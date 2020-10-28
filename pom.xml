@@ -8,7 +8,7 @@
 		<version>2.3.4.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>kn.zymla</groupId>
+	<groupId>uni.kn.zymla</groupId>
 	<artifactId>syntax-annotator-glue</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>syntax-annotator-glue</name>

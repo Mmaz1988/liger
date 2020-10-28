@@ -26,20 +26,11 @@ import utilities.DBASettings;
 
 @CrossOrigin
 @RestController
-public class GreetingController {
-
-	private static final String template = "This is the new sentence: %s!";
-	private final AtomicLong counter = new AtomicLong();
-
-	@GetMapping("/greeting")
-	public Greeting greeting(@RequestParam(value = "name", defaultValue = "World") String name) {
-		return new Greeting(counter.incrementAndGet(), String.format(template, name));
-	}
-
+public class AnnotatorController {
 	@CrossOrigin
 	//(origins = "http://localhost:63342")
-	@PostMapping(value = "/annotate", produces = "application/json")
-	public TestGraph annotationRequest(
+	@PostMapping(value = "/graph-test", produces = "application/json")
+	public TestGraph produceGraph(
 			@RequestParam(value = "in",defaultValue = "Didn't pass sentence") String in)
 	{
 
@@ -60,21 +51,11 @@ public class GreetingController {
 
 	@CrossOrigin
 	//(origins = "http://localhost:63342")
-	@PostMapping(value = "/annotate2", produces = "application/json")
+	@PostMapping(value = "/annotate", produces = "application/json")
 	public TestGraph annotationRequest2(
 			@RequestParam(value = "in",defaultValue = "Didn't pass sentence") String input)
 	{
 
-		/*
-		TestNode node1 = new TestNode("1","input");
-		TestNode node2 = new TestNode("2","annotation");
-		TestNode edge1 = new TestNode("12","1","2","projection","proj");
-
-		List<TestNode> nodeList = new ArrayList<>();
-		nodeList.add(node1);
-		nodeList.add(node2);
-		nodeList.add(edge1);
-*/
 		 UDoperator parser = new UDoperator();
 
 		SyntacticStructure fs = parser.parseSingle(input);
@@ -84,17 +65,6 @@ public class GreetingController {
 
 		RuleParser rp = new RuleParser(fsList, QueryParserTest.testFolderPath + "testRulesUD4.txt");
 		rp.addAnnotation2(fs);
-
-
-		GlueSemantics sem = new GlueSemantics();
-		sem.calculateSemantics(fs);
-
-
-		for (Premise p : sem.llprover.getSolutions()) {
-			System.out.println(p.toString());
-		}
-
-
 
 		try {
 			fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
@@ -106,26 +76,6 @@ public class GreetingController {
 		for (GraphConstraint g : fs.annotation) {
 			System.out.println(g);
 		}
-
-
-                /*
-                List<List<GraphConstraint>> substructure = fs.getSubstructures("FEATURES");
-
-                for (List<GraphConstraint> sstr : substructure)
-                {
-
-                    //System.out.println(sstr);
-
-                    for (GraphConstraint g : sstr)
-                    {
-                        if (g.getRelationLabel().equals("MODAL"))
-                        {
-                            System.out.println(fs.sentence + " " + g.getFsValue().toString());
-                        }
-                    }
-
-                }
-                */
 
 
 		System.out.println("Done");
