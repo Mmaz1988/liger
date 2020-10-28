@@ -70,6 +70,15 @@
 			<version>5.6.2</version>
 		</dependency>
 
+		<dependency>
+			<groupId>uni.kn.zymla</groupId>
+			<artifactId>gswb</artifactId>
+			<version>1.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/resources/glueSemWorkbench2.jar</systemPath>
+		</dependency>
+
+
 	</dependencies>
 
 	<build>
