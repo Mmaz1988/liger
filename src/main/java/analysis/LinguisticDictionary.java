@@ -17,7 +17,7 @@ public class LinguisticDictionary {
     public void testLoadDict() throws IOException {
         HashMap<String, HashMap<String, List<String>>> result;
         String filename = "zukunftsverben.txt";
-        String path_to_txt = "C:\\Users\\Celeste\\IdeaProjects\\xle_operator\\src\\Dicts\\";
+        String path_to_txt = "/Users/red_queen/IdeaProjects/syntax-annotator-glue/src/main/java/Dicts/";
         result = text2Dict(path_to_txt, filename);
         //compare number of keys
         Assertions.assertEquals(3, result.get(filename).size());
@@ -47,7 +47,7 @@ try {
         HashMap<String, HashMap<String, List<String>>> dict = new HashMap<>();
 
         try {
-            return text2Dict("C:\\Users\\Celeste\\IdeaProjects\\xle_operator\\src\\Dicts\\", "future_verbs.txt");
+            return text2Dict("/Users/red_queen/IdeaProjects/syntax-annotator-glue/src/main/java/Dicts/", "future_verbs.txt");
         }catch(Exception e)
         {
             e.printStackTrace();

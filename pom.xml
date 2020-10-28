@@ -9,14 +9,22 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>kn.zymla</groupId>
-	<artifactId>syntax-annotator+glue</artifactId>
+	<artifactId>syntax-annotator-glue</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>syntax-annotator+glue</name>
+	<name>syntax-annotator-glue</name>
 	<description>A rule-based syntactic annotator for adding relational and attribute value information and semantic representations based on glue semantics</description>
 
 	<properties>
 		<java.version>11</java.version>
 	</properties>
+
+	<repositories>
+		<repository>
+			<id>resources</id>
+			<url>file:///${project.basedir}/resources</url>
+		</repository>
+	</repositories>
+
 
 	<dependencies>
 		<dependency>
@@ -61,7 +69,6 @@
 			<artifactId>junit-jupiter</artifactId>
 			<version>5.6.2</version>
 		</dependency>
-
 
 	</dependencies>
 

@@ -587,8 +587,8 @@ public class RuleParser {
 
         }
         matcher3.appendTail(sb3);
-        replacedFsVars = sb3.toString();
 
+        replacedFsVars = sb3.toString();
         replacedFsVars = HelperMethods.stripValeue2(replacedFsVars);
 
         return replacedFsVars;

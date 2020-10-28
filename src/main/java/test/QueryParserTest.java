@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class QueryParserTest {
 
-    public static final String testFolderPath = "C:\\Users\\Celeste\\IdeaProjects\\xle_operator_web\\src\\main\\java\\test\\";
+    public static final String testFolderPath = "/Users/red_queen/IdeaProjects/syntax-annotator-glue/src/main/java/test/";
 
 
     public LinkedHashMap<String, SyntacticStructure> loadFs(int i)
