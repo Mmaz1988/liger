@@ -135,19 +135,8 @@ public class DbaMain {
                 List<SyntacticStructure> fsList = new ArrayList<>();
                 fsList.add(fs);
 
-                RuleParser rp = new RuleParser(fsList, QueryParserTest.testFolderPath + "testRulesUD4.txt");
+                RuleParser rp = new RuleParser(fsList, QueryParserTest.testFolderPath + "testRulesUD1.txt");
                 rp.addAnnotation2(fs);
-
-
-                GlueSemantics sem = new GlueSemantics();
-                sem.calculateSemantics(fs);
-
-
-                for (Premise p : sem.llprover.getSolutions()) {
-                    System.out.println(p.toString());
-                }
-
-
 
                 try {
                     fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
@@ -156,9 +145,21 @@ public class DbaMain {
                     System.out.println("Sorting annotation failed.");
                 }
 
+
+                System.out.println("Annotation output:");
+
                 for (GraphConstraint g : fs.annotation) {
                     System.out.println(g);
                 }
+
+                GlueSemantics sem = new GlueSemantics();
+                String result = sem.calculateSemantics(fs);
+
+
+
+                System.out.println(System.lineSeparator());
+                System.out.println("Result of the Glue derivation:");
+                System.out.println(result);
 
 
                 /*
@@ -218,7 +219,7 @@ public class DbaMain {
 
 
                         GlueSemantics sem = new GlueSemantics();
-                        sem.calculateSemantics(fs);
+                        String result = sem.calculateSemantics(fs);
 
                         for (Premise p : sem.llprover.getSolutions())
                         {

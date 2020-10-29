@@ -1,9 +1,11 @@
 package semantics;
 
+import glueSemantics.linearLogic.Premise;
 import glueSemantics.linearLogic.Sequent;
 import glueSemantics.parser.GlueParser;
 import glueSemantics.semantics.LexicalEntry;
 import main.Settings;
+import org.apache.xml.serialize.LineSeparator;
 import prover.LLProver2;
 import syntax.SyntacticStructure;
 import syntax.xle.Prolog2Java.GraphConstraint;
@@ -13,13 +15,13 @@ import java.util.List;
 
 public class GlueSemantics {
 
-    public GlueParser glueParser = new GlueParser();
+    public GlueParser glueParser = new GlueParser(true );
     public LLProver2 llprover = new LLProver2(new Settings(), new StringBuilder());
 
     public GlueSemantics()
     {}
 
-    public void calculateSemantics(SyntacticStructure fs)
+    public String calculateSemantics(SyntacticStructure fs)
     {
         List<String> meaningConstructorStrings = new ArrayList<>();
         for (GraphConstraint c : fs.annotation)
@@ -53,6 +55,18 @@ public class GlueSemantics {
             System.out.println("Failed to deduce a meaning from f-structure: " + fs.local_id);
             e.printStackTrace();
         }
+
+
+        StringBuilder solutionBuilder = new StringBuilder();
+
+        for (Premise p : llprover.getSolutions()) {
+            solutionBuilder.append(p.toString());
+            solutionBuilder.append(System.lineSeparator());
+        }
+
+
+
+        return solutionBuilder.toString();
     }
 
 
