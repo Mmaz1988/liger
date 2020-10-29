@@ -218,19 +218,25 @@ public class DbaMain {
                         System.out.println("Done");
 
 
-                        GlueSemantics sem = new GlueSemantics();
-                        String result = sem.calculateSemantics(fs);
-
-                        for (Premise p : sem.llprover.getSolutions())
+                        try {
+                            fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
+                        } catch(Exception e)
                         {
-                            System.out.println(p.toString());
+                            System.out.println("Sorting annotation failed.");
                         }
+                        
+                        System.out.println("Annotation output:");
 
                         for (GraphConstraint g : fs.annotation) {
                             System.out.println(g);
                         }
 
+                        GlueSemantics sem = new GlueSemantics();
+                        String result = sem.calculateSemantics(fs);
 
+                        System.out.println(System.lineSeparator());
+                        System.out.println("Result of the Glue derivation:");
+                        System.out.println(result);
                     }
                 }
                 break;
