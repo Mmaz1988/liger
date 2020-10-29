@@ -152,6 +152,9 @@ public class DbaMain {
                     System.out.println(g);
                 }
 
+                System.out.println(System.lineSeparator());
+
+                System.out.println("Glue prover output:");
                 GlueSemantics sem = new GlueSemantics();
                 String result = sem.calculateSemantics(fs);
 
@@ -215,8 +218,6 @@ public class DbaMain {
                         RuleParser rp = new RuleParser(fsList,  QueryParserTest.testFolderPath + "testRulesLFG7.txt");
 
                         rp.addAnnotation2(fs);
-                        System.out.println("Done");
-
 
                         try {
                             fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
@@ -224,19 +225,24 @@ public class DbaMain {
                         {
                             System.out.println("Sorting annotation failed.");
                         }
-                        
+
                         System.out.println("Annotation output:");
 
                         for (GraphConstraint g : fs.annotation) {
                             System.out.println(g);
                         }
 
+                        System.out.println(System.lineSeparator());
+
+                        System.out.println("Glue prover output:");
                         GlueSemantics sem = new GlueSemantics();
                         String result = sem.calculateSemantics(fs);
 
                         System.out.println(System.lineSeparator());
                         System.out.println("Result of the Glue derivation:");
                         System.out.println(result);
+
+                        System.out.println("Done");
                     }
                 }
                 break;

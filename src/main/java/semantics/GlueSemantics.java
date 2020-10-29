@@ -29,8 +29,7 @@ public class GlueSemantics {
             if (c.getRelationLabel().equals("GLUE"))
             {
                 meaningConstructorStrings.add(c.getFsValue().toString());
-                System.out.println(c.getFsValue().toString());
-
+              //  System.out.println(c.getFsValue().toString());
             }
         }
         List<LexicalEntry> lexicalEntries = new ArrayList<>();
@@ -56,15 +55,12 @@ public class GlueSemantics {
             e.printStackTrace();
         }
 
-
         StringBuilder solutionBuilder = new StringBuilder();
 
         for (Premise p : llprover.getSolutions()) {
             solutionBuilder.append(p.toString());
             solutionBuilder.append(System.lineSeparator());
         }
-
-
 
         return solutionBuilder.toString();
     }
