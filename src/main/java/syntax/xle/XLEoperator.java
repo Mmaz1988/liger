@@ -98,11 +98,22 @@ public class XLEoperator {
         }
     }
 
-    public void parseSentence(String sentence)
-    {
+    public SyntacticStructure parseSingle(String sentence) {
         List<String> singletonList = new ArrayList<>();
         singletonList.add(sentence);
         parseSentences(singletonList);
+
+        File fsFile = new File("/Users/red_queen/IdeaProjects/syntax-annotator-glue/parser_output");
+
+        if (fsFile.isDirectory()) {
+            File[] files = fsFile.listFiles((d, name) -> name.endsWith(".pl"));
+
+            for (int i = 0; i < files.length; i++) {
+                LinkedHashMap<String, SyntacticStructure> fsRef = fs2Java(files[i].getPath());
+                return fsRef.get(fsRef.keySet().iterator().next()) ;
+            }
+        }
+            return null;
     }
 
     public LinkedHashMap loadPrologFstructures()

@@ -17,14 +17,7 @@ public class TestNode {
         data.put("id", id);
         data.put("type", type);
 
-        HashMap<String, String> avp = new HashMap<>();
-        avp.put("tense", "past");
-        avp.put("aspect", "prog");
-
-        data.put("avp", avp);
-
         this.data = data;
-
     }
 
     public TestNode(String id, String type, HashMap<String, String> avp)

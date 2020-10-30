@@ -1,10 +1,10 @@
 -replace(true);
 
 //Finite forms
-#a POS VBZ & #a TOKEN %a ==> #a M-STR #b & #b TENSE 'pres' & #b HEAD %a.
-#a POS VBP & #a TOKEN %a ==> #a M-STR #b & #b TENSE 'pres' & #b HEAD %a.
-#a POS VBD & #a TOKEN %a ==> #a M-STR #b & #b TENSE 'past' & #b HEAD %a.
-#a POS MD & #a TOKEN %a ==> #a M-STR #b & #b TENSE 'lex(%a,tense)' & #b HEAD %a.
+#a POS VBZ & #a TOKEN %a ==> #a M-STR #b & #b FIN '+' & #b TENSE 'pres' & #b HEAD %a.
+#a POS VBP & #a TOKEN %a ==> #a M-STR #b & #b FIN '+' & #b TENSE 'pres' & #b HEAD %a.
+#a POS VBD & #a TOKEN %a ==> #a M-STR #b & #b FIN '+' & #b TENSE 'past' & #b HEAD %a.
+#a POS MD & #a TOKEN %a ==> #a M-STR #b & #b FIN '+' & #b TENSE 'lex(%a,tense)' & #b HEAD %a.
 
 //Non-finite forms
 #a POS VBG & #a TOKEN %a ==> #a M-STR #b & #b FIN '-' & #b HEAD %a & #b FORM 'prpart'.
@@ -57,12 +57,6 @@
 //Tense from aux verb
 #a M-STR #b MAIN '+' & #b AUX #c & #c TENSE %b &
 #c HEAD %d & #b HEAD %c ==> #c TAM #d & #b TAM #d & #d HEAD '%c' & #d TENSE %b.
-
-//Tense from XCOMPs
-#a xcomp #b &
-#a M-STR #c & #b M-STR #d &
-#d FORM 'inf' &
-#c HEAD %c & #d HEAD %d ==>#c TAM #e & #d TAM #e & #e HEAD '%c to %d'.
 
 #a xcomp #b &
 #a M-STR #c & #b M-STR #d &

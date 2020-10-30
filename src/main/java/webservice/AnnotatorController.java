@@ -6,7 +6,9 @@ import semantics.GlueSemantics;
 import syntax.SyntacticStructure;
 import syntax.ud.UDoperator;
 import syntax.xle.Prolog2Java.GraphConstraint;
+import syntax.xle.XLEoperator;
 import test.QueryParserTest;
+import utilities.VariableHandler;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -41,14 +43,14 @@ public class AnnotatorController {
     public TestGraph annotationRequest2(
             @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
 
-        UDoperator parser = new UDoperator();
+        XLEoperator parser = new XLEoperator(new VariableHandler());
 
         SyntacticStructure fs = parser.parseSingle(input);
         System.out.println(fs.constraints);
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
-        RuleParser rp = new RuleParser(fsList, QueryParserTest.testFolderPath + "testRulesUD4.txt");
+        RuleParser rp = new RuleParser(fsList, QueryParserTest.testFolderPath + "testRulesLFG7.txt");
         rp.addAnnotation2(fs);
 
         try {
@@ -65,7 +67,7 @@ public class AnnotatorController {
         System.out.println("Done");
 
 
-        return new TestGraph(fs);
+        return new TestGraph(fs.constraints,fs.annotation);
 
         //return new TestGraph(nodeList);
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
@@ -77,14 +79,14 @@ public class AnnotatorController {
     public TestGraph semanticsRequest2(
             @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
 
-        UDoperator parser = new UDoperator();
+        XLEoperator parser = new XLEoperator(new VariableHandler());
 
         SyntacticStructure fs = parser.parseSingle(input);
         System.out.println(fs.constraints);
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
-        RuleParser rp = new RuleParser(fsList, QueryParserTest.testFolderPath + "testRulesUD1.txt");
+        RuleParser rp = new RuleParser(fsList, QueryParserTest.testFolderPath + "testRulesLFG7.txt");
         rp.addAnnotation2(fs);
 
         try {
@@ -96,20 +98,12 @@ public class AnnotatorController {
         GlueSemantics sem = new GlueSemantics();
         String semantics = sem.calculateSemantics(fs);
 
-        TestNode node1 = new TestNode("1", "input");
-        TestNode node2 = new TestNode("2", "annotation");
-        TestNode edge1 = new TestNode("12", "1", "2", "projection", "proj");
-
-        List<TestNode> nodeList = new ArrayList<>();
-        nodeList.add(node1);
-        nodeList.add(node2);
-        nodeList.add(edge1);
 
       //  return new TestGraph(nodeList,semantics);
 
 
 
-        return new TestGraph(nodeList,semantics);
+        return new TestGraph(fs.constraints,fs.annotation,semantics);
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
     }
 
