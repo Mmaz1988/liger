@@ -135,7 +135,7 @@ public class DbaMain {
                 List<SyntacticStructure> fsList = new ArrayList<>();
                 fsList.add(fs);
 
-                RuleParser rp = new RuleParser(fsList, QueryParserTest.testFolderPath + "testRulesUD1.txt");
+                RuleParser rp = new RuleParser(fsList, QueryParserTest.testFolderPath + "testRulesUD4.txt");
                 rp.addAnnotation2(fs);
 
                 try {
