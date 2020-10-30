@@ -65,7 +65,7 @@ public class AnnotatorController {
         System.out.println("Done");
 
 
-        return null;
+        return new TestGraph(fs);
 
         //return new TestGraph(nodeList);
         //new Greeting(counter.incrementAndGet(),String.format(template,in));

@@ -1,18 +1,85 @@
 package webservice;
 
+import com.google.gson.internal.$Gson$Preconditions;
+import syntax.SyntacticStructure;
+import syntax.xle.Prolog2Java.GraphConstraint;
+import utilities.HelperMethods;
+
+import javax.swing.text.Utilities;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class TestGraph {
 
-    public final List<TestNode> graphElements;
+    public List<TestNode> graphElements;
     public String semantics;
 
-    public TestGraph(List<TestNode> graphElements)
-    {
+    public TestGraph(List<TestNode> graphElements) {
         this.graphElements = graphElements;
     }
 
-    public TestGraph(List<TestNode> graphElements, String semantics)
-    {this.graphElements = graphElements;
-    this.semantics = semantics;}
+    public TestGraph(List<TestNode> graphElements, String semantics) {
+        this.graphElements = graphElements;
+        this.semantics = semantics;
+    }
+
+
+    public TestGraph(SyntacticStructure s)
+    {
+        this.graphElements = extractGraph(s);
+    }
+
+    public List<TestNode> extractGraph(SyntacticStructure s)
+    {
+        LinkedHashMap<Integer, HashMap<String,String>> nodes = new LinkedHashMap<>();
+        List<TestNode> edges = new ArrayList<>();
+
+        for (int i = 0; i < s.constraints.size(); i++)
+        {
+            int rel = 0;
+            GraphConstraint g = s.constraints.get(i);
+            Integer fsNode = Integer.parseInt(g.getFsNode());
+
+            if (!nodes.containsKey(fsNode))
+            {
+                nodes.put(fsNode,new HashMap<>());
+            }
+
+            if (HelperMethods.isInteger(g.getFsValue())
+            ) {
+                if (!nodes.containsKey(fsNode))
+                {
+                    nodes.put(fsNode,new HashMap<>());
+                }
+                //TestNode(String id, String source, String target, String label, String type)
+                edges.add(new TestNode("rid" + g.getFsNode() + rel + g.getFsValue().toString(),
+                        g.getFsNode(),g.getFsValue().toString(),
+                        g.getRelationLabel(),"edge"));
+
+            } else
+            {
+                nodes.get(fsNode).put(g.getRelationLabel(),g.getFsValue().toString());
+            }
+
+        }
+
+        List<TestNode> testNodes = new ArrayList<>();
+
+        for (Integer key : nodes.keySet())
+        {
+            if (!nodes.get(key).keySet().isEmpty()) {
+                testNodes.add(new TestNode(key.toString(), "input", nodes.get(key)));
+            } else
+            {
+                testNodes.add(new TestNode(key.toString(),"input"));
+            }
+        }
+
+        List<TestNode> output = new ArrayList<>();
+        output.addAll(testNodes);
+        output.addAll(edges);
+        return output;
+    }
 }
