@@ -1,6 +1,7 @@
 package syntax.xle;
 
 import syntax.SyntacticStructure;
+import syntax.ud.SyntaxOperator;
 import syntax.xle.FstructureElements.AttributeValuePair;
 import syntax.xle.Prolog2Java.FsProlog2Java;
 import syntax.xle.Prolog2Java.GraphConstraint;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 import static syntax.ud.UDoperator.extractModals;
 
 
-public class XLEoperator {
+public class XLEoperator extends SyntaxOperator {
 
     public VariableHandler vh;
 
@@ -97,7 +98,7 @@ public class XLEoperator {
             e.printStackTrace();
         }
     }
-
+    @Override
     public SyntacticStructure parseSingle(String sentence) {
         List<String> singletonList = new ArrayList<>();
         singletonList.add(sentence);

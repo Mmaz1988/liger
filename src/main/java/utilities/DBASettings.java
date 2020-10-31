@@ -24,6 +24,7 @@ public class DBASettings {
     public DBASettings()
     {
         this.interactiveMode = true;
+        this.semanticParsing = false;
     }
 
     public void setOutputWriter(File file)

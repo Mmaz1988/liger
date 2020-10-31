@@ -20,7 +20,7 @@ import java.util.*;
 
 //import edu.stanford.nlp.pipeline;
 //TODO Methoden sortieren
-public class UDoperator {
+public class UDoperator extends SyntaxOperator{
 
     public static void main(String[] args) // throws VariableBindingException
     {
@@ -61,7 +61,7 @@ public class UDoperator {
         vh = variable_handler;
     }
 
-
+    @Override
     public SyntacticStructure parseSingle(String sentence) {
 
         //VariableHandler vh = new VariableHandler();

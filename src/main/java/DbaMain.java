@@ -1,13 +1,13 @@
 import analysis.LinguisticDictionary;
 import analysis.RuleParser.RuleParser;
-import glueSemantics.linearLogic.Premise;
 import semantics.GlueSemantics;
 import syntax.SyntacticStructure;
+import syntax.ud.SyntaxOperator;
 import syntax.ud.UDoperator;
 import syntax.xle.Prolog2Java.GraphConstraint;
 import syntax.xle.XLEoperator;
-import test.QueryParserTest;
 import utilities.DBASettings;
+import utilities.PathVariables;
 import utilities.VariableHandler;
 
 import java.io.BufferedWriter;
@@ -18,42 +18,40 @@ import java.util.*;
 
 public class DbaMain {
 
-    public enum mode{
+    public enum mode {
         LFG,
         DEP
     }
 
     public BufferedWriter outputWriter;
     public static DBASettings settings;
-
+    public static LinguisticDictionary ld = new LinguisticDictionary();
 
 
     public static void main(String[] args) {
 
-    initiateArguments(args);
+        initiateArguments(args);
     }
 
-    public static void initiateArguments(String[] args)
-    {
+    public static void initiateArguments(String[] args) {
         settings = new DBASettings();
 
-        for (int i = 0; i < args.length; i++)
-        {
+        for (int i = 0; i < args.length; i++) {
             String arg = args[i];
 
-            switch(arg){
+            switch (arg) {
 
                 case "-i":
-                    settings.inputFile = args[i+1];
+                    settings.inputFile = args[i + 1];
                     settings.interactiveMode = false;
                     i++;
                     break;
                 case "-o":
-                    settings.outputFile = args[i+1];
+                    settings.outputFile = args[i + 1];
                     i++;
                     break;
                 case "-rf":
-                    settings.ruleFile = args[i+1];
+                    settings.ruleFile = args[i + 1];
                     i++;
                     break;
                 case "-dep":
@@ -72,10 +70,9 @@ public class DbaMain {
         runDBA();
     }
 
-    public static void runDBA()
-    {
+    public static void runDBA() {
 
-        LinguisticDictionary ld = new LinguisticDictionary();
+        //    LinguisticDictionary ld = new LinguisticDictionary();
 
         if (settings.inputFile != null) {
             try {
@@ -93,168 +90,123 @@ public class DbaMain {
             }
         }
 
-            if (settings.outputFile != null) {
-                String outPath = settings.outputFile;
-                try {
-                    File outFile = new File(outPath);
+        if (settings.outputFile != null) {
+            String outPath = settings.outputFile;
+            try {
+                File outFile = new File(outPath);
 
-                    if (outFile.exists()) {
-                        outFile.delete();
-                    }
-                    outFile.createNewFile();
-                    //  outFile.createNewFile();
-                    settings.setOutputWriter(outFile);
-                } catch (Exception e) {
-                    System.out.println("Failed to write output to:" + outPath);
+                if (outFile.exists()) {
+                    outFile.delete();
                 }
+                outFile.createNewFile();
+                //  outFile.createNewFile();
+                settings.setOutputWriter(outFile);
+            } catch (Exception e) {
+                System.out.println("Failed to write output to:" + outPath);
             }
-
-
-
-        System.out.println("Starting interactive mode...\n");
-        Scanner s = new Scanner(System.in);
-
-        SyntacticStructure fs = null;
-        String input;
-        while (true) {
-            System.out.println("Enter sentence to be analyzed or enter 'quit' to exit the program.");
-            input = s.nextLine();
-            break;
-            //if (input.equals("quit"))
-            //    break;
-        }
-
-        UDoperator parser = null;
-        switch(settings.mode)
-        {
-            case "dep": {
-                parser = new UDoperator();
-
-                fs = parser.parseSingle(input);
-                System.out.println(fs.constraints);
-                List<SyntacticStructure> fsList = new ArrayList<>();
-                fsList.add(fs);
-
-                RuleParser rp = new RuleParser(fsList, QueryParserTest.testFolderPath + "testRulesUD4.txt");
-                rp.addAnnotation2(fs);
-
-                try {
-                    fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
-                } catch(Exception e)
-                {
-                    System.out.println("Sorting annotation failed.");
-                }
-
-
-                System.out.println("Annotation output:");
-
-                for (GraphConstraint g : fs.annotation) {
-                    System.out.println(g);
-                }
-
-                System.out.println(System.lineSeparator());
-
-                System.out.println("Glue prover output:");
-                GlueSemantics sem = new GlueSemantics();
-                String result = sem.calculateSemantics(fs);
-
-
-
-                System.out.println(System.lineSeparator());
-                System.out.println("Result of the Glue derivation:");
-                System.out.println(result);
-
-
-                /*
-                List<List<GraphConstraint>> substructure = fs.getSubstructures("FEATURES");
-
-                for (List<GraphConstraint> sstr : substructure)
-                {
-
-                    //System.out.println(sstr);
-
-                    for (GraphConstraint g : sstr)
-                    {
-                        if (g.getRelationLabel().equals("MODAL"))
-                        {
-                            System.out.println(fs.sentence + " " + g.getFsValue().toString());
-                        }
-                    }
-
-                }
-                */
-                System.out.println("Done");
-
-                break;
-            }
-            case "lfg": {
-                List<String> sentences = new ArrayList<>();
-                sentences.add(input);
-
-                VariableHandler vh = new VariableHandler();
-
-                XLEoperator xle = new XLEoperator(vh);
-
-                xle.parseSentences(sentences);
-
-                File fsFile = new File("/Users/red_queen/IdeaProjects/xlebatchparsing/parser_output");
-
-                if (fsFile.isDirectory()) {
-                    File[] files = fsFile.listFiles((d, name) -> name.endsWith(".pl"));
-
-
-                    for (int i = 0; i < files.length; i++) {
-
-                        LinkedHashMap<String, SyntacticStructure> fsRef = xle.fs2Java(files[i].getPath());
-
-                        fs = fsRef.get(fsRef.keySet().stream().findAny().get());
-
-                        List<SyntacticStructure> fsList = new ArrayList<>();
-                        fsList.add(fs);
-
-                        RuleParser rp = new RuleParser(fsList,  QueryParserTest.testFolderPath + "testRulesLFG7.txt");
-
-                        rp.addAnnotation2(fs);
-
-                        try {
-                            fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
-                        } catch(Exception e)
-                        {
-                            System.out.println("Sorting annotation failed.");
-                        }
-
-                        System.out.println("Annotation output:");
-
-                        for (GraphConstraint g : fs.annotation) {
-                            System.out.println(g);
-                        }
-
-                        System.out.println(System.lineSeparator());
-
-                        System.out.println("Glue prover output:");
-                        GlueSemantics sem = new GlueSemantics();
-                        String result = sem.calculateSemantics(fs);
-
-                        System.out.println(System.lineSeparator());
-                        System.out.println("Result of the Glue derivation:");
-                        System.out.println(result);
-
-                        System.out.println("Done");
-                    }
-                }
-                break;
-            }
-
-
-
         }
 
 
+        if (settings.interactiveMode) {
+            System.out.println("Starting interactive mode...\n");
+            Scanner s = new Scanner(System.in);
+
+            String input;
+            while (true) {
+                System.out.println("Enter sentence to be analyzed or enter 'quit' to exit the program.");
+                input = s.nextLine();
+                break;
+                //if (input.equals("quit"))
+                //    break;
+            }
+
+            String ruleFile = "";
+
+            if (settings.ruleFile == null)
+            {
+                ruleFile = PathVariables.testPath + "testRulesUD4.txt";
+            } else
+            {
+                ruleFile = settings.ruleFile;
+            }
+
+            SyntacticStructure fs = parserInteractiveWrapper(settings.mode,input, ruleFile);
 
 
+            if (settings.semanticParsing) {
+                semanticsInteractiveWrapper(fs);
+            }
+        }
 
 
     }
+
+    public static void semanticsInteractiveWrapper(SyntacticStructure fs)
+    {
+        System.out.println(System.lineSeparator());
+
+        System.out.println("Glue prover output:");
+        GlueSemantics sem = new GlueSemantics();
+        String result = sem.calculateSemantics(fs);
+
+        System.out.println(System.lineSeparator());
+        System.out.println("Result of the Glue derivation:");
+        System.out.println(result);
+
+        System.out.println("Done");
+    }
+
+    public static SyntacticStructure parserInteractiveWrapper(String parserType, String input, String path)
+    {
+
+        SyntacticStructure fs = null;
+        SyntaxOperator syn = null;
+
+        switch(parserType)
+        {
+            case "dep": {
+                syn = new UDoperator();
+                break;
+            }
+            case "lfg": {
+                VariableHandler vh = new VariableHandler();
+                syn = new XLEoperator(vh);
+                break;
+            }
+        }
+
+        assert syn != null;
+        fs = syn.parseSingle(input);
+        System.out.println(fs.constraints);
+
+        List<SyntacticStructure> fsList = new ArrayList<>();
+        fsList.add(fs);
+
+        RuleParser rp = new RuleParser(fsList, path);
+
+        rp.addAnnotation2(fs);
+
+        try {
+            fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
+        } catch (Exception e) {
+            System.out.println("Sorting annotation failed.");
+        }
+
+        System.out.println("Annotation output:");
+
+        for (GraphConstraint g : fs.annotation) {
+            System.out.println(g);
+        }
+
+        return fs;
+
+    }
+
+}
+
+
+
+
 
     /*
        System.out.println("Starting interactive lfg mode...\n");
@@ -306,4 +258,4 @@ public class DbaMain {
 
      */
 
-}
+
