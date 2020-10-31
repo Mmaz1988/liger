@@ -9,6 +9,7 @@ import syntax.SyntacticStructure;
 import utilities.HelperMethods;
 import syntax.xle.XLEoperator;
 import org.junit.jupiter.api.Test;
+import utilities.PathVariables;
 import utilities.VariableHandler;
 
 import java.util.*;
@@ -18,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class QueryParserTest {
 
-    public static final String testFolderPath = "/Users/red_queen/IdeaProjects/syntax-annotator-glue/src/main/java/test/";
+    public static final String testFolderPath = PathVariables.testPath;
 
 
     public LinkedHashMap<String, SyntacticStructure> loadFs(int i)

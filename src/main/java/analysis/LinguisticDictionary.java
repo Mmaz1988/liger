@@ -3,6 +3,8 @@ package analysis;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import utilities.HelperMethods;
+import utilities.PathVariables;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -17,7 +19,7 @@ public class LinguisticDictionary {
     public void testLoadDict() throws IOException {
         HashMap<String, HashMap<String, List<String>>> result;
         String filename = "zukunftsverben.txt";
-        String path_to_txt = "/Users/red_queen/IdeaProjects/syntax-annotator-glue/src/main/java/Dicts/";
+        String path_to_txt = PathVariables.dictPath;
         result = text2Dict(path_to_txt, filename);
         //compare number of keys
         Assertions.assertEquals(3, result.get(filename).size());
@@ -47,7 +49,7 @@ try {
         HashMap<String, HashMap<String, List<String>>> dict = new HashMap<>();
 
         try {
-            return text2Dict("/Users/red_queen/IdeaProjects/syntax-annotator-glue/src/main/java/Dicts/", "future_verbs.txt");
+            return text2Dict(PathVariables.dictPath, "future_verbs.txt");
         }catch(Exception e)
         {
             e.printStackTrace();

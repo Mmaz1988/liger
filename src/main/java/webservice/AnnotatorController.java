@@ -8,6 +8,7 @@ import syntax.ud.UDoperator;
 import syntax.xle.Prolog2Java.GraphConstraint;
 import syntax.xle.XLEoperator;
 import test.QueryParserTest;
+import utilities.PathVariables;
 import utilities.VariableHandler;
 
 import java.util.ArrayList;
@@ -43,14 +44,14 @@ public class AnnotatorController {
     public TestGraph annotationRequest2(
             @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
 
-        XLEoperator parser = new XLEoperator(new VariableHandler());
+        UDoperator parser = new UDoperator();
 
         SyntacticStructure fs = parser.parseSingle(input);
         System.out.println(fs.constraints);
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
-        RuleParser rp = new RuleParser(fsList, QueryParserTest.testFolderPath + "testRulesLFG7.txt");
+        RuleParser rp = new RuleParser(fsList, PathVariables.testPath + "testRulesUD4.txt");
         rp.addAnnotation2(fs);
 
         try {
@@ -79,14 +80,14 @@ public class AnnotatorController {
     public TestGraph semanticsRequest2(
             @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
 
-        XLEoperator parser = new XLEoperator(new VariableHandler());
+        UDoperator parser = new UDoperator();
 
         SyntacticStructure fs = parser.parseSingle(input);
         System.out.println(fs.constraints);
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
-        RuleParser rp = new RuleParser(fsList, QueryParserTest.testFolderPath + "testRulesLFG7.txt");
+        RuleParser rp = new RuleParser(fsList, PathVariables.testPath + "testRulesUD1.txt");
         rp.addAnnotation2(fs);
 
         try {

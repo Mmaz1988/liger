@@ -7,11 +7,13 @@ import syntax.SyntacticStructure;
 import syntax.ud.UDoperator;
 import syntax.xle.Prolog2Java.GraphConstraint;
 import syntax.xle.XLEoperator;
+import utilities.PathVariables;
 import utilities.VariableHandler;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
 import static test.QueryParserTest.testFolderPath;
@@ -22,7 +24,7 @@ public class ParserTest {
     @Test
     void testParser()
     {
-        String test_file = "C:\\Users\\User\\Documents\\Uni\\HiWi-Java\\manifesto_test.txt";
+        String test_file = PathVariables.testPath + "manifesto_test.txt";
         VariableHandler var_handler = new VariableHandler();
         UDoperator parser = new UDoperator(var_handler);
         List<List<String>> sentences = parser.extractModalsFromTestfile(test_file);
@@ -39,7 +41,7 @@ public class ParserTest {
                 SyntacticStructure fs = parser.parseSingle(j);
                 List<SyntacticStructure> fsList = new ArrayList<>();
                 fsList.add(fs);
-                RuleParser rp = new RuleParser(fsList, testFolderPath + "testRulesUD5.txt");
+                RuleParser rp = new RuleParser(fsList, PathVariables.testPath + "testRulesUD5.txt");
                 rp.addAnnotation2(fs);
                 try {
                     fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
@@ -130,7 +132,7 @@ public class ParserTest {
         }
         // first create file object for file placed at location
         // specified by filepath
-        String filePath = "C:\\Users\\User\\Documents\\Uni\\HiWi-Java\\manifesto_test_j.csv";
+        String filePath = PathVariables.testPath + "manifesto_test_j.csv";
         File file = new File(filePath);
 
         try {
@@ -249,7 +251,7 @@ public class ParserTest {
         }
         // first create file object for file placed at location
         // specified by filepath
-        String filePath = "/Users/red_queen/IdeaProjects/xlebatchparsing/src/test/manifesto_test_xle.csv";
+        String filePath = PathVariables.testPath + "manifesto_test_xle.csv";
         File file = new File(filePath);
 
         try {
