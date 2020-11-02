@@ -139,8 +139,11 @@ public class AnnotatorController {
         RuleParser rp = new RuleParser(fsList, request.ruleString,true);
         rp.addAnnotation2(fs);
 
+        GlueSemantics sem = new GlueSemantics();
+        String semantics = sem.calculateSemantics(fs);
 
-    return new TestGraph(fs.constraints,fs.annotation);
+
+    return new TestGraph(fs.constraints,fs.annotation,semantics);
 
     }
 
