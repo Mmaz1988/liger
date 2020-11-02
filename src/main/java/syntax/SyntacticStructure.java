@@ -1,6 +1,5 @@
 package syntax;
 
-import syntax.xle.Prolog2Java.GraphConstraint;
 import utilities.HelperMethods;
 
 import java.util.ArrayList;

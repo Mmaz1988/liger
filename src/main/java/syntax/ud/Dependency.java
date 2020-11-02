@@ -1,7 +1,7 @@
 package syntax.ud;
 
 
-import syntax.xle.Prolog2Java.GraphConstraint;
+import syntax.GraphConstraint;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;

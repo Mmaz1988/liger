@@ -5,7 +5,7 @@ import com.opencsv.CSVWriter;
 import org.junit.jupiter.api.Test;
 import syntax.SyntacticStructure;
 import syntax.ud.UDoperator;
-import syntax.xle.Prolog2Java.GraphConstraint;
+import syntax.GraphConstraint;
 import syntax.xle.XLEoperator;
 import utilities.PathVariables;
 import utilities.VariableHandler;
@@ -13,10 +13,7 @@ import utilities.VariableHandler;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
-
-import static test.QueryParserTest.testFolderPath;
 
 public class ParserTest {
 

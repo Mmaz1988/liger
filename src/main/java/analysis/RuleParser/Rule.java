@@ -1,6 +1,6 @@
 package analysis.RuleParser;
 
-import syntax.xle.Prolog2Java.GraphConstraint;
+import syntax.GraphConstraint;
 
 import java.util.ArrayList;
 import java.util.List;

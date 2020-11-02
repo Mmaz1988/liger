@@ -1,6 +1,6 @@
 package analysis.QueryParser;
 
-import syntax.xle.Prolog2Java.GraphConstraint;
+import syntax.GraphConstraint;
 
 import java.util.HashMap;
 import java.util.LinkedList;

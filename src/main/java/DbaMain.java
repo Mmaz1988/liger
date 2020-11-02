@@ -4,7 +4,7 @@ import semantics.GlueSemantics;
 import syntax.SyntacticStructure;
 import syntax.ud.SyntaxOperator;
 import syntax.ud.UDoperator;
-import syntax.xle.Prolog2Java.GraphConstraint;
+import syntax.GraphConstraint;
 import syntax.xle.XLEoperator;
 import utilities.DBASettings;
 import utilities.PathVariables;
@@ -182,7 +182,7 @@ public class DbaMain {
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
-        RuleParser rp = new RuleParser(fsList, path);
+        RuleParser rp = new RuleParser(fsList, new File(path));
 
         rp.addAnnotation2(fs);
 

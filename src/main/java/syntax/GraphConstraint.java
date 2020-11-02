@@ -1,16 +1,17 @@
-package syntax.xle.Prolog2Java;
+package syntax;
 
 import utilities.HelperMethods;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Set;
 
 public class GraphConstraint implements Serializable {
 
 
 
     //basic string based representation of graph nodes and labeled edges
-    private Object reading;
+    private Set<String> reading;
     private String nodeIdentifier;
     private String relationLabel;
     private Object fsValue;
@@ -19,7 +20,7 @@ public class GraphConstraint implements Serializable {
     public GraphConstraint()
     {}
 
-    public GraphConstraint(String reading, Integer fsNode, String relationLabel, Object fsValue)
+    public GraphConstraint(Set<String> reading, Integer fsNode, String relationLabel, Object fsValue)
     {
         this.reading = reading;
         this.nodeIdentifier = fsNode.toString();
@@ -112,11 +113,11 @@ public class GraphConstraint implements Serializable {
         this.fsValue = fsValue;}
 
 
-    public Object getReading() {
+    public Set<String> getReading() {
         return reading;
     }
 
-    public void setReading(String reading) {
+    public void setReading(Set<String> reading) {
         this.reading = reading;
     }
 

@@ -4,7 +4,7 @@ import syntax.SyntacticStructure;
 import syntax.ud.SyntaxOperator;
 import syntax.xle.FstructureElements.AttributeValuePair;
 import syntax.xle.Prolog2Java.FsProlog2Java;
-import syntax.xle.Prolog2Java.GraphConstraint;
+import syntax.GraphConstraint;
 import syntax.xle.Prolog2Java.ReadFsProlog;
 import utilities.VariableHandler;
 

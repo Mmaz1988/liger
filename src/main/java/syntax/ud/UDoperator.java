@@ -8,7 +8,7 @@ import edu.stanford.nlp.process.Morphology;
 import edu.stanford.nlp.trees.GrammaticalStructure;
 import edu.stanford.nlp.trees.TypedDependency;
 import syntax.SyntacticStructure;
-import syntax.xle.Prolog2Java.GraphConstraint;
+import syntax.GraphConstraint;
 import test.QueryParserTest;
 import utilities.VariableHandler;
 

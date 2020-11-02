@@ -1,11 +1,9 @@
 package webservice;
 
-import com.google.gson.internal.$Gson$Preconditions;
 import syntax.SyntacticStructure;
-import syntax.xle.Prolog2Java.GraphConstraint;
+import syntax.GraphConstraint;
 import utilities.HelperMethods;
 
-import javax.swing.text.Utilities;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;

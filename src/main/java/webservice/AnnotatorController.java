@@ -1,16 +1,15 @@
 package webservice;
 
 import analysis.RuleParser.RuleParser;
+import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.*;
 import semantics.GlueSemantics;
 import syntax.SyntacticStructure;
 import syntax.ud.UDoperator;
-import syntax.xle.Prolog2Java.GraphConstraint;
-import syntax.xle.XLEoperator;
-import test.QueryParserTest;
+import syntax.GraphConstraint;
 import utilities.PathVariables;
-import utilities.VariableHandler;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -40,6 +39,21 @@ public class AnnotatorController {
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
+    @PostMapping(value = "/parse", produces = "application/json")
+    public TestGraph parseRequest(
+            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
+
+        UDoperator parser = new UDoperator();
+
+        SyntacticStructure fs = parser.parseSingle(input);
+        System.out.println(fs.constraints);
+
+        return new TestGraph(fs);
+
+    }
+
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
     @PostMapping(value = "/annotate", produces = "application/json")
     public TestGraph annotationRequest2(
             @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
@@ -51,7 +65,7 @@ public class AnnotatorController {
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
-        RuleParser rp = new RuleParser(fsList, PathVariables.testPath + "testRulesUD4.txt");
+        RuleParser rp = new RuleParser(fsList, new File(PathVariables.testPath + "testRulesUD4.txt"));
         rp.addAnnotation2(fs);
 
         try {
@@ -87,7 +101,7 @@ public class AnnotatorController {
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
-        RuleParser rp = new RuleParser(fsList, PathVariables.testPath + "testRulesUD1.txt");
+        RuleParser rp = new RuleParser(fsList, new File(PathVariables.testPath + "testRulesUD1.txt"));
         rp.addAnnotation2(fs);
 
         try {
@@ -107,5 +121,28 @@ public class AnnotatorController {
         return new TestGraph(fs.constraints,fs.annotation,semantics);
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
     }
+
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/apply_rule", produces = "application/json", consumes = "application/json")
+    public TestGraph applyRuleRequest(@RequestBody AnnotationRequest request) {
+
+    //    System.out.println(request.sentence);
+     //   System.out.println(request.ruleString);
+        UDoperator parser = new UDoperator();
+
+        SyntacticStructure fs = parser.parseSingle(request.sentence);
+        System.out.println(fs.constraints);
+        List<SyntacticStructure> fsList = new ArrayList<>();
+        fsList.add(fs);
+
+        RuleParser rp = new RuleParser(fsList, request.ruleString,true);
+        rp.addAnnotation2(fs);
+
+
+    return new TestGraph(fs.constraints,fs.annotation);
+
+    }
+
 
 }

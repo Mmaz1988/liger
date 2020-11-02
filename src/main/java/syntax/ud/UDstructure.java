@@ -2,7 +2,7 @@ package syntax.ud;
 
 
 import syntax.SyntacticStructure;
-import syntax.xle.Prolog2Java.GraphConstraint;
+import syntax.GraphConstraint;
 
 import java.util.List;
 

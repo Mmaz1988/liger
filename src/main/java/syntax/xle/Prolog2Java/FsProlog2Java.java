@@ -1,5 +1,6 @@
 package syntax.xle.Prolog2Java;
 
+import syntax.GraphConstraint;
 import syntax.xle.FstructureElements.*;
 import utilities.HelperMethods;
 
@@ -198,7 +199,7 @@ public class FsProlog2Java {
                         }
                     }
 
-                    out.add(new GraphConstraint(ambKey,key,attribute,value));
+                    out.add(new GraphConstraint(new HashSet<String>(Collections.singleton(ambKey)),key,attribute,value));
                 }
 
 

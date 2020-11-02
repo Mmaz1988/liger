@@ -5,10 +5,9 @@ import glueSemantics.linearLogic.Sequent;
 import glueSemantics.parser.GlueParser;
 import glueSemantics.semantics.LexicalEntry;
 import main.Settings;
-import org.apache.xml.serialize.LineSeparator;
 import prover.LLProver2;
 import syntax.SyntacticStructure;
-import syntax.xle.Prolog2Java.GraphConstraint;
+import syntax.GraphConstraint;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,7 +1,7 @@
 package analysis.QueryParser;
 
 import syntax.SyntacticStructure;
-import syntax.xle.Prolog2Java.GraphConstraint;
+import syntax.GraphConstraint;
 import utilities.HelperMethods;
 import utilities.VariableHandler;
 
@@ -47,6 +47,12 @@ public class QueryParser {
         {
             usedKeys.add(fs.constraints.get(i).getFsNode());
             fsIndexed.put(i,fs.constraints.get(i));
+        }
+        if (!fs.annotation.isEmpty()) {
+            for (int i = 0; i < fs.annotation.size(); i++) {
+                usedKeys.add(fs.constraints.get(i).getFsNode());
+                fsIndexed.put(i, fs.constraints.get(i));
+            }
         }
         //Part 1, String to QueryExpression element
     this.fsIndices = fsIndexed;
