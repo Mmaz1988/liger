@@ -224,6 +224,7 @@ public class QueryParser {
 
 
                         } else if (current instanceof Node && (previous instanceof AttributeExpression
+                                || previous instanceof Attribute
                                 || previous instanceof UncertaintyExpression
                                 || previous instanceof ConjointExpression)) {
                             NodeExpression ne = new NodeExpression(previous, (Node) current);

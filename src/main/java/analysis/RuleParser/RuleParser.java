@@ -23,6 +23,7 @@ public class RuleParser {
     private Boolean replace;
     private Set<String> usedKeys = new HashSet<>();
     private Set<Set<String>> usedReadings = new HashSet<>();
+    public LinguisticDictionary dict = new LinguisticDictionary();
 
 
 

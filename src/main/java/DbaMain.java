@@ -25,7 +25,6 @@ public class DbaMain {
 
     public BufferedWriter outputWriter;
     public static DBASettings settings;
-    public static LinguisticDictionary ld = new LinguisticDictionary();
 
 
     public static void main(String[] args) {
@@ -124,7 +123,7 @@ public class DbaMain {
 
             if (settings.ruleFile == null)
             {
-                ruleFile = PathVariables.testPath + "testRulesUD4.txt";
+                ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
             } else
             {
                 ruleFile = settings.ruleFile;

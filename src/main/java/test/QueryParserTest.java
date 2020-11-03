@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import utilities.PathVariables;
 import utilities.VariableHandler;
 
+import java.io.File;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -64,7 +65,7 @@ public class QueryParserTest {
     @Test
     void testQueryParsera()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(7);
+        LinkedHashMap<String, SyntacticStructure> fs = loadFs(1);
 
         for (String key : fs.keySet())
         {
@@ -72,7 +73,7 @@ public class QueryParserTest {
 
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
-            assertEquals(4,qpr.result.keySet().size());
+            assertEquals(3,qpr.result.keySet().size());
         }
 
     }
@@ -416,7 +417,7 @@ public class QueryParserTest {
             fslist.add(fs.get(key));
         }
 
-        RuleParser rp = new RuleParser(fslist,testFolderPath + "testRules.txt");
+        RuleParser rp = new RuleParser(fslist,new File(testFolderPath + "testRules.txt"));
 
         rp.addAnnotation2(fslist.get(0));
 
@@ -485,7 +486,7 @@ public class QueryParserTest {
             fslist.add(fs.get(key));
         }
 
-        RuleParser rp = new RuleParser(fslist,testFolderPath + "testRules2.txt");
+        RuleParser rp = new RuleParser(fslist, new File(testFolderPath + "testRules2.txt"));
 
         rp.addAnnotation2(fslist.get(0));
 
@@ -503,7 +504,7 @@ public class QueryParserTest {
             fslist.add(fs.get(key));
         }
 
-        RuleParser rp = new RuleParser(fslist,testFolderPath + "testRules3.txt");
+        RuleParser rp = new RuleParser(fslist, new File(testFolderPath + "testRules3.txt"));
 
         rp.addAnnotation2(fslist.get(0));
 
@@ -523,7 +524,7 @@ public class QueryParserTest {
             fslist.add(fs.get(key));
         }
 
-        RuleParser rp = new RuleParser(fslist,testFolderPath + "testRules3.txt");
+        RuleParser rp = new RuleParser(fslist,new File( testFolderPath + "testRules3.txt"));
 
         rp.addAnnotation2(fslist.get(0));
 
@@ -551,7 +552,7 @@ public class QueryParserTest {
             fslist.add(fs.get(key));
         }
 
-        RuleParser rp = new RuleParser(fslist,testFolderPath + "testRules5.txt");
+        RuleParser rp = new RuleParser(fslist,new File(testFolderPath + "testRules5.txt"));
 
         rp.addAnnotation2(fslist.get(0));
 
@@ -579,7 +580,7 @@ public class QueryParserTest {
             fslist.add(fs.get(key));
         }
 
-        RuleParser rp = new RuleParser(fslist,testFolderPath + "testRules5.txt");
+        RuleParser rp = new RuleParser(fslist,new File(testFolderPath + "testRules5.txt"));
 
         rp.addAnnotation2(fslist.get(0));
 

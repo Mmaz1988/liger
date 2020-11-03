@@ -65,7 +65,7 @@ public class AnnotatorController {
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
-        RuleParser rp = new RuleParser(fsList, new File(PathVariables.testPath + "testRulesUD4.txt"));
+        RuleParser rp = new RuleParser(fsList, new File(PathVariables.testPath + "testRulesUD4c.txt"));
         rp.addAnnotation2(fs);
 
         try {

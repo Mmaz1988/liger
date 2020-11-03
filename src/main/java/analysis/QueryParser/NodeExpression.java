@@ -149,46 +149,52 @@ public class NodeExpression extends QueryExpression {
 
             //Concatenation with previous variable bindings
 
-            HashMap<Set<String>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out3 = new HashMap<>();
+            if (left.getNodeVar() != null) {
+                HashMap<Set<String>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out3 = new HashMap<>();
 
-            for (Set<String> key : leftSolution.keySet()) {
+                for (Set<String> key : leftSolution.keySet()) {
 
 
-                String nodeVar = left.getNodeVar();
-                String nodeRef = leftSolution.get(key).get(nodeVar).keySet().stream().findAny().get();
-                HashMap<Integer, GraphConstraint> boundIndices = leftSolution.get(key).get(nodeVar).get(nodeRef);
+                    String nodeVar = left.getNodeVar();
+                    String nodeRef = leftSolution.get(key).get(nodeVar).keySet().stream().findAny().get();
+                    HashMap<Integer, GraphConstraint> boundIndices = leftSolution.get(key).get(nodeVar).get(nodeRef);
 
-                for (Set<String> key2 : out2.keySet()) {
-                    String nodeVar2 = getNodeVar();
-                    String nodeRef2 = out2.get(key2).get(nodeVar2).keySet().stream().findAny().get();
-                    //      HashMap<Integer,GraphConstraint> boundIndices2 = out2.get(key2).get(nodeVar2).get(nodeRef2);
+                    for (Set<String> key2 : out2.keySet()) {
+                        String nodeVar2 = getNodeVar();
+                        String nodeRef2 = out2.get(key2).get(nodeVar2).keySet().stream().findAny().get();
+                        //      HashMap<Integer,GraphConstraint> boundIndices2 = out2.get(key2).get(nodeVar2).get(nodeRef2);
 
-                    HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
+                        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
 
-                    for (String key4 : leftSolution.get(key).keySet()) {
-                        if (!key4.equals(nodeVar)) {
-                            binding.put(key4, leftSolution.get(key).get(key4));
+                        for (String key4 : leftSolution.get(key).keySet()) {
+                            if (!key4.equals(nodeVar)) {
+                                binding.put(key4, leftSolution.get(key).get(key4));
+                            }
+
                         }
 
-                    }
+                        for (Integer key3 : boundIndices.keySet()) {
+                            if (boundIndices.get(key3).getFsValue().equals(nodeRef2)) {
+                                binding.put(nodeVar, leftSolution.get(key).get(nodeVar));
+                                binding.put(nodeVar2, out2.get(key2).get(nodeVar2));
 
-                    for (Integer key3 : boundIndices.keySet()) {
-                        if (boundIndices.get(key3).getFsValue().equals(nodeRef2)) {
-                            binding.put(nodeVar, leftSolution.get(key).get(nodeVar));
-                            binding.put(nodeVar2, out2.get(key2).get(nodeVar2));
+                                Set<String> newKey = new HashSet<>();
+                                newKey.addAll(key);
+                                newKey.addAll(key2);
 
-                            Set<String> newKey = new HashSet<>();
-                            newKey.addAll(key);
-                            newKey.addAll(key2);
-
-                            out3.put(newKey, binding);
+                                out3.put(newKey, binding);
+                            }
                         }
                     }
                 }
+
+
+                setSolution(out3);
+
+            } else
+            {
+                setSolution(out2);
             }
-
-
-            setSolution(out3);
       //      getParser().fsNodeBindings = out3;
 
 
