@@ -96,7 +96,13 @@ public class AnnotatorController {
 
         UDoperator parser = new UDoperator();
 
-        SyntacticStructure fs = parser.parseSingle(input);
+        /*
+        char[] c = input.toCharArray();
+        c[0] = Character.toLowerCase(c[0]);
+        input = new String(c);
+         */
+
+        SyntacticStructure fs = parser.parseSingle(input.toLowerCase());
         System.out.println(fs.constraints);
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
