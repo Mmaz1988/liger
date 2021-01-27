@@ -58,7 +58,7 @@
 ==> #e AUX #b & #e FORM %f('fut') & #b MAIN '-' & #e FIN '+' & #b FIN '+' & #e MAIN '+' & #e HEAD %b to %e.
 
 //Simple tense
-#a M-STR #b FIN '+' & #b FORM %b & #b HEAD %c & #b AUX '-' ==> #b TAM #d & #d HEAD '%c' & #d TENSE %b.
+#b FIN '+' & #b FORM %b & #b HEAD %c & #b AUX '-' ==> #b TAM #d & #d HEAD '%c' & #d TENSE %b.
 
 //Tense from aux verb
 #b MAIN '+' & #b AUX #c & #c FIN '+' & #b FORM %b &

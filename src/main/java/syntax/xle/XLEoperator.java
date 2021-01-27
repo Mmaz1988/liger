@@ -223,6 +223,43 @@ public class XLEoperator extends SyntaxOperator {
         return out;
     }
 
+    //Load single xle structure as a syntactic structure:
+    public SyntacticStructure xle2Java(String inputPath) throws IOException {
+        //In
+        File f = new File(inputPath);
+
+        //Out
+        LinkedHashMap<String,SyntacticStructure> out = new LinkedHashMap<>();
+
+// This filter will only include files ending with .py
+        FilenameFilter filter = new FilenameFilter() {
+            @Override
+            public boolean accept(File f, String name) {
+                return name.endsWith(".pl");
+            }
+        };
+
+// This is how to apply the filter
+        List<String> pathnames = null;
+        if (!f.isDirectory() && f.toString().endsWith(".pl")) {
+
+            File sentence = new File(f.getPath());
+
+            ReadFsProlog fs2pl = ReadFsProlog.readPrologFile(sentence,vh);
+
+            LinkedHashMap<String, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
+            List<GraphConstraint> fsList = FsProlog2Java.fsHash2List(fsHash);
+
+            return new Fstructure(fs2pl.sentenceID,fs2pl.sentence,fsList,true);
+
+        } else
+        {throw new IOException("Input path must be a prolog structure as produced by the XLE");}
 
     }
+
+
+}
+
+
+
 

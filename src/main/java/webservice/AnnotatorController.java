@@ -7,9 +7,12 @@ import semantics.GlueSemantics;
 import syntax.SyntacticStructure;
 import syntax.ud.UDoperator;
 import syntax.GraphConstraint;
+import syntax.xle.XLEoperator;
 import utilities.PathVariables;
+import utilities.VariableHandler;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -151,6 +154,38 @@ public class AnnotatorController {
 
     return new TestGraph(fs.constraints,fs.annotation,semantics);
 
+    }
+
+
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/annotate_xle", produces = "application/json", consumes = "application/json")
+    public TestGraph annotateXLEoutput(@RequestBody AnnotationRequest request) throws IOException {
+
+        //    System.out.println(request.sentence);
+        //   System.out.println(request.ruleString);
+        XLEoperator parser = new XLEoperator(new VariableHandler());
+        try {
+            SyntacticStructure fs = parser.xle2Java("some string");
+
+        System.out.println(fs.constraints);
+        List<SyntacticStructure> fsList = new ArrayList<>();
+        fsList.add(fs);
+
+        RuleParser rp = new RuleParser(fsList, request.ruleString,true);
+        rp.addAnnotation2(fs);
+
+        GlueSemantics sem = new GlueSemantics();
+        String semantics = sem.calculateSemantics(fs);
+
+
+        return new TestGraph(fs.constraints,fs.annotation,semantics);
+
+        }catch(Exception e)
+        {
+            System.out.println("Failed to load xle prolog file.");
+        }
+        return null;
     }
 
 
