@@ -123,7 +123,12 @@ public class DbaMain {
 
             if (settings.ruleFile == null)
             {
-                ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
+                if (settings.mode == "dep") {
+                    ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
+                } else
+                {
+                    ruleFile = PathVariables.testPath + "testRulesLFG8.txt";
+                }
             } else
             {
                 ruleFile = settings.ruleFile;
