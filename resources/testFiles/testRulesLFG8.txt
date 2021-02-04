@@ -233,7 +233,9 @@ OBJ-TH #g NTYPE #h & #g PRED %g
  ==>  #c GLUE [/M_<s,<s,t>>.[/P_<s,t>.[/s_s.Ez_s[M(s)(z) \& P(z)]]]] : ((#d -o (#e -o #c)) -o ((#c -o #b) -o (#f -o #b))).
 
 //Tense values
+
 //TODO make so that one tense restrictor works for both relative and absolute tenses
+
 //Past tense
 #a SEM #b TEMP-REF #c T-REF 'past' & #c EVAL #d CHECK '-' ==>
 #c T-REF' #e & #e GLUE [/t_s.[/t2_s.before(t,t2)]] : (#c -o (#d -o #c)).
@@ -250,11 +252,11 @@ OBJ-TH #g NTYPE #h & #g PRED %g
 
 
 //absolute tense closure
-#a SEM #b TEMP-REF #c T-REF %a & %a != 'unspec' & #c EVAL #d CHECK '-'
+#a SEM #b TEMP-REF #c T-REF %a & %a != 'undefined' & #c EVAL #d CHECK '-'
 ==> #c GLUE [/T_<s,<s,t>>.[/P_<s,t>.[/s_s.Er_s[T(r)(s) \& P(r)]]]] : ((#c -o (#d -o #c)) -o ((#c -o #b) -o (#d -o #b))).
 
 //relative tense closure
-#a SEM #b TEMP-REF #c T-REF %a & %a != 'unspec' & #c EVAL #d T-REF %b
+#a SEM #b TEMP-REF #c T-REF %a & %a != 'undefined' & #c EVAL #d T-REF %b
 ==> #c GLUE [/T_<s,<s,t>>.[/P_<s,t>.[/s_s.Er_s[T(r)(s) \& P(r)]]]] : ((#c -o (#d -o #c)) -o ((#c -o #b) -o (#d -o #b))).
 
 
