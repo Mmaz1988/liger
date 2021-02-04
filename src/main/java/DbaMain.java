@@ -18,12 +18,9 @@ import java.util.*;
 
 public class DbaMain {
 
-    public enum mode {
-        LFG,
-        DEP
-    }
 
-    public BufferedWriter outputWriter;
+
+  //  public BufferedWriter outputWriter;
     public static DBASettings settings;
 
 
@@ -43,6 +40,7 @@ public class DbaMain {
                 case "-i":
                     settings.inputFile = args[i + 1];
                     settings.interactiveMode = false;
+                    settings.mode = "lfg";
                     i++;
                     break;
                 case "-o":
@@ -105,6 +103,21 @@ public class DbaMain {
             }
         }
 
+        String ruleFile = "";
+
+        if (settings.ruleFile == null)
+        {
+            if (settings.mode == "dep") {
+                ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
+            } else
+            {
+                ruleFile = PathVariables.testPath + "testRulesLFG8.txt";
+            }
+        } else
+        {
+            ruleFile = settings.ruleFile;
+        }
+
 
         if (settings.interactiveMode) {
             System.out.println("Starting interactive mode...\n");
@@ -119,24 +132,15 @@ public class DbaMain {
                 //    break;
             }
 
-            String ruleFile = "";
-
-            if (settings.ruleFile == null)
-            {
-                if (settings.mode == "dep") {
-                    ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
-                } else
-                {
-                    ruleFile = PathVariables.testPath + "testRulesLFG8.txt";
-                }
-            } else
-            {
-                ruleFile = settings.ruleFile;
-            }
-
             SyntacticStructure fs = parserInteractiveWrapper(settings.mode,input, ruleFile);
 
+            if (settings.semanticParsing) {
+                semanticsInteractiveWrapper(fs);
+            }
+        }
 
+        else {
+            SyntacticStructure fs = fromFileWrapper(settings.inputFile,ruleFile);
             if (settings.semanticParsing) {
                 semanticsInteractiveWrapper(fs);
             }
@@ -204,6 +208,39 @@ public class DbaMain {
 
         return fs;
 
+    }
+
+    public static SyntacticStructure fromFileWrapper(String inPath, String rulePath)
+    {
+        SyntacticStructure fs = null;
+
+        XLEoperator xle = new XLEoperator(new VariableHandler());
+
+        LinkedHashMap<String,SyntacticStructure> indexedFs = xle.fs2Java(inPath);
+
+        fs = indexedFs.get(indexedFs.keySet().iterator().next());
+
+        List<SyntacticStructure> fsList = new ArrayList<>();
+        fsList.add(fs);
+
+        RuleParser rp = new RuleParser(fsList, new File(rulePath));
+
+        rp.addAnnotation2(fs);
+
+        try {
+            fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
+        } catch (Exception e) {
+            System.out.println("Sorting annotation failed.");
+        }
+
+        System.out.println("Annotation output:");
+
+        for (GraphConstraint g : fs.annotation) {
+            System.out.println(g);
+        }
+
+
+        return fs;
     }
 
 }

@@ -26,16 +26,16 @@ public class EqualityExpression extends QueryExpression {
     @Override
     public void calculateSolutions() {
 
-        HashMap<Set<String>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+        HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
 
-        for (Set<String> key : left.getSolution().keySet())
+        for (Set<SolutionKey> key : left.getSolution().keySet())
         {
             String leftString = "";
             String rightString = "";
 
             if (left.var)
             {
-                for (Set<String> key2 : getParser().fsValueBindings.keySet())
+                for (Set<SolutionKey> key2 : getParser().fsValueBindings.keySet())
                 {
                     if (key.containsAll(key2))
                     {
@@ -63,7 +63,7 @@ public class EqualityExpression extends QueryExpression {
 
             if (right.var)
             {
-                for (Set<String> key2 : getParser().fsValueBindings.keySet())
+                for (Set<SolutionKey> key2 : getParser().fsValueBindings.keySet())
                 {
                     if (key.containsAll(key2))
                     {

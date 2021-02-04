@@ -3,6 +3,7 @@ package analysis.RuleParser;
 import analysis.LinguisticDictionary;
 import analysis.QueryParser.QueryParser;
 import analysis.QueryParser.QueryParserResult;
+import analysis.QueryParser.SolutionKey;
 import syntax.SyntacticStructure;
 import syntax.GraphConstraint;
 import utilities.HelperMethods;
@@ -111,7 +112,7 @@ public class RuleParser {
                             boolean valueMatches = valueMatcher.matches();
 
                             if (nodeMatcher.matches()) {
-                                    for (Set<String> solutionKey : qpr.result.keySet())
+                                    for (Set<SolutionKey> solutionKey : qpr.result.keySet())
                                     {
                                         if (variableIsAssigned(qpr,solutionKey,nodeMatcher.group(1))) {
 
@@ -316,13 +317,13 @@ public class RuleParser {
 
 
     // if (qp.getFsVarAssignment().containsKey(nodeMatcher.group(1)))
-    public Boolean variableIsAssigned(QueryParserResult qpr, Set<String> solutionKey , String key)
+    public Boolean variableIsAssigned(QueryParserResult qpr, Set<SolutionKey> solutionKey , String key)
     {
      return qpr.result.get(solutionKey).keySet().contains(key);
     }
 
 
-    public String replaceVars(QueryParserResult qpr, Set<String> solutionKey, String value)
+    public String replaceVars(QueryParserResult qpr, Set<SolutionKey> solutionKey, String value)
     {
         Matcher matcher = HelperMethods.fsNodePattern.matcher(value);
         Pattern lexPattern = Pattern.compile("(lex\\((.*?),(.*?)\\))");
@@ -353,7 +354,7 @@ public class RuleParser {
         StringBuffer sb2 = new StringBuffer();
         while (matcher2.find())
         {
-            for (Set<String> key : qpr.valueBindings.keySet()) {
+            for (Set<SolutionKey> key : qpr.valueBindings.keySet()) {
                 if (solutionKey.containsAll(key))
                 {
                 if (qpr.valueBindings.get(key).containsKey(matcher2.group(1))) {

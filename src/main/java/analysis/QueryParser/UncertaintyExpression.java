@@ -34,11 +34,11 @@ public UncertaintyExpression(QueryExpression left, Uncertainty middle, QueryExpr
     @Override
     public void calculateSolutions() {
 
-        HashMap<Set<String>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+        HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
 
 
 
-        for (Set<String> key : left.getSolution().keySet()) {
+        for (Set<SolutionKey> key : left.getSolution().keySet()) {
             String nodeVar = left.getNodeVar();
             String nodeRef = left.getSolution().get(key).get(nodeVar).keySet().stream().findAny().get();
             HashMap<Integer, GraphConstraint> boundIndices = left.getSolution().get(key).get(nodeVar).get(nodeRef);
@@ -65,12 +65,12 @@ public UncertaintyExpression(QueryExpression left, Uncertainty middle, QueryExpr
                     }
                 }
 
-                HashMap<Set<String>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
+                HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
                         mapUsedKeys(usedKeys, uncertainty, right.getNodeVar());
 
                 right.setSolution(out2);
 
-                for (Set<String> key2 : out2.keySet()) {
+                for (Set<SolutionKey> key2 : out2.keySet()) {
 
                     HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
 
@@ -83,7 +83,7 @@ public UncertaintyExpression(QueryExpression left, Uncertainty middle, QueryExpr
 
 
 
-                    Set<String> newKey = new HashSet<>();
+                    Set<SolutionKey> newKey = new HashSet<>();
                     newKey.addAll(key);
                     newKey.addAll(key2);
 
@@ -243,7 +243,7 @@ public UncertaintyExpression(QueryExpression left, Uncertainty middle, QueryExpr
     public HashMap<Integer,GraphConstraint> searchInsideOutUncertainty(HashMap<Integer,GraphConstraint> in)
     {
 
-        Deque<String> search = new LinkedList<String>(Arrays.asList(middle.getQuery().split(">")));
+        List<String> search = new LinkedList<String>(Arrays.asList(middle.getQuery().split(">")));
         Pattern starPattern = Pattern.compile("(.*)\\*");
 
 
@@ -253,8 +253,10 @@ public UncertaintyExpression(QueryExpression left, Uncertainty middle, QueryExpr
 
 
 
-        for (String element : search)
+        for (int i = 0; i < search.size(); i++)
         {
+
+            String element = search.get(i);
             Matcher starMatcher = starPattern.matcher(element);
 
             if (result.keySet().isEmpty())
@@ -326,9 +328,18 @@ public UncertaintyExpression(QueryExpression left, Uncertainty middle, QueryExpr
                 } else if (result.get(key).getRelationLabel().equals(element)) {
                     HashMap<Integer, GraphConstraint> newResult = new HashMap<>();
 
+                    if (i != search.size()-1){
                     for (Integer key2 : right.getFsIndices().keySet()) {
-                        if (result.get(key).getFsNode().equals(right.getFsIndices().get(key2).getFsNode())) {
+                        if (result.get(key).getFsNode().equals(right.getFsIndices().get(key2).getFsValue())) {
                             newResult.put(key2, right.getFsIndices().get(key2));
+                        }
+                    }
+                    }
+                    else {
+                        for (Integer key2 : right.getFsIndices().keySet()) {
+                            if (result.get(key).getFsNode().equals(right.getFsIndices().get(key2).getFsNode())) {
+                                newResult.put(key2, right.getFsIndices().get(key2));
+                            }
                         }
                     }
                     currentResult.putAll(newResult);
