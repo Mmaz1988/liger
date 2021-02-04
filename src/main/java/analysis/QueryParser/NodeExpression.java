@@ -1,12 +1,10 @@
 package analysis.QueryParser;
 
+import edu.stanford.nlp.io.StringOutputStream;
 import syntax.GraphConstraint;
 import utilities.HelperMethods;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 public class NodeExpression extends QueryExpression {
 
@@ -30,7 +28,7 @@ public class NodeExpression extends QueryExpression {
         if (left instanceof ConjointExpression) {
 
             Boolean alreadyBound = false;
-            for (Set<String> key : left.getSolution().keySet()) {
+            for (Set<SolutionKey> key : left.getSolution().keySet()) {
                 if (left.getSolution().get(key).containsKey(right.getNodeVar())) {
                     setSolution(left.getSolution());
                     //TODO (maybe) set solution of right
@@ -41,17 +39,17 @@ public class NodeExpression extends QueryExpression {
 
             if (!alreadyBound)
             {
-                HashMap<Set<String>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+                HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
 
 
-                    HashMap<Set<String>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
+                    HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
                             right.getSolution();
 
-                    for (Set<String> key : left.getSolution().keySet()){
+                    for (Set<SolutionKey> key : left.getSolution().keySet()){
 
-                    for (Set<String> key2 : out2.keySet())
+                    for (Set<SolutionKey> key2 : out2.keySet())
                     {
-                        Set<String> newKey = new HashSet<>();
+                        Set<SolutionKey> newKey = new HashSet<>();
                         newKey.addAll(key);
                         newKey.addAll(key2);
 
@@ -68,7 +66,7 @@ public class NodeExpression extends QueryExpression {
             else
             {
                 setSolution(left.getSolution());
-                for (Set<String> key : left.getSolution().keySet())
+                for (Set<SolutionKey> key : left.getSolution().keySet())
                 {
                     for (String key2 : left.getSolution().get(key).get(right.getNodeVar()).keySet())
                     {
@@ -86,16 +84,16 @@ public class NodeExpression extends QueryExpression {
         }
         else {
 
-            HashMap<Set<String>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> leftSolution = left.getSolution();
-            HashMap<Set<String>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> rightSolution = right.getSolution();
+            HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> leftSolution = left.getSolution();
+            HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> rightSolution = right.getSolution();
 
 
 
             Set<String> usedKeys = new HashSet<>();
 
-            Iterator<Set<String>> it = rightSolution.keySet().iterator();
+            Iterator<Set<SolutionKey>> it = rightSolution.keySet().iterator();
             while (it.hasNext()) {
-                Set<String> key = it.next();
+                Set<SolutionKey> key = it.next();
 
                 String nodeVar = rightSolution.get(key).keySet().stream().findAny().get();
                 String nodeRef = rightSolution.get(key).get(nodeVar).keySet().stream().findAny().get();
@@ -129,13 +127,13 @@ public class NodeExpression extends QueryExpression {
                 }
 
         //Solution only for current Node variable
-            HashMap<Set<String>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
+            HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
                     mapUsedKeys(usedKeys, right.getFsIndices(), right.getNodeVar());
 
 
             //Collect current values to fsIndices
 
-            for (Set<String> key : out2.keySet())
+            for (Set<SolutionKey> key : out2.keySet())
             {
                 for (String key2 : out2.get(key).keySet())
                     for (String key3 : out2.get(key).get(key2).keySet())
@@ -150,16 +148,22 @@ public class NodeExpression extends QueryExpression {
             //Concatenation with previous variable bindings
 
             if (left.getNodeVar() != null) {
-                HashMap<Set<String>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out3 = new HashMap<>();
+                HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out3 = new HashMap<>();
 
-                for (Set<String> key : leftSolution.keySet()) {
+
+                for (Set<SolutionKey> key : leftSolution.keySet()) {
 
 
                     String nodeVar = left.getNodeVar();
                     String nodeRef = leftSolution.get(key).get(nodeVar).keySet().stream().findAny().get();
                     HashMap<Integer, GraphConstraint> boundIndices = leftSolution.get(key).get(nodeVar).get(nodeRef);
 
-                    for (Set<String> key2 : out2.keySet()) {
+                    for (Set<SolutionKey> key2 : out2.keySet()) {
+
+                        if (checkSolutionCompatibility(key,key2))
+                        {
+
+
                         String nodeVar2 = getNodeVar();
                         String nodeRef2 = out2.get(key2).get(nodeVar2).keySet().stream().findAny().get();
                         //      HashMap<Integer,GraphConstraint> boundIndices2 = out2.get(key2).get(nodeVar2).get(nodeRef2);
@@ -178,7 +182,7 @@ public class NodeExpression extends QueryExpression {
                                 binding.put(nodeVar, leftSolution.get(key).get(nodeVar));
                                 binding.put(nodeVar2, out2.get(key2).get(nodeVar2));
 
-                                Set<String> newKey = new HashSet<>();
+                                Set<SolutionKey> newKey = new HashSet<>();
                                 newKey.addAll(key);
                                 newKey.addAll(key2);
 
@@ -186,6 +190,7 @@ public class NodeExpression extends QueryExpression {
                             }
                         }
                     }
+                }
                 }
 
 
@@ -218,4 +223,53 @@ public class NodeExpression extends QueryExpression {
         this.right = right;
     }
 
+    public Boolean checkSolutionCompatibility(Set<SolutionKey> sol1,
+                                              Set<SolutionKey> sol2)
+    {
+
+                Iterator<SolutionKey> sol1Itr = sol1.iterator();
+                HashMap<String,Set<String>> sol1map = new HashMap();
+                while (sol1Itr.hasNext())
+                {
+                    SolutionKey sol1var = sol1Itr.next();
+                    if (!sol1map.containsKey(sol1var.variable))
+                    {
+                        sol1map.put(sol1var.variable,new HashSet<>());
+                    }
+                    sol1map.get(sol1var.variable).add(sol1var.reference);
+                }
+
+                Iterator<SolutionKey> sol2Itr = sol2.iterator();
+                HashMap<String,Set<String>> sol2map = new HashMap();
+                while (sol2Itr.hasNext())
+                {
+                    SolutionKey sol2var = sol2Itr.next();
+                    if (!sol2map.containsKey(sol2var.variable))
+                    {
+                        sol2map.put(sol2var.variable,new HashSet<>());
+                    }
+                    sol2map.get(sol2var.variable).add(sol2var.reference);
+                }
+
+                List<String> commonKeys;
+                List<String> difference;
+                if (sol1map.keySet().size() > sol2map.keySet().size())
+                {
+                    commonKeys = new ArrayList<String>(sol1map.keySet());
+                    difference = new ArrayList<String>(sol2map.keySet());
+                } else{
+                    commonKeys = new ArrayList<String>(sol2map.keySet());
+                    difference = new ArrayList<String>(sol1map.keySet());
+                }
+
+                commonKeys.retainAll(difference);
+
+                for (String commonKey : commonKeys){
+                    if (!sol1map.get(commonKey).equals(sol2map.get(commonKey)))
+                    {
+                        return false;
+                    }
+        }
+        return true;
+    }
 }

@@ -26,16 +26,16 @@ public class AttributeExpression extends QueryExpression {
     @Override
     public void calculateSolutions()
     {
-        HashMap<Set<String>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> out = left.getSolution();
+        HashMap<Set<SolutionKey>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> out = left.getSolution();
 
         HashMap<Integer,GraphConstraint> fsIndices = new HashMap<>();
 
-            Iterator<Set<String>> it = out.keySet().iterator();
+            Iterator<Set<SolutionKey>> it = out.keySet().iterator();
 
 
             while (it.hasNext())
             {
-                Set<String> key = it.next();
+                Set<SolutionKey> key = it.next();
                 Boolean containsAtribute = false;
 
 

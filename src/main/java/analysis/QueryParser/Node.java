@@ -37,7 +37,7 @@ public class Node extends QueryExpression {
 public void calculateSolutions()
 {
 
-    HashMap<Set<String>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> out = new HashMap<>();
+    HashMap<Set<SolutionKey>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> out = new HashMap<>();
 
     Set<String> usedKeys = new HashSet<>();
     for (Integer key : getFsIndices().keySet())
@@ -61,7 +61,8 @@ public void calculateSolutions()
             }
             }
 
-            String key = getNodeVar()+fs;
+            // String key = getNodeVar()+fs;
+            SolutionKey key = new SolutionKey(getNodeVar(),fs);
             binding.put(getNodeVar(),reference);
             out.put(Collections.singleton(key),binding);
         }

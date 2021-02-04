@@ -16,7 +16,7 @@ public class QueryParser {
     private VariableHandler vh = new VariableHandler();
     private Set<String> usedKeys = new HashSet<>();
 
-    public HashMap<Set<String>, HashMap<String,String>> fsValueBindings = new HashMap<>();
+    public HashMap<Set<SolutionKey>, HashMap<String,String>> fsValueBindings = new HashMap<>();
 
 
     //TODO why are the values of the result hashmap empty?
@@ -188,7 +188,7 @@ public class QueryParser {
 
             ListIterator<QueryExpression> it = queryList.listIterator();
 
-            HashMap<Set<String>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> result = new HashMap<>();
+            HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> result = new HashMap<>();
 
 
             QueryExpression previous = null;
