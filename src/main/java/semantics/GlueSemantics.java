@@ -32,6 +32,7 @@ public class GlueSemantics {
             }
         }
         List<LexicalEntry> lexicalEntries = new ArrayList<>();
+
         for (String mc : meaningConstructorStrings)
         {
             try {
@@ -60,6 +61,8 @@ public class GlueSemantics {
             solutionBuilder.append(p.toString());
             solutionBuilder.append(System.lineSeparator());
         }
+
+        System.out.println(llprover.getProofBuilder().toString());
 
         return solutionBuilder.toString();
     }

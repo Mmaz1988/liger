@@ -26,6 +26,12 @@
 #a TNS-ASP #b PROG '-_' & #a SEM #c ==> #c VIEWPOINT #d & #d ASPECT 'prv' & #d A-RESTR 'bounded'.
 #a TNS-ASP #b PERF '+_' & #a SEM #c ==> #c ASP-TENSE #d & #d A-REF 'past'.
 
+//Tier 2 aspect example
+#a T-REF 'undefined' &
+#a ^(TEMP-REF) #b ^(SEM>XCOMP) #c & #c !(SEM>TEMP-REF) #d EVAL #e &
+#b VIEWPOINT #f ASPECT 'prv'
+==>  #a T-REF 'future' & #a EVAL #d.
+
 //undefined FPS for transitive verbs
 #a TNS-ASP #b & #a PRED %a & #a SEM #z  ==>
 #z FPS #y & #y CHECK #x.
@@ -87,21 +93,33 @@ OBJ-TH #g NTYPE #h & #g PRED %g
 #g ^(SPEC) #h & #g QUANT #i & #h SEM #l ==> #l VAR #j & #l RESTR #k & #l SIT #s.
 #g ^(SPEC) #h & #g DET #i & #h SEM #l ==> #l VAR #j & #l RESTR #k & #l SIT #s.
 
+
+//relative clause (with who)
 #a PRED %a & #a PRON-REL #b & #a SUBJ #b &
 #a SEM #z & #b SEM #y &
 #a ^(inSet>ADJUNCT) #c SEM #d VAR #e & #d RESTR #f 6 #d SIT #s
 ==> #y GLUE [/P_<e,t>.[/Q_<e,t>.[/x_e.(P(x) \& Q(x))]]] : ((#e -o #f) -o ((#y -o #z) -o (#e -o #f))).
 
 //NP Quantifier instantiation
+
+//Universal quantifier
 #g ^(SPEC) #h SEM #i VAR #j & #i RESTR #k & #i SIT #s &
 #g QUANT #l PRED %l & %l == 'every' &
 #h ^(%) #m SEM #n FPS #b & #n VIEWPOINT #o
 ==> #i GLUE [/P_<e,<s,t>>.[/Q_<e,<s,t>>.[/s_s.Ax_e[P(x)(s) -> Q(x)(s)]]]] : ((#j -o (#s -o #k)) -o ((#i -o (#o -o #n)) -o (#o -o #n))).
 
+//Existential quantifier
 #g ^(SPEC) #h SEM #i VAR #j & #i RESTR #k & #i SIT #s &
-#g DET #l PRED %l &
+#g DET #l PRED %l & l == 'a' &
 #h ^(%) #m SEM #n FPS #b & #n VIEWPOINT #o
 ==> #i SIT #s & #i GLUE [/P_<e,<s,t>>.[/Q_<e,<s,t>>.[/s_s.Ex_e[P(x)(s) \& Q(x)(s)]]]] : ((#j -o (#s -o #k)) -o ((#i -o (#o -o #n)) -o (#o -o #n))).
+
+#g ^(SPEC) #h SEM #i VAR #j & #i RESTR #k & #i SIT #s &
+#g DET #l DET-TYPE 'def' &
+#h ^(%) #m SEM #n FPS #b & #n VIEWPOINT #o
+==> #i SIT #s & #i GLUE [/P_<e,<s,t>>.[/Q_<e,<s,t>>.[/s_s.the(P(x)(s),Q(x)(s))]]] : ((#j -o (#s -o #k)) -o ((#i -o (#o -o #n)) -o (#o -o #n))).
+
+//==> #i SIT #s & #i GLUE [/P_<e,<s,t>>.[/s_s.Ix_e[P(x)(s)]]] : ((#j -o (#s -o #k)) -o (#o -o #i)).
 
 //SUBJ predicates for Quantifiers
 #g SEM #j VAR #i & #j RESTR #k & #j SIT #a & #g PRED %g ==>#g GLUE [/x_e.[/s_s.strip(%g)(x,s)] : (#i -o (#a -o #k)).
@@ -187,7 +205,7 @@ OBJ-TH #g NTYPE #h & #g PRED %g
 #a SEM #j &
 #a XCOMP #d SEM #e TEMP-REF #f EVAL #g T-REF %i &
 #j FPS #h CHECK #i &
- ==> #h GLUE [/R_<v,t>.[/P_<s,t>.[/x_e.[/s_s.[/e_v.(R(e) \& (ag(e,x) \& th(e,P(s))))]]]]] : ((#i -o #h) -o ((#g -o #e) -o (#c -o (#g -o (#i -o #h))))).
+ ==> #h GLUE [/R_<v,t>.[/P_<e,<s,t>>.[/x_e.[/s_s.[/e_v.(R(e) \& (ag(e,x) \& th(e,P(x)(s))))]]]]] : ((#i -o #h) -o ((#c -o (#g -o #e)) -o (#c -o (#g -o (#i -o #h))))).
 
 
 //Closure
@@ -199,26 +217,30 @@ OBJ-TH #g NTYPE #h & #g PRED %g
 #a SEM #z FPS #c & #z VIEWPOINT #y
 ==> #c EXEMP #f & #f GLUE [/P_t.[/s_s.exemplify(s,P)]] : (#c -o (#y -o #z)).
 
+
 #a SEM #b FPS #c EXEMP #d & #b VIEWPOINT #e &
 #a !(COMP>SEM) #f &
 #f TEMP-REF #g EVAL #h & #i TEMP-REF #h
 ==> #d GLUE [/P_<s,t>.[/s_s.exemplify(s,P(s))]] : ((#h -o #c) -o (#e -o #b)).
 
-
+#a SEM #b FPS #c EXEMP #d & #b VIEWPOINT #e &
+#a !(XCOMP>SEM) #f &
+#f TEMP-REF #g EVAL #h & #i TEMP-REF #h
+==> #d GLUE [/P_<s,t>.[/s_s.exemplify(s,P(s))]] : ((#h -o #c) -o (#e -o #b)).
 
 #a SEM #b VIEWPOINT #c ==>
 #c VAR #d & #c RESTR #e &
-#c ASP-RESTR #f.
+#c ASP-RESTR' #f.
 
 
 #a SEM #b VIEWPOINT #c A-RESTR 'ongoing' &
 #c VAR #d & #c RESTR #e &
-#c ASP-RESTR #f ==>
+#c ASP-RESTR' #f ==>
 #f GLUE [/s_s.[/t_s.ongoing(t,s)]] : (#d -o (#e -o #c)).
 
 #a SEM #b VIEWPOINT #c A-RESTR 'bounded' &
 #c VAR #d & #c RESTR #e &
-#c ASP-RESTR #f ==>
+#c ASP-RESTR' #f ==>
 #f GLUE [/s_s.[/t_s.bounded(t,s)]] : (#d -o (#e -o #c)).
 
 
@@ -236,7 +258,7 @@ OBJ-TH #g NTYPE #h & #g PRED %g
 
 //TODO make so that one tense restrictor works for both relative and absolute tenses
 
-//Past tense
+//Past reference
 #a SEM #b TEMP-REF #c T-REF 'past' & #c EVAL #d CHECK '-' ==>
 #c T-REF' #e & #e GLUE [/t_s.[/t2_s.before(t,t2)]] : (#c -o (#d -o #c)).
 
@@ -249,6 +271,13 @@ OBJ-TH #g NTYPE #h & #g PRED %g
 
 #a SEM #b TEMP-REF #c T-REF 'non-future' & #c EVAL #d T-REF %a ==>
 #c T-REF' #e & #e GLUE {[/t_s.[/t2_s.before(t,t2)]],[/t_s.[/t2_s.overlap(t,t2)]]} : (#c -o (#d -o #c)).
+
+//Future reference
+#a SEM #b TEMP-REF #c T-REF 'future' & #c EVAL #d CHECK '-' ==>
+#c T-REF' #e & #e GLUE [/t_s.[/t2_s.after(t,t2)]] : (#c -o (#d -o #c)).
+
+#a SEM #b TEMP-REF #c T-REF 'future' & #c EVAL #d T-REF %a ==>
+#c T-REF' #e & #e GLUE [/t_s.[/t2_s.after(t,t2)]] : (#c -o (#d -o #c)).
 
 
 //absolute tense closure
