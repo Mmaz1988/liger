@@ -8,7 +8,7 @@ public class PathVariables {
     //Path to the dict package
     public static final String dictPath = "C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\dicts\\";
 
-
+    /*
     public static void main(String[] args) {
         try {
             System.out.println(PathVariables.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath().toString());
@@ -17,7 +17,7 @@ public class PathVariables {
         catch(Exception e)
         {System.out.println("failed");}
     }
-
+*/
  //   return new File(MyClass.class.getProtectionDomain().getCodeSource().getLocation()
  //   .toURI()).getPath();
 
