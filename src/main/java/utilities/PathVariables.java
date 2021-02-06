@@ -17,8 +17,8 @@ public class PathVariables {
         catch(Exception e)
         {System.out.println("failed");}
     }
-*/
- //   return new File(MyClass.class.getProtectionDomain().getCodeSource().getLocation()
- //   .toURI()).getPath();
 
+ //   return new File(MyClass.class.getProtectionDomain().getCodeSource().getLocation()
+ //   .toURI()).getPath();*
+ */
 }
