@@ -83,7 +83,7 @@ The resulting partial semantic representations are shown in (note that the rules
  #2 GLUE [/x_e.man(x)] : (10 -o 12)
  #8 GLUE [/P_<e,t>.[/Q_<e,t>.Ax_e[P(x) -> Q(x)]]] : ((10 -o 12) -o ((8 -o 6) -o 6))
 ```
-If the rules are used to produce Glue semantics output, all GLUE nodes are collected and a proof is derived. For this, the Glue semantics workbench is used (see [GSWB](https://github.com/Mmaz1988/GlueSemWorkbench_v2/tree/pure%2Bdrt))
+If the rules are used to produce Glue semantics output(by using the `-sem` argument), all GLUE nodes are collected and a proof is derived. For this, the Glue semantics workbench is used (see [GSWB](https://github.com/Mmaz1988/GlueSemWorkbench_v2/tree/pure%2Bdrt)). It is included in the jar file, but needs to be installed explicitly when trying to build new versions of the project (see section "Installation"). 
 
 ```
 Sequent:
@@ -143,6 +143,16 @@ Result of the Glue derivation:
 
 Done
 ```
+
+# Rule syntax: A quick intro
+
+- Rules consist of a left-hand side and a right hand side separated by "==>". The end of a rule is indicated by a "." 
+- Graph nodes are referred to via variable names starting with "#", e.g. #a,#b,#c,...
+- Relation labels can be any strings used in the syntactic input or in facts introduced by previous rules
+- Values are any strings following relation labels. They are limited by a new element in the rule (e.g. variables, conjunctions,==>) or by the "."
+- Variables over values are referred to via variable names starting with "%", e.g. %a,%b,%c,...
+
+Simple graph matching can be achieved by defining mother nodes, relation labels and daughter nodes, e.g.:
 
 
 
