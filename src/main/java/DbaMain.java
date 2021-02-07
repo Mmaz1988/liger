@@ -1,5 +1,6 @@
 import analysis.LinguisticDictionary;
 import analysis.RuleParser.RuleParser;
+import main.Settings;
 import semantics.GlueSemantics;
 import syntax.SyntacticStructure;
 import syntax.ud.SyntaxOperator;
@@ -42,6 +43,9 @@ public class DbaMain {
                     settings.web = true;
                     break;
 
+                case "-res":
+                    settings.resources = args[i + 1];
+                    break;
                 case "-i":
                     settings.inputFile = args[i + 1];
                     settings.interactiveMode = false;
@@ -64,6 +68,7 @@ public class DbaMain {
                     break;
                 case "-sem":
                     settings.semanticParsing = true;
+                    break;
 
             }
         }
@@ -75,6 +80,12 @@ public class DbaMain {
     public static void runDBA() {
 
         //    LinguisticDictionary ld = new LinguisticDictionary();
+
+        if (settings.resources != null) {
+            PathVariables.workingDirectory = settings.resources;
+        }
+        PathVariables.initializePathVariables();
+
 
         if (settings.web)
         {
@@ -118,7 +129,11 @@ public class DbaMain {
 
             if (settings.ruleFile == null) {
                 if (settings.mode == "dep") {
-                    ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
+                    if (settings.semanticParsing) {
+                        ruleFile = PathVariables.testPath + "testRulesUD1.txt";
+                    } else {
+                            ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
+                    }
                 } else {
                     ruleFile = PathVariables.testPath + "testRulesLFG8.txt";
                 }
@@ -131,7 +146,11 @@ public class DbaMain {
                 if (settings.mode == null)
                 {
                     settings.mode = "dep";
-                    ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
+                    if (settings.semanticParsing) {
+                        ruleFile = PathVariables.testPath + "testRulesUD1.txt";
+                    } else {
+                        ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
+                    }
                 }
                 System.out.println("Starting interactive mode...\n");
                 Scanner s = new Scanner(System.in);
@@ -255,6 +274,31 @@ public class DbaMain {
     }
 
 }
+
+
+
+
+
+    /*
+ * "
+ *     Copyright (C) 2021 Mark-Matthias Zymla
+ *
+ *     This file is part of the abstract syntax annotator  (https://github.com/Mmaz1988/abstract-syntax-annotator-web/blob/master/README.md).
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * "
+ */
 
 
 
