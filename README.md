@@ -196,10 +196,13 @@ The dictionary is a text file sorting values in categories:
 threaten, vow, promise, pressure, force, urge, warn, indicate, insist, postpone, should
 ```
 
+For XLE, there exists a special predicate `strip/1` that reduces the values of `PRED`s to their entry in the lexicon. 
 
-
-
-
+```
+#a PRED %a 
+`%a == semform('seem',5,[var(8)],[var(2)])
+strip(%a) == 'seem'
+````
 
 
 
