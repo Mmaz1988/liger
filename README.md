@@ -152,7 +152,54 @@ Done
 - Values are any strings following relation labels. They are limited by a new element in the rule (e.g. variables, conjunctions,==>) or by the "."
 - Variables over values are referred to via variable names starting with "%", e.g. %a,%b,%c,...
 
-Simple graph matching can be achieved by defining mother nodes, relation labels and daughter nodes, e.g.:
+Simple graph matching can be achieved by defining mother nodes, relation labels and daughter nodes. Several edges can be concatenated, as shown in the following example:
+
+```
+#a SEM #b VAR #c & #b RESTR #d & #a TOKEN %a
+```
+
+In directed graphs, such as f-structures and UD structures, functional application can be used to check for dominance relations without specifiying intermediate graph nodes. In the following examples "#g" and "#h" refer to the same structural nodes, but the dominance relation between them is checked in a different order by virtue of the "!"(identifying sub-structures) and "^"(identifying super structures) operators. 
+
+```
+#g !(COMP>TNS-ASP) #h
+```
+
+```
+#h ^(TNS-ASP>COMP) #g
+```
+
+Functional application can also be extended to functional uncertainty by adding the "*" operator, indicating that the corresponding relation label occurs one or more times.
+
+
+```
+#g !(COMP*>TNS-ASP) #h
+```
+
+Values and value variables can be compared for equality or non-equality (however, note that some instances of equality can also be checked via unification):
+
+```
+TENSE %a & %a == past       //corresponds to TENSE past
+TENSE %a & %a != past 
+```
+
+Values can be looked up in a lexicon, stored in resources via the predicate `lex/2`:
+
+```
+#a POS MD & #a TOKEN %a ==> #a MORPH #b & #b FIN '+' & #b FORM 'lex(%a,tense)' & #b HEAD %a.
+```
+
+The dictionary is a text file sorting values in categories:
+
+```
+***
+#FUTURE_PREDICTION
+threaten, vow, promise, pressure, force, urge, warn, indicate, insist, postpone, should
+```
+
+
+
+
+
 
 
 
