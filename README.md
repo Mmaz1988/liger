@@ -196,7 +196,7 @@ The dictionary is a text file sorting values in categories:
 threaten, vow, promise, pressure, force, urge, warn, indicate, insist, postpone, should
 ```
 
-For XLE, there exists a special predicate `strip/1` that reduces the values of `PRED`s to their entry in the lexicon. 
+For XLE, there exists a special predicate `strip/1` that reduces the values of `PRED`s to their lemmas (more concretely, string values in the lexicon). 
 
 ```
 #a PRED %a 
