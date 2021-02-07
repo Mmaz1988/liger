@@ -27,11 +27,25 @@ mvn install:install-file -Dfile=resources\glueSemWorkbench2.jar -DgroupId=uni.kn
 
 Now you're ready to execute the jar file by navigating to the folder containing the jar file in the shell/terminal and executing the following command(replace path\to\resources with the path to the copy of resources stored on your computer):
 ```
-java -jar .\syntax-annotator-glue-0.0.1-SNAPSHOT.jar -res path\to\resources\
+java -jar syntax-annotator-glue-0.0.1-SNAPSHOT.jar -res path/to/resources/
 ```
 
-To use the micro-service version with the web interface demo run:
+To use the micro-service version with the web interface use the "-web" command argument like so: 
 
 ```
-java -jar .\syntax-annotator-glue-0.0.1-SNAPSHOT.jar -res path\to\resources\ -web
+java -jar syntax-annotator-glue-0.0.1-SNAPSHOT.jar -res path/to/resources/ -web
 ```
+
+# Command arguments 
+
+The following table presents the possible command line arguments: 
+
+| `command line argument` | `effect` |
+| ------------- | ------------- | 
+| `-web` | `used to run the system as a micro-service` |
+| `-i` | `used to specify an input file (XLE output; .pl file)` |
+| `-o` | `specify an output file` |
+| `-rf` | `specify a rule file (see "resources/testFiles" for examples)` |
+| `-dep/-lfg` | run interactive mode with dependency or XLE parser, when no input file is specified |
+| `-sem` | `Collect meaning constructors and run glue prover after rewriting is complete` |
+
