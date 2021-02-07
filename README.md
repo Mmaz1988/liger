@@ -33,13 +33,13 @@ Now you're ready to execute the jar file by navigating to the folder containing 
 java -jar syntax-annotator-glue-0.0.1-SNAPSHOT.jar -res path/to/resources/
 ```
 
-To use the micro-service version with the web interface use the "-web" command argument like so: 
+To use the micro-service version with the web interface use the "-web" command line argument like so: 
 
 ```
 java -jar syntax-annotator-glue-0.0.1-SNAPSHOT.jar -res path/to/resources/ -web
 ```
 
-# Command arguments 
+# Command line arguments 
 
 The following table presents the possible command line arguments: 
 
