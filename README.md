@@ -1,6 +1,6 @@
 # About
 
-This repository contains a system for expanding linguistic annotations. Inspired by a proposal in Ide & Bunt (2010), linguistic annotations are translated into "abstract" graph representations that may be expanded using the present system. Presently, the system provides native support for the output produced by XLE grammars and for the output produced by the dependency parser of the Stanford CoreNLP (i.e. universal dependencies). Furthermore, the system makes use of the Glue Semantics Workbench (GSWB) making it particularly useful for formal semantic analysis. The system is embedded into a micro-service architecture based on Spring Boot. This component is currently under development (see https://github.com/Mmaz1988/abstract-syntax-annotator-client for a small Demo). 
+This repository contains a system for expanding linguistic annotations. Inspired by a proposal in Ide & Bunt (2010), linguistic annotations are translated into "abstract" graph representations that may be expanded using the present system (The graph structure proposed here is more simple than the one proposed in Ide & Bunt). Presently, the system provides native support for the output produced by XLE grammars and for the output produced by the dependency parser of the Stanford CoreNLP (i.e. universal dependencies). Furthermore, the system makes use of the Glue Semantics Workbench (GSWB) making it particularly useful for formal semantic analysis. The system is embedded into a micro-service architecture based on Spring Boot. This component is currently under development (see https://github.com/Mmaz1988/abstract-syntax-annotator-client for a small Demo). 
 
 # Licensing
 The abstract-syntax-annotator
@@ -17,8 +17,6 @@ If not, please visit http://www.gnu.org/licenses/ for more information.
 ```
 mvn install:install-file -Dfile=resources\glueSemWorkbench2.jar -DgroupId=uni.kn.zymla -DartifactId=gswb -Dversion=1.0 -Dpackaging=jar -DgeneratePom=true
 ```
-
-2. In the class "main/utilities/PathVariables" change the Path Variables to the respective folders in the resources folder at the top-level of the repository.
 
 # Running from Jar file
 
@@ -42,6 +40,7 @@ The following table presents the possible command line arguments:
 
 | `command line argument` | `effect` |
 | ------------- | ------------- | 
+| `-res` | `obligatory argument pointing to the resource folder in the repository` |
 | `-web` | `used to run the system as a micro-service` |
 | `-i [path/to/file]`  | `used to specify an input file (XLE output; .pl file)` |
 | `-o [path/to/file]` | `specify an output file` |
