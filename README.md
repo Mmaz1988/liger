@@ -11,6 +11,10 @@ without any warranty.
 You should have received a copy of the GNU General Public License along with the source code.
 If not, please visit http://www.gnu.org/licenses/ for more information.
 
+# Requirements:
+
+- This system uses Java. [OpenJDK](https://jdk.java.net/13/) is used for development. Support for other versions is not guaranteed, but please contact me if there are issues. 
+
 # Installation:
 1. To install this repository, simply import it as a maven project into your IDE. To use the -sem function for semantic analysis, install the GlueSemanticsWorkbench.jar to your local maven repository. To do this navigate to the project folder and execute the following command, or execute it as a maven goal in your IDE:
 
