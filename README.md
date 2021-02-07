@@ -2,10 +2,7 @@
 
 This repository contains a system for expanding linguistic annotations. Inspired by a proposal in Ide & Bunt (2010), linguistic annotations are translated into "abstract" graph representations that may be expanded using the present system. Presently, the system provides native support for the output produced by XLE grammars and for the output produced by the dependency parser of the Stanford CoreNLP (i.e. universal dependencies). Furthermore, the system makes use of the Glue Semantics Workbench (GSWB) making it particularly useful for formal semantic analysis. The system is embedded into a micro-service architecture based on Spring Boot. This component is currently under development (see https://github.com/Mmaz1988/abstract-syntax-annotator-client for a small Demo). 
 
-
-
-
-## Licensing
+# Licensing
 The abstract-syntax-annotator
 Copyright 2021 Mark-Matthias Zymla.
 This file is part of the abstract-syntax-annotator.
@@ -23,4 +20,18 @@ mvn install:install-file -Dfile=resources\glueSemWorkbench2.jar -DgroupId=uni.kn
 
 2. In the class "main/utilities/PathVariables" change the Path Variables to the respective folders in the resources folder at the top-level of the repository.
 
+# Running from Jar file
 
+- Download the Jar file from: 
+- Download the resources folder from this repository
+
+Now you're ready to execute the jar file by navigating to the folder containing the jar file in the shell/terminal and executing the following command(replace path\to\resources with the path to the copy of resources stored on your computer):
+```
+java -jar .\syntax-annotator-glue-0.0.1-SNAPSHOT.jar -res path\to\resources\
+```
+
+To use the micro-service version with the web interface demo run:
+
+```
+java -jar .\syntax-annotator-glue-0.0.1-SNAPSHOT.jar -res path\to\resources\ -web
+```
