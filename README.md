@@ -52,3 +52,36 @@ The following table presents the possible command line arguments:
 | `-dep/-lfg` | run interactive mode with dependency or XLE parser, when no input file is specified |
 | `-sem` | `Collect meaning constructors and run glue prover after rewriting is complete` |
 
+# Using the system
+
+The system can be used to rewrite and expand linguistic annotations. Input needs to be translated into a fact-based graph representation consisting of a (mother) node reference, a relation label, and either a (daugther) node reference or a string value. This is done natively for XLE putput and for the output of the Universal Dependency parser contained in the Stanford CoreNLP. 
+
+The rewrite rules are specified by means of the `-rf [path/to/file]` argument. They are applied one after another, given the left-hand side matches the input structure combined with the previously added structures. The following example illustrates how the rules can be used to produce a universal quantifier based on a universal dependency parse. The input is a list of facts provided by a universal dependency parse.
+
+## Input
+`[ #2 det #1,  #1 TOKEN every,  #1 POS DT,  #1 LEMMA every,  #3 nsubj #2,  #2 TOKEN man,  #2 POS NN,  #2 LEMMA man,  #0 root #3,  #3 TOKEN loves,  #3 POS VBZ,  #3 LEMMA love,  #5 det #4,  #4 TOKEN a,  #4 POS DT,  #4 LEMMA a,  #3 obj #5,  #5 TOKEN woman,  #5 POS NN,  #5 LEMMA woman]`
+
+This input can be expanded by adding partial semantic representations. The following rules illustrate, how a universal quantifier can be added in several steps, based on the treatment of universal quantifiers in Glue semantics, in particular, in Dalrymple (1999). First, the additional structures `VAR` and `RESTR` are introduced. Using these additional nodes the restrictor of the quantifier is defined based on the element that the quantifier attaches to (in this case "man"). Finally, the quantifier is derived from the semantics of the noun phrase and the semantics of the rest of the sentence, or more concretely, the semantics of the element that dominates the noun phrase. 
+
+## Rewrite rules
+```
+//Setup for Quantifier
+#a ^(det) #b ==> #b SEM #c & #c VAR #d & #c RESTR #e.
+
+//predicative NP (restrictor of quantifier)
+#a SEM #b VAR #c & #b RESTR #d & #a TOKEN %a ==> #a GLUE [/x_e.%a(x)] : (#c -o #d).
+
+//universal quantifier
+#a ^(det) #b SEM #c VAR #d & #c RESTR #e &
+#a TOKEN %a & %a == every &
+#b ^(%) #f SEM #g
+==> #c GLUE [/P_<e,t>.[/Q_<e,t>.Ax_e[P(x) -> Q(x)]]] : ((#d -o #e) -o ((#c -o #g) -o #g)).
+```
+The resulting partial semantic representations are shown in (note that the rules above add further additional structures omitted in the example below): 
+
+```
+ #2 GLUE [/x_e.man(x)] : (10 -o 12)
+ #8 GLUE [/P_<e,t>.[/Q_<e,t>.Ax_e[P(x) -> Q(x)]]] : ((10 -o 12) -o ((8 -o 6) -o 6))
+```
+
+
