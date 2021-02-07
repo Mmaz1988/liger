@@ -15,8 +15,12 @@ You should have received a copy of the GNU General Public License along with the
 If not, please visit http://www.gnu.org/licenses/ for more information.
 
 # Installation:
-To install this repository, simply import it as a maven project into your IDE. To use the -sem function for semantic analysis, install the GlueSemanticsWorkbench.jar to your local maven repository. To do this navigate to the project folder and execute the following command, or execute it as a maven goal in your IDE:
+1. To install this repository, simply import it as a maven project into your IDE. To use the -sem function for semantic analysis, install the GlueSemanticsWorkbench.jar to your local maven repository. To do this navigate to the project folder and execute the following command, or execute it as a maven goal in your IDE:
 
 ```
 mvn install:install-file -Dfile=resources\glueSemWorkbench2.jar -DgroupId=uni.kn.zymla -DartifactId=gswb -Dversion=1.0 -Dpackaging=jar -DgeneratePom=true
 ```
+
+2. In the class "main/utilities/PathVariables" change the Path Variables to the respective folders in the resources folder at the top-level of the repository.
+
+
