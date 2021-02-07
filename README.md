@@ -83,7 +83,7 @@ The resulting partial semantic representations are shown in (note that the rules
  #2 GLUE [/x_e.man(x)] : (10 -o 12)
  #8 GLUE [/P_<e,t>.[/Q_<e,t>.Ax_e[P(x) -> Q(x)]]] : ((10 -o 12) -o ((8 -o 6) -o 6))
 ```
-If the rules are used to produce Glue semantics output, all GLUE nodes are collected and a proof is derived. For this, the Glue semantics workbench is used (see [https://github.com/Mmaz1988/GlueSemWorkbench_v2/tree/pure%2Bdrt])
+If the rules are used to produce Glue semantics output, all GLUE nodes are collected and a proof is derived. For this, the Glue semantics workbench is used (see [GSWB](https://github.com/Mmaz1988/GlueSemWorkbench_v2/tree/pure%2Bdrt))
 
 ```
 Sequent:
