@@ -2,6 +2,17 @@
 
 This repository contains a system for expanding linguistic annotations. Inspired by a proposal in Ide & Bunt (2010), linguistic annotations are translated into "abstract" graph representations that may be expanded using the present system (The graph structure proposed here is more simple than the one proposed in Ide & Bunt). Presently, the system provides native support for the output produced by XLE grammars and for the output produced by the dependency parser of the Stanford CoreNLP (i.e. universal dependencies). Furthermore, the system makes use of the Glue Semantics Workbench (GSWB) making it particularly useful for formal semantic analysis. The system is embedded into a micro-service architecture based on Spring Boot. This component is currently under development (see https://github.com/Mmaz1988/abstract-syntax-annotator-client for a small Demo). 
 
+# Notes
+
+- XLE interactive mode is not generally supported due to complications with the XLE interface
+
+### Planned features:
+
+- Packed linguistic rewriting
+- Distributing rules across multiple files
+- adding identifiers for linguistic dictionaries
+-Streamlined interface for importing linguistic annotations
+
 # Licensing
 The abstract-syntax-annotator
 Copyright 2021 Mark-Matthias Zymla.
