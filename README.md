@@ -144,7 +144,7 @@ Result of the Glue derivation:
 Done
 ```
 
-# Rule syntax: A quick intro
+# Rule syntax: a quick intro
 
 - Rules consist of a left-hand side and a right hand side separated by "==>". The end of a rule is indicated by a "." 
 - Graph nodes are referred to via variable names starting with "#", e.g. #a,#b,#c,...
