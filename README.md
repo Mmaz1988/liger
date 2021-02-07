@@ -45,7 +45,7 @@ The following table presents the possible command line arguments:
 
 | `command line argument` | `effect` |
 | ------------- | ------------- | 
-| `-res` | `obligatory argument pointing to the resource folder in the repository` |
+| `-res [path/to/folder/]` | `obligatory argument pointing to the resource folder in the repository` |
 | `-web` | `used to run the system as a micro-service` |
 | `-i [path/to/file]`  | `used to specify an input file (XLE output; .pl file)` |
 | `-o [path/to/file]` | `specify an output file` |
