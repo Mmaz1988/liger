@@ -83,5 +83,66 @@ The resulting partial semantic representations are shown in (note that the rules
  #2 GLUE [/x_e.man(x)] : (10 -o 12)
  #8 GLUE [/P_<e,t>.[/Q_<e,t>.Ax_e[P(x) -> Q(x)]]] : ((10 -o 12) -o ((8 -o 6) -o 6))
 ```
+If the rules are used to produce Glue semantics output, all GLUE nodes are collected and a proof is derived. For this, the Glue semantics workbench is used (see [https://github.com/Mmaz1988/GlueSemWorkbench_v2/tree/pure%2Bdrt])
+
+```
+Sequent:
+(10 ⊸ 12) : [λx_e.man(x)]
+(11 ⊸ 13) : [λx_e.woman(x)]
+((7 ⊸ 6) ⊸ (8 ⊸ (9 ⊸ 6))) : [λR_<v,t>.[λx_e.[λy_e.∃e[R(e) ∧ agent(e,x) ∧ theme(e,y)]]]]
+(7 ⊸ 6) : [λe_v.love(e)]
+((10 ⊸ 12) ⊸ ((8 ⊸ 6) ⊸ 6)) : [λP_<e,t>.[λQ_<e,t>.∀x[P(x) → Q(x)]]]
+((11 ⊸ 13) ⊸ ((9 ⊸ 6) ⊸ 6)) : [λP_<e,t>.[λQ_<e,t>.∃x[P(x) ∧ Q(x)]]]
+
+
+Agenda:
+(10 ⊸ 12) : [λx_e.man(x)]
+(11 ⊸ 13) : [λx_e.woman(x)]
+(6 ⊸ (8 ⊸ (9 ⊸ 6))) : [λR_<v,t>.[λx_e.[λy_e.∃e[R(e) ∧ agent(e,x) ∧ theme(e,y)]]]]
+7 : z
+(7 ⊸ 6) : [λe_v.love(e)]
+8 : y1
+(12 ⊸ (6 ⊸ 6)) : [λP_<e,t>.[λQ_<e,t>.∀x[P(x) → Q(x)]]]
+10 : x1
+9 : x2
+(13 ⊸ (6 ⊸ 6)) : [λP_<e,t>.[λQ_<e,t>.∃x[P(x) ∧ Q(x)]]]
+11 : z1
+
+
+Combining (7 ⊸ 6) : [λe_v.love(e)] and 7 : z
+to: 6 : love(z)
+Combining (10 ⊸ 12) : [λx_e.man(x)] and 10 : x1
+to: 12 : man(x1)
+Combining (11 ⊸ 13) : [λx_e.woman(x)] and 11 : z1
+to: 13 : woman(z1)
+Combining (6 ⊸ (8 ⊸ (9 ⊸ 6))) : [λR_<v,t>.[λx_e.[λy_e.∃e[R(e) ∧ agent(e,x) ∧ theme(e,y)]]]] and 6 : love(z)
+to: (8 ⊸ (9 ⊸ 6)) : [λx_e.[λy_e.∃e[love(e) ∧ agent(e,x) ∧ theme(e,y)]]]
+Combining (12 ⊸ (6 ⊸ 6)) : [λP_<e,t>.[λQ_<e,t>.∀x[P(x) → Q(x)]]] and 12 : man(x1)
+to: (6 ⊸ 6) : [λQ_<e,t>.∀x[man(x) → Q(x)]]
+Combining (13 ⊸ (6 ⊸ 6)) : [λP_<e,t>.[λQ_<e,t>.∃x[P(x) ∧ Q(x)]]] and 13 : woman(z1)
+to: (6 ⊸ 6) : [λQ_<e,t>.∃x[woman(x) ∧ Q(x)]]
+Combining (8 ⊸ (9 ⊸ 6)) : [λx_e.[λy_e.∃e[love(e) ∧ agent(e,x) ∧ theme(e,y)]]] and 8 : y1
+to: (9 ⊸ 6) : [λy_e.∃e[love(e) ∧ agent(e,y1) ∧ theme(e,y)]]
+Combining (9 ⊸ 6) : [λy_e.∃e[love(e) ∧ agent(e,y1) ∧ theme(e,y)]] and 9 : x2
+to: 6 : ∃e[love(e) ∧ agent(e,y1) ∧ theme(e,x2)]
+Combining (6 ⊸ 6) : [λQ_<e,t>.∀x[man(x) → Q(x)]] and 6 : ∃e[love(e) ∧ agent(e,y1) ∧ theme(e,x2)]
+to: 6 : ∀x[man(x) → ∃e[love(e) ∧ agent(e,x) ∧ theme(e,x2)]]
+Combining (6 ⊸ 6) : [λQ_<e,t>.∃x[woman(x) ∧ Q(x)]] and 6 : ∃e[love(e) ∧ agent(e,y1) ∧ theme(e,x2)]
+to: 6 : ∃x[woman(x) ∧ ∃e[love(e) ∧ agent(e,y1) ∧ theme(e,x)]]
+Combining (6 ⊸ 6) : [λQ_<e,t>.∃x[woman(x) ∧ Q(x)]] and 6 : ∀y2[man(y2) → ∃e[love(e) ∧ agent(e,y2) ∧ theme(e,x2)]]
+to: 6 : ∃x[woman(x) ∧ ∀y2[man(y2) → ∃e[love(e) ∧ agent(e,y2) ∧ theme(e,x)]]]
+Combining (6 ⊸ 6) : [λQ_<e,t>.∀y2[man(y2) → Q(y2)]] and 6 : ∃x[woman(x) ∧ ∃e[love(e) ∧ agent(e,y1) ∧ theme(e,x)]]
+to: 6 : ∀y2[man(y2) → ∃x[woman(x) ∧ ∃e[love(e) ∧ agent(e,y2) ∧ theme(e,x)]]]
+
+
+
+
+Result of the Glue derivation:
+6 : ∃x[woman(x) ∧ ∀y2[man(y2) → ∃e[love(e) ∧ agent(e,y2) ∧ theme(e,x)]]]
+6 : ∀y2[man(y2) → ∃x[woman(x) ∧ ∃e[love(e) ∧ agent(e,y2) ∧ theme(e,x)]]]
+
+Done
+```
+
 
 
