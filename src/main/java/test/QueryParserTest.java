@@ -20,16 +20,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class QueryParserTest {
 
-    public static final String testFolderPath = PathVariables.testPath;
+    public static String testFolderPath;
 
 
     public LinkedHashMap<String, SyntacticStructure> loadFs(int i)
     {
+        PathVariables.initializePathVariables();
+        testFolderPath = PathVariables.testPath;
         VariableHandler vh = new VariableHandler();
         XLEoperator xle = new XLEoperator(vh);
 
         List<LinkedHashMap<String, SyntacticStructure>> fsList = new ArrayList<>();
 
+        System.out.println(testFolderPath.toString());
 
         fsList.add(xle.fs2Java(testFolderPath + "testdirS1.pl"));
         fsList.add(xle.fs2Java(testFolderPath + "testdirS2.pl"));

@@ -25,6 +25,7 @@ public class DBASettings {
 
     public DBASettings()
     {
+        PathVariables.initializePathVariables();
         this.interactiveMode = true;
         this.semanticParsing = false;
         this.web = false;
