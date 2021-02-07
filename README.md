@@ -43,9 +43,9 @@ The following table presents the possible command line arguments:
 | `command line argument` | `effect` |
 | ------------- | ------------- | 
 | `-web` | `used to run the system as a micro-service` |
-| `-i` | `used to specify an input file (XLE output; .pl file)` |
-| `-o` | `specify an output file` |
-| `-rf` | `specify a rule file (see "resources/testFiles" for examples)` |
+| `-i [path/to/file]`  | `used to specify an input file (XLE output; .pl file)` |
+| `-o [path/to/file]` | `specify an output file` |
+| `-rf [path/to/file]` | `specify a rule file (see "resources/testFiles" for examples)` |
 | `-dep/-lfg` | run interactive mode with dependency or XLE parser, when no input file is specified |
 | `-sem` | `Collect meaning constructors and run glue prover after rewriting is complete` |
 
