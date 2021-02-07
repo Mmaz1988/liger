@@ -95,7 +95,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>webservice.WebApplication</mainClass>
+							<mainClass>DbaMain</mainClass>
 						</manifest>
 					</archive>
 				</configuration>

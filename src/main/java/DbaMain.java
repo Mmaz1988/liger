@@ -9,6 +9,7 @@ import syntax.xle.XLEoperator;
 import utilities.DBASettings;
 import utilities.PathVariables;
 import utilities.VariableHandler;
+import webservice.WebApplication;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -36,6 +37,10 @@ public class DbaMain {
             String arg = args[i];
 
             switch (arg) {
+
+                case "-web":
+                    settings.web = true;
+                    break;
 
                 case "-i":
                     settings.inputFile = args[i + 1];
@@ -71,82 +76,88 @@ public class DbaMain {
 
         //    LinguisticDictionary ld = new LinguisticDictionary();
 
-        if (settings.inputFile != null) {
-            try {
-
-                File inFile = new File(settings.inputFile);
-
-                if (inFile.exists()) {
-                    List<String> lines = null;
-
-                    lines = Files.readAllLines(inFile.toPath());
-
-                }
-            } catch (Exception e1) {
-                System.out.println("Could not load rule file:" + settings.inputFile);
-            }
-        }
-
-        if (settings.outputFile != null) {
-            String outPath = settings.outputFile;
-            try {
-                File outFile = new File(outPath);
-
-                if (outFile.exists()) {
-                    outFile.delete();
-                }
-                outFile.createNewFile();
-                //  outFile.createNewFile();
-                settings.setOutputWriter(outFile);
-            } catch (Exception e) {
-                System.out.println("Failed to write output to:" + outPath);
-            }
-        }
-
-        String ruleFile = "";
-
-        if (settings.ruleFile == null)
+        if (settings.web)
         {
-            if (settings.mode == "dep") {
-                ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
-            } else
-            {
-                ruleFile = PathVariables.testPath + "testRulesLFG8.txt";
-            }
-        } else
-        {
-            ruleFile = settings.ruleFile;
+            WebApplication web = new WebApplication();
+            web.main(new String[0]);
         }
-
-
-        if (settings.interactiveMode) {
-            System.out.println("Starting interactive mode...\n");
-            Scanner s = new Scanner(System.in);
-
-            String input;
-            while (true) {
-                System.out.println("Enter sentence to be analyzed or enter 'quit' to exit the program.");
-                input = s.nextLine();
-                break;
-                //if (input.equals("quit"))
-                //    break;
-            }
-
-            SyntacticStructure fs = parserInteractiveWrapper(settings.mode,input, ruleFile);
-
-            if (settings.semanticParsing) {
-                semanticsInteractiveWrapper(fs);
-            }
-        }
-
         else {
-            SyntacticStructure fs = fromFileWrapper(settings.inputFile,ruleFile);
-            if (settings.semanticParsing) {
-                semanticsInteractiveWrapper(fs);
+            if (settings.inputFile != null) {
+                try {
+
+                    File inFile = new File(settings.inputFile);
+
+                    if (inFile.exists()) {
+                        List<String> lines = null;
+
+                        lines = Files.readAllLines(inFile.toPath());
+
+                    }
+                } catch (Exception e1) {
+                    System.out.println("Could not load rule file:" + settings.inputFile);
+                }
             }
+
+            if (settings.outputFile != null) {
+                String outPath = settings.outputFile;
+                try {
+                    File outFile = new File(outPath);
+
+                    if (outFile.exists()) {
+                        outFile.delete();
+                    }
+                    outFile.createNewFile();
+                    //  outFile.createNewFile();
+                    settings.setOutputWriter(outFile);
+                } catch (Exception e) {
+                    System.out.println("Failed to write output to:" + outPath);
+                }
+            }
+
+            String ruleFile = "";
+
+            if (settings.ruleFile == null) {
+                if (settings.mode == "dep") {
+                    ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
+                } else {
+                    ruleFile = PathVariables.testPath + "testRulesLFG8.txt";
+                }
+            } else {
+                ruleFile = settings.ruleFile;
+            }
+
+
+            if (settings.interactiveMode) {
+                if (settings.mode == null)
+                {
+                    settings.mode = "dep";
+                    ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
+                }
+                System.out.println("Starting interactive mode...\n");
+                Scanner s = new Scanner(System.in);
+
+                String input;
+                while (true) {
+                    System.out.println("Enter sentence to be analyzed or enter 'quit' to exit the program.");
+                    input = s.nextLine();
+                    break;
+                    //if (input.equals("quit"))
+                    //    break;
+                }
+
+                SyntacticStructure fs = parserInteractiveWrapper(settings.mode, input, ruleFile);
+
+                if (settings.semanticParsing) {
+                    semanticsInteractiveWrapper(fs);
+                }
+            } else {
+                SyntacticStructure fs = fromFileWrapper(settings.inputFile, ruleFile);
+                if (settings.semanticParsing) {
+                    semanticsInteractiveWrapper(fs);
+                }
+            }
+
         }
-
-
     }
 
     public static void semanticsInteractiveWrapper(SyntacticStructure fs)

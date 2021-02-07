@@ -21,10 +21,13 @@ public class DBASettings {
 
     public BufferedWriter outputWriter;
 
+    public Boolean web;
+
     public DBASettings()
     {
         this.interactiveMode = true;
         this.semanticParsing = false;
+        this.web = false;
     }
 
     public void setOutputWriter(File file)
