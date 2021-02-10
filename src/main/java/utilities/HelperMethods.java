@@ -31,6 +31,7 @@ public class HelperMethods {
     public static Pattern valueVarPattern = Pattern.compile("(%[a-z])");
     //semform('say',3,[var(11),var(2)],[]))
     public static Pattern predPattern = Pattern.compile("semform\\('(.+)',.+\\)");
+    public static Pattern hyphenPattern = Pattern.compile("'(.+)'");
     public static Pattern valueStringPattern = Pattern.compile("'(.+)'");
     public static Pattern stripPattern = Pattern.compile("(strip\\((.+)\\))");
     public static Pattern uncertaintyPattern = Pattern.compile("([\\^|!])\\((.*)\\)");
@@ -58,6 +59,12 @@ public class HelperMethods {
         if (m.matches())
         {
             return m.group(1);
+        } else
+        {
+            Matcher m2 = hyphenPattern.matcher(value);
+            if (m2.matches()) {
+                return m2.group(1);
+            }
         }
 
         return value;

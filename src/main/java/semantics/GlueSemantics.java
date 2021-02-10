@@ -56,6 +56,8 @@ public class GlueSemantics {
 
         for (String mc : meaningConstructorStrings)
         {
+          //  System.out.println(mc);
+
             try {
                 LexicalEntry le = glueParser.parseMeaningConstructor(mc);
                 lexicalEntries.add(le);
