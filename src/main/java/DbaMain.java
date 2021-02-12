@@ -161,6 +161,7 @@ public class DbaMain {
                 ruleFile = settings.ruleFile;
             }
 
+            LinkedHashMap<String,HashMap<Integer,String>> result = new LinkedHashMap<>();
 
             if (settings.interactiveMode) {
                 if (settings.mode == null)
@@ -184,39 +185,55 @@ public class DbaMain {
                     //    break;
                 }
 
-                SyntacticStructure fs = parserInteractiveWrapper(settings.mode, input, ruleFile);
+                LinkedHashMap<String,SyntacticStructure> fs = parserInteractiveWrapper(settings.mode, input, ruleFile,result);
 
                 if (settings.semanticParsing) {
-                    semanticsInteractiveWrapper(fs);
+                    semanticsInteractiveWrapper(fs,result);
                 }
             } else {
-                SyntacticStructure fs = fromFileWrapper(settings.inputFile, ruleFile);
+                LinkedHashMap<String,SyntacticStructure> fs  = fromFileWrapper(settings.inputFile, ruleFile,result);
                 if (settings.semanticParsing) {
-                    semanticsInteractiveWrapper(fs);
+                    semanticsInteractiveWrapper(fs,result);
                 }
             }
 
         }
     }
 
-    public static void semanticsInteractiveWrapper(SyntacticStructure fs)
+    public static void
+    semanticsInteractiveWrapper(LinkedHashMap<String,SyntacticStructure> in, LinkedHashMap<String,HashMap<Integer,String>> result)
     {
         System.out.println(System.lineSeparator());
 
-        System.out.println("Glue prover output:");
-        GlueSemantics sem = new GlueSemantics();
-        String result = sem.calculateSemantics(fs);
+        for (String key : in.keySet()) {
+            SyntacticStructure fs = in.get(key);
+            System.out.println("Glue prover output:");
+            GlueSemantics sem = new GlueSemantics();
+            String semantics = sem.calculateSemantics(fs);
 
-        System.out.println(System.lineSeparator());
-        System.out.println("Result of the Glue derivation:");
-        System.out.println(result);
+            StringBuilder resultBuilder = new StringBuilder();
 
-        System.out.println("Done");
+            resultBuilder.append(System.lineSeparator());
+            resultBuilder.append("Result of the Glue derivation:");
+            resultBuilder.append(semantics);
+
+            result.get(key).put(1,semantics);
+
+            System.out.println("Done\n\n");
+        }
+
+        for (String key : result.keySet())
+        {
+            System.out.println(result.get(key).get(0));
+            System.out.println(result.get(key).get(1));
+        }
+
     }
 
-    public static SyntacticStructure parserInteractiveWrapper(String parserType, String input, String path)
+    public static LinkedHashMap<String,SyntacticStructure>
+    parserInteractiveWrapper(String parserType, String input, String path, LinkedHashMap<String,HashMap<Integer,String>> result)
     {
-
+        VariableHandler vh = new VariableHandler();
         SyntacticStructure fs = null;
         SyntaxOperator syn = null;
 
@@ -227,7 +244,6 @@ public class DbaMain {
                 break;
             }
             case "lfg": {
-                VariableHandler vh = new VariableHandler();
                 syn = new XLEoperator(vh);
                 break;
             }
@@ -240,57 +256,120 @@ public class DbaMain {
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
-        RuleParser rp = new RuleParser(fsList, new File(path));
+        RuleParser rp = new RuleParser(new File(path));
+        StringBuilder resultBuilder = new StringBuilder();
+        HashMap<Integer,String> syntaxResult = new HashMap<>();
 
         rp.addAnnotation2(fs);
 
-        try {
-            fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
-        } catch (Exception e) {
-            System.out.println("Sorting annotation failed.");
-        }
+        String sid = vh.returnNewVar(VariableHandler.variableType.SENTENCE_ID,null);
 
-        System.out.println("Annotation output:");
+        LinkedHashMap<String,SyntacticStructure> out = new LinkedHashMap<>();
+        out.put(sid,fs);
 
-        for (GraphConstraint g : fs.annotation) {
-            System.out.println(g);
-        }
+            resultBuilder.append(sid + ": " + fs.sentence);
+            resultBuilder.append(System.lineSeparator());
 
-        return fs;
+            try {
+                fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
+            } catch (Exception e) {
+                System.out.println("Sorting annotation failed.");
+            }
+
+            resultBuilder.append("Annotation output:\n");
+
+            for (GraphConstraint g : fs.annotation) {
+                resultBuilder.append(g.toString());
+                resultBuilder.append(System.lineSeparator());
+            }
+
+            resultBuilder.append("End of: " + sid + "\n");
+            resultBuilder.append(System.lineSeparator());
+
+            syntaxResult.put(0,resultBuilder.toString());
+            result.put(sid,syntaxResult);
+
+    if(!settings.semanticParsing) {
+        System.out.println(resultBuilder.toString());
+    }
+        return out;
 
     }
 
-    public static SyntacticStructure fromFileWrapper(String inPath, String rulePath)
+    public static LinkedHashMap<String,SyntacticStructure>
+    fromFileWrapper(String inPath, String rulePath, LinkedHashMap<String,HashMap<Integer,String>> result)
     {
-        SyntacticStructure fs = null;
+
+        File inFile = new File(inPath);
 
         XLEoperator xle = new XLEoperator(new VariableHandler());
 
-        LinkedHashMap<String,SyntacticStructure> indexedFs = xle.fs2Java(inPath);
+        LinkedHashMap<String,SyntacticStructure> indexedFs;
+
+
+        if (inFile.isDirectory()) {
+            File[] files = inFile.listFiles((d, name) -> name.endsWith(".pl"));
+
+            indexedFs = new LinkedHashMap<String, SyntacticStructure>();
+
+            for (int i = 0; i < files.length;i++)
+            {
+                indexedFs.putAll(xle.fs2Java(files[i].toString()));
+            }
+        }
+        else
+        {
+            indexedFs = xle.fs2Java(inPath);
+        }
+/*
+        List<SyntacticStructure> fsList = new ArrayList<>();
 
         fs = indexedFs.get(indexedFs.keySet().iterator().next());
+*/
+     //   List<SyntacticStructure> fsList = new ArrayList<>();
+     //   fsList.add(fs);
 
-        List<SyntacticStructure> fsList = new ArrayList<>();
-        fsList.add(fs);
+        RuleParser rp = new RuleParser(new File(rulePath));
 
-        RuleParser rp = new RuleParser(fsList, new File(rulePath));
 
-        rp.addAnnotation2(fs);
 
-        try {
-            fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
-        } catch (Exception e) {
-            System.out.println("Sorting annotation failed.");
+        for (String key : indexedFs.keySet()) {
+            StringBuilder resultBuilder = new StringBuilder();
+            HashMap<Integer,String> syntaxResult = new HashMap<>();
+            SyntacticStructure fs = indexedFs.get(key);
+            rp.addAnnotation2(fs);
+
+            resultBuilder.append(key + ": " + fs.sentence);
+            resultBuilder.append(System.lineSeparator());
+
+            try {
+                fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
+            } catch (Exception e) {
+                System.out.println("Sorting annotation failed.");
+            }
+
+            resultBuilder.append("Annotation output:\n");
+
+            for (GraphConstraint g : fs.annotation) {
+                resultBuilder.append(g.toString());
+                resultBuilder.append(System.lineSeparator());
+            }
+
+            resultBuilder.append("End of: " + key + "\n");
+            resultBuilder.append(System.lineSeparator());
+
+            syntaxResult.put(0,resultBuilder.toString());
+            result.put(key,syntaxResult);
+
+        }
+        if(!settings.semanticParsing) {
+           for (String key : result.keySet())
+           {
+               System.out.println(result.get(key).get(0));
+           }
         }
 
-        System.out.println("Annotation output:");
-
-        for (GraphConstraint g : fs.annotation) {
-            System.out.println(g);
-        }
-
-
-        return fs;
+        return indexedFs;
     }
 
 }

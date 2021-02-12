@@ -88,6 +88,21 @@ public class RuleParser {
         this.rules = parseRuleFile(fileString);
     }
 
+    public RuleParser(File path)
+    {
+        this.replace = false;
+
+        String fileString = null;
+        try {
+            fileString = new String(Files.readAllBytes(Paths.get(path.toString())));
+        }catch(Exception e)
+        {
+            System.out.println("Failed to load rule file");
+            e.printStackTrace();
+        }
+
+        this.rules = parseRuleFile(fileString);
+    }
 
     public void addAnnotation2(SyntacticStructure fs)
     {
