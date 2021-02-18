@@ -28,8 +28,9 @@ import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.process.Morphology;
 import edu.stanford.nlp.trees.GrammaticalStructure;
 import edu.stanford.nlp.trees.TypedDependency;
-import syntax.SyntacticStructure;
+import packing.ChoiceVar;
 import syntax.GraphConstraint;
+import syntax.SyntacticStructure;
 import test.QueryParserTest;
 import utilities.VariableHandler;
 
@@ -99,16 +100,19 @@ public class UDoperator extends SyntaxOperator{
 
             for (TypedDependency dep : parse.typedDependencies()) {
 
-                GraphConstraint dc = new GraphConstraint(null, dep.gov().index(),
+                Set<ChoiceVar> context = new HashSet<>();
+                context.add(new ChoiceVar("1"));
+
+                GraphConstraint dc = new GraphConstraint(context, dep.gov().index(),
                         dep.reln().toString(),
                         String.valueOf(dep.dep().index()));
 
-                GraphConstraint dcDep = new GraphConstraint(null, dep.dep().index(), "TOKEN", dep.dep().word().toString());
-                GraphConstraint dcPos = new GraphConstraint(null, dep.dep().index(), "POS", dep.dep().tag().toString());
+                GraphConstraint dcDep = new GraphConstraint(context, dep.dep().index(), "TOKEN", dep.dep().word().toString());
+                GraphConstraint dcPos = new GraphConstraint(context, dep.dep().index(), "POS", dep.dep().tag().toString());
 
                 String lemma = morphology.lemma(dep.dep().word(),dep.dep().tag());
 
-                GraphConstraint dcLemma = new GraphConstraint(null, dep.dep().index(), "LEMMA", lemma);
+                GraphConstraint dcLemma = new GraphConstraint(context, dep.dep().index(), "LEMMA", lemma);
 
                 out.add(dc);
                 out.add(dcDep);

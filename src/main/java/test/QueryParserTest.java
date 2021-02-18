@@ -53,7 +53,7 @@ public class QueryParserTest {
 
         List<LinkedHashMap<String, SyntacticStructure>> fsList = new ArrayList<>();
 
-        System.out.println(testFolderPath.toString());
+        System.out.println("C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\testFiles\\");
 
         fsList.add(xle.fs2Java(testFolderPath + "testdirS1.pl"));
         fsList.add(xle.fs2Java(testFolderPath + "testdirS2.pl"));
@@ -63,6 +63,7 @@ public class QueryParserTest {
         fsList.add(xle.fs2Java(testFolderPath + "testdirS6.pl"));
         fsList.add(xle.fs2Java(testFolderPath + "testdirS7.pl"));
         fsList.add(xle.fs2Java(testFolderPath + "testdirS8.pl"));
+        fsList.add(xle.fs2Java(testFolderPath + "testdirS11.pl"));
         return fsList.get(i);
     }
 
@@ -358,6 +359,35 @@ public class QueryParserTest {
         }
 
     }
+
+    @Test
+    void testQueryParser15()
+    {
+        LinkedHashMap<String, SyntacticStructure> fs = loadFs(8);
+
+        for (String key : fs.keySet())
+        {
+            QueryParser qp = new QueryParser("#g ADJUNCT #h & #h inSet #i",fs.get(key));
+
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            RuleParser rp = new RuleParser(new ArrayList<>());
+
+            Rule r1 = new Rule("#g ADJUNCT #h & #h inSet #i ==> #i ADJ-SEM 'event'.");
+
+            rp.getRules().add(r1);
+
+            String key2 = fs.keySet().stream().findAny().get();
+
+            rp.addAnnotation2(fs.get(key2));
+
+            assertEquals(2, fs.get(key2).annotation.size());
+
+        //    assertEquals(2,qpr.result.keySet().size());
+        }
+
+    }
+
 
     /**
      * analysis.RuleParser tests

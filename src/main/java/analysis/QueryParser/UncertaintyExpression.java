@@ -62,9 +62,15 @@ public UncertaintyExpression(QueryExpression left, Uncertainty middle, QueryExpr
         for (Set<SolutionKey> key : left.getSolution().keySet()) {
             String nodeVar = left.getNodeVar();
             String nodeRef = left.getSolution().get(key).get(nodeVar).keySet().stream().findAny().get();
-            HashMap<Integer, GraphConstraint> boundIndices = left.getSolution().get(key).get(nodeVar).get(nodeRef);
+            HashMap<Integer, GraphConstraint> boundIndices = new HashMap<>();
 
-
+            for (Integer key2 : middle.getFsIndices().keySet())
+            {
+                if (middle.getFsIndices().get(key2).getFsNode().equals(nodeRef))
+                {
+                    boundIndices.put(key2,middle.getFsIndices().get(key2));
+                }
+            }
 
             HashMap<Integer,GraphConstraint> uncertainty = new HashMap<>();
 

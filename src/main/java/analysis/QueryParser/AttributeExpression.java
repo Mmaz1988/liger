@@ -64,7 +64,38 @@ public class AttributeExpression extends QueryExpression {
                 String nodeRef = left.getSolution().get(key).get(left.getNodeVar()).keySet().stream().findAny().get();
                 HashMap<Integer,GraphConstraint> boundIndices = left.getSolution().get(key).get(left.getNodeVar()).get(nodeRef);
 
+                    if (left instanceof Node || left instanceof NodeExpression)
+                    {
+                     for (Integer key2 : right.getFsIndices().keySet())
+                     {
+                         if (right.getFsIndices().get(key2).getFsNode().equals(nodeRef))
+                         {
+                             boundIndices.put(key2,right.getFsIndices().get(key2));
+                             fsIndices.put(key2,right.getFsIndices().get(key2));
+                             containsAtribute = true;
+                         }
+                     }
+                    }
 
+                    /*
+                Iterator<Integer> boundIter = boundIndices.keySet().iterator();
+
+                    while (boundIter.hasNext())
+                    {
+                        Integer key3 = boundIter.next();
+
+                        if(boundIndices.get(key3).getRelationLabel().equals(right.getQuery()))
+                        {
+                            fsIndices.put(key3,boundIndices.get(key3));
+                            containsAtribute = true;
+                        } else
+                        {
+                            boundIter.remove();
+                        }
+
+                    }
+*/
+/*
                     for (Integer key3 : boundIndices.keySet())
                     {
                         if(boundIndices.get(key3).getRelationLabel().equals(right.getQuery()))
@@ -73,8 +104,9 @@ public class AttributeExpression extends QueryExpression {
                             fsIndices.put(key3,boundIndices.get(key3));
                             containsAtribute = true;
                         }
-                    }
 
+                    }
+*/
             if (!containsAtribute)
             {
                 it.remove();

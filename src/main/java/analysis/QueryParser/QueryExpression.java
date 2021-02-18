@@ -132,11 +132,13 @@ public abstract class QueryExpression {
             HashMap<String, HashMap<Integer, GraphConstraint>> reference = new HashMap<>();
             reference.put(fs, new HashMap<>());
 
+            /*
             for (Integer key : fsIndices.keySet()) {
                 if (fsIndices.get(key).getFsNode().equals(fs)) {
                     reference.get(fs).put(key, fsIndices.get(key));
                 }
             }
+             */
             binding.put(nodeVar, reference);
             out2.put(Collections.singleton(new SolutionKey(nodeVar,fs)), binding);
         }

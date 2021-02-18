@@ -21,6 +21,7 @@
 
 package syntax.xle;
 
+import packing.ChoiceVar;
 import syntax.SyntacticStructure;
 import syntax.ud.SyntaxOperator;
 import syntax.xle.FstructureElements.AttributeValuePair;
@@ -232,10 +233,10 @@ public class XLEoperator extends SyntaxOperator {
 
             ReadFsProlog fs2pl = ReadFsProlog.readPrologFile(sentence,vh);
 
-            LinkedHashMap<String, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
+            LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
             List<GraphConstraint> fsList = FsProlog2Java.fsHash2List(fsHash);
 
-            Fstructure fs = new Fstructure(fs2pl.sentenceID,fs2pl.sentence,fsList,true);
+            Fstructure fs = new Fstructure(fs2pl.sentenceID,fs2pl.sentence,fsList,fs2pl.cp);
 
             out.put(fs2pl.sentenceID,fs);
 
@@ -268,10 +269,10 @@ public class XLEoperator extends SyntaxOperator {
 
             ReadFsProlog fs2pl = ReadFsProlog.readPrologFile(sentence,vh);
 
-            LinkedHashMap<String, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
+            LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
             List<GraphConstraint> fsList = FsProlog2Java.fsHash2List(fsHash);
 
-            return new Fstructure(fs2pl.sentenceID,fs2pl.sentence,fsList,true);
+            return new Fstructure(fs2pl.sentenceID,fs2pl.sentence,fsList,fs2pl.cp);
 
         } else
         {throw new IOException("Input path must be a prolog structure as produced by the XLE");}

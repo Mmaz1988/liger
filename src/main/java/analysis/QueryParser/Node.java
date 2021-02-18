@@ -23,6 +23,7 @@ package analysis.QueryParser;
 
 
 import syntax.GraphConstraint;
+import utilities.HelperMethods;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -64,6 +65,10 @@ public void calculateSolutions()
     for (Integer key : getFsIndices().keySet())
     {
         usedKeys.add(getFsIndices().get(key).getFsNode());
+        if (HelperMethods.isInteger(getFsIndices().get(key).getFsValue()))
+        {
+            usedKeys.add(getFsIndices().get(key).getFsValue().toString());
+        }
     }
 
 
@@ -74,6 +79,8 @@ public void calculateSolutions()
             HashMap<String,HashMap<String,HashMap<Integer,GraphConstraint>>> binding = new HashMap<>();
             binding.put(getNodeVar(),new HashMap<>());
 
+
+            /*
             for (Integer key : getFsIndices().keySet())
         {
             if (getFsIndices().get(key).getFsNode().equals(fs))
@@ -81,6 +88,7 @@ public void calculateSolutions()
                 reference.get(fs).put(key,getFsIndices().get(key));
             }
             }
+            */
 
             // String key = getNodeVar()+fs;
             SolutionKey key = new SolutionKey(getNodeVar(),fs);

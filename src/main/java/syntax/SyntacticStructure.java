@@ -21,6 +21,7 @@
 
 package syntax;
 
+import packing.ChoiceSpace;
 import utilities.HelperMethods;
 
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ public class SyntacticStructure {
     public String local_id;
     public String sentence;
     public List<GraphConstraint> constraints;
+    public ChoiceSpace cp;
 
     public List<GraphConstraint> annotation = new ArrayList<>();
 
@@ -43,6 +45,14 @@ public class SyntacticStructure {
         this.local_id = local_id;
         this.sentence = sentence;
         this.constraints = fsFacts;
+    }
+
+    public SyntacticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts, ChoiceSpace cp)
+    {
+        this.local_id = local_id;
+        this.sentence = sentence;
+        this.constraints = fsFacts;
+        this.cp = cp;
     }
 
     public List<List<GraphConstraint>> getSubstructures(String name)

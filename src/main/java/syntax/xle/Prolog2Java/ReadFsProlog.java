@@ -21,6 +21,7 @@
 
 package syntax.xle.Prolog2Java;
 
+import packing.ChoiceSpace;
 import utilities.VariableHandler;
 
 import java.io.*;
@@ -34,6 +35,7 @@ public class ReadFsProlog implements Serializable {
     public List<String> prolog;
     public String sentenceID;
    public VariableHandler vh;
+   public ChoiceSpace cp;
 
 
     public ReadFsProlog(String sentenceID, String sentence, List<String> fsConstraints, VariableHandler vh)
@@ -41,6 +43,16 @@ public class ReadFsProlog implements Serializable {
         this.sentenceID = sentenceID;
         this.sentence = sentence;
         this.prolog = fsConstraints;
+        this.vh = vh;
+
+    }
+
+    public ReadFsProlog(String sentenceID, String sentence, List<String> fsConstraints, ChoiceSpace cp, VariableHandler vh)
+    {
+        this.sentenceID = sentenceID;
+        this.sentence = sentence;
+        this.prolog = fsConstraints;
+        this.cp = cp;
         this.vh = vh;
 
     }
@@ -75,6 +87,8 @@ public class ReadFsProlog implements Serializable {
         // This list will contain our f-structure constraints
         String inSentence = "";
         List<String> fsConstraints = new ArrayList<String>();
+        List<String> choiceSpace = new ArrayList<>();
+        ChoiceSpace cp = null;
 
         try {
             // reads in File
@@ -86,37 +100,42 @@ public class ReadFsProlog implements Serializable {
             Pattern constraints = Pattern.compile("(cf\\(.*\\))");
             // Mark up free sentence
             Pattern sentence = Pattern.compile( "'markup_free_sentence'\\((.*?)\\)");
+
+            Pattern choice = Pattern.compile("choice\\((.+)\\),?");
+
             // matches c-structure constraints (this is very ugly but maybe enough)
        //     Pattern cstructure = Pattern.compile("((surfaceform|semform_data)\\(.+\\))");
 
-            while ((strLine = br.readLine()) != null)
-            {
+            while ((strLine = br.readLine()) != null) {
 
                 Matcher sentenceMatcher = sentence.matcher(strLine);
                 Matcher constraintMatcher = constraints.matcher(strLine);
-   //             Matcher cstructureMatcher = cstructure.matcher(strLine);
+                Matcher choiceMatcher = choice.matcher(strLine);
+                //             Matcher cstructureMatcher = cstructure.matcher(strLine);
 
                 if (sentenceMatcher.find()) {
                     inSentence = sentenceMatcher.group(1);
                 }
 
-                if (constraintMatcher.find())
-                {
+                if (constraintMatcher.find()) {
                     // Material that we want to translate into java objects is stored in arrayList
                     fsConstraints.add(constraintMatcher.group(1));
-                //    counter++;
+                    //    counter++;
 
 //                if (cstructureMatcher.find())
 //                {
 //                    fsConstraints.add(cstructureMatcher.group(1));
 //                }
-
-                } else
+                }
+                if (choiceMatcher.find())
                 {
-                    continue;
+                    choiceSpace.add(choiceMatcher.group(1));
                 }
             }
           //  System.out.println(counter);
+
+
+             cp = new ChoiceSpace(choiceSpace);
 
 
             // Print out f-structure facts for test purposes
@@ -131,7 +150,7 @@ public class ReadFsProlog implements Serializable {
         fsConstraints = contractFstructure(fsConstraints);
         fsConstraints = removeEqualities(fsConstraints);
 
-        ReadFsProlog Fstructure = new ReadFsProlog(sentenceID, inSentence, fsConstraints,vh);
+        ReadFsProlog Fstructure = new ReadFsProlog(sentenceID, inSentence, fsConstraints, cp, vh);
         return Fstructure;
     }
 
@@ -200,7 +219,7 @@ public class ReadFsProlog implements Serializable {
                 while (varMatcher.find())
                 {
                     //for debugging reasons
-                    System.out.println(varMatcher.group(1));
+                   // System.out.println(varMatcher.group(1));
 
                     String varString = varMatcher.group(1);
                     varString = varString.replaceAll("\\(","\\\\(");

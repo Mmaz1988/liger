@@ -19,29 +19,43 @@
  * "
  */
 
-package syntax.xle;
-
-import packing.ChoiceSpace;
-import syntax.SyntacticStructure;
-import syntax.GraphConstraint;
-
-import java.util.List;
-
-public class Fstructure extends SyntacticStructure {
-
-    public boolean packed;
+package packing;
 
 
-    //TODO
-    //public Integer global_id
+import java.util.Objects;
 
-    public Fstructure(String local_id, String sentence, List<GraphConstraint> fsFacts, ChoiceSpace cp)
+public class ChoiceVar {
+
+    public String choiceID;
+    public Boolean propValue;
+
+    public ChoiceVar(String choiceID)
     {
-        super(local_id,sentence,fsFacts,cp);
-        if (cp.choiceNodes.size() > 0) {
-            this.packed = true;
-        }else{
-            this.packed = false;
+        this.choiceID = choiceID;
+        if (choiceID.equals("1"))
+        {
+            this.propValue = true;
         }
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChoiceVar choiceVar = (ChoiceVar) o;
+        return Objects.equals(choiceID, choiceVar.choiceID) &&
+                Objects.equals(propValue, choiceVar.propValue);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(choiceID, propValue);
+    }
+
+    @Override
+    public String toString()
+    {
+        return choiceID;
     }
 }

@@ -19,29 +19,19 @@
  * "
  */
 
-package syntax.xle;
+package analysis.QueryParser;
 
-import packing.ChoiceSpace;
-import syntax.SyntacticStructure;
-import syntax.GraphConstraint;
-
-import java.util.List;
-
-public class Fstructure extends SyntacticStructure {
-
-    public boolean packed;
+public class End extends QueryExpression{
 
 
-    //TODO
-    //public Integer global_id
+    public End()
+    {}
+    @Override
+    public void calculateSolutions() {
 
-    public Fstructure(String local_id, String sentence, List<GraphConstraint> fsFacts, ChoiceSpace cp)
-    {
-        super(local_id,sentence,fsFacts,cp);
-        if (cp.choiceNodes.size() > 0) {
-            this.packed = true;
-        }else{
-            this.packed = false;
-        }
+
+
     }
 }
+
+

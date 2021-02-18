@@ -192,10 +192,11 @@ public class QueryParser {
             } catch(IllegalArgumentException e)
             {
                 System.out.println("Element \"" + ((LinkedList<String>) queryDeque).get(i) + "\" not contained in current f-structure." );
-                queryList = new LinkedList<QueryExpression>();
-                break;
+                return new LinkedList<QueryExpression>();
             }
         }
+
+        queryList.add(new End());
 
         return queryList;
     }
@@ -272,16 +273,22 @@ public class QueryParser {
                             current.setFsIndices(previous.getFsIndices());
                             current.setSolution(previous.getSolution());
                             //  it.next();
-
-                        } else if (previous instanceof Value && current instanceof Equality && next instanceof Value) {
+                    } else if (current instanceof End)
+                    {
+                        EndExpression ee = new EndExpression(previous);
+                        result = ee.getSolution();
+                    }
+                        else if (previous instanceof Value && current instanceof Equality && next instanceof Value) {
                             EqualityExpression ee =
                                     new EqualityExpression((Value) previous, (Equality) current, (Value) next);
                             it.add(ee);
                             result = ee.getSolution();
                             it.next();
                             it.remove();
+                        }
 
-                        } else {
+
+                        else {
                             throw new IllegalArgumentException("Invalid query string! Error at " + it.nextIndex());
 
                         }

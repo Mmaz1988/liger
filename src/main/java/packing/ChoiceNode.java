@@ -19,29 +19,37 @@
  * "
  */
 
-package syntax.xle;
+package packing;
 
-import packing.ChoiceSpace;
-import syntax.SyntacticStructure;
-import syntax.GraphConstraint;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import java.util.List;
-
-public class Fstructure extends SyntacticStructure {
-
-    public boolean packed;
+public class ChoiceNode {
+    public Set<ChoiceVar> choiceNode;
+    public Set<ChoiceVar> daughterNodes;
 
 
-    //TODO
-    //public Integer global_id
-
-    public Fstructure(String local_id, String sentence, List<GraphConstraint> fsFacts, ChoiceSpace cp)
+    public ChoiceNode(Set<ChoiceVar> choiceNode, Set<ChoiceVar> daughterNodes)
     {
-        super(local_id,sentence,fsFacts,cp);
-        if (cp.choiceNodes.size() > 0) {
-            this.packed = true;
-        }else{
-            this.packed = false;
+        this.choiceNode = choiceNode;
+        this.daughterNodes = daughterNodes;
+    }
+
+    @Override
+    public String toString()
+    {
+        String mother;
+        if (choiceNode.size() == 1)
+        {
+            mother = choiceNode.stream().findAny().get().toString();
+        } else
+        {
+            mother = "or(" + choiceNode.stream().map(n -> n.toString()).collect(Collectors.joining(",")) + ")";
         }
+
+        String daughter = "[" + daughterNodes.stream().map(n -> n.toString()).collect(Collectors.joining(",")) + "]";
+
+        return "choice(" + daughter + "," + mother + ")";
+
     }
 }

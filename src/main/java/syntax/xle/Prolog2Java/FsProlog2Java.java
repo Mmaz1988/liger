@@ -21,6 +21,8 @@
 
 package syntax.xle.Prolog2Java;
 
+import packing.ChoiceSpace;
+import packing.ChoiceVar;
 import syntax.GraphConstraint;
 import syntax.xle.FstructureElements.*;
 import utilities.HelperMethods;
@@ -39,7 +41,7 @@ public class FsProlog2Java {
     public static Pattern keys = Pattern.compile("var\\((\\d+)\\)");
     public static Pattern preds = Pattern.compile("attr\\(var\\((\\d+)\\),('PRED')\\),(semform\\(.*\\[.*\\],\\[.*\\]\\))");
     public static Pattern adjuncts = Pattern.compile("attr\\(var\\((\\d+)\\),'ADJUNCT'\\),var\\((\\d+)\\)");
-    public static Pattern inSet = Pattern.compile("in_set\\((.*),var\\((.*?)\\)\\)");
+    public static Pattern inSet = Pattern.compile("in_set\\((.*),var\\((\\d+)\\)\\)");
     public static Pattern nonTerminals = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),var\\((\\d+)\\)");
     public static Pattern terminals = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),('.*')");
     public static Pattern cstructure = Pattern.compile("(semform_data|surfaceform)\\((.+?),(.+?),(.+?),(.+?)\\)");
@@ -54,12 +56,12 @@ public class FsProlog2Java {
         this.In = input;
     }
 
-    public static  LinkedHashMap<String,LinkedHashMap<Integer, List<AttributeValuePair>>> fs2Hash(ReadFsProlog plFs) {
+    public static  LinkedHashMap<Set<ChoiceVar>,LinkedHashMap<Integer, List<AttributeValuePair>>> fs2Hash(ReadFsProlog plFs) {
         // This method creates a hashmap from prolog input
 
         List<String> constraints = plFs.prolog;
-        LinkedHashMap<String, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash =
-                new LinkedHashMap<String, LinkedHashMap<Integer, List<AttributeValuePair>>>();
+        LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash =
+                new LinkedHashMap<>();
 
         //Patterns for different kinds of f-structure constraints
 
@@ -74,13 +76,15 @@ public class FsProlog2Java {
             Matcher terminalsMatcher = terminals.matcher(constraint);
             Matcher cstructureMatcher = cstructure.matcher(constraint);
 
-
+            Set<ChoiceVar> context = null;
 
             if (ambMatcher.find()) {
-                String key = ambMatcher.group(1);
-                if (!fsHash.containsKey(key)) {
+                context = ChoiceSpace.parseChoice(ambMatcher.group(1));
+                plFs.cp.choices.add(context);
+
+                if (!fsHash.containsKey(context)) {
                     LinkedHashMap<Integer, List<AttributeValuePair>> fsConstraints = new LinkedHashMap<>();
-                    fsHash.put(key, fsConstraints);
+                    fsHash.put(context, fsConstraints);
                 }
             }
             else {
@@ -90,17 +94,17 @@ public class FsProlog2Java {
             // Collects keys for hashMap
             while (keyMatcher.find()) {
                 Integer var = Integer.parseInt(keyMatcher.group(1));
-                if (!fsHash.get(ambMatcher.group(1)).containsKey(var)) {
+                if (!fsHash.get(context).containsKey(var)) {
                     Integer key = var;
                     List<AttributeValuePair> values = new ArrayList<AttributeValuePair>();
-                    fsHash.get(ambMatcher.group(1)).put(key, values);
+                    fsHash.get(context).put(key, values);
                 }
             }
 
             //Processes preds
             if (predsMatcher.find()) {
                 Integer key = Integer.parseInt(predsMatcher.group(1));
-                List<AttributeValuePair> values = fsHash.get(ambMatcher.group(1)).get(key);
+                List<AttributeValuePair> values = fsHash.get(context).get(key);
                 PredAVP avp = new PredAVP(predsMatcher.group(2), predsMatcher.group(3));
                 values.add(avp);
                 continue;
@@ -110,7 +114,7 @@ public class FsProlog2Java {
             if (adjunctMatcher.find()) {
 
                 List<AttributeValuePair> values =
-                        fsHash.get(ambMatcher.group(1)).get(Integer.parseInt(adjunctMatcher.group(1)));
+                        fsHash.get(context).get(Integer.parseInt(adjunctMatcher.group(1)));
                 Adjunct avp = new Adjunct(adjunctMatcher.group(2));
                 values.add(avp);
                 continue;
@@ -119,7 +123,7 @@ public class FsProlog2Java {
             //Processes non-terminal nodes
             if (nonTerminalMatcher.find()) {
                 Integer key = Integer.parseInt(nonTerminalMatcher.group(1));
-                List<AttributeValuePair> values = fsHash.get(ambMatcher.group(1)).get(key);
+                List<AttributeValuePair> values = fsHash.get(context).get(key);
                 NonTerminalAVP avp = new NonTerminalAVP(nonTerminalMatcher.group(2), nonTerminalMatcher.group(3));
                 values.add(avp);
                 continue;
@@ -128,8 +132,22 @@ public class FsProlog2Java {
 
             if (setMatcher.find()) {
                 Integer key = Integer.parseInt(setMatcher.group(2));
-                List<AttributeValuePair> values = fsHash.get(ambMatcher.group(1)).get(key);
-                AdjunctSet avp = new AdjunctSet(setMatcher.group(1));
+                List<AttributeValuePair> values = fsHash.get(context).get(key);
+
+                Matcher varMatcher = keys.matcher(setMatcher.group(1));
+
+                String var;
+
+                if (varMatcher.find())
+                {
+                    var = varMatcher.group(1);
+                }
+                else
+                {
+                    var = setMatcher.group(1);
+                }
+
+                AdjunctSet avp = new AdjunctSet(var);
                 values.add(avp);
                 continue;
             }
@@ -138,7 +156,7 @@ public class FsProlog2Java {
             // Processes terminal nodes in the f-structure
             if (terminalsMatcher.find()) {
                 Integer key = Integer.parseInt(terminalsMatcher.group(1));
-                List<AttributeValuePair> values = fsHash.get(ambMatcher.group(1)).get(key);
+                List<AttributeValuePair> values = fsHash.get(context).get(key);
                 TerminalAVP avp = new TerminalAVP(terminalsMatcher.group(2), terminalsMatcher.group(3));
                 values.add(avp);
                 continue;
@@ -146,12 +164,12 @@ public class FsProlog2Java {
 
             if (cstructureMatcher.find())
             {
-                if (!fsHash.get(ambMatcher.group(1)).containsKey(-1))
+                if (!fsHash.get(context).containsKey(-1))
                 {
-                    fsHash.get(ambMatcher.group(1)).put(-1,new ArrayList<AttributeValuePair>());
+                    fsHash.get(context).put(-1,new ArrayList<AttributeValuePair>());
                 }
                 else {
-                    List<AttributeValuePair> values = fsHash.get(ambMatcher.group(1)).get(-1);
+                    List<AttributeValuePair> values = fsHash.get(context).get(-1);
                     CsCorrespondence csc = new CsCorrespondence(cstructureMatcher.group(1),
                             Arrays.asList(cstructureMatcher.group(2),
                                             cstructureMatcher.group(3),
@@ -166,7 +184,7 @@ public class FsProlog2Java {
 
         // Debug print fsHash
 
-        for (String key1 : fsHash.keySet()) {
+        for (Set<ChoiceVar> key1 : fsHash.keySet()) {
             for (Integer key : fsHash.get(key1).keySet()) {
                 String keyO = key.toString();
                 String value = fsHash.get(key1).get(key).toString();
@@ -179,7 +197,7 @@ public class FsProlog2Java {
 
 
     public static List<GraphConstraint> fsHash2List(
-            LinkedHashMap<String,
+            LinkedHashMap<Set<ChoiceVar>,
                     LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash)
     {
 
@@ -188,7 +206,7 @@ public class FsProlog2Java {
 
         List<GraphConstraint> out = new ArrayList<GraphConstraint>();
 
-        for(String ambKey : fsHash.keySet())
+        for(Set<ChoiceVar> ambKey : fsHash.keySet())
 
         {
 
@@ -220,7 +238,7 @@ public class FsProlog2Java {
                         }
                     }
 
-                    out.add(new GraphConstraint(new HashSet<String>(Collections.singleton(ambKey)),key,attribute,value));
+                    out.add(new GraphConstraint(ambKey,key,attribute,value));
                 }
 
 

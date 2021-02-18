@@ -21,6 +21,7 @@
 
 package syntax;
 
+import packing.ChoiceVar;
 import utilities.HelperMethods;
 
 import java.io.Serializable;
@@ -32,7 +33,7 @@ public class GraphConstraint implements Serializable {
 
 
     //basic string based representation of graph nodes and labeled edges
-    private Set<String> reading;
+    private Set<ChoiceVar> reading;
     private String nodeIdentifier;
     private String relationLabel;
     private Object fsValue;
@@ -41,7 +42,7 @@ public class GraphConstraint implements Serializable {
     public GraphConstraint()
     {}
 
-    public GraphConstraint(Set<String> reading, Integer fsNode, String relationLabel, Object fsValue)
+    public GraphConstraint(Set<ChoiceVar> reading, Integer fsNode, String relationLabel, Object fsValue)
     {
         this.reading = reading;
         this.nodeIdentifier = fsNode.toString();
@@ -134,11 +135,11 @@ public class GraphConstraint implements Serializable {
         this.fsValue = fsValue;}
 
 
-    public Set<String> getReading() {
+    public Set<ChoiceVar> getReading() {
         return reading;
     }
 
-    public void setReading(Set<String> reading) {
+    public void setReading(Set<ChoiceVar> reading) {
         this.reading = reading;
     }
 

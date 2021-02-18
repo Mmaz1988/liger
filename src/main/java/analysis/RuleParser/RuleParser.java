@@ -25,6 +25,7 @@ import analysis.LinguisticDictionary;
 import analysis.QueryParser.QueryParser;
 import analysis.QueryParser.QueryParserResult;
 import analysis.QueryParser.SolutionKey;
+import packing.ChoiceVar;
 import syntax.SyntacticStructure;
 import syntax.GraphConstraint;
 import utilities.HelperMethods;
@@ -133,6 +134,7 @@ public class RuleParser {
             {
                 List<String> search = r.splitGoal();
 
+
                 try {
                     //for (String searchString : search) {
                     for (int i = 0; i < search.size(); i++)
@@ -150,6 +152,7 @@ public class RuleParser {
                             if (nodeMatcher.matches()) {
                                     for (Set<SolutionKey> solutionKey : qpr.result.keySet())
                                     {
+                                        Set<ChoiceVar> context = extractContexts(qpr.result.get(solutionKey), newConstraints);
                                         if (variableIsAssigned(qpr,solutionKey,nodeMatcher.group(1))) {
 
                                         String key2 = qpr.result.get(solutionKey).get(nodeMatcher.group(1)).keySet().stream().findAny().get();
@@ -159,6 +162,7 @@ public class RuleParser {
 
                                                     String key3 = qpr.result.get(solutionKey).get(valueMatcher.group(1)).keySet().stream().findAny().get();
                                                         GraphConstraint c = new GraphConstraint();
+                                                        c.setReading(context);
                                                         c.setFsNode(key2);
                                                         c.setRelationLabel(graphMatcher.group(2));
                                                         c.setFsValue(key3);
@@ -166,12 +170,16 @@ public class RuleParser {
                                                         //Readings experiment start
                                                 for (Integer constraintKey : newConstraints.keySet())
                                                 {
-                                                    String reading = "A1";
+                                                    //TODO return unused context
+                                                    ChoiceVar choice = new ChoiceVar("X1");
+                                                    Set<ChoiceVar> newChoice = new HashSet<>();
+                                                    newChoice.add(choice);
 
                                                     GraphConstraint c1 = newConstraints.get(constraintKey);
-                                                    if (c1.getFsNode().equals(key2) && c1.getRelationLabel().equals(c.getRelationLabel()))
+                                                    if (c1.getFsNode().equals(key2) && c1.getRelationLabel().equals(c.getRelationLabel()) &&
+                                                        c1.getReading().equals(c.getReading()))
                                                     {
-                                                        c.setReading(new HashSet<String>());
+                                                        c.setReading(newChoice);
                                                     }
                                                 }
                                                 //Readings experiment end
@@ -198,6 +206,7 @@ public class RuleParser {
                                                 //   qp.getFsVarAssignment().get(valueMatcher.group(1)).add(newFsNode);
 
                                                 GraphConstraint c = new GraphConstraint();
+                                                c.setReading(context);
                                                 c.setFsNode(key2);
                                                 c.setRelationLabel(graphMatcher.group(2));
                                                 c.setFsValue(newFsNode);
@@ -232,6 +241,7 @@ public class RuleParser {
                                             if (!replaceValue) {
 
                                                 GraphConstraint c = new GraphConstraint();
+                                                c.setReading(context);
                                                 c.setFsNode(key2);
                                                 c.setRelationLabel(graphMatcher.group(2));
                                                 c.setFsValue(newValue);
@@ -240,12 +250,16 @@ public class RuleParser {
                                                 //Reading experiment start
                                                 for (Integer constraintKey : newConstraints.keySet())
                                                 {
-                                                    String reading = "A1";
+                                                    //TODO return unused context
+                                                    ChoiceVar choice = new ChoiceVar("A1");
+                                                    Set<ChoiceVar> newChoice = new HashSet<>();
+                                                    newChoice.add(choice);
 
                                                     GraphConstraint c1 = newConstraints.get(constraintKey);
-                                                    if (c1.getFsNode().equals(key2) && c1.getRelationLabel().equals(graphMatcher.group(2)))
+                                                    if (c1.getFsNode().equals(key2) && c1.getRelationLabel().equals(graphMatcher.group(2)) &&
+                                                    c.getReading().equals(c1.getReading()))
                                                     {
-                                                        c.setReading(new HashSet<String>());
+                                                        c.setReading(newChoice);
                                                     }
                                                 }
                                                 //Reading experiment end
@@ -276,6 +290,7 @@ public class RuleParser {
                                                 String key3 = qpr.result.get(solutionKey).get(valueMatcher.group(1)).keySet().stream().findAny().get();
 
                                                 GraphConstraint c = new GraphConstraint();
+                                                c.setReading(context);
                                                 c.setFsNode(key2);
                                                 c.setRelationLabel(graphMatcher.group(2));
                                                 c.setFsValue(key3);
@@ -287,6 +302,7 @@ public class RuleParser {
                                                 String newFsNode = returnUnusedVar();
 
                                                 GraphConstraint c = new GraphConstraint();
+                                                c.setReading(context);
                                                 c.setFsNode(key2);
                                                 c.setRelationLabel(graphMatcher.group(2));
                                                 c.setFsValue(newFsNode);
@@ -297,6 +313,7 @@ public class RuleParser {
                                             }
                                         } else {
                                             GraphConstraint c = new GraphConstraint();
+                                            c.setReading(context);
                                             c.setFsNode(key2);
                                             c.setRelationLabel(graphMatcher.group(2));
                                             c.setFsValue(graphMatcher.group(3));
@@ -572,7 +589,7 @@ public class RuleParser {
 
     }
 
-
+/*
     public void resolveAmbiguity(GraphConstraint a, GraphConstraint b, HashMap<Integer,GraphConstraint> fsConstraints)
     {
         Set<String> usedReadings = new HashSet<>();
@@ -582,12 +599,42 @@ public class RuleParser {
             usedReadings.addAll(fsConstraints.get(key).getReading());
         }
     }
+*/
 
     public void resetRuleParser()
     {
         usedKeys = new HashSet<>();
         usedReadings = new HashSet<>();
     }
+
+public Set<ChoiceVar> extractContexts( HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> result,
+                                       HashMap<Integer,GraphConstraint> newConstraints)
+{
+ Set<ChoiceVar> out = new HashSet<>();
+
+ for (String key : result.keySet())
+ {
+     for (String key2 : result.get(key).keySet()) {
+         for (Integer key3 : result.get(key).get(key2).keySet())
+         {
+
+                 if (!result.get(key).get(key2).get(key3).getReading().stream().findAny().get().toString().equals("1") &&
+                        !newConstraints.keySet().contains(key3))
+                 {
+                     out.addAll(result.get(key).get(key2).get(key3).getReading());
+                 }
+
+         }
+     }
+ }
+    if (!out.isEmpty())
+    {return  out;}
+    else
+    {
+        out.add(new ChoiceVar("1"));
+        return out;
+    }
+}
 }
 
 
