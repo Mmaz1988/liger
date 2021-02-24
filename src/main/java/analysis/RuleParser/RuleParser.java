@@ -171,14 +171,15 @@ public class RuleParser {
                                                 for (Integer constraintKey : newConstraints.keySet())
                                                 {
                                                     //TODO return unused context
-                                                    ChoiceVar choice = new ChoiceVar("X1");
-                                                    Set<ChoiceVar> newChoice = new HashSet<>();
-                                                    newChoice.add(choice);
+
 
                                                     GraphConstraint c1 = newConstraints.get(constraintKey);
                                                     if (c1.getFsNode().equals(key2) && c1.getRelationLabel().equals(c.getRelationLabel()) &&
                                                         c1.getReading().equals(c.getReading()))
                                                     {
+                                                        ChoiceVar choice = new ChoiceVar("X1");
+                                                        Set<ChoiceVar> newChoice = new HashSet<>();
+                                                        newChoice.add(choice);
                                                         c.setReading(newChoice);
                                                     }
                                                 }
@@ -230,7 +231,8 @@ public class RuleParser {
                                             boolean replaceValue = false;
                                             for (GraphConstraint c : fs.annotation)
                                             {
-                                                if ( c.getFsNode().equals(key2) && c.getRelationLabel().equals(graphMatcher.group(2)))
+                                                if ( c.getFsNode().equals(key2) && c.getRelationLabel().equals(graphMatcher.group(2)) &&
+                                                c.getReading().equals(context))
                                                 {
                                                     c.setFsValue(newValue);
                                                     replaceValue = true;

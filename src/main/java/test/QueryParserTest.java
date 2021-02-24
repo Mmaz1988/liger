@@ -372,10 +372,14 @@ public class QueryParserTest {
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
             RuleParser rp = new RuleParser(new ArrayList<>());
+            rp.setReplace(true);
 
-            Rule r1 = new Rule("#g ADJUNCT #h & #h inSet #i ==> #i ADJ-SEM 'event'.");
+            Rule r1 = new Rule("#g ADJUNCT #h & #h inSet #i & #g TNS-ASP #j ==> #i ADJ-SEM '#g -o #i'.");
+            Rule r2 = new Rule("#g ADJUNCT #h & #h inSet #i & #g NTYPE #a ==> #i ADJ-SEM '#g -o #i'.");
 
             rp.getRules().add(r1);
+            rp.getRules().add(r2);
+
 
             String key2 = fs.keySet().stream().findAny().get();
 

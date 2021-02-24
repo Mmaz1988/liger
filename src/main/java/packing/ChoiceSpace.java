@@ -32,6 +32,7 @@ public class ChoiceSpace {
     public static Pattern choicePattern = Pattern.compile("\\[(.+)\\],(.+)");
     public static Pattern orPattern = Pattern.compile("or\\((.+)\\)");
 
+    public Set<ChoiceVar> rootChoice = new HashSet<ChoiceVar>(Collections.singleton(new ChoiceVar("1")));
     public List<ChoiceNode> choiceNodes;
     public Set<Set<ChoiceVar>> choices = new HashSet<>();
 

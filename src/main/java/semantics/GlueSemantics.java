@@ -26,70 +26,90 @@ import glueSemantics.linearLogic.Sequent;
 import glueSemantics.parser.GlueParser;
 import glueSemantics.semantics.LexicalEntry;
 import main.Settings;
+import packing.ChoiceVar;
 import prover.LLProver2;
-import syntax.SyntacticStructure;
 import syntax.GraphConstraint;
+import syntax.SyntacticStructure;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 public class GlueSemantics {
 
     public GlueParser glueParser = new GlueParser(true );
-    public LLProver2 llprover = new LLProver2(new Settings(), new StringBuilder());
+    public LLProver2 llprover;
 
     public GlueSemantics()
     {}
 
-    public String calculateSemantics(SyntacticStructure fs)
-    {
+    public String calculateSemantics(SyntacticStructure fs) {
+        HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
+
+        for (Set<ChoiceVar> choice : fs.cp.choices) {
+            if (!choice.equals(fs.cp.rootChoice)) {
+                unpackedSem.put(choice, new ArrayList<>());
+            }
+        }
+
         List<String> meaningConstructorStrings = new ArrayList<>();
-        for (GraphConstraint c : fs.annotation)
-        {
-            if (c.getRelationLabel().equals("GLUE"))
-            {
-                meaningConstructorStrings.add(c.getFsValue().toString());
-              //  System.out.println(c.getFsValue().toString());
-            }
-        }
-        List<LexicalEntry> lexicalEntries = new ArrayList<>();
-
-        for (String mc : meaningConstructorStrings)
-        {
-          //  System.out.println(mc);
-
-            try {
-                LexicalEntry le = glueParser.parseMeaningConstructor(mc);
-                lexicalEntries.add(le);
-            }catch(Exception e)
-            {
-                System.out.println("Failed to parse meaning constructor " + mc);
-                e.printStackTrace();
+        for (GraphConstraint c : fs.annotation) {
+            if (c.getRelationLabel().equals("GLUE")) {
+                if (unpackedSem.containsKey(c.getReading())) {
+                    unpackedSem.get(c.getReading()).add(c.getFsValue().toString());
+                } else {
+                    for (Set<ChoiceVar> key : unpackedSem.keySet()) {
+                        unpackedSem.get(key).add(c.getFsValue().toString());
+                    }
+                }
+                //  System.out.println(c.getFsValue().toString());
             }
         }
 
-        Sequent s = new Sequent(lexicalEntries);
-
-        try {
-            llprover.deduce(s);
-        }catch(Exception e)
-        {
-            System.out.println("Failed to deduce a meaning from f-structure: " + fs.local_id);
-            e.printStackTrace();
-        }
-
+        //Unpacked semantic calculation
         StringBuilder solutionBuilder = new StringBuilder();
 
-        for (Premise p : llprover.getSolutions()) {
-            solutionBuilder.append(p.toString());
-            solutionBuilder.append(System.lineSeparator());
+
+        for (Set<ChoiceVar> key : unpackedSem.keySet()) {
+
+            llprover = new LLProver2(new Settings(), new StringBuilder());
+
+            List<LexicalEntry> lexicalEntries = new ArrayList<>();
+
+            for (String mc : unpackedSem.get(key)) {
+                System.out.println(mc);
+
+                try {
+                    LexicalEntry le = glueParser.parseMeaningConstructor(mc);
+                    lexicalEntries.add(le);
+                } catch (Exception e) {
+                    System.out.println("Failed to parse meaning constructor " + mc);
+                    e.printStackTrace();
+                }
+            }
+
+            Sequent s = new Sequent(lexicalEntries);
+
+            try {
+                llprover.deduce(s);
+            } catch (Exception e) {
+                System.out.println("Failed to deduce a meaning from f-structure: " + fs.local_id);
+                e.printStackTrace();
+            }
+
+
+            for (Premise p : llprover.getSolutions()) {
+                solutionBuilder.append(p.toString());
+                solutionBuilder.append(System.lineSeparator());
+            }
+
+            System.out.println(llprover.getProofBuilder().toString());
+
+
         }
-
-        System.out.println(llprover.getProofBuilder().toString());
-
         return solutionBuilder.toString();
     }
-
 
     /*
        public LexicalEntry parseMeaningConstructor(String mc) throws ParserInputException {
