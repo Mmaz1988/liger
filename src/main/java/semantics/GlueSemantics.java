@@ -47,10 +47,15 @@ public class GlueSemantics {
     public String calculateSemantics(SyntacticStructure fs) {
         HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
 
-        for (Set<ChoiceVar> choice : fs.cp.choices) {
-            if (!choice.equals(fs.cp.rootChoice)) {
-                unpackedSem.put(choice, new ArrayList<>());
+        if(fs.cp.choices.size() > 1) {
+            for (Set<ChoiceVar> choice : fs.cp.choices) {
+                if (!choice.equals(fs.cp.rootChoice)) {
+                    unpackedSem.put(choice, new ArrayList<>());
+                }
             }
+        }else
+        {
+            unpackedSem.put(fs.cp.rootChoice,new ArrayList<>());
         }
 
         List<String> meaningConstructorStrings = new ArrayList<>();

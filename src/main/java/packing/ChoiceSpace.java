@@ -40,6 +40,7 @@ public class ChoiceSpace {
     {
        choiceNodes = parseChoiceSpace(choices);
     }
+    public  ChoiceSpace() {}
 
 
     public static Set<ChoiceVar> parseChoice(String choice)

@@ -28,6 +28,7 @@ import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.process.Morphology;
 import edu.stanford.nlp.trees.GrammaticalStructure;
 import edu.stanford.nlp.trees.TypedDependency;
+import packing.ChoiceSpace;
 import packing.ChoiceVar;
 import syntax.GraphConstraint;
 import syntax.SyntacticStructure;
@@ -94,6 +95,8 @@ public class UDoperator extends SyntaxOperator{
 
         Morphology morphology = new Morphology();
 
+        ChoiceSpace cp = new ChoiceSpace();
+
         for (GrammaticalStructure parse : stanfordParse) {
             //Dependency list
             List<GraphConstraint> dh = new ArrayList<>();
@@ -102,6 +105,7 @@ public class UDoperator extends SyntaxOperator{
 
                 Set<ChoiceVar> context = new HashSet<>();
                 context.add(new ChoiceVar("1"));
+                cp.choices.add(context);
 
                 GraphConstraint dc = new GraphConstraint(context, dep.gov().index(),
                         dep.reln().toString(),
@@ -134,8 +138,9 @@ public class UDoperator extends SyntaxOperator{
             }
         }
 
-        UDstructure ud = new UDstructure(vh.returnNewVar(VariableHandler.variableType.SENTENCE_ID,null),sentence,out);
 
+        UDstructure ud = new UDstructure(vh.returnNewVar(VariableHandler.variableType.SENTENCE_ID,null),sentence,out);
+        ud.cp = cp;
 
         return ud;
     }
