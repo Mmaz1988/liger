@@ -21,6 +21,7 @@
 
 package syntax.xle.Prolog2Java;
 
+import main.DbaMain;
 import packing.ChoiceSpace;
 import packing.ChoiceVar;
 import syntax.GraphConstraint;
@@ -28,6 +29,7 @@ import syntax.xle.FstructureElements.*;
 import utilities.HelperMethods;
 
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,7 +47,7 @@ public class FsProlog2Java {
     public static Pattern nonTerminals = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),var\\((\\d+)\\)");
     public static Pattern terminals = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),('.*')");
     public static Pattern cstructure = Pattern.compile("(semform_data|surfaceform)\\((.+?),(.+?),(.+?),(.+?)\\)");
-
+    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
 
     public ReadFsProlog In;
     //public LinkedHashMap<Integer, List<Object>> FsHash;
@@ -88,7 +90,7 @@ public class FsProlog2Java {
                 }
             }
             else {
-                System.out.println(constraint + " threw an error");
+                LOGGER.warning(constraint + " threw an error");
             }
 
             // Collects keys for hashMap
@@ -182,8 +184,9 @@ public class FsProlog2Java {
 
         }
 
+        //TODO add to logger?
         // Debug print fsHash
-
+/*
         for (Set<ChoiceVar> key1 : fsHash.keySet()) {
             for (Integer key : fsHash.get(key1).keySet()) {
                 String keyO = key.toString();
@@ -191,7 +194,7 @@ public class FsProlog2Java {
                 System.out.println(key1 + " " + keyO + " " + value);
             }
         }
-
+*/
         return fsHash;
     }
 
@@ -281,68 +284,7 @@ public class FsProlog2Java {
     public static LinkedHashMap<Integer,List<AttributeValuePair>>
     deleteEmptyEntries(LinkedHashMap<Integer,List<AttributeValuePair>> fsHash)
     {
-        for (Iterator<Map.Entry<Integer,List<AttributeValuePair>>> it = fsHash.entrySet().iterator(); it.hasNext();)
-        {
-            Map.Entry<Integer,List<AttributeValuePair>> entry = it.next();
-            if (entry.getValue().isEmpty())
-            {
-                it.remove();
-            }
-        }
+        fsHash.entrySet().removeIf(entry -> entry.getValue().isEmpty());
         return fsHash;
-    }
-
-
-    public static String fsHashToString(
-            LinkedHashMap<String,
-            LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash)
-    {
-
-        StringBuilder builder = new StringBuilder();
-
-
-        for (String stringkey : fsHash.keySet())
-
-        {
-            SortedSet<Integer> keys = new TreeSet<Integer>(fsHash.get(stringkey).keySet());
-
-            for (Integer key : keys) {
-                String keyO = key.toString();
-                String value = fsHash.get(stringkey).get(key).toString();
-                builder.append(stringkey + " " + keyO + " " + value);
-                builder.append(System.lineSeparator());
-            }
-        }
-
-        return builder.toString();
-    }
-
-
-
-    //TODO This function needs to be fixed. It runs into an endless recursive loop sometimes. Probably due to the kei variable.
-    public static Set<Integer> returnPathNodes(LinkedHashMap<String,
-            LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash,
-                                               Integer key, String ambkey, Set<Integer> pathNodes)
-    {
-        for (Integer kei : fsHash.get(ambkey).keySet())
-        {
-            for (AttributeValuePair avp : fsHash.get(ambkey).get(kei))
-            {
-                try {
-                    if ((Integer.parseInt(avp.value)) == key)
-                    {
-                        System.out.println(avp.toString());
-                        pathNodes.add(kei);
-                        return returnPathNodes(fsHash,kei,ambkey,pathNodes);
-                    }
-                }
-                catch(Exception e)
-                {
-                    continue;
-                }
-            }
-        }
-        return pathNodes;
-
     }
 }

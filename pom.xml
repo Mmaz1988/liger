@@ -95,7 +95,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>DbaMain</mainClass>
+							<mainClass>main.DbaMain</mainClass>
 						</manifest>
 					</archive>
 				</configuration>

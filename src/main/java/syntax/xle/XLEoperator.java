@@ -21,12 +21,13 @@
 
 package syntax.xle;
 
+import main.DbaMain;
 import packing.ChoiceVar;
+import syntax.GraphConstraint;
 import syntax.SyntacticStructure;
 import syntax.ud.SyntaxOperator;
 import syntax.xle.FstructureElements.AttributeValuePair;
 import syntax.xle.Prolog2Java.FsProlog2Java;
-import syntax.GraphConstraint;
 import syntax.xle.Prolog2Java.ReadFsProlog;
 import utilities.VariableHandler;
 
@@ -35,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -47,6 +49,8 @@ public class XLEoperator extends SyntaxOperator {
     public VariableHandler vh;
 
     public String xlebashcommand = "/Users/red_queen/IdeaProjects/xlebatchparsing/resources/xlebash.sh";
+    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+
 
     public XLEoperator(VariableHandler vh)
     {
@@ -85,7 +89,7 @@ public class XLEoperator extends SyntaxOperator {
                    .forEach(File::delete);
             }catch(Exception e)
             {
-                System.out.println("Failed to delete output directory");
+                LOGGER.warning("Failed to delete output directory");
             }
         }
             new File("parser_output").mkdirs();
@@ -104,7 +108,7 @@ public class XLEoperator extends SyntaxOperator {
         }
         catch(Exception e)
         {
-            System.out.println("Something went wrong.");
+            LOGGER.warning("Something went wrong.\n" + e.getMessage());
         }
         try
         {

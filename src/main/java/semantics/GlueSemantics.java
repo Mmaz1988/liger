@@ -25,21 +25,28 @@ import glueSemantics.linearLogic.Premise;
 import glueSemantics.linearLogic.Sequent;
 import glueSemantics.parser.GlueParser;
 import glueSemantics.semantics.LexicalEntry;
+import main.DbaMain;
 import main.Settings;
 import packing.ChoiceVar;
-import prover.LLProver2;
+import prover.LLProver;
+import prover.LLProver1;
 import syntax.GraphConstraint;
 import syntax.SyntacticStructure;
+import utilities.MyFormatter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Logger;
 
 public class GlueSemantics {
 
     public GlueParser glueParser = new GlueParser(true );
-    public LLProver2 llprover;
+    public LLProver llprover;
+
+    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
 
     public GlueSemantics()
     {}
@@ -78,19 +85,24 @@ public class GlueSemantics {
 
         for (Set<ChoiceVar> key : unpackedSem.keySet()) {
 
-            llprover = new LLProver2(new Settings(), new StringBuilder());
+            llprover = new LLProver1(new Settings(), new StringBuilder());
+
+            LLProver.getLOGGER().setUseParentHandlers(false);
+            ConsoleHandler handler = new ConsoleHandler();
+            handler.setFormatter(new MyFormatter());
+            LLProver.getLOGGER().addHandler(handler);
 
             List<LexicalEntry> lexicalEntries = new ArrayList<>();
 
             for (String mc : unpackedSem.get(key)) {
-                System.out.println(mc);
+         //       System.out.println(mc);
 
                 try {
                     LexicalEntry le = glueParser.parseMeaningConstructor(mc);
                     lexicalEntries.add(le);
                 } catch (Exception e) {
-                    System.out.println("Failed to parse meaning constructor " + mc);
-                    e.printStackTrace();
+                    LOGGER.warning("Failed to parse meaning constructor " + mc);
+                    LOGGER.warning(e.getMessage());
                 }
             }
 
@@ -99,8 +111,8 @@ public class GlueSemantics {
             try {
                 llprover.deduce(s);
             } catch (Exception e) {
-                System.out.println("Failed to deduce a meaning from f-structure: " + fs.local_id);
-                e.printStackTrace();
+                LOGGER.warning("Failed to deduce a meaning from f-structure: " + fs.local_id);
+                LOGGER.warning(e.getMessage());
             }
 
 
@@ -109,7 +121,7 @@ public class GlueSemantics {
                 solutionBuilder.append(System.lineSeparator());
             }
 
-            System.out.println(llprover.getProofBuilder().toString());
+         //   System.out.println(((LLProver1) llprover).getProofBuilder().toString());
 
 
         }

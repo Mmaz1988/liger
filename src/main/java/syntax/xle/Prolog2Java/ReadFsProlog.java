@@ -21,11 +21,13 @@
 
 package syntax.xle.Prolog2Java;
 
+import main.DbaMain;
 import packing.ChoiceSpace;
 import utilities.VariableHandler;
 
 import java.io.*;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,7 +38,7 @@ public class ReadFsProlog implements Serializable {
     public String sentenceID;
    public VariableHandler vh;
    public ChoiceSpace cp;
-
+    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
 
     public ReadFsProlog(String sentenceID, String sentence, List<String> fsConstraints, VariableHandler vh)
     {
@@ -72,7 +74,7 @@ public class ReadFsProlog implements Serializable {
             }
         }catch(Exception e)
         {
-            System.out.println("Invalid prolog file name: Could not retrieve sentence ID");
+           LOGGER.warning("Invalid prolog file name: Could not retrieve sentence ID");
         }
 
         if (sentenceID == null)
@@ -138,10 +140,11 @@ public class ReadFsProlog implements Serializable {
              cp = new ChoiceSpace(choiceSpace);
 
 
-            // Print out f-structure facts for test purposes
+            /* Print out f-structure facts for test purposes
             for (int i = 0; i < fsConstraints.size(); i++) {
                 System.out.println(fsConstraints.get(i));
             }
+*/
 
         } catch (IOException e) {
             e.printStackTrace();

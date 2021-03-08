@@ -1,5 +1,26 @@
+/*
+ * "
+ *     Copyright (C) 2021 Mark-Matthias Zymla
+ *
+ *     This file is part of the abstract syntax annotator  (https://github.com/Mmaz1988/abstract-syntax-annotator-web/blob/master/README.md).
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * "
+ */
 
-    /*
+package main;
+/*
      * "
      *     Copyright (C) 2021 Mark-Matthias Zymla
      *
@@ -29,24 +50,37 @@ import syntax.ud.SyntaxOperator;
 import syntax.ud.UDoperator;
 import syntax.xle.XLEoperator;
 import utilities.DBASettings;
+import utilities.MyFormatter;
 import utilities.PathVariables;
 import utilities.VariableHandler;
 import webservice.WebApplication;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.util.*;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
-public class DbaMain {
+    public class DbaMain {
 
 
 
   //  public BufferedWriter outputWriter;
     public static DBASettings settings;
+    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
 
 
     public static void main(String[] args) {
+
+        LOGGER.setUseParentHandlers(false);
+        ConsoleHandler handler = new ConsoleHandler();
+        handler.setFormatter(new MyFormatter());
+        handler.setLevel(Level.FINE);
+        LOGGER.addHandler(handler);
+        LOGGER.setLevel(Level.ALL);
+
+        LOGGER.info("Starting linguistic rewrite system -- copyright 2021 Mark-Matthias Zymla");
 
         initiateArguments(args);
     }
@@ -109,26 +143,11 @@ public class DbaMain {
 
         if (settings.web)
         {
+            LOGGER.info("Running system as web service ... ");
             WebApplication web = new WebApplication();
             web.main(new String[0]);
         }
         else {
-            if (settings.inputFile != null) {
-                try {
-
-                    File inFile = new File(settings.inputFile);
-
-                    if (inFile.exists()) {
-                        List<String> lines = null;
-
-                        lines = Files.readAllLines(inFile.toPath());
-
-                    }
-                } catch (Exception e1) {
-                    System.out.println("Could not load rule file:" + settings.inputFile);
-                }
-            }
-
             if (settings.outputFile != null) {
                 String outPath = settings.outputFile;
                 try {
@@ -140,8 +159,9 @@ public class DbaMain {
                     outFile.createNewFile();
                     //  outFile.createNewFile();
                     settings.setOutputWriter(outFile);
+                    LOGGER.info("Created output file: " +outFile.toString());
                 } catch (Exception e) {
-                    System.out.println("Failed to write output to:" + outPath);
+                   LOGGER.warning("Failed to write output to:" + outPath);
                 }
             }
 
@@ -161,6 +181,8 @@ public class DbaMain {
                 ruleFile = settings.ruleFile;
             }
 
+            LOGGER.info("Set rule file: " + ruleFile);
+
             LinkedHashMap<String,HashMap<Integer,String>> result = new LinkedHashMap<>();
 
             if (settings.interactiveMode) {
@@ -173,12 +195,12 @@ public class DbaMain {
                         ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
                     }
                 }
-                System.out.println("Starting interactive mode...\n");
+               LOGGER.info("Starting interactive mode...\n");
                 Scanner s = new Scanner(System.in);
 
                 String input;
                 while (true) {
-                    System.out.println("Enter sentence to be analyzed or enter 'quit' to exit the program.");
+                    LOGGER.info("Enter sentence to be analyzed or enter 'quit' to exit the program.");
                     input = s.nextLine();
                     break;
                     //if (input.equals("quit"))
@@ -203,31 +225,29 @@ public class DbaMain {
     public static void
     semanticsInteractiveWrapper(LinkedHashMap<String,SyntacticStructure> in, LinkedHashMap<String,HashMap<Integer,String>> result)
     {
-        System.out.println(System.lineSeparator());
+
 
         for (String key : in.keySet()) {
             SyntacticStructure fs = in.get(key);
-            System.out.println("Glue prover output:");
             GlueSemantics sem = new GlueSemantics();
             String semantics = sem.calculateSemantics(fs);
 
             StringBuilder resultBuilder = new StringBuilder();
 
-            resultBuilder.append(System.lineSeparator());
-            resultBuilder.append("Result of the Glue derivation:");
+                     resultBuilder.append("Result of the Glue derivation:");
             resultBuilder.append(semantics);
 
             result.get(key).put(1,semantics);
 
-            System.out.println("Done\n\n");
+
         }
 
         for (String key : result.keySet())
         {
-            System.out.println(result.get(key).get(0));
-            System.out.println(result.get(key).get(1));
+            LOGGER.info("The rewrite system produced the following output:\n" + result.get(key).get(0));
+            LOGGER.info("The GSWB produced the following output:\n" + result.get(key).get(1));
         }
-
+        LOGGER.info("Done");
     }
 
     public static LinkedHashMap<String,SyntacticStructure>
@@ -241,17 +261,19 @@ public class DbaMain {
         {
             case "dep": {
                 syn = new UDoperator();
+                LOGGER.info("Created new dependency parser instance...");
                 break;
             }
             case "lfg": {
                 syn = new XLEoperator(vh);
+                LOGGER.info("Created new XLE parser instance ...");
                 break;
             }
         }
 
         assert syn != null;
         fs = syn.parseSingle(input);
-        System.out.println(fs.constraints);
+   //     System.out.println(fs.constraints);
 
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
@@ -273,7 +295,7 @@ public class DbaMain {
             try {
                 fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
             } catch (Exception e) {
-                System.out.println("Sorting annotation failed.");
+               LOGGER.warning("Sorting annotation failed.");
             }
 
             resultBuilder.append("Annotation output:\n");
@@ -283,14 +305,13 @@ public class DbaMain {
                 resultBuilder.append(System.lineSeparator());
             }
 
-            resultBuilder.append("End of: " + sid + "\n");
-            resultBuilder.append(System.lineSeparator());
+            resultBuilder.append("End of: " + sid);
 
             syntaxResult.put(0,resultBuilder.toString());
             result.put(sid,syntaxResult);
 
     if(!settings.semanticParsing) {
-        System.out.println(resultBuilder.toString());
+        LOGGER.info( resultBuilder.toString());
     }
         return out;
 
@@ -337,6 +358,7 @@ public class DbaMain {
             StringBuilder resultBuilder = new StringBuilder();
             HashMap<Integer,String> syntaxResult = new HashMap<>();
             SyntacticStructure fs = indexedFs.get(key);
+            LOGGER.info("Now annotating structure with id " + key + "...");
             rp.addAnnotation2(fs);
 
             resultBuilder.append(key + ": " + fs.sentence);
@@ -345,10 +367,8 @@ public class DbaMain {
             try {
                 fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
             } catch (Exception e) {
-                System.out.println("Sorting annotation failed.");
+                LOGGER.warning("Sorting annotation failed.");
             }
-
-            resultBuilder.append("Annotation output:\n");
 
             for (GraphConstraint g : fs.annotation) {
                 resultBuilder.append(g.toString());
@@ -365,7 +385,7 @@ public class DbaMain {
         if(!settings.semanticParsing) {
            for (String key : result.keySet())
            {
-               System.out.println(result.get(key).get(0));
+              LOGGER.info("The rewrite system produced the following output:\n" + result.get(key).get(0));
            }
         }
 

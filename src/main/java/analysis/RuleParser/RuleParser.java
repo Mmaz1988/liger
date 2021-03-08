@@ -25,15 +25,17 @@ import analysis.LinguisticDictionary;
 import analysis.QueryParser.QueryParser;
 import analysis.QueryParser.QueryParserResult;
 import analysis.QueryParser.SolutionKey;
+import main.DbaMain;
 import packing.ChoiceVar;
-import syntax.SyntacticStructure;
 import syntax.GraphConstraint;
+import syntax.SyntacticStructure;
 import utilities.HelperMethods;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,7 +49,7 @@ public class RuleParser {
     private Set<String> usedKeys = new HashSet<>();
     private Set<Set<String>> usedReadings = new HashSet<>();
     public LinguisticDictionary dict = new LinguisticDictionary();
-
+    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
 
 
 
@@ -82,7 +84,7 @@ public class RuleParser {
             fileString = new String(Files.readAllBytes(Paths.get(path.toString())));
         }catch(Exception e)
         {
-            System.out.println("Failed to load rule file");
+            LOGGER.warning("Failed to load rule file");
             e.printStackTrace();
         }
 
@@ -98,7 +100,7 @@ public class RuleParser {
             fileString = new String(Files.readAllBytes(Paths.get(path.toString())));
         }catch(Exception e)
         {
-            System.out.println("Failed to load rule file");
+            LOGGER.warning("Failed to load rule file");
             e.printStackTrace();
         }
 
@@ -121,8 +123,8 @@ public class RuleParser {
         {
             Rule r = rules.get(k);
 
-            System.out.println("Currently processing rule with index " + k + ":");
-            System.out.println("\t" + r.toString());
+            LOGGER.fine("Currently processing rule with index " + k + ":\n" +
+            "\t" + r.toString());
 
             HashMap<Integer, GraphConstraint> annotation = new HashMap<>();
 
@@ -339,7 +341,7 @@ public class RuleParser {
                     }
                 } catch(Exception e)
                 {
-                    System.out.println("Failed to parse rule right-hand side");
+                    LOGGER.warning("Failed to parse rule right-hand side");
                 }
             }
 
@@ -348,15 +350,17 @@ public class RuleParser {
                 //adds newly created constraints to the contents of queryParser so they are parsed in subsequent rules
                 qp.getFsIndices().putAll(annotation);
 
-                System.out.println("Added the following facts:");
+                LOGGER.finer("Added the following facts:");
+               List<String> addedFacts = new ArrayList<>();
                 for (Integer akey : annotation.keySet()) {
                     fs.annotation.add(annotation.get(akey));
-                    System.out.println(annotation.get(akey).toString());
+                    addedFacts.add(annotation.get(akey).toString());
                 }
-                System.out.println("\t" + "Rule has been applied!");
+                LOGGER.finer(String.join("\n" + addedFacts));
+
+               LOGGER.fine("\t" + "Rule has been applied!");
 
             }
-            System.out.println(System.lineSeparator());
         }
     }
 

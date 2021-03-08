@@ -21,12 +21,14 @@
 
 package analysis.QueryParser;
 
-import syntax.SyntacticStructure;
+import main.DbaMain;
 import syntax.GraphConstraint;
+import syntax.SyntacticStructure;
 import utilities.HelperMethods;
 import utilities.VariableHandler;
 
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 public class QueryParser {
@@ -36,15 +38,14 @@ public class QueryParser {
     private HashMap<Integer, GraphConstraint> fsIndices;
     private VariableHandler vh = new VariableHandler();
     private Set<String> usedKeys = new HashSet<>();
-
     public HashMap<Set<SolutionKey>, HashMap<String,String>> fsValueBindings = new HashMap<>();
+    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
 
 
     //TODO why are the values of the result hashmap empty?
 
     public QueryParser(String query, SyntacticStructure fs)
     {
-
         HashMap<Integer,GraphConstraint> fsIndexed = new HashMap<>();
 
         for (int i = 0; i < fs.constraints.size();i++)
@@ -138,7 +139,7 @@ public class QueryParser {
                     }
                     catch(IllegalArgumentException e)
                     {
-                        System.out.println("Invalid fsNode variable! (Range: #f - #n)");
+                        LOGGER.warning("Invalid fsNode variable! (Range: #f - #n)");
                         queryList = new LinkedList<QueryExpression>();
                         break;
                     }
@@ -191,7 +192,7 @@ public class QueryParser {
                 }
             } catch(IllegalArgumentException e)
             {
-                System.out.println("Element \"" + ((LinkedList<String>) queryDeque).get(i) + "\" not contained in current f-structure." );
+                LOGGER.finer("Element \"" + ((LinkedList<String>) queryDeque).get(i) + "\" not contained in current f-structure." );
                 return new LinkedList<QueryExpression>();
             }
         }
@@ -299,8 +300,8 @@ public class QueryParser {
                         continue;
                     }
                 } catch (Exception e) {
-                    System.out.println("Invalid query snytax!");
-                    e.printStackTrace();
+                    LOGGER.warning("Invalid query snytax!\n" + e.getMessage());
+                   // e.printStackTrace();
                 }
 
                 if (!it.hasNext() && next == null) {
@@ -311,7 +312,7 @@ public class QueryParser {
                         previous = it.next();
                         current = it.next();
                     } catch (Exception e) {
-                        System.out.println("Hit end of Query!");
+                       LOGGER.finer("Hit end of Query!");
                     }
 
                 }

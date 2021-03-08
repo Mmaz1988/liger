@@ -22,12 +22,12 @@
 package webservice;
 
 import analysis.RuleParser.RuleParser;
-import org.junit.jupiter.api.Test;
+import main.DbaMain;
 import org.springframework.web.bind.annotation.*;
 import semantics.GlueSemantics;
+import syntax.GraphConstraint;
 import syntax.SyntacticStructure;
 import syntax.ud.UDoperator;
-import syntax.GraphConstraint;
 import syntax.xle.XLEoperator;
 import utilities.PathVariables;
 import utilities.VariableHandler;
@@ -37,10 +37,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Logger;
 
 @CrossOrigin
 @RestController
 public class AnnotatorController {
+    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @RequestMapping(value = "/graph-test", produces = "application/json")
@@ -70,7 +73,8 @@ public class AnnotatorController {
         UDoperator parser = new UDoperator();
 
         SyntacticStructure fs = parser.parseSingle(input);
-        System.out.println(fs.constraints);
+       // System.out.println(fs.constraints);
+        LOGGER.fine(fs.constraints.toString());
 
         return new TestGraph(fs);
 
@@ -85,7 +89,7 @@ public class AnnotatorController {
         UDoperator parser = new UDoperator();
 
         SyntacticStructure fs = parser.parseSingle(input);
-        System.out.println(fs.constraints);
+        LOGGER.fine(fs.constraints.toString());
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
@@ -95,15 +99,20 @@ public class AnnotatorController {
         try {
             fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
         } catch (Exception e) {
-            System.out.println("Sorting annotation failed.");
+            LOGGER.warning("Sorting annotation failed.");
         }
 
+        StringBuilder resultBuilder = new StringBuilder();
         for (GraphConstraint g : fs.annotation) {
-            System.out.println(g);
+              resultBuilder.append(g.toString());
         }
 
+        LOGGER.info("Annotation output:\n" + resultBuilder.toString());
 
-        System.out.println("Done");
+
+
+
+       LOGGER.info("Done");
 
 
         return new TestGraph(fs.constraints,fs.annotation);
@@ -127,7 +136,7 @@ public class AnnotatorController {
          */
 
         SyntacticStructure fs = parser.parseSingle(input.toLowerCase());
-        System.out.println(fs.constraints);
+      //  System.out.println(fs.constraints);
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
@@ -137,7 +146,7 @@ public class AnnotatorController {
         try {
             fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
         } catch (Exception e) {
-            System.out.println("Sorting annotation failed.");
+          LOGGER.warning("Sorting annotation failed.");
         }
 
         GlueSemantics sem = new GlueSemantics();
@@ -162,7 +171,7 @@ public class AnnotatorController {
         UDoperator parser = new UDoperator();
 
         SyntacticStructure fs = parser.parseSingle(request.sentence);
-        System.out.println(fs.constraints);
+       // System.out.println(fs.constraints);
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
@@ -189,7 +198,7 @@ public class AnnotatorController {
         try {
             SyntacticStructure fs = parser.xle2Java("some string");
 
-        System.out.println(fs.constraints);
+       // System.out.println(fs.constraints);
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
@@ -204,7 +213,7 @@ public class AnnotatorController {
 
         }catch(Exception e)
         {
-            System.out.println("Failed to load xle prolog file.");
+            LOGGER.warning("Failed to load xle prolog file.");
         }
         return null;
     }
