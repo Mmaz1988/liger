@@ -21,9 +21,14 @@
 
 package analysis.QueryParser;
 
+import packing.ChoiceVar;
+
+import java.util.Set;
+
 public class SolutionKey {
     public String variable;
     public String reference;
+    public Set<ChoiceVar> context;
 
     public SolutionKey(String variable, String reference)
     {

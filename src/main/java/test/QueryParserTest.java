@@ -22,19 +22,25 @@
 package test;
 
 
-import analysis.QueryParser.*;
-import analysis.RuleParser.*;
+import analysis.QueryParser.QueryParser;
+import analysis.QueryParser.QueryParserResult;
+import analysis.RuleParser.Rule;
+import analysis.RuleParser.RuleParser;
 import glueSemantics.linearLogic.Premise;
+import main.DbaMain;
+import org.junit.jupiter.api.Test;
 import semantics.GlueSemantics;
 import syntax.SyntacticStructure;
-import utilities.HelperMethods;
 import syntax.xle.XLEoperator;
-import org.junit.jupiter.api.Test;
+import utilities.HelperMethods;
 import utilities.PathVariables;
 import utilities.VariableHandler;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -42,7 +48,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class QueryParserTest {
 
     public static String testFolderPath;
-
+    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
 
     public LinkedHashMap<String, SyntacticStructure> loadFs(int i)
     {
@@ -193,6 +199,31 @@ public class QueryParserTest {
             QueryParser qp = new QueryParser("#g !(COMP*>TNS-ASP) #h",fs.get(key));
 
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(3,qpr.result.keySet().size());
+        }
+
+    }
+
+    @Test
+    void testQueryParser5a()
+    {
+        LinkedHashMap<String, SyntacticStructure> fs = loadFs(1);
+
+        for (String key : fs.keySet())
+        {
+            QueryParser qp = new QueryParser("#g !(COMP*>TNS-ASP) #h",fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            RuleParser rp = new RuleParser(new ArrayList<>());
+
+            Rule r = new Rule("#g !(COMP*>TNS-ASP) #h ==> #g TMP-DOM #h");
+
+            rp.getRules().add(r);
+
+            rp.addAnnotation2(fs.get(key));
+
+            assertEquals(3,fs.get(key).annotation.size());
 
             assertEquals(3,qpr.result.keySet().size());
         }
