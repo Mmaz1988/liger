@@ -33,7 +33,7 @@ public abstract class QueryExpression {
     private HashMap<Integer, GraphConstraint> fsIndices;
     private String nodeVar;
 
-    private HashMap<Set<SolutionKey>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> solution = new HashMap<>();
+    private HashMap<Set<SolutionKey>,HashMap<Integer,GraphConstraint>> solution = new HashMap<>();
 
     public QueryExpression()
     {
@@ -109,21 +109,21 @@ public abstract class QueryExpression {
 
     //Test
 
-    public HashMap<Set<SolutionKey>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> getSolution() {
+    public HashMap<Set<SolutionKey>,HashMap<Integer,GraphConstraint>> getSolution() {
         return solution;
     }
 
-    public void setSolution(HashMap<Set<SolutionKey>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> solution) {
+    public void setSolution(HashMap<Set<SolutionKey>,HashMap<Integer,GraphConstraint>> solution) {
         this.solution = solution;
     }
 
     public abstract void calculateSolutions();
 
 
-    public HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>>
+    public HashMap<Set<SolutionKey>, HashMap<Integer, GraphConstraint>>
     mapUsedKeys(Set<String> usedKeys, HashMap<Integer,GraphConstraint> fsIndices, String nodeVar) {
 
-        HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 = new HashMap<>();
+        HashMap<Set<SolutionKey>,HashMap<Integer, GraphConstraint>> out2 = new HashMap<>();
 
 
         for (String fs : usedKeys) {
@@ -140,7 +140,7 @@ public abstract class QueryExpression {
             }
              */
             binding.put(nodeVar, reference);
-            out2.put(Collections.singleton(new SolutionKey(nodeVar,fs)), binding);
+            out2.put(Collections.singleton(new SolutionKey(nodeVar,fs)), new HashMap<>());
         }
 
         return out2;

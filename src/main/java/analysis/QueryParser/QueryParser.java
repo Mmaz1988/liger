@@ -211,7 +211,7 @@ public class QueryParser {
 
             ListIterator<QueryExpression> it = queryList.listIterator();
 
-            HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> result = new HashMap<>();
+            HashMap<Set<SolutionKey>,HashMap<Integer, GraphConstraint>> result = new HashMap<>();
 
 
             QueryExpression previous = null;

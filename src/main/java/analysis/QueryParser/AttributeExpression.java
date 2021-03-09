@@ -47,7 +47,7 @@ public class AttributeExpression extends QueryExpression {
     @Override
     public void calculateSolutions()
     {
-        HashMap<Set<SolutionKey>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> out = left.getSolution();
+        HashMap<Set<SolutionKey>,HashMap<Integer,GraphConstraint>> out = left.getSolution();
 
         HashMap<Integer,GraphConstraint> fsIndices = new HashMap<>();
 
@@ -58,6 +58,15 @@ public class AttributeExpression extends QueryExpression {
             {
                 Set<SolutionKey> key = it.next();
                 Boolean containsAtribute = false;
+
+
+                for (SolutionKey skey : key)
+                {
+                    if (skey.variable.equals(left.getNodeVar()))
+                    {
+                        String nodeRef = skey.reference;
+                    }
+                }
 
 
 
