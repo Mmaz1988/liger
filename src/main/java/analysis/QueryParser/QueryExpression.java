@@ -146,4 +146,12 @@ public abstract class QueryExpression {
         return out2;
     }
 
+    public HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>>
+    mergeSolutions(HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> solution)
+    {
+        HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> merged = new HashMap<>();
+
+        return null;
+    }
+
 }
