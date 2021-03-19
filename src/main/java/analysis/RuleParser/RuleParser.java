@@ -236,6 +236,7 @@ public class RuleParser {
                                                 if ( c.getFsNode().equals(key2) && c.getRelationLabel().equals(graphMatcher.group(2)) &&
                                                 c.getReading().equals(context))
                                                 {
+                                                    LOGGER.finer("Rewritten value: " + c.getFsValue() + " into: " + newValue);
                                                     c.setFsValue(newValue);
                                                     replaceValue = true;
                                                 }
@@ -356,7 +357,8 @@ public class RuleParser {
                     fs.annotation.add(annotation.get(akey));
                     addedFacts.add(annotation.get(akey).toString());
                 }
-                LOGGER.finer(String.join("\n" + addedFacts));
+                String added = String.join("\n",addedFacts);
+                LOGGER.finer("\n" + added);
 
                LOGGER.fine("\t" + "Rule has been applied!");
 

@@ -76,7 +76,7 @@ import java.util.logging.Logger;
         LOGGER.setUseParentHandlers(false);
         ConsoleHandler handler = new ConsoleHandler();
         handler.setFormatter(new MyFormatter());
-        handler.setLevel(Level.FINE);
+        handler.setLevel(Level.ALL);
         LOGGER.addHandler(handler);
         LOGGER.setLevel(Level.ALL);
 

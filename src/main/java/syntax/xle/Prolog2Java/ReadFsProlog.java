@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ReadFsProlog implements Serializable {
 
@@ -149,12 +150,64 @@ public class ReadFsProlog implements Serializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        fsConstraints = contractFstructure(fsConstraints);
-        fsConstraints = removeEqualities(fsConstraints);
+       fsConstraints = simplifyFs(fsConstraints);
+      //  fsConstraints = contractFstructure(fsConstraints);
+       // fsConstraints = removeEqualities(fsConstraints);
 
         ReadFsProlog Fstructure = new ReadFsProlog(sentenceID, inSentence, fsConstraints, cp, vh);
         return Fstructure;
+    }
+
+
+    public static List<String> simplifyFs(List<String> fsConstraints)
+    {
+        List<String[]> varEqualities = new ArrayList<>();
+        List<String[]> valEqualities = new ArrayList<>();
+
+        Pattern eq = Pattern.compile("eq\\((var\\(\\d+\\)),(.*)\\)\\)");
+        Pattern var = Pattern.compile("var\\(\\d+\\)");
+
+        ListIterator<String> iter = fsConstraints.listIterator();
+
+        while (iter.hasNext()) {
+            {
+                String c = iter.next();
+                Matcher eqM = eq.matcher(c);
+                if (eqM.find()) {
+                    String[] equal = {eqM.group(1), eqM.group(2)};
+                    Matcher varM = var.matcher(eqM.group(2));
+                    if (varM.matches()) {
+                        varEqualities.add(equal);
+                    } else {
+                        valEqualities.add(equal);
+                    }
+                    iter.remove();
+                }
+            }
+        }
+
+        for (int i =0; i < fsConstraints.size(); i++)
+        {
+
+            for (String[] equal : varEqualities)
+            {
+                if (fsConstraints.get(i).contains(equal[0])) {
+                    String replace = fsConstraints.get(i).replace(equal[0],equal[1]);
+                   fsConstraints.set(i,replace);
+                          }
+            }
+        }
+
+        for (String c : fsConstraints) {
+            for (String[] equal : valEqualities) {
+                if (c.contains(equal[0])) {
+                    c = c.replace(equal[0], equal[1]);
+                }
+            }
+        }
+
+     List<String> newfsConstraints = fsConstraints.stream().distinct().collect(Collectors.toList());
+        return newfsConstraints;
     }
 
     // This function contracts two different constraints in the f-structure to one constraint.

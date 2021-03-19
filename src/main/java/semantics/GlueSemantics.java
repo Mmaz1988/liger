@@ -121,7 +121,7 @@ public class GlueSemantics {
                 solutionBuilder.append(System.lineSeparator());
             }
 
-         //   System.out.println(((LLProver1) llprover).getProofBuilder().toString());
+         LOGGER.fine(((LLProver1) llprover).getProofBuilder().toString());
 
 
         }
