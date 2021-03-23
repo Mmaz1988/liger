@@ -140,7 +140,6 @@ public class ReadFsProlog implements Serializable {
 
              cp = new ChoiceSpace(choiceSpace);
 
-
             /* Print out f-structure facts for test purposes
             for (int i = 0; i < fsConstraints.size(); i++) {
                 System.out.println(fsConstraints.get(i));

@@ -36,6 +36,7 @@ public class ChoiceSpace {
     public List<ChoiceNode> choiceNodes;
     public Set<Set<ChoiceVar>> choices = new HashSet<>();
 
+
     public ChoiceSpace(List<String> choices)
     {
        choiceNodes = parseChoiceSpace(choices);

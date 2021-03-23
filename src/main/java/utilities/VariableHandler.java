@@ -56,9 +56,9 @@ Possibly add more types, e.g. SemVarE, SemVarT etc.
 
     private HashMap<variableType,List<String>> usedVariables = usedVars();
 
-    private HashMap<String,Integer> usedChoiceVars = new HashMap<>();
+    private static HashMap<String,Integer> usedChoiceVars = new HashMap<>();
 
-    private String[] choiceArray = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
+    private static String[] choiceArray = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
 
 
     public VariableHandler()
@@ -244,7 +244,7 @@ Possibly add more types, e.g. SemVarE, SemVarT etc.
     }
 
 
-    public Set<ChoiceVar> returnNewChoiceVars(Integer numberOfChoices)
+    public static Set<ChoiceVar> returnNewChoiceVars(Integer numberOfChoices)
     {
 
         String choice = "";
@@ -254,8 +254,6 @@ Possibly add more types, e.g. SemVarE, SemVarT etc.
         int k = 0;
         while (contains)
         {
-
-
         for (int i = 0; i < choiceArray.length; i++) {
             choice = sb.toString() + choiceArray[i];
             if (usedChoiceVars.containsKey(choice)) {
@@ -267,7 +265,6 @@ Possibly add more types, e.g. SemVarE, SemVarT etc.
                break;
             }
         }
-
         if (contains)
         {
             sb.append(choiceArray[j]);
@@ -278,11 +275,8 @@ Possibly add more types, e.g. SemVarE, SemVarT etc.
         {
             j = 0;
         }
-
     }
-
         HashSet<ChoiceVar> result = new HashSet<>();
-
         for (int i = 0; i < numberOfChoices; i++)
         {
             result.add(new ChoiceVar(choice + i));
