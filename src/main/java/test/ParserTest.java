@@ -59,7 +59,7 @@ public class ParserTest {
                 SyntacticStructure fs = parser.parseSingle(j);
                 List<SyntacticStructure> fsList = new ArrayList<>();
                 fsList.add(fs);
-                RuleParser rp = new RuleParser(fsList, PathVariables.testPath + "testRulesUD5.txt");
+                RuleParser rp = new RuleParser(fsList, PathVariables.testPath + "testRulesUD4.txt");
                 rp.addAnnotation2(fs);
                 try {
                     fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));

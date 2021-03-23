@@ -27,9 +27,9 @@ public class PathVariables {
 
     public static String workingDirectory;
     //Path to the test package
-    public static String testPath = workingDirectory + "testFiles/";
+    public static String testPath = "C:\\Users\\charl\\IdeaProjects\\abstract-syntax-annotator-web\\resources\\testFiles\\";
     //Path to the dict package
-    public static String dictPath = workingDirectory + "dicts/";
+    public static String dictPath = "C:\\Users\\charl\\IdeaProjects\\abstract-syntax-annotator-web\\resources\\dicts\\";
 
     /*
 
