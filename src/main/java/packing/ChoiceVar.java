@@ -27,6 +27,10 @@ import java.util.Objects;
 public class ChoiceVar {
 
     public String choiceID;
+    //e.g. A,B,C,...
+    public String level;
+    //e.g. 1,2,3,...
+    public String choice;
     public Boolean propValue;
 
     public ChoiceVar(String choiceID)

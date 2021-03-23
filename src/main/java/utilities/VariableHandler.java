@@ -23,10 +23,9 @@ package utilities;
 
 //import java.io.Serializable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import packing.ChoiceVar;
+
+import java.util.*;
 
 public class VariableHandler {
     public enum variableType{
@@ -36,6 +35,7 @@ public class VariableHandler {
         TIME_ID,
         TREL_ID,
         EV_NODE
+
 
 /*
 Possibly add more types, e.g. SemVarE, SemVarT etc.
@@ -54,9 +54,11 @@ Possibly add more types, e.g. SemVarE, SemVarT etc.
 
     private HashMap<Integer,String> assignment = new HashMap<>();
 
-
-
     private HashMap<variableType,List<String>> usedVariables = usedVars();
+
+    private HashMap<String,Integer> usedChoiceVars = new HashMap<>();
+
+    private String[] choiceArray = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
 
 
     public VariableHandler()
@@ -241,6 +243,53 @@ Possibly add more types, e.g. SemVarE, SemVarT etc.
         return null;
     }
 
+
+    public Set<ChoiceVar> returnNewChoiceVars(Integer numberOfChoices)
+    {
+
+        String choice = "";
+        Boolean contains = true;
+        StringBuilder sb = new StringBuilder();
+        int j = 0;
+        int k = 0;
+        while (contains)
+        {
+
+
+        for (int i = 0; i < choiceArray.length; i++) {
+            choice = sb.toString() + choiceArray[i];
+            if (usedChoiceVars.containsKey(choice)) {
+                choiceArray[i] = choice;
+                i++;
+            } else
+            {
+                contains = false;
+               break;
+            }
+        }
+
+        if (contains)
+        {
+            sb.append(choiceArray[j]);
+                j++;
+
+        }
+        if (j == choiceArray.length)
+        {
+            j = 0;
+        }
+
+    }
+
+        HashSet<ChoiceVar> result = new HashSet<>();
+
+        for (int i = 0; i < numberOfChoices; i++)
+        {
+            result.add(new ChoiceVar(choice + i));
+        }
+
+        return result;
+    }
 
    /*
     public void addUsedVariable(variableType varType,String var)

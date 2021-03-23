@@ -21,6 +21,7 @@
 
 package analysis.QueryParser;
 
+import packing.ChoiceVar;
 import syntax.GraphConstraint;
 import utilities.HelperMethods;
 
@@ -35,8 +36,8 @@ public class UncertaintyExpression extends QueryExpression {
     private QueryExpression left;
     private Uncertainty middle;
     private QueryExpression right;
-
-    private List<String> gf = Arrays.asList("OBL", "OBJ", "SUBJ", "COMP", "XCOMP", "OBJ-TH");
+    private List<String> gf = Arrays.asList("OBL", "OBJ", "SUBJ", "COMP", "XCOMP", "OBJ-TH", "XCOMP-PRED");
+    private Set<ChoiceVar> choices = new HashSet<>();
 
     public UncertaintyExpression(QueryExpression left, Uncertainty middle, QueryExpression right) {
 
@@ -231,6 +232,11 @@ public class UncertaintyExpression extends QueryExpression {
 
             //  getParser().getVarAssignment().get(getNodeVar()).removeIf(i -> !boundVariables.contains(i));
 
+            for (Integer key : currentResult.keySet())
+            {
+                choices.addAll(currentResult.get(key).getReading());
+            }
+
             if (currentResult.isEmpty()) {
                 return currentResult;
             } else {
@@ -387,7 +393,13 @@ public class UncertaintyExpression extends QueryExpression {
                     }
                 }
             }
-                    if (currentResult.isEmpty()) {
+
+            for (Integer key : currentResult.keySet())
+            {
+                choices.addAll(currentResult.get(key).getReading());
+            }
+
+            if (currentResult.isEmpty()) {
                         return currentResult;
                     } else {
                         result = currentResult;

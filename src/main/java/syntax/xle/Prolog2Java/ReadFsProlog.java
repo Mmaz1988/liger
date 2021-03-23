@@ -198,10 +198,11 @@ public class ReadFsProlog implements Serializable {
             }
         }
 
-        for (String c : fsConstraints) {
+        for (int i = 0; i < fsConstraints.size(); i++) {
             for (String[] equal : valEqualities) {
-                if (c.contains(equal[0])) {
-                    c = c.replace(equal[0], equal[1]);
+                if (fsConstraints.get(i).contains(equal[0])) {
+                    String replace = fsConstraints.get(i).replace(equal[0],equal[1]);
+                    fsConstraints.set(i,replace);
                 }
             }
         }

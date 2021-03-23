@@ -82,14 +82,23 @@
 
 //Semantic interpretation
 
-SUBJ #g NTYPE #h & #g PRED %g
+SUBJ #g NTYPE #h & #g PRED %g & %g != 'null'
 ==> #g SEM #i & #i GLUE strip(%g) : #i.
+
+SUBJ #g NTYPE #h & #g PRED %g & %g == 'null'
+==> #g SEM #i.
 
 OBJ #g NTYPE #h & #g PRED %g
 ==> #g SEM #i & #i GLUE strip(%g) : #i.
 
 OBJ-TH #g NTYPE #h & #g PRED %g
 ==> #g SEM #i & #i GLUE strip(%g) : #i.
+
+XCOMP-PRED #g NTYPE #h & #g PRED %g
+==> #g SEM #i & #i GLUE strip(%g) : #i.
+
+XCOMP-PRED #a SUBJ #b & #a NTYPE #c & #a SEM #i
+==> #b SEM #i & #i GLUE strip(%g) : #i.
 
 //NP Quantifier -- Sem structure
 #g ^(SPEC) #h & #g QUANT #i & #h SEM #l ==> #l VAR #j & #l RESTR #k & #l SIT #s.
@@ -100,7 +109,14 @@ OBJ-TH #g NTYPE #h & #g PRED %g
 #a PRED %a & #a PRON-REL #b & #a SUBJ #b &
 #a SEM #z & #b SEM #y &
 #a ^(inSet>ADJUNCT) #c SEM #d VAR #e & #d RESTR #f 6 #d SIT #s
-==> #y GLUE [/P_<e,t>.[/Q_<e,t>.[/x_e.(P(x) \& Q(x))]]] : ((#e -o #f) -o ((#y -o #z) -o (#e -o #f))).
+==> #y GLUE
+
+#a SEM #b TEMP-REF #c T-REF 'undefined' &
+#a SUBJ #d SEM #e & #d PRED 'null' &
+#a ^(inSet>ADJUNCT) #f SEM #g TEMP-REF #h T-REF %h & %h != 'undefined' &
+#f SUBJ #i SEM #j
+==> #c EVAL #h &
+ #z GLUE [/P_<e,<s,t>>.[/Q_<e,<s,t>>.[/x_e.[/s_s.(P(x) \& Q(x))]]]] : ((#e -o #f) -o ((#y -o #z) -o (#j -o (#h -o #g)))).
 
 //NP Quantifier instantiation
 
@@ -186,6 +202,10 @@ OBJ-TH #g NTYPE #h & #g PRED %g
 #a SUBJ #b SEM #c & #a OBJ #d SEM #e &
 #a SEM #z FPS #f & #f CHECK #y ==>
 #f GLUE [/R_<v,t>.[/x_e.[/y_e.[/e_v.(R(e) \& (ag(e,x) \& pt(e,y)))]]]] : ((#y -o #f) -o (#c -o (#e -o (#y -o #f))).
+
+#a SUBJ #b SEM #c & #a OBL #d OBJ #g SEM #e &
+#a SEM #z FPS #f & #f CHECK #y ==>
+#f GLUE [/R_<v,t>.[/x_e.[/y_e.[/e_v.(R(e) \& (ag(e,x) \& loc(e,y)))]]]] : ((#y -o #f) -o (#c -o (#e -o (#y -o #f))).
 
 #a SUBJ #b & #a OBJ #c & #a TNS-ASP #d & #a PRED %a &
 #a SEM #z FPS #e procP #f P-SUBJ #b SEM #j &

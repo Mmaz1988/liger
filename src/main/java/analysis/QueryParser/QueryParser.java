@@ -22,6 +22,7 @@
 package analysis.QueryParser;
 
 import main.DbaMain;
+import packing.ChoiceSpace;
 import syntax.GraphConstraint;
 import syntax.SyntacticStructure;
 import utilities.HelperMethods;
@@ -40,6 +41,7 @@ public class QueryParser {
     private Set<String> usedKeys = new HashSet<>();
     public HashMap<Set<SolutionKey>, HashMap<String,String>> fsValueBindings = new HashMap<>();
     private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+    public ChoiceSpace cp;
 
 
     //TODO why are the values of the result hashmap empty?
@@ -56,6 +58,7 @@ public class QueryParser {
         //Part 1, String to QueryExpression element
 
         this.fsIndices = fsIndexed;
+        this.cp = fs.cp;
         generateQuery(query);
 
     }
@@ -78,9 +81,10 @@ public class QueryParser {
         }
         //Part 1, String to QueryExpression element
     this.fsIndices = fsIndexed;
+        this.cp = fs.cp;
     }
 
-
+/*
 
     public QueryParser(String query, HashMap<Integer,GraphConstraint> fsIndices)
     {
@@ -104,7 +108,7 @@ public class QueryParser {
         this.fsIndices = fsIndices;
         this.queryList = generateQuery(queryDeque);
     }
-
+ */
 
     public LinkedList<QueryExpression> generateQuery(Deque<String> queryDeque){
 
