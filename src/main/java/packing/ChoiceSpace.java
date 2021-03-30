@@ -125,9 +125,9 @@ public class ChoiceSpace {
         String previousVar = lastVar();
         // Tested by entering random variable below to see if it finds the next one :)
         //String previousVar = "BDFKIZ";
-        System.out.println(previousVar);
+        //System.out.println(previousVar);
         int index = previousVar.length()-1;
-        System.out.println(index);
+        //System.out.println(index);
         boolean goOn = true;
         StringBuilder sb = new StringBuilder();
 
