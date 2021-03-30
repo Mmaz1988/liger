@@ -120,7 +120,6 @@ public class ChoiceSpace {
 
     public Set<ChoiceVar> returnNewChoiceVars(Integer numberOfChoices)
     {
-
         String choice;
         String previousVar = lastVar();
         // Tested by entering random variable below to see if it finds the next one :)

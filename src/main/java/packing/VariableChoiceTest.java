@@ -27,9 +27,11 @@ import syntax.xle.FstructureElements.AttributeValuePair;
 import syntax.xle.Prolog2Java.FsProlog2Java;
 import syntax.xle.Prolog2Java.ReadFsProlog;
 import syntax.xle.XLEoperator;
+import utilities.PathVariables;
 import utilities.VariableHandler;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,14 +40,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class VariableChoiceTest {
 
 
-    String testfile = "C:\\Users\\charl\\IdeaProjects\\abstract-syntax-annotator-web\\resources\\testFiles\\testdirS12.pl";
-            //"C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\testFiles\\testdirS12.pl";
-
 
 
     @Test
     public void testVariableReturn()
     {
+        PathVariables.initializePathVariables();
+
+        String testfile = PathVariables.testPath + "testdirS12.pl";
+
         XLEoperator xle = new XLEoperator(new VariableHandler());
 
         List<LinkedHashMap<String, SyntacticStructure>> fsList = new ArrayList<>();
