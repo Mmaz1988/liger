@@ -25,7 +25,7 @@ mvn install:install-file -Dfile=resources\glueSemWorkbench2.jar -DgroupId=uni.kn
 
 # Running from Jar file
 
-- Download the Jar file from: 
+- Download the Jar file from: [.jar](https://cloud.uni-konstanz.de/index.php/s/4QXWfHMo3xCARM4)
 - Download the resources folder from this repository
 
 Now you're ready to execute the jar file by navigating to the folder containing the jar file in the shell/terminal and executing the following command(replace path\to\resources with the path to the copy of resources stored on your computer):
