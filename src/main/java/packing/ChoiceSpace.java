@@ -42,6 +42,8 @@ public class ChoiceSpace {
        choiceNodes = parseChoiceSpace(choices);
     }
     public  ChoiceSpace() {}
+    public List<String> allVariables = new ArrayList<>();
+    private static String[] choiceArray = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
 
 
     public static Set<ChoiceVar> parseChoice(String choice)
@@ -79,6 +81,11 @@ public class ChoiceSpace {
             }
 
             daughter = daughterNodes.stream().map(n -> new ChoiceVar(n)).collect(Collectors.toSet());
+            //System.out.println("Test1" + daughter);
+            ChoiceVar variable = daughter.iterator().next();
+            String variableFinal = variable.toString().replaceAll("[0-9]", "");
+            //System.out.println(variableFinal);
+            allVariables.add(variableFinal);
 
             Matcher orMatcher = orPattern.matcher(choiceMatcher.group(2));
 
@@ -109,5 +116,57 @@ public class ChoiceSpace {
             sb.append(System.lineSeparator());
         }
         return sb.toString();
+    }
+
+    public Set<ChoiceVar> returnNewChoiceVars(Integer numberOfChoices)
+    {
+        String choice;
+        String previousVar = lastVar();
+        // Tested by entering random variable below to see if it finds the next one :)
+        //String previousVar = "BDFKIZ";
+        //System.out.println(previousVar);
+        int index = previousVar.length()-1;
+        //System.out.println(index);
+        boolean goOn = true;
+        StringBuilder sb = new StringBuilder();
+
+        while (index >= 0 && goOn) {
+            String currentChar = String.valueOf(previousVar.charAt(index));
+            if (!currentChar.equals("Z")){
+                for (int i = 0; i < choiceArray.length; i++) {
+                    if (currentChar.equals(choiceArray[i])) {
+                        sb.append(choiceArray[i + 1]);
+                        goOn = false;
+                    }
+                }
+            }
+            else{
+                sb.append("A");
+                index--;
+
+            }
+
+        }
+        sb.reverse();
+
+        if (goOn){
+            choice = "A"+sb.toString();
+        }
+        else{
+            choice = previousVar.substring(0, index)+sb.toString();
+        }
+        HashSet<ChoiceVar> result = new HashSet<>();
+        for (int i = 0; i < numberOfChoices; i++)
+        {
+            int j = i+1;
+            result.add(new ChoiceVar(choice + j));
+        }
+        allVariables.add(choice);
+        return result;
+    }
+
+    public String lastVar(){
+        int index = allVariables.size()-1;
+        return allVariables.get(index);
     }
 }
