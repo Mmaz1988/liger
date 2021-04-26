@@ -46,7 +46,7 @@ package main;
 import semantics.GlueSemantics;
 import syntax.GraphConstraint;
 import syntax.SyntacticStructure;
-import syntax.ud.SyntaxOperator;
+import syntax.SyntaxOperator;
 import syntax.ud.UDoperator;
 import syntax.xle.XLEoperator;
 import utilities.DBASettings;

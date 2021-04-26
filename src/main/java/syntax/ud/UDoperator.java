@@ -32,6 +32,7 @@ import packing.ChoiceSpace;
 import packing.ChoiceVar;
 import syntax.GraphConstraint;
 import syntax.SyntacticStructure;
+import syntax.SyntaxOperator;
 import test.QueryParserTest;
 import utilities.VariableHandler;
 
@@ -43,7 +44,7 @@ import java.util.*;
 
 //import edu.stanford.nlp.pipeline;
 //TODO Methoden sortieren
-public class UDoperator extends SyntaxOperator{
+public class UDoperator extends SyntaxOperator {
 
     public static void main(String[] args) // throws VariableBindingException
     {

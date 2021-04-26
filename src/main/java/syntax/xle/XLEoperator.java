@@ -25,7 +25,7 @@ import main.DbaMain;
 import packing.ChoiceVar;
 import syntax.GraphConstraint;
 import syntax.SyntacticStructure;
-import syntax.ud.SyntaxOperator;
+import syntax.SyntaxOperator;
 import syntax.xle.FstructureElements.AttributeValuePair;
 import syntax.xle.Prolog2Java.FsProlog2Java;
 import syntax.xle.Prolog2Java.ReadFsProlog;

@@ -89,8 +89,8 @@ public class ChoiceSpace {
 
             Matcher orMatcher = orPattern.matcher(choiceMatcher.group(2));
 
-            Set<ChoiceVar> mother;
-
+            Set<Object> mother;
+//Create mother node
             if (orMatcher.find())
             {
                 mother = Arrays.asList(orMatcher.group(1).split(",")).stream().map(n -> new ChoiceVar(n)).collect(Collectors.toSet());

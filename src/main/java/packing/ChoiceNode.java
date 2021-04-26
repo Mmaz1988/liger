@@ -25,11 +25,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ChoiceNode {
-    public Set<ChoiceVar> choiceNode;
+    public Set<Object> choiceNode;
     public Set<ChoiceVar> daughterNodes;
 
 
-    public ChoiceNode(Set<ChoiceVar> choiceNode, Set<ChoiceVar> daughterNodes)
+    public ChoiceNode(Set<Object> choiceNode, Set<ChoiceVar> daughterNodes)
     {
         this.choiceNode = choiceNode;
         this.daughterNodes = daughterNodes;
