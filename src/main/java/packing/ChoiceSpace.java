@@ -21,6 +21,8 @@
 
 package packing;
 
+import edu.stanford.nlp.ling.CoreAnnotations;
+
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,6 +33,7 @@ public class ChoiceSpace {
 
     public static Pattern choicePattern = Pattern.compile("\\[(.+)\\],(.+)");
     public static Pattern orPattern = Pattern.compile("or\\((.+)\\)");
+    public static String inputString;
 
     public Set<ChoiceVar> rootChoice = new HashSet<ChoiceVar>(Collections.singleton(new ChoiceVar("1")));
     public List<ChoiceNode> choiceNodes;
@@ -70,6 +73,7 @@ public class ChoiceSpace {
         List<ChoiceNode> choiceNodes = new ArrayList<>();
         for (String choice : choices)
         {
+            System.out.println("Input "+choice);
             Matcher choiceMatcher  = choicePattern.matcher(choice);
 
             List<String> daughterNodes = null;
@@ -88,22 +92,81 @@ public class ChoiceSpace {
             allVariables.add(variableFinal);
 
             Matcher orMatcher = orPattern.matcher(choiceMatcher.group(2));
-
-            Set<Object> mother;
+            Set<Object> inputSet;
+            Set<Object> mother = new HashSet<>();
 //Create mother node
             if (orMatcher.find())
             {
-                mother = Arrays.asList(orMatcher.group(1).split(",")).stream().map(n -> new ChoiceVar(n)).collect(Collectors.toSet());
+                //inputSet = Arrays.asList(orMatcher.group(1)).stream().map(n -> new ChoiceVar(n)).collect(Collectors.toSet());
+                //System.out.println("TEST "+inputSet);
+                List<String> input = Arrays.asList(choiceMatcher.group(2));
+                inputString = input.get(0).strip();
+
+                //for newbuildormother
+                inputString = inputString.substring(3,inputString.length());
+                System.out.println(inputString);
+
+                System.out.println("entering");
+                mother = buildOrMother(mother);
+                //mother = Arrays.asList(orMatcher.group(1).split(",")).stream().map(n -> new ChoiceVar(n)).collect(Collectors.toSet());
+                System.out.println("Or Mother " + mother);
             }
             else
             {
                 mother = Collections.singleton(new ChoiceVar(choiceMatcher.group(2).trim()));
+                System.out.println("reg"+mother);
             }
 
             ChoiceNode choiceNode = new ChoiceNode(mother,daughter);
             choiceNodes.add(choiceNode);
         }
     return choiceNodes;
+    }
+
+    private Set<Object> buildOrMother(Set<Object> mother){
+        System.out.println("Entering the function with mother: "+mother);
+        Set<Object> temp = new HashSet<>();
+        boolean parse = true;
+
+        while (parse){
+            if (inputString.substring(0, 1).equals("o")){
+                System.out.println("This is the or if");
+                inputString=inputString.substring(3,inputString.length());
+                System.out.println("entering the recursion");
+                temp.clear();
+                temp= buildOrMother(temp);
+                mother.add(Arrays.asList(temp).stream().map(n -> new HashSet(n) {}).collect(Collectors.toSet()));
+                System.out.println("Dropping out of recursion with the following string: "+inputString);
+                System.out.println("This is in mother: "+mother);
+                System.out.println("This is in temp: "+temp);
+
+            }
+            int comma = inputString.indexOf(",");
+            int par = inputString.indexOf(")");
+            if ((comma<par)&&(comma!=-1)){
+                System.out.println("The system found a comma with in String: "+inputString);
+                String variable = inputString.substring(0, comma);
+                if(variable.length()>1){
+                mother.add(variable);}
+                System.out.println("Current Mother:"+mother);
+                inputString = inputString.substring(comma + 1, inputString.length());
+                System.out.println("Current Input String: "+inputString);
+
+            }
+            else{
+                System.out.println("The next is a parentheses in this String: "+inputString);
+                String variable = inputString.substring(0, par);
+                mother.add(variable);
+                System.out.println("Current Mother: "+mother);
+                inputString = inputString.substring(par + 1, inputString.length());
+                System.out.println("Current Input String "+inputString);
+                parse = false;
+
+            }
+        }
+        temp.clear();
+        System.out.println("Returning Mother:");
+        return mother;
     }
 
     @Override
