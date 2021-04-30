@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 public class ChoiceSpace {
@@ -97,11 +98,13 @@ public class ChoiceSpace {
 //Create mother node
             if (orMatcher.find())
             {
-                List<String> input = Arrays.asList(choiceMatcher.group(2));
+                List<String> input = Collections.singletonList(choiceMatcher.group(2));
                 inputString = input.get(0).strip();
                 inputString = inputString.substring(3,inputString.length());
                 //System.out.println(inputString);
                 mother = buildOrMother(mother);
+                //System.out.println("Mother: "+mother);
+                //System.out.println(mother.iterator().next().getClass());
             }
             else
             {
@@ -119,11 +122,11 @@ public class ChoiceSpace {
         boolean parse = true;
 
         while (parse){
-            if (inputString.substring(0, 1).equals("o")){
+            if (inputString.charAt(0) == 'o'){
                 inputString=inputString.substring(3,inputString.length());
                 temp.clear();
                 temp= buildOrMother(temp);
-                mother.add(Arrays.asList(temp).stream().map(n -> new HashSet(n) {}).collect(Collectors.toSet()).iterator().next());
+                mother.add(Stream.of(temp).map(n -> new HashSet(n) {}).collect(Collectors.toSet()).iterator().next());
             }
             int comma = inputString.indexOf(",");
             int par = inputString.indexOf(")");
@@ -137,7 +140,7 @@ public class ChoiceSpace {
             else{
                 String variable = inputString.substring(0, par);
                 if(variable.length()>1){
-                    mother.add(Arrays.asList(variable).stream().map(n -> new ChoiceVar(n)).collect(Collectors.toSet()).iterator().next());}
+                    mother.add(Stream.of(variable).map(n -> new ChoiceVar(n)).collect(Collectors.toSet()).iterator().next());}
                 inputString = inputString.substring(par + 1, inputString.length());
                 parse = false;
 
