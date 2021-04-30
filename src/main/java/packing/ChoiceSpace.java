@@ -73,7 +73,7 @@ public class ChoiceSpace {
         List<ChoiceNode> choiceNodes = new ArrayList<>();
         for (String choice : choices)
         {
-            System.out.println("Input "+choice);
+            //System.out.println("Input "+choice);
             Matcher choiceMatcher  = choicePattern.matcher(choice);
 
             List<String> daughterNodes = null;
@@ -97,24 +97,15 @@ public class ChoiceSpace {
 //Create mother node
             if (orMatcher.find())
             {
-                //inputSet = Arrays.asList(orMatcher.group(1)).stream().map(n -> new ChoiceVar(n)).collect(Collectors.toSet());
-                //System.out.println("TEST "+inputSet);
                 List<String> input = Arrays.asList(choiceMatcher.group(2));
                 inputString = input.get(0).strip();
-
-                //for newbuildormother
                 inputString = inputString.substring(3,inputString.length());
-                System.out.println(inputString);
-
-                System.out.println("entering");
+                //System.out.println(inputString);
                 mother = buildOrMother(mother);
-                //mother = Arrays.asList(orMatcher.group(1).split(",")).stream().map(n -> new ChoiceVar(n)).collect(Collectors.toSet());
-                System.out.println("Or Mother " + mother);
             }
             else
             {
                 mother = Collections.singleton(new ChoiceVar(choiceMatcher.group(2).trim()));
-                System.out.println("reg"+mother);
             }
 
             ChoiceNode choiceNode = new ChoiceNode(mother,daughter);
@@ -124,48 +115,34 @@ public class ChoiceSpace {
     }
 
     private Set<Object> buildOrMother(Set<Object> mother){
-        System.out.println("Entering the function with mother: "+mother);
         Set<Object> temp = new HashSet<>();
         boolean parse = true;
 
         while (parse){
             if (inputString.substring(0, 1).equals("o")){
-                System.out.println("This is the or if");
                 inputString=inputString.substring(3,inputString.length());
-                System.out.println("entering the recursion");
                 temp.clear();
                 temp= buildOrMother(temp);
-                mother.add(Arrays.asList(temp).stream().map(n -> new HashSet(n) {}).collect(Collectors.toSet()));
-                System.out.println("Dropping out of recursion with the following string: "+inputString);
-                System.out.println("This is in mother: "+mother);
-                System.out.println("This is in temp: "+temp);
-
+                mother.add(Arrays.asList(temp).stream().map(n -> new HashSet(n) {}).collect(Collectors.toSet()).iterator().next());
             }
             int comma = inputString.indexOf(",");
             int par = inputString.indexOf(")");
             if ((comma<par)&&(comma!=-1)){
-                System.out.println("The system found a comma with in String: "+inputString);
                 String variable = inputString.substring(0, comma);
                 if(variable.length()>1){
-                mother.add(variable);}
-                System.out.println("Current Mother:"+mother);
+                    mother.add(Arrays.asList(variable).stream().map(n -> new ChoiceVar(n)).collect(Collectors.toSet()).iterator().next());}
                 inputString = inputString.substring(comma + 1, inputString.length());
-                System.out.println("Current Input String: "+inputString);
 
             }
             else{
-                System.out.println("The next is a parentheses in this String: "+inputString);
                 String variable = inputString.substring(0, par);
-                mother.add(variable);
-                System.out.println("Current Mother: "+mother);
+                if(variable.length()>1){
+                    mother.add(Arrays.asList(variable).stream().map(n -> new ChoiceVar(n)).collect(Collectors.toSet()).iterator().next());}
                 inputString = inputString.substring(par + 1, inputString.length());
-                System.out.println("Current Input String "+inputString);
                 parse = false;
 
             }
         }
-        temp.clear();
-        System.out.println("Returning Mother:");
         return mother;
     }
 
