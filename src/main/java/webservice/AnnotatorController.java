@@ -135,7 +135,8 @@ public class AnnotatorController {
         input = new String(c);
          */
 
-        SyntacticStructure fs = parser.parseSingle(input.toLowerCase());
+        SyntacticStructure fs = parser.parseSingle(input);
+        LOGGER.fine(fs.constraints.toString());
       //  System.out.println(fs.constraints);
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
@@ -171,6 +172,7 @@ public class AnnotatorController {
         UDoperator parser = new UDoperator();
 
         SyntacticStructure fs = parser.parseSingle(request.sentence);
+        LOGGER.fine(fs.constraints.toString());
        // System.out.println(fs.constraints);
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);

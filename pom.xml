@@ -15,7 +15,7 @@
 	<description>A rule-based syntactic annotator for adding relational and attribute value information and semantic representations based on glue semantics</description>
 
 	<properties>
-		<java.version>15</java.version>
+		<java.version>11</java.version>
 	</properties>
 
 	<repositories>

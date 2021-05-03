@@ -112,12 +112,12 @@ public class UDoperator extends SyntaxOperator {
                         dep.reln().toString(),
                         String.valueOf(dep.dep().index()));
 
-                GraphConstraint dcDep = new GraphConstraint(context, dep.dep().index(), "TOKEN", dep.dep().word().toString());
+                GraphConstraint dcDep = new GraphConstraint(context, dep.dep().index(), "TOKEN", dep.dep().word().toLowerCase());
                 GraphConstraint dcPos = new GraphConstraint(context, dep.dep().index(), "POS", dep.dep().tag().toString());
 
                 String lemma = morphology.lemma(dep.dep().word(),dep.dep().tag());
 
-                GraphConstraint dcLemma = new GraphConstraint(context, dep.dep().index(), "LEMMA", lemma);
+                GraphConstraint dcLemma = new GraphConstraint(context, dep.dep().index(), "LEMMA", lemma.toLowerCase());
 
                 out.add(dc);
                 out.add(dcDep);
