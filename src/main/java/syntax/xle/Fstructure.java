@@ -26,6 +26,7 @@ import syntax.SyntacticStructure;
 import syntax.GraphConstraint;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Fstructure extends SyntacticStructure {
 
@@ -44,4 +45,40 @@ public class Fstructure extends SyntacticStructure {
             this.packed = false;
         }
     }
+
+    public String writeToProlog(){
+        StringBuilder prologStringBuilder = new StringBuilder();
+
+        prologStringBuilder.append("% -*- coding: utf-8 -*-\n");
+        prologStringBuilder.append(System.lineSeparator());
+        prologStringBuilder.append("fstructure("+this.sentence +",\n");
+        prologStringBuilder.append("% Properties:\n");
+        //Properties list can be empty
+        prologStringBuilder.append("[],\n");
+        //TODO Implement toString for Choices and Equivalences
+        prologStringBuilder.append("% Choices:\n");
+        prologStringBuilder.append("[],\n");
+        prologStringBuilder.append("% Equivalences:\n");
+        prologStringBuilder.append("[],\n");
+        prologStringBuilder.append("% Constraints:\n[\n");
+
+
+        /*
+        for (GraphConstraint g : this.constraints) {
+            if (!g.getFsNode().equals("-1")) {
+                prologStringBuilder.append(g.toPrologString() + ",\n");
+            }
+        }
+*/
+
+      prologStringBuilder.append(this.constraints.stream().filter(x -> !x.getFsNode().equals("-1")).map(x -> x.toPrologString()).collect(Collectors.joining(",\n")));
+
+        prologStringBuilder.append("\n],\n");
+        prologStringBuilder.append("% C-structure:\n");
+        prologStringBuilder.append("[]).\n");
+
+
+        return prologStringBuilder.toString();
+    }
+
 }

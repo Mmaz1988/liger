@@ -44,6 +44,7 @@ public class FsProlog2Java {
     public static Pattern preds = Pattern.compile("attr\\(var\\((\\d+)\\),('PRED')\\),(semform\\(.*\\[.*\\],\\[.*\\]\\))");
     public static Pattern adjuncts = Pattern.compile("attr\\(var\\((\\d+)\\),'ADJUNCT'\\),var\\((\\d+)\\)");
     public static Pattern inSet = Pattern.compile("in_set\\((.*),var\\((\\d+)\\)\\)");
+    public static Pattern subsume = Pattern.compile("subsume\\((.*),var\\((\\d+)\\)\\)");
     public static Pattern nonTerminals = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),var\\((\\d+)\\)");
     public static Pattern terminals = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),('.*')");
     public static Pattern cstructure = Pattern.compile("(semform_data|surfaceform)\\((.+?),(.+?),(.+?),(.+?)\\)");
@@ -77,6 +78,7 @@ public class FsProlog2Java {
             Matcher nonTerminalMatcher = nonTerminals.matcher(constraint);
             Matcher terminalsMatcher = terminals.matcher(constraint);
             Matcher cstructureMatcher = cstructure.matcher(constraint);
+            Matcher subsumeMatcher = subsume.matcher(constraint);
 
             Set<ChoiceVar> context = null;
 
@@ -150,6 +152,28 @@ public class FsProlog2Java {
                 }
 
                 AdjunctSet avp = new AdjunctSet(var);
+                values.add(avp);
+                continue;
+            }
+
+            if (subsumeMatcher.find()) {
+                Integer key = Integer.parseInt(subsumeMatcher.group(2));
+                List<AttributeValuePair> values = fsHash.get(context).get(key);
+
+                Matcher varMatcher = keys.matcher(subsumeMatcher.group(1));
+
+                String var;
+
+                if (varMatcher.find())
+                {
+                    var = varMatcher.group(1);
+                }
+                else
+                {
+                    var = setMatcher.group(1);
+                }
+
+                SubsumeRel avp = new SubsumeRel(var);
                 values.add(avp);
                 continue;
             }

@@ -31,12 +31,14 @@ import main.DbaMain;
 import org.junit.jupiter.api.Test;
 import semantics.GlueSemantics;
 import syntax.SyntacticStructure;
+import syntax.xle.Fstructure;
 import syntax.xle.XLEoperator;
 import utilities.HelperMethods;
 import utilities.PathVariables;
 import utilities.VariableHandler;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -73,6 +75,16 @@ public class QueryParserTest {
         return fsList.get(i);
     }
 
+
+    @Test
+    void testPrologPrint() throws IOException {
+        PathVariables.initializePathVariables();
+        testFolderPath = PathVariables.testPath;
+        VariableHandler vh = new VariableHandler();
+        XLEoperator xle = new XLEoperator(vh);
+        Fstructure fs = (Fstructure) xle.xle2Java(testFolderPath + "testdirS1.pl");
+        System.out.println(fs.writeToProlog());
+    }
 
     /**
      * Queryparser tests
@@ -398,15 +410,15 @@ public class QueryParserTest {
 
         for (String key : fs.keySet())
         {
-            QueryParser qp = new QueryParser("#g ADJUNCT #h & #h inSet #i",fs.get(key));
+            QueryParser qp = new QueryParser("#g ADJUNCT #h & #h in_set #i",fs.get(key));
 
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
             RuleParser rp = new RuleParser(new ArrayList<>());
             rp.setReplace(true);
 
-            Rule r1 = new Rule("#g ADJUNCT #h & #h inSet #i & #g TNS-ASP #j ==> #i ADJ-SEM '#g -o #i'.");
-            Rule r2 = new Rule("#g ADJUNCT #h & #h inSet #i & #g NTYPE #a ==> #i ADJ-SEM '#g -o #i'.");
+            Rule r1 = new Rule("#g ADJUNCT #h & #h in_set #i & #g TNS-ASP #j ==> #i ADJ-SEM '#g -o #i'.");
+            Rule r2 = new Rule("#g ADJUNCT #h & #h in_set #i & #g NTYPE #a ==> #i ADJ-SEM '#g -o #i'.");
 
             rp.getRules().add(r1);
             rp.getRules().add(r2);

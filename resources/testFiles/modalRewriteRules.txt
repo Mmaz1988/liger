@@ -1,0 +1,1 @@
+#a TNS-ASP #b ==> #a SOMETHING #b.

@@ -40,11 +40,11 @@
 ==>  #a T-REF 'pres' & #a EVAL #d & #z CHECK '+'.
 
 //future shift in comp (prv aspect)
-#a T-REF 'non-past' &
-#a ^(TEMP-REF) #b ^(SEM>COMP) #c & #c !(SEM>TEMP-REF) #d EVAL #e &
-#b VIEWPOINT #f ASPECT 'prv' &
-#a EVAL #z CHECK '-'
-==>  #a T-REF 'future' & #a EVAL #d & #z CHECK '+'.
+#a TEMP-REF #b T-REF 'non-past' &
+#a VIEWPOINT #f ASPECT 'prv' &
+#a ^(SEM>COMP) #c & #c !(SEM>TEMP-REF) #d EVAL #e &
+#b EVAL #z CHECK '-'
+==>  #b T-REF 'future' & #b EVAL #d & #z CHECK '+'.
 
 //simultaneous under comp (impv aspect)
 #a T-REF 'non-past' &

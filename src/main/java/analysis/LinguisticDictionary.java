@@ -24,12 +24,10 @@ package analysis;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import utilities.HelperMethods;
 import utilities.PathVariables;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -40,17 +38,17 @@ public class LinguisticDictionary {
     public void testLoadDict() throws IOException {
         HashMap<String, HashMap<String, List<String>>> result;
         String filename = "zukunftsverben.txt";
-        String path_to_txt = PathVariables.dictPath;
+        String path_to_txt = "C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\dicts\\";
         result = text2Dict(path_to_txt, filename);
         //compare number of keys
-        Assertions.assertEquals(3, result.get(filename).size());
+        Assertions.assertEquals(3, result.get("tense").size());
         //compare number of elements in every list
-        Assertions.assertEquals(29, result.get(filename).get("FUTURE_POSSIBLE").size());
-        Assertions.assertEquals(9, result.get(filename).get("FUTURE_PREDICTION").size());
-        Assertions.assertEquals(16, result.get(filename).get("FUTURE_PLANNED").size());
+        Assertions.assertEquals(29, result.get("tense").get("FUTURE_POSSIBLE").size());
+        Assertions.assertEquals(9, result.get("tense").get("FUTURE_PREDICTION").size());
+        Assertions.assertEquals(16, result.get("tense").get("FUTURE_PLANNED").size());
     }
 
-    public static List<String> future = Arrays.asList("will", "would", "can", "could");
+
     public static HashMap<String, HashMap<String, List<String>>> ld;
 
 
@@ -83,9 +81,13 @@ try {
 
         HashMap<String, HashMap<String, List<String>>> future_verbs = new HashMap<>();
         //String tense = file_name;
+        //A linguistic dictionary is a collection  of dictionaries for different categories, e.g. tense,
+        // within a dictionary specific tokens are associated with a label, i.e. hashmap that has a label as key and a list of possible values as value.
+        //==> type HashMap<String,HashMap<String,List<String>>>
+
         HashMap<String, List<String>> map_verbs = new HashMap<>();
         List<String> verbs = new ArrayList();
-        List<String> verbs_copy = new ArrayList();
+
 
         //File file = new File("C:\\Users\\User\\Documents\\Uni\\HiWi-Java\\future_verbs.txt");
         File file = new File(path_to_txt + file_name);
@@ -96,13 +98,20 @@ try {
         String line = null;
         while ((line = br.readLine()) != null) {
             String key = "";
+            String lexKey ="";
+
+            if (line.startsWith(">"))
+            {
+                 lexKey = line.substring(1).strip();
+            }
+
             if (line.startsWith("#")) {
                 key = line.replace("#", "");
                 map_verbs.put(key, verbs);
             } else if (line.contains(",")) {
                 String[] lines = line.split(", ");
                 for (String ss : lines) {
-                    verbs.add(ss);
+                    verbs.add(ss.strip());
                 }
             } else if (line.contains("*")) {
                 verbs = new ArrayList<String>();

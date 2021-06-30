@@ -535,15 +535,12 @@ public class RuleParser {
                     {
                         i++;
                     }
-
                     if (!String.valueOf(fileString.charAt(i)).matches("."))
                     {
                         i++;
                         lineCounter++;
                     }
                 }
-
-
                 if (c == '/' && fileString.charAt(i+1) == '/')
                 {
                     while (String.valueOf(fileString.charAt(i)).matches("."))

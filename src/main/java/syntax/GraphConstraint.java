@@ -27,6 +27,7 @@ import utilities.HelperMethods;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class GraphConstraint implements Serializable {
 
@@ -76,6 +77,39 @@ public class GraphConstraint implements Serializable {
         return sb.toString();
 
     }
+
+    public String toPrologString(){
+
+        String value = fsValue.toString();
+
+        if (HelperMethods.isInteger(value))
+        {
+            value = "var(" + value + ")";
+        }
+
+        String choice;
+
+        if (reading.size() == 1)
+        {
+            choice = reading.stream().findAny().get().toString();
+        }
+
+        else {
+            choice = "or(" + reading.stream().map(ChoiceVar::toString).collect(Collectors.joining(",")) + ")";
+        }
+
+
+        if (this.getRelationLabel().equals("in_set") || this.getRelationLabel().equals("subsume"))
+        {
+            return String.format("cf(%1$s,%2$s(%3$s,var(%4$s)))",choice,getRelationLabel(),value,nodeIdentifier);
+        }
+        else
+        {
+            return String.format("cf(%1$s,eq(attr(var(%2$s),'%3$s'),%4$s))",choice,nodeIdentifier,getRelationLabel(),value);
+        }
+
+
+      }
 
 
     public static GraphConstraint returnRoot(List<GraphConstraint> fs)

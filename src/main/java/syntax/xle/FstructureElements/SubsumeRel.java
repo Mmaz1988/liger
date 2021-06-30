@@ -21,14 +21,9 @@
 
 package syntax.xle.FstructureElements;
 
-
-
-
-public class AdjunctSet extends AttributeValuePair {
-
-    public AdjunctSet(String value){
-        this.attribute = "in_set";
+public class SubsumeRel extends AttributeValuePair {
+    public SubsumeRel(String value) {
+        this.attribute = "subsume";
         this.value = value;
     }
-
 }
