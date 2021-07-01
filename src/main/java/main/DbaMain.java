@@ -48,7 +48,8 @@ import syntax.GraphConstraint;
 import syntax.SyntacticStructure;
 import syntax.SyntaxOperator;
 import syntax.ud.UDoperator;
-import syntax.xle.XLEoperator;
+    import syntax.xle.Fstructure;
+    import syntax.xle.XLEoperator;
 import utilities.DBASettings;
 import utilities.MyFormatter;
 import utilities.PathVariables;
@@ -374,6 +375,10 @@ import java.util.logging.Logger;
                 resultBuilder.append(g.toString());
                 resultBuilder.append(System.lineSeparator());
             }
+
+            resultBuilder.append(System.lineSeparator());
+            resultBuilder.append(((Fstructure) fs).writeToProlog(true));
+            resultBuilder.append(System.lineSeparator());
 
             resultBuilder.append("End of: " + key + "\n");
             resultBuilder.append(System.lineSeparator());

@@ -25,6 +25,7 @@ import packing.ChoiceSpace;
 import syntax.SyntacticStructure;
 import syntax.GraphConstraint;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,7 +47,7 @@ public class Fstructure extends SyntacticStructure {
         }
     }
 
-    public String writeToProlog(){
+    public String writeToProlog(Boolean annotated){
         StringBuilder prologStringBuilder = new StringBuilder();
 
         prologStringBuilder.append("% -*- coding: utf-8 -*-\n");
@@ -71,7 +72,18 @@ public class Fstructure extends SyntacticStructure {
         }
 */
 
-      prologStringBuilder.append(this.constraints.stream().filter(x -> !x.getFsNode().equals("-1")).map(x -> x.toPrologString()).collect(Collectors.joining(",\n")));
+        List<GraphConstraint> factList = constraints;
+
+        if (annotated)
+        {
+            factList = new ArrayList<>();
+            factList.addAll(constraints);
+            factList.addAll(annotation);
+        }
+
+
+
+      prologStringBuilder.append(factList.stream().filter(x -> !x.getFsNode().equals("-1")).map(x -> x.toPrologString()).collect(Collectors.joining(",\n")));
 
         prologStringBuilder.append("\n],\n");
         prologStringBuilder.append("% C-structure:\n");
@@ -80,5 +92,7 @@ public class Fstructure extends SyntacticStructure {
 
         return prologStringBuilder.toString();
     }
+
+
 
 }

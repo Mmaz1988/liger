@@ -83,7 +83,7 @@ public class QueryParserTest {
         VariableHandler vh = new VariableHandler();
         XLEoperator xle = new XLEoperator(vh);
         Fstructure fs = (Fstructure) xle.xle2Java(testFolderPath + "testdirS1.pl");
-        System.out.println(fs.writeToProlog());
+        System.out.println(fs.writeToProlog(false));
     }
 
     /**
