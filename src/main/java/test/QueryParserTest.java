@@ -54,6 +54,7 @@ public class QueryParserTest {
 
     public LinkedHashMap<String, SyntacticStructure> loadFs(int i)
     {
+        PathVariables.workingDirectory = "C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\";
         PathVariables.initializePathVariables();
         testFolderPath = PathVariables.testPath;
         VariableHandler vh = new VariableHandler();

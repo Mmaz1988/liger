@@ -22,8 +22,6 @@
 package analysis;
 
 import com.google.gson.Gson;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import utilities.PathVariables;
 
 import java.io.*;
@@ -33,7 +31,7 @@ import java.util.List;
 
 public class LinguisticDictionary {
 
-
+/*
     @Test
     public void testLoadDict() throws IOException {
         HashMap<String, HashMap<String, List<String>>> result;
@@ -47,7 +45,7 @@ public class LinguisticDictionary {
         Assertions.assertEquals(9, result.get("tense").get("FUTURE_PREDICTION").size());
         Assertions.assertEquals(16, result.get("tense").get("FUTURE_PLANNED").size());
     }
-
+*/
 
     public static HashMap<String, HashMap<String, List<String>>> ld;
 
@@ -68,7 +66,7 @@ try {
         HashMap<String, HashMap<String, List<String>>> dict = new HashMap<>();
 
         try {
-            return text2Dict(PathVariables.dictPath, "future_verbs.txt");
+            return text2Dict(PathVariables.dictPath, "ling_dict_eng.txt");
         }catch(Exception e)
         {
             e.printStackTrace();
@@ -79,49 +77,63 @@ try {
     //TODO write Method that loads in external lexicon; JSON?
     public static HashMap<String, HashMap<String, List<String>>>  text2Dict(String path_to_txt, String file_name) throws IOException {
 
-        HashMap<String, HashMap<String, List<String>>> future_verbs = new HashMap<>();
+        HashMap<String, HashMap<String, List<String>>> lingDict = new HashMap<>();
         //String tense = file_name;
         //A linguistic dictionary is a collection  of dictionaries for different categories, e.g. tense,
         // within a dictionary specific tokens are associated with a label, i.e. hashmap that has a label as key and a list of possible values as value.
         //==> type HashMap<String,HashMap<String,List<String>>>
 
-        HashMap<String, List<String>> map_verbs = new HashMap<>();
+
         List<String> verbs = new ArrayList();
+        HashMap<String, List<String>> map_verbs = new HashMap<>();
 
-
-        //File file = new File("C:\\Users\\User\\Documents\\Uni\\HiWi-Java\\future_verbs.txt");
+        //File file = new File("C:\\Users\\User\\Documents\\Uni\\HiWi-Java\\ling_dict_eng.txt");
         File file = new File(path_to_txt + file_name);
         BufferedReader br = new BufferedReader(new FileReader(file));
         //Key has to start with #
         //Lines should not end with ,
         // Block have to end with *
         String line = null;
+
         while ((line = br.readLine()) != null) {
             String key = "";
+
             String lexKey ="";
+
+            if (line.startsWith("//"))
+            {
+                continue;
+            }
 
             if (line.startsWith(">"))
             {
                  lexKey = line.substring(1).strip();
+                 map_verbs = new HashMap<>();
+                 lingDict.put(lexKey,map_verbs);
             }
 
-            if (line.startsWith("#")) {
-                key = line.replace("#", "");
-                map_verbs.put(key, verbs);
-            } else if (line.contains(",")) {
-                String[] lines = line.split(", ");
-                for (String ss : lines) {
-                    verbs.add(ss.strip());
+//            while ((line = br.readLine()) != null && !line.startsWith(">")) {
+
+                if (line.startsWith("#")) {
+                    key = line.replace("#", "");
+                    map_verbs.put(key, verbs);
+                } else if (line.contains(",")) {
+                    String[] lines = line.split(", ");
+                    for (String ss : lines) {
+                        verbs.add(ss.strip());
+                    }
+                } else if (line.contains("*")) {
+                    verbs = new ArrayList<String>();
                 }
-            } else if (line.contains("*")) {
-                verbs = new ArrayList<String>();
-            }
+     //           lexKey = line.substring(1).strip();
+  //          }
+         //   future_verbs.put(lexKey, map_verbs);
         }
-        future_verbs.put("tense", map_verbs);
+
         //writing to json
         //write2json(future_verbs);
         //json2hashmap("C:/Users/User/Documents/Uni/HiWi-Java/future_map.json");
-        return future_verbs;
+        return lingDict;
     }
 
 

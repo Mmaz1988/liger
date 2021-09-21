@@ -7,7 +7,10 @@
 #a TNS-ASP #b TENSE 'pres' & #a SEM #c TEMP-REF #d & #d T-REF 'undefined' ==>  #d T-REF 'pres' & #d EVAL #e & #e CHECK '-'.
 #a TNS-ASP #b TENSE 'fut' & #a SEM #c TEMP-REF #d & #d T-REF 'undefined' ==>  #d T-REF 'fut' & #d EVAL #e & #e CHECK '-'.
 
-#a TNS-ASP #b TENSE 'NON_PAST' & #a SEM #c TEMP-REF #d & #d T-REF 'undefined' ==>  #d T-REF 'non-past' & #d EVAL #e & #e CHECK '-'.
+#a TNS-ASP #b TENSE 'NON_PAST' & #b ASPECT 'IP' & #a SEM #c TEMP-REF #d & #d T-REF 'undefined' ==>  #d T-REF 'non-past' & #d EVAL #e & #e CHECK '-'.
+#a TNS-ASP #b TENSE 'NON_PAST' & #b ASPECT 'PE' & #a SEM #c TEMP-REF #d & #d T-REF 'undefined' ==>  #d T-REF 'non-past'.
+
+
 
 //#a TNS-ASP #b TENSE 'pres' & #a SEM #c ==> #c TEMP-REF #d & #d T-REF 'pres' & #d EVAL #e & #e TIME 'now'.
 //#a TNS-ASP #b TENSE 'fut' & #a SEM #c ==> #c TEMP-REF #d & #d T-REF 'fut' & #d EVAL #e & #e TIME 'now'.
@@ -19,18 +22,16 @@
 #a ^(TEMP-REF>SEM>COMP) #b & #b !(SEM>TEMP-REF) #c T-REF 'past' ==> #a T-REF 'non-future' & #z CHECK '+' & #a EVAL #c.
 
 
-
-
 //Aspect rules
 #a TNS-ASP #b ASPECT 'IP' & #a SEM #c ==> #c VIEWPOINT #d & #d ASPECT 'impv' & #d A-RESTR 'ongoing'.
 #a TNS-ASP #b ASPECT 'PE' & #a SEM #c ==> #c VIEWPOINT #d & #d ASPECT 'prv' & #d A-RESTR 'bounded'.
 #a TNS-ASP #b PERF '+_' & #a SEM #c ==> #c ASP-TENSE #d & #d A-REF 'past'.
 
 //Tier 2 aspect example
+
 #a T-REF 'non-past' &
 #a ^(TEMP-REF) #b ^(SEM>XCOMP) #c & #c !(SEM>TEMP-REF) #d EVAL #e &
-#b VIEWPOINT #f ASPECT 'prv' &
-#a EVAL #z CHECK '-'
+#b VIEWPOINT #f ASPECT 'prv'
 ==>  #a T-REF 'future' & #a EVAL #d & #z CHECK '+'.
 
 #a T-REF 'non-past' &
@@ -40,13 +41,14 @@
 ==>  #a T-REF 'pres' & #a EVAL #d & #z CHECK '+'.
 
 //future shift in comp (prv aspect)
+
 #a TEMP-REF #b T-REF 'non-past' &
 #a VIEWPOINT #f ASPECT 'prv' &
-#a ^(SEM>COMP) #c & #c !(SEM>TEMP-REF) #d EVAL #e &
-#b EVAL #z CHECK '-'
-==>  #b T-REF 'future' & #b EVAL #d & #z CHECK '+'.
+#a ^(SEM>COMP) #c & #c !(SEM>TEMP-REF) #d EVAL #e
+==>  #b T-REF 'future' & #b EVAL #d & #d CHECK '+'.
 
 //simultaneous under comp (impv aspect)
+
 #a T-REF 'non-past' &
 #a ^(TEMP-REF) #b ^(SEM>COMP) #c & #c !(SEM>TEMP-REF) #d EVAL #e &
 #b VIEWPOINT #f ASPECT 'impv' &
@@ -67,48 +69,6 @@
 //undefined FPS for transitive verbs
 #a TNS-ASP #b & #a PRED %a & #a SEM #z  ==>
 #z FPS #y & #y CHECK #x.
-
-#a TNS-ASP #b & #a PRED %a & #a SEM #z & #a SUBJ #c & #a OBJ #d & strip(%a) == 'kiss' &
-#z FPS #e & #e CHECK #x ==>
-#e CHECK '-' &
-#e initP #f &
-#f INIT #a &
-#f I-SUBJ #c &
-#e procP #g &
-#g PROC #a &
-#g P-SUBJ #d &
-#e XP #h &
-#h REF 'unspec' &
-#h TYPE 'rheme'.
-
-#a TNS-ASP #b & #a PRED %a & #a SEM #z & #a SUBJ #c & #a OBJ #d & strip(%a) == 'visit' &
-#z FPS #e & #e CHECK #x ==>
-#e CHECK '-' &
-#e initP #f &
-#f INIT #a &
-#f I-SUBJ #c &
-#e procP #g &
-#g PROC #a &
-#g P-SUBJ #c &
-#e XP #h &
-#h REF 'unspec' &
-#h TYPE 'rheme'.
-
-#a TNS-ASP #b & #a PRED %a & #a SEM #z & #a SUBJ #c & #a OBJ #d & #a OBJ-TH #e & strip(%a) == 'give' &
-#f FPS #g & #g CHECK #h ==>
-#g CHECK '-' &
-#g initP #i &
-#i INIT #a &
-#i I-SUBJ #c &
-#g procP #j &
-#j PROC #a &
-#j P-SUBJ 'undefined' &
-#g resP #k &
-#k RES #a &
-#k R-SUBJ #d &
-#g XP #l &
-#l REF #e &
-#l TYPE 'possession'.
 
 //Semantic interpretation
 

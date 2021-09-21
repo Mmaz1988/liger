@@ -11,7 +11,7 @@
 	<groupId>uni.kn.zymla</groupId>
 	<artifactId>syntax-annotator-glue</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>syntax-annotator-glue</name>
+	<name>liger</name>
 	<description>A rule-based syntactic annotator for adding relational and attribute value information and semantic representations based on glue semantics</description>
 
 	<properties>

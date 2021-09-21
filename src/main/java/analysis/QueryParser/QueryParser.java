@@ -35,6 +35,7 @@ import java.util.regex.Matcher;
 public class QueryParser {
 
     //TODO combine with GUI (set gui as field, to throw exceptions inside GUI
+    private String query;
     private LinkedList<QueryExpression> queryList;
     private HashMap<Integer, GraphConstraint> fsIndices;
     private VariableHandler vh = new VariableHandler();
@@ -48,12 +49,21 @@ public class QueryParser {
 
     public QueryParser(String query, SyntacticStructure fs)
     {
+        this.query = query;
+
         HashMap<Integer,GraphConstraint> fsIndexed = new HashMap<>();
 
         for (int i = 0; i < fs.constraints.size();i++)
         {
             usedKeys.add(fs.constraints.get(i).getFsNode());
             fsIndexed.put(i,fs.constraints.get(i));
+        }
+        if (!fs.annotation.isEmpty()) {
+            for (int i = 0; i < fs.annotation.size(); i++) {
+                int j = i + fs.constraints.size();
+                usedKeys.add(fs.annotation.get(i).getFsNode());
+                fsIndexed.put(j, fs.annotation.get(i));
+            }
         }
         //Part 1, String to QueryExpression element
 
@@ -75,8 +85,9 @@ public class QueryParser {
         }
         if (!fs.annotation.isEmpty()) {
             for (int i = 0; i < fs.annotation.size(); i++) {
-                usedKeys.add(fs.constraints.get(i).getFsNode());
-                fsIndexed.put(i, fs.constraints.get(i));
+                int j = i + fs.constraints.size();
+                usedKeys.add(fs.annotation.get(i).getFsNode());
+                fsIndexed.put(j, fs.annotation.get(i));
             }
         }
         //Part 1, String to QueryExpression element
@@ -110,7 +121,7 @@ public class QueryParser {
     }
  */
 
-    public LinkedList<QueryExpression> generateQuery(Deque<String> queryDeque){
+    public LinkedList<QueryExpression> generateQueryList(Deque<String> queryDeque){
 
         LinkedList<QueryExpression> queryList = new LinkedList<>();
         List<String> deque = (LinkedList<String>) queryDeque;
@@ -395,6 +406,7 @@ return false;
     {
         this.fsValueBindings = new HashMap<>();
         this.queryList = null;
+        this.query = null;
     }
 
 
@@ -402,9 +414,16 @@ return false;
     {
         Deque<String> search = new LinkedList<String>(Arrays.asList(query.split("\\s+")));
 
-        this.queryList = generateQuery(search);
+        this.queryList = generateQueryList(search);
     }
 
+    public void generateQuery()
+    {
+
+        Deque<String> search = new LinkedList<String>(Arrays.asList(query.split("\\s+")));
+
+        this.queryList = generateQueryList(search);
+    }
 
 
 

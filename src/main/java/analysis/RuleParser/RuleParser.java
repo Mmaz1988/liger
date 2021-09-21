@@ -107,6 +107,14 @@ public class RuleParser {
         this.rules = parseRuleFile(fileString);
     }
 
+    public void addAnnotation()
+    {
+        for (SyntacticStructure fs : this.fsList)
+        {
+            addAnnotation2(fs);
+        }
+    }
+
     public void addAnnotation2(SyntacticStructure fs)
     {
         resetRuleParser();

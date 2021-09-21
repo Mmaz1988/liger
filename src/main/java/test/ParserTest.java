@@ -23,10 +23,11 @@ package test;
 
 import analysis.RuleParser.RuleParser;
 import com.opencsv.CSVWriter;
+import main.DbaMain;
 import org.junit.jupiter.api.Test;
+import syntax.GraphConstraint;
 import syntax.SyntacticStructure;
 import syntax.ud.UDoperator;
-import syntax.GraphConstraint;
 import syntax.xle.XLEoperator;
 import utilities.PathVariables;
 import utilities.VariableHandler;
@@ -35,13 +36,19 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class ParserTest {
 
 
+    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+
     @Test
     void testParser()
     {
+
+        PathVariables.workingDirectory = "C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\";
+        PathVariables.initializePathVariables();
         String test_file = PathVariables.testPath + "manifesto_test.txt";
         VariableHandler var_handler = new VariableHandler();
         UDoperator parser = new UDoperator(var_handler);
@@ -59,7 +66,7 @@ public class ParserTest {
                 SyntacticStructure fs = parser.parseSingle(j);
                 List<SyntacticStructure> fsList = new ArrayList<>();
                 fsList.add(fs);
-                RuleParser rp = new RuleParser(fsList, PathVariables.testPath + "testRulesUD4.txt");
+                RuleParser rp = new RuleParser(fsList, PathVariables.testPath + "testRulesUD5.txt");
                 rp.addAnnotation2(fs);
                 try {
                     fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
@@ -150,7 +157,7 @@ public class ParserTest {
         }
         // first create file object for file placed at location
         // specified by filepath
-        String filePath = PathVariables.testPath + "manifesto_test_j.csv";
+        String filePath = PathVariables.testPath + "manifesto_test_j2.csv";
         File file = new File(filePath);
 
         try {

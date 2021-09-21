@@ -248,6 +248,19 @@ import java.util.logging.Logger;
             LOGGER.info("The rewrite system produced the following output:\n" + result.get(key).get(0));
             LOGGER.info("The GSWB produced the following output:\n" + result.get(key).get(1));
         }
+
+        StringBuilder report = new StringBuilder();
+
+        report.append(System.lineSeparator());
+        report.append("ID:      Added facts:     Glue solutions:\n");
+
+        for (String key : result.keySet())
+        {
+            report.append(String.format("%s\t\t\t%s\t\t\t%s",key,in.get(key).annotation.size(),result.get(key).get(1)));
+        }
+
+        LOGGER.info(report.toString());
+
         LOGGER.info("Done");
     }
 

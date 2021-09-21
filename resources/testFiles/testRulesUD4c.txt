@@ -44,9 +44,9 @@
 #c HEAD %b & #d HEAD %d
 ==> #c AUX '+' & #d AUX #c & #d MAIN '+' & #d FIN '+' & #d FORM %c & #d HEAD %b %d.
 
-#a aux:pass #b & #b MORPH #c FIN '+' & #a MORPH #d &
+#a aux:pass #b & #a MORPH #c FIN '+' & #b MORPH #d &
 #c HEAD %b & #d HEAD %d
-==> #c AUX '+' & #d AUX #c & #d MAIN '+' & #d HEAD %b %d.
+==> #b AUX '+' & #c AUX #d & #c MAIN '+' & #c HEAD %d %b.
 
 //#a aux #b & #b MORPH #c TENSE %c & #a MORPH #d FORM 'ppart' ==> #c AUX '+' & #d AUX #c & #d MAIN '+' & #d ASPECT 'perf' & #b ASPECT 'perf'.
 //#a aux #b & #b MORPH #c TENSE %c & #a MORPH #d FORM 'prpart' ==> #c AUX '+' & #d AUX #c & #d MAIN '+' & #d ASPECT 'prog'.
@@ -64,15 +64,11 @@
 #b MAIN '+' & #b AUX #c & #c FIN '+' & #b FORM %b &
 #c HEAD %d & #b HEAD %c ==> #c TAM #d & #b TAM #d & #d HEAD '%c' & #d TENSE %b.
 
-#a xcomp #b &
-#a MORPH #c & #b MORPH #d &
-#c FIN '+' & #d FIN '-' &
-#c TAM #e &
-#e TENSE %b &
-#c HEAD %c & #d HEAD %d ==> #d TAM #e & #e HEAD '%c to %d' & #e TENSE %b.
+//aspect
+#a HEAD %a & #a MAIN '+' & #a ASPECT %b & #a FIN '-' ==> #a TAM #b & #b HEAD %a & #b ASPECT %b.
 
 //Aspect
-#a TAM #b & #a MAIN '+' & #a ASPECT %a ==> #b ASPECT %a.
+#a TAM #b & #a MAIN '+' & #a ASPECT %a & #a FIN '+' ==> #b ASPECT %a.
 #a TAM #b & #a MAIN '+' & #a ASPECT %a & #a ASP-AUX #c ASPECT %b ==> #b ASPECT '%b,%a'.
 
 

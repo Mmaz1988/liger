@@ -64,15 +64,15 @@ public class PathVariables {
     {
         if (workingDirectory != null)
         {
-            testPath = workingDirectory + "testFiles/";
-            dictPath = workingDirectory + "dicts/";
+            testPath = workingDirectory + "testFiles\\";
+            dictPath = workingDirectory + "dicts\\";
         }
         else
         {
 
         try {
-            testPath = returnResourcesFolder() + "testFiles/";
-            dictPath = returnResourcesFolder() + "dicts/";
+            testPath = returnResourcesFolder() + "testFiles\\";
+            dictPath = returnResourcesFolder() + "dicts\\";
         }catch(Exception e)
         {
             System.out.println("Failed to locate working directory.");
