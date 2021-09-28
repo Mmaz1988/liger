@@ -212,6 +212,7 @@ dockerize-backend:
   variables:
     MAVEN_OPTS: "-Dmaven.repo.local=.m2 -Dmaven.test.skip=true"
   script:
+    - IMG="${CI_REGISTRY_IMAGE}:${VERSION}"
     - ./mvnw --batch-mode compile jib:build -Dimage=$IMG | grep -vE "^\[INFO\] Download(ing|ed) from"
   dependencies:
     - export-environment
