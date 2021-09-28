@@ -21,7 +21,7 @@
 	<repositories>
 		<repository>
 			<id>resources</id>
-			<url>file:///${project.basedir}/resources</url>
+			<url>file:${project.basedir}/resources</url>
 		</repository>
 	</repositories>
 
@@ -30,6 +30,11 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 
 		<dependency>
@@ -81,6 +86,36 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>com.google.cloud.tools</groupId>
+				<artifactId>jib-maven-plugin</artifactId>
+				<version>3.0.0</version>
+				<configuration>
+					<from>
+						<image>openjdk:13-alpine</image>
+					</from>
+					<to>
+						<image>liger</image>
+						<auth>
+							<!--suppress MavenModelInspection -->
+							<username>${env.CI_REGISTRY_USER}</username>
+							<!--suppress MavenModelInspection -->
+							<password>${env.CI_REGISTRY_PASSWORD}</password>
+						</auth>
+					</to>
+					<container>
+						<jvmFlags>
+							<jvmFlag>-XX:+UseContainerSupport</jvmFlag>
+							<jvmFlag>-XX:MaxRAMPercentage=90.0</jvmFlag>
+						</jvmFlags>
+						<ports>
+							<port>8080</port>
+						</ports>
+						<creationTime>USE_CURRENT_TIMESTAMP</creationTime>
+						<mainClass>webservice.WebApplication</mainClass>
+					</container>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
