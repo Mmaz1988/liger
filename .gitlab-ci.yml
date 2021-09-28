@@ -212,7 +212,7 @@ dockerize-backend:
   variables:
     MAVEN_OPTS: "-Dmaven.repo.local=.m2 -Dmaven.test.skip=true"
   script:
-    - ./mvn --batch-mode compile jib:build -Dimage=$IMG | grep -vE "^\[INFO\] Download(ing|ed) from"
+    - ./mvnw --batch-mode compile jib:build -Dimage=$IMG | grep -vE "^\[INFO\] Download(ing|ed) from"
   dependencies:
     - export-environment
   cache:
