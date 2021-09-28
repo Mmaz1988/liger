@@ -17,6 +17,8 @@ app:
   port: 8080
   health: "/actuator/health"
 
+  regcred: regcred-cuepaq
+
   requests:
     cpu: 250m
     memory: 1Gi
