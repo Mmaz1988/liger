@@ -107,6 +107,7 @@
 							<port>8080</port>
 						</ports>
 						<creationTime>USE_CURRENT_TIMESTAMP</creationTime>
+						<mainClass>webservice.WebApplication</mainClass>
 					</container>
 				</configuration>
 			</plugin>
