@@ -24,6 +24,7 @@ package claimanalysis;
 import analysis.QueryParser.QueryParser;
 import analysis.QueryParser.QueryParserResult;
 import analysis.RuleParser.RuleParser;
+import org.springframework.stereotype.Service;
 import syntax.SyntacticStructure;
 import syntax.ud.UDoperator;
 import webservice.ClaimRequest;
@@ -33,9 +34,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+@Service
 public class ClaimAnalysis {
 
-    public ClaimRequest cr;
     /***
     The database should contain the necessary rules
      */
@@ -43,16 +44,6 @@ public class ClaimAnalysis {
 
 
     public ClaimAnalysis(){};
-
-
-
-    public ClaimAnalysis(ClaimRequest cr)
-    {
-        this.cr = cr;
-    }
-
-
-
 
 
     /***
@@ -67,7 +58,7 @@ public class ClaimAnalysis {
     }
 
 
-    public ClaimComparisonReport compareClaimRequest()
+    public ClaimComparisonReport compareClaimRequest(ClaimRequest cr)
     {
         return compareMinimalPairElements(cr.input,cr.output,cr.classifier);
     }
