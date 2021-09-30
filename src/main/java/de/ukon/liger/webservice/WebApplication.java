@@ -27,7 +27,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 import java.util.Collections;
 
-@ComponentScan("*")
+@ComponentScan("de.ukon.liger")
 @SpringBootApplication
 public class WebApplication {
 
