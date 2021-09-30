@@ -19,7 +19,7 @@
  * "
  */
 
-package packing;
+package de.ukon.liger.packing;
 
 import edu.stanford.nlp.ling.CoreAnnotations;
 

@@ -19,22 +19,22 @@
  * "
  */
 
-package syntax.ud;
+package de.ukon.liger.syntax.ud;
 
 // Base class for creating glue semantic representations with a meaning side and a glue side
 
-import analysis.RuleParser.RuleParser;
+import de.ukon.liger.analysis.RuleParser.RuleParser;
 import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.process.Morphology;
 import edu.stanford.nlp.trees.GrammaticalStructure;
 import edu.stanford.nlp.trees.TypedDependency;
-import packing.ChoiceSpace;
-import packing.ChoiceVar;
-import syntax.GraphConstraint;
-import syntax.SyntacticStructure;
-import syntax.SyntaxOperator;
-import test.QueryParserTest;
-import utilities.VariableHandler;
+import de.ukon.liger.packing.ChoiceSpace;
+import de.ukon.liger.packing.ChoiceVar;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.SyntaxOperator;
+import de.ukon.liger.test.QueryParserTest;
+import de.ukon.liger.utilities.VariableHandler;
 
 import java.io.BufferedReader;
 import java.io.File;

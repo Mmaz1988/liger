@@ -19,19 +19,19 @@
  * "
  */
 
-package semantics;
+package de.ukon.liger.semantics;
 
 import glueSemantics.linearLogic.Premise;
 import glueSemantics.linearLogic.Sequent;
 import glueSemantics.parser.GlueParser;
 import glueSemantics.semantics.LexicalEntry;
-import main.DbaMain;
+import de.ukon.liger.main.DbaMain;
 import main.Settings;
-import packing.ChoiceVar;
+import de.ukon.liger.packing.ChoiceVar;
 import prover.LLProver;
 import prover.LLProver1;
-import syntax.GraphConstraint;
-import syntax.SyntacticStructure;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.syntax.SyntacticStructure;
 import utilities.MyFormatter;
 
 import java.util.ArrayList;

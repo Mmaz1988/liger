@@ -19,7 +19,7 @@
  * "
  */
 
-package syntax;
+package de.ukon.liger.syntax;
 
 import java.util.Set;
 

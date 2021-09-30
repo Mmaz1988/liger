@@ -19,7 +19,7 @@
  * "
  */
 
-package claimanalysis;
+package de.ukon.liger.claimanalysis;
 
 public class ClaimComparisonReport {
 

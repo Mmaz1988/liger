@@ -19,10 +19,10 @@
  * "
  */
 
-package claimanalysis;
+package de.ukon.liger.claimanalysis;
 
 import org.junit.jupiter.api.Test;
-import utilities.PathVariables;
+import de.ukon.liger.utilities.PathVariables;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

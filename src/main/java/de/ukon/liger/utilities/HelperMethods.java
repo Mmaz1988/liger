@@ -19,7 +19,7 @@
  * "
  */
 
-package utilities;
+package de.ukon.liger.utilities;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

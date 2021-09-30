@@ -19,7 +19,7 @@
  * "
  */
 
-package utilities;
+package de.ukon.liger.utilities;
 
 public class ResultContainer {
 

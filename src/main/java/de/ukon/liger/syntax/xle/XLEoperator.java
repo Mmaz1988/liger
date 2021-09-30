@@ -19,17 +19,17 @@
  * "
  */
 
-package syntax.xle;
+package de.ukon.liger.syntax.xle;
 
-import main.DbaMain;
-import packing.ChoiceVar;
-import syntax.GraphConstraint;
-import syntax.SyntacticStructure;
-import syntax.SyntaxOperator;
-import syntax.xle.FstructureElements.AttributeValuePair;
-import syntax.xle.Prolog2Java.FsProlog2Java;
-import syntax.xle.Prolog2Java.ReadFsProlog;
-import utilities.VariableHandler;
+import de.ukon.liger.main.DbaMain;
+import de.ukon.liger.packing.ChoiceVar;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.SyntaxOperator;
+import de.ukon.liger.syntax.xle.FstructureElements.AttributeValuePair;
+import de.ukon.liger.syntax.xle.Prolog2Java.FsProlog2Java;
+import de.ukon.liger.syntax.xle.Prolog2Java.ReadFsProlog;
+import de.ukon.liger.utilities.VariableHandler;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -41,7 +41,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static syntax.ud.UDoperator.extractModals;
+import static de.ukon.liger.syntax.ud.UDoperator.extractModals;
 
 
 public class XLEoperator extends SyntaxOperator {

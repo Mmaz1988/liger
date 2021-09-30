@@ -19,18 +19,18 @@
  * "
  */
 
-package webservice;
+package de.ukon.liger.webservice;
 
-import analysis.RuleParser.RuleParser;
-import main.DbaMain;
+import de.ukon.liger.analysis.RuleParser.RuleParser;
+import de.ukon.liger.main.DbaMain;
 import org.springframework.web.bind.annotation.*;
-import semantics.GlueSemantics;
-import syntax.GraphConstraint;
-import syntax.SyntacticStructure;
-import syntax.ud.UDoperator;
-import syntax.xle.XLEoperator;
-import utilities.PathVariables;
-import utilities.VariableHandler;
+import de.ukon.liger.semantics.GlueSemantics;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.ud.UDoperator;
+import de.ukon.liger.syntax.xle.XLEoperator;
+import de.ukon.liger.utilities.PathVariables;
+import de.ukon.liger.utilities.VariableHandler;
 
 import java.io.File;
 import java.io.IOException;

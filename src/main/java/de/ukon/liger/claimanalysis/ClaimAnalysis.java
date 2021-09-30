@@ -19,15 +19,15 @@
  * "
  */
 
-package claimanalysis;
+package de.ukon.liger.claimanalysis;
 
-import analysis.QueryParser.QueryParser;
-import analysis.QueryParser.QueryParserResult;
-import analysis.RuleParser.RuleParser;
+import de.ukon.liger.analysis.QueryParser.QueryParser;
+import de.ukon.liger.analysis.QueryParser.QueryParserResult;
+import de.ukon.liger.analysis.RuleParser.RuleParser;
 import org.springframework.stereotype.Service;
-import syntax.SyntacticStructure;
-import syntax.ud.UDoperator;
-import webservice.ClaimRequest;
+import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.ud.UDoperator;
+import de.ukon.liger.webservice.ClaimRequest;
 
 import java.io.File;
 import java.util.ArrayList;

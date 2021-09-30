@@ -19,10 +19,10 @@
  * "
  */
 
-package syntax.ud;
+package de.ukon.liger.syntax.ud;
 
-import syntax.SyntacticStructure;
-import syntax.GraphConstraint;
+import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.GraphConstraint;
 
 import java.util.ArrayList;
 import java.util.Arrays;

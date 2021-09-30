@@ -19,7 +19,7 @@
  * "
  */
 
-package main;
+package de.ukon.liger.main;
 /*
      * "
      *     Copyright (C) 2021 Mark-Matthias Zymla
@@ -42,19 +42,19 @@ package main;
      */
 
 
-    import analysis.RuleParser.RuleParser;
-import semantics.GlueSemantics;
-import syntax.GraphConstraint;
-import syntax.SyntacticStructure;
-import syntax.SyntaxOperator;
-import syntax.ud.UDoperator;
-    import syntax.xle.Fstructure;
-    import syntax.xle.XLEoperator;
-import utilities.DBASettings;
+    import de.ukon.liger.analysis.RuleParser.RuleParser;
+import de.ukon.liger.semantics.GlueSemantics;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.SyntaxOperator;
+import de.ukon.liger.syntax.ud.UDoperator;
+    import de.ukon.liger.syntax.xle.Fstructure;
+    import de.ukon.liger.syntax.xle.XLEoperator;
+import de.ukon.liger.utilities.DBASettings;
 import utilities.MyFormatter;
-import utilities.PathVariables;
-import utilities.VariableHandler;
-import webservice.WebApplication;
+import de.ukon.liger.utilities.PathVariables;
+import de.ukon.liger.utilities.VariableHandler;
+import de.ukon.liger.webservice.WebApplication;
 
 import java.io.File;
 import java.util.*;

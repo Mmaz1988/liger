@@ -19,9 +19,9 @@
  * "
  */
 
-package analysis.RuleParser;
+package de.ukon.liger.analysis.RuleParser;
 
-import syntax.GraphConstraint;
+import de.ukon.liger.syntax.GraphConstraint;
 
 import java.util.ArrayList;
 import java.util.List;

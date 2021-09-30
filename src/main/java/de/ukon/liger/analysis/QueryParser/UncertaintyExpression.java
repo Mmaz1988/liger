@@ -19,11 +19,11 @@
  * "
  */
 
-package analysis.QueryParser;
+package de.ukon.liger.analysis.QueryParser;
 
-import packing.ChoiceVar;
-import syntax.GraphConstraint;
-import utilities.HelperMethods;
+import de.ukon.liger.packing.ChoiceVar;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.utilities.HelperMethods;
 
 import java.util.*;
 import java.util.regex.Matcher;

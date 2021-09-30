@@ -19,11 +19,11 @@
  * "
  */
 
-package utilities;
+package de.ukon.liger.utilities;
 
 //import java.io.Serializable;
 
-import packing.ChoiceVar;
+import de.ukon.liger.packing.ChoiceVar;
 
 import java.util.*;
 

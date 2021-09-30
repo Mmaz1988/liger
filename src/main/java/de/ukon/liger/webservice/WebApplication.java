@@ -19,7 +19,7 @@
  * "
  */
 
-package webservice;
+package de.ukon.liger.webservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

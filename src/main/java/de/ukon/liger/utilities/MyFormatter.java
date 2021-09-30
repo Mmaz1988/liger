@@ -1,4 +1,4 @@
-package utilities;
+package de.ukon.liger.utilities;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

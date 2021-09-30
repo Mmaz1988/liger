@@ -19,11 +19,11 @@
  * "
  */
 
-package webservice;
+package de.ukon.liger.webservice;
 
-import syntax.SyntacticStructure;
-import syntax.GraphConstraint;
-import utilities.HelperMethods;
+import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.utilities.HelperMethods;
 
 import java.util.ArrayList;
 import java.util.HashMap;

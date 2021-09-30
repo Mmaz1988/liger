@@ -19,7 +19,7 @@
  * "
  */
 
-package packing;
+package de.ukon.liger.packing;
 
 
 import java.util.Objects;

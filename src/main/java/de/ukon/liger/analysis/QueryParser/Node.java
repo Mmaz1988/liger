@@ -19,11 +19,11 @@
  * "
  */
 
-package analysis.QueryParser;
+package de.ukon.liger.analysis.QueryParser;
 
 
-import syntax.GraphConstraint;
-import utilities.HelperMethods;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.utilities.HelperMethods;
 
 import java.util.Collections;
 import java.util.HashMap;
