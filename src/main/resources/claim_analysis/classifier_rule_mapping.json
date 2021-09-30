@@ -1,0 +1,19 @@
+{
+  "name": "claim_analysis",
+  "version": "1.0.0",
+
+  "CPST": {
+    "rules":"C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\testFiles\\testRulesUD4c.txt",
+    "query": "#a root #b MORPH #c TAM #d TENSE 'past'"
+  },
+
+  "CPRS": {
+    "rules":"C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\testFiles\\testRulesUD4c.txt",
+    "query": "#a root #b MORPH #c TAM #d TENSE 'past'"
+  },
+
+  "CFUT": {
+    "rules":"C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\testFiles\\testRulesUD4c.txt",
+    "query": "#a root #b MORPH #c TAM #d TENSE 'future'"
+  }
+}

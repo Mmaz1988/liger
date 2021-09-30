@@ -35,6 +35,12 @@ import java.util.logging.Logger;
 @RequestMapping("/claim_analysis")
 public class minimalPairController {
 
+    public ClaimAnalysis ca;
+
+    public minimalPairController(ClaimAnalysis ca){
+        this.ca = ca;
+    }
+
     private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
 
     /*
@@ -59,13 +65,11 @@ public class minimalPairController {
     @RequestMapping(value = "/compare_claims",consumes = "application/json")
     public ClaimComparisonReport compareClaims(@RequestBody ClaimRequest cr) {
 
-        ClaimAnalysis ca = new ClaimAnalysis(cr);
-
-        return ca.compareClaimRequest();
+        return ca.compareClaimRequest(cr);
     }
 
     /***
-     * For an input spring, specifies the set of classifiers that applys to this tring.
+     * For an input spring, specifies the set of classifiers that apply to this tring.
      * @param
      * @return Set of classifiers that apply to the given claim.
      */

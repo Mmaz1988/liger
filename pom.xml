@@ -112,7 +112,7 @@
 							<port>8080</port>
 						</ports>
 						<creationTime>USE_CURRENT_TIMESTAMP</creationTime>
-						<mainClass>webservice.WebApplication</mainClass>
+						<mainClass>de.ukon.liger.webservice.WebApplication</mainClass>
 					</container>
 				</configuration>
 			</plugin>
@@ -130,7 +130,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>main.DbaMain</mainClass>
+							<mainClass>de.ukon.liger.main.DbaMain</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
