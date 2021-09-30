@@ -19,14 +19,14 @@
  * "
  */
 
-package syntax.xle.Prolog2Java;
+package de.ukon.liger.syntax.xle.Prolog2Java;
 
-import main.DbaMain;
-import packing.ChoiceSpace;
-import packing.ChoiceVar;
-import syntax.GraphConstraint;
-import syntax.xle.FstructureElements.*;
-import utilities.HelperMethods;
+import de.ukon.liger.main.DbaMain;
+import de.ukon.liger.packing.ChoiceSpace;
+import de.ukon.liger.packing.ChoiceVar;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.syntax.xle.FstructureElements.*;
+import de.ukon.liger.utilities.HelperMethods;
 
 import java.util.*;
 import java.util.logging.Logger;

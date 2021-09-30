@@ -19,10 +19,10 @@
  * "
  */
 
-package syntax;
+package de.ukon.liger.syntax;
 
-import packing.ChoiceVar;
-import utilities.HelperMethods;
+import de.ukon.liger.packing.ChoiceVar;
+import de.ukon.liger.utilities.HelperMethods;
 
 import java.io.Serializable;
 import java.util.List;

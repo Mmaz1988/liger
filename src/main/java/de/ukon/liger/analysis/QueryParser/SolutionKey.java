@@ -19,9 +19,9 @@
  * "
  */
 
-package analysis.QueryParser;
+package de.ukon.liger.analysis.QueryParser;
 
-import packing.ChoiceVar;
+import de.ukon.liger.packing.ChoiceVar;
 
 import java.util.Set;
 

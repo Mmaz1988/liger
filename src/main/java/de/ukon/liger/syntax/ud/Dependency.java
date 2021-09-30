@@ -19,10 +19,10 @@
  * "
  */
 
-package syntax.ud;
+package de.ukon.liger.syntax.ud;
 
 
-import syntax.GraphConstraint;
+import de.ukon.liger.syntax.GraphConstraint;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;

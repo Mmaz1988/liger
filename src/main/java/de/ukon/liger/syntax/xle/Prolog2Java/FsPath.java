@@ -19,11 +19,11 @@
  * "
  */
 
-package syntax.xle.Prolog2Java;
+package de.ukon.liger.syntax.xle.Prolog2Java;
 
-import syntax.GraphConstraint;
-import utilities.HelperMethods;
-import utilities.VariableHandler;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.utilities.HelperMethods;
+import de.ukon.liger.utilities.VariableHandler;
 
 import java.util.*;
 import java.util.regex.Matcher;

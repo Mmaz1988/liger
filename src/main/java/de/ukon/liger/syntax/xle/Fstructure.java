@@ -19,11 +19,11 @@
  * "
  */
 
-package syntax.xle;
+package de.ukon.liger.syntax.xle;
 
-import packing.ChoiceSpace;
-import syntax.SyntacticStructure;
-import syntax.GraphConstraint;
+import de.ukon.liger.packing.ChoiceSpace;
+import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.GraphConstraint;
 
 import java.util.ArrayList;
 import java.util.List;

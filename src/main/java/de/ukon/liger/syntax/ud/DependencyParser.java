@@ -19,7 +19,7 @@
  * "
  */
 
-package syntax.ud;
+package de.ukon.liger.syntax.ud;
 
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;

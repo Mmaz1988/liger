@@ -19,14 +19,14 @@
  * "
  */
 
-package analysis.QueryParser;
+package de.ukon.liger.analysis.QueryParser;
 
-import main.DbaMain;
-import packing.ChoiceSpace;
-import syntax.GraphConstraint;
-import syntax.SyntacticStructure;
-import utilities.HelperMethods;
-import utilities.VariableHandler;
+import de.ukon.liger.main.DbaMain;
+import de.ukon.liger.packing.ChoiceSpace;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.utilities.HelperMethods;
+import de.ukon.liger.utilities.VariableHandler;
 
 import java.util.*;
 import java.util.logging.Logger;

@@ -19,7 +19,7 @@
  * "
  */
 
-package webservice;
+package de.ukon.liger.webservice;
 
 public class AnnotationRequest {
     public String sentence;

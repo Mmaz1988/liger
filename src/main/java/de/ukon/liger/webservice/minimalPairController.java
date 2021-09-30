@@ -19,12 +19,12 @@
  * "
  */
 
-package webservice;
+package de.ukon.liger.webservice;
 
 
-import claimanalysis.ClaimAnalysis;
-import claimanalysis.ClaimComparisonReport;
-import main.DbaMain;
+import de.ukon.liger.claimanalysis.ClaimAnalysis;
+import de.ukon.liger.claimanalysis.ClaimComparisonReport;
+import de.ukon.liger.main.DbaMain;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;

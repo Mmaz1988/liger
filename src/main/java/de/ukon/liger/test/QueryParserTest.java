@@ -19,23 +19,23 @@
  * "
  */
 
-package test;
+package de.ukon.liger.test;
 
 
-import analysis.QueryParser.QueryParser;
-import analysis.QueryParser.QueryParserResult;
-import analysis.RuleParser.Rule;
-import analysis.RuleParser.RuleParser;
+import de.ukon.liger.analysis.QueryParser.QueryParser;
+import de.ukon.liger.analysis.QueryParser.QueryParserResult;
+import de.ukon.liger.analysis.RuleParser.Rule;
+import de.ukon.liger.analysis.RuleParser.RuleParser;
 import glueSemantics.linearLogic.Premise;
-import main.DbaMain;
+import de.ukon.liger.main.DbaMain;
 import org.junit.jupiter.api.Test;
-import semantics.GlueSemantics;
-import syntax.SyntacticStructure;
-import syntax.xle.Fstructure;
-import syntax.xle.XLEoperator;
-import utilities.HelperMethods;
-import utilities.PathVariables;
-import utilities.VariableHandler;
+import de.ukon.liger.semantics.GlueSemantics;
+import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.xle.Fstructure;
+import de.ukon.liger.syntax.xle.XLEoperator;
+import de.ukon.liger.utilities.HelperMethods;
+import de.ukon.liger.utilities.PathVariables;
+import de.ukon.liger.utilities.VariableHandler;
 
 import java.io.File;
 import java.io.IOException;

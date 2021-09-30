@@ -19,17 +19,17 @@
  * "
  */
 
-package analysis.RuleParser;
+package de.ukon.liger.analysis.RuleParser;
 
-import analysis.LinguisticDictionary;
-import analysis.QueryParser.QueryParser;
-import analysis.QueryParser.QueryParserResult;
-import analysis.QueryParser.SolutionKey;
-import main.DbaMain;
-import packing.ChoiceVar;
-import syntax.GraphConstraint;
-import syntax.SyntacticStructure;
-import utilities.HelperMethods;
+import de.ukon.liger.analysis.LinguisticDictionary;
+import de.ukon.liger.analysis.QueryParser.QueryParser;
+import de.ukon.liger.analysis.QueryParser.QueryParserResult;
+import de.ukon.liger.analysis.QueryParser.SolutionKey;
+import de.ukon.liger.main.DbaMain;
+import de.ukon.liger.packing.ChoiceVar;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.utilities.HelperMethods;
 
 import java.io.File;
 import java.nio.file.Files;

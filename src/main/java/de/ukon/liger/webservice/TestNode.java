@@ -19,7 +19,7 @@
  * "
  */
 
-package webservice;
+package de.ukon.liger.webservice;
 
 import java.util.HashMap;
 import java.util.List;

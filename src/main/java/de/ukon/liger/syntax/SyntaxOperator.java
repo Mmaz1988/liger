@@ -40,7 +40,7 @@
  * "
  */
 
-package syntax;
+package de.ukon.liger.syntax;
 
 public abstract class SyntaxOperator {
 

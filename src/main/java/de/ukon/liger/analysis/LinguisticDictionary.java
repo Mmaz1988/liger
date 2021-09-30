@@ -19,10 +19,10 @@
  * "
  */
 
-package analysis;
+package de.ukon.liger.analysis;
 
 import com.google.gson.Gson;
-import utilities.PathVariables;
+import de.ukon.liger.utilities.PathVariables;
 
 import java.io.*;
 import java.util.ArrayList;

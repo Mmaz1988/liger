@@ -19,7 +19,7 @@
  * "
  */
 
-package analysis.QueryParser;
+package de.ukon.liger.analysis.QueryParser;
 
 public class EndExpression extends QueryExpression{
 

@@ -19,10 +19,10 @@
  * "
  */
 
-package syntax;
+package de.ukon.liger.syntax;
 
-import packing.ChoiceSpace;
-import utilities.HelperMethods;
+import de.ukon.liger.packing.ChoiceSpace;
+import de.ukon.liger.utilities.HelperMethods;
 
 import java.util.ArrayList;
 import java.util.HashSet;

@@ -19,9 +19,9 @@
  * "
  */
 
-package analysis;
+package de.ukon.liger.analysis;
 
-import syntax.SyntacticStructure;
+import de.ukon.liger.syntax.SyntacticStructure;
 
 import java.util.ArrayList;
 import java.util.Arrays;

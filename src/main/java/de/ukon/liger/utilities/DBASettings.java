@@ -19,7 +19,7 @@
  * "
  */
 
-package utilities;
+package de.ukon.liger.utilities;
 
 import java.io.BufferedWriter;
 import java.io.File;

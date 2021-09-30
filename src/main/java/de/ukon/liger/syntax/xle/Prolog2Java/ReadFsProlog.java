@@ -19,11 +19,11 @@
  * "
  */
 
-package syntax.xle.Prolog2Java;
+package de.ukon.liger.syntax.xle.Prolog2Java;
 
-import main.DbaMain;
-import packing.ChoiceSpace;
-import utilities.VariableHandler;
+import de.ukon.liger.main.DbaMain;
+import de.ukon.liger.packing.ChoiceSpace;
+import de.ukon.liger.utilities.VariableHandler;
 
 import java.io.*;
 import java.util.*;
