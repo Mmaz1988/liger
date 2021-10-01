@@ -214,6 +214,11 @@ dockerize-backend:
   script:
     - IMG="${CI_REGISTRY_IMAGE}:${VERSION}"
     - ./mvnw --batch-mode compile jib:build -Dimage=$IMG | grep -vE "^\[INFO\] Download(ing|ed) from"
+    - |
+      if [ "${ENV_TYPE}" == "staging" ]
+      then
+        ./mvnw --batch-mode compile jib:build -Dimage="${CI_REGISTRY_IMAGE}:master" | grep -vE "^\[INFO\] Download(ing|ed) from"
+      fi
   dependencies:
     - export-environment
   cache:
