@@ -1,37 +1,3 @@
-INESS-logo
-Sign in: Local | Clarin SPF | eduGAIN | OpenIdP
-XLE-Web
-Main Page
-Knowledge center
-The project
-Documentation
-FAQ
-Publications
-Links
-Resources
-Treebanks
-Treebank Selection
-Parallel Sentences
-Tools
-XLE-Web
-Grammars
-
-Grammar:
-Write a sentence (max. 600 characters), ending it with punctuation (. ? or !).
-Please observe orthographic conventions, such as capitalization of proper names.
-Please do not use XLE-Web for automatic parsing of larger amounts of text.
-Russian police and tax inspectors have raided the offices of the human rights group Memorial and other civil society groups which get foreign funding.
-
-
-Packed representation
-Show XLE messages
-Show unoptimal
-	Suppress CHECK
-Suppress complex categories
-PREDs only 	Show discriminant weights
-Include non-top F-structures
-Show discriminants c-structure f-structure
-
 % -*- coding: utf-8 -*-
 
 fstructure('Russian police and tax inspectors have raided the offices of the human rights group Memorial and other civil society groups which get foreign funding.',

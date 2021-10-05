@@ -1,0 +1,1 @@
+management.endpoint.health.enabled=true

@@ -23,6 +23,7 @@ package de.ukon.liger.webservice;
 
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.main.DbaMain;
+import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
@@ -43,6 +44,9 @@ import java.util.logging.Logger;
 @RestController
 public class AnnotatorController {
     private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+
+
+
 
     @CrossOrigin
     //(origins = "http://localhost:63342")

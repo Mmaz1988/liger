@@ -1,0 +1,33 @@
+package de.ukon.liger.claimanalysis;
+
+public enum Classifier {
+    CNFN,
+    CFIN,
+    CMDV,
+    CEVD,
+    CPKN,
+    CMSP,
+    CLSP,
+    CADJ,
+    CPOS,
+    CNEG,
+    CLKY,
+    CULK,
+    CFCT,
+    CLFT,
+    CADV,
+    CPOL,
+    CPAS,
+    CPRG,
+    CHAB,
+    CPST,
+    CSPR,
+    CPRS,
+    CFUT,
+    CPSP,
+    CPAP,
+    CRHQ,
+    CSCN,
+    CMDA,
+    CPLT
+}
