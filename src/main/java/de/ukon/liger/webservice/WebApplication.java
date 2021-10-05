@@ -21,6 +21,7 @@
 
 package de.ukon.liger.webservice;
 
+import de.ukon.liger.utilities.PathVariables;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
@@ -37,6 +38,7 @@ public class WebApplication {
 	}
 	 */
 	public static void main(String[] args) {
+		PathVariables.initializePathVariables();
 		SpringApplication app = new SpringApplication(WebApplication.class);
 		app.setDefaultProperties(Collections
 				.singletonMap("server.port", "8080"));

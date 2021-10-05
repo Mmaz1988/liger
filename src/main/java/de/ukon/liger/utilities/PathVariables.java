@@ -21,7 +21,15 @@
 
 package de.ukon.liger.utilities;
 
+import de.ukon.liger.main.DbaMain;
+
+import java.io.File;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.util.logging.Logger;
 
 public class PathVariables {
 
@@ -30,6 +38,8 @@ public class PathVariables {
     public static String testPath;
     //Path to the dict package
     public static String dictPath;
+
+    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
 
     /*
 
@@ -82,10 +92,25 @@ public class PathVariables {
 
 
     public static String returnResourcesFolder() throws URISyntaxException {
-        return PathVariables.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath().toString();
+
+/*
+        ClassLoader classLoader = PathVariables.class.getClassLoader();
+        final URI uri = new URI(classLoader.getResource("").getPath());
+*/
+
+
+    File f = new File(DbaMain.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+
+     //  File f = new File(ClassLoader.getSystemClassLoader().getResource(".").toURI());
+
+     //   File f = null;
+
+        if (f == null)
+        {LOGGER.warning("Failed to find working directory.");
+        }
+
+        return f.toString();
+
+ //      return uri.getPath();
     }
-
- //   return new File(MyClass.class.getProtectionDomain().getCodeSource().getLocation()
- //   .toURI()).getPath();*
-
 }
