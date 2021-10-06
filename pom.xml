@@ -156,10 +156,10 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${basedir}/target/external_resources/</outputDirectory>
+							<outputDirectory>${basedir}/target/liger_resources/</outputDirectory>
 							<resources>
 								<resource>
-									<directory>resources</directory>
+									<directory>${basedir}/liger_resources</directory>
 									<filtering>true</filtering>
 								</resource>
 							</resources>

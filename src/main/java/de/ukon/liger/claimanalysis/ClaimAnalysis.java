@@ -100,16 +100,16 @@ public class ClaimAnalysis {
      * @return Set of string identifiers of classifiers
      */
 
-    public Set<String> searchClassifiers(String input)
+    public Set<Classifier> searchClassifiers(String input)
     {
-        Set<String> classifiers = new HashSet<>();
+        Set<Classifier> classifiers = new HashSet<>();
         SyntacticStructure synstr = ud.parseSingle(input);
 
        for (Classifier c : classifierMap.keySet())
        {
            if (checkForClassifier(synstr,c))
            {
-               classifiers.add(c.toString());
+               classifiers.add(c);
            }
        }
         return classifiers;

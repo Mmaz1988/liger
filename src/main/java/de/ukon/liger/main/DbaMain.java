@@ -173,13 +173,19 @@ import java.util.logging.Logger;
                     if (settings.semanticParsing) {
                         ruleFile = PathVariables.testPath + "testRulesUD1.txt";
                     } else {
-                            ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
+                        ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
                     }
-                } else {
-                    ruleFile = PathVariables.testPath + "testRulesLFG8.txt";
                 }
-            } else {
-                ruleFile = settings.ruleFile;
+            }
+
+            if (settings.mode == null)
+            {
+                settings.mode = "dep";
+                if (settings.semanticParsing) {
+                    ruleFile = PathVariables.testPath + "testRulesUD1.txt";
+                } else {
+                    ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
+                }
             }
 
             LOGGER.info("Set rule file: " + ruleFile);
@@ -187,15 +193,7 @@ import java.util.logging.Logger;
             LinkedHashMap<String,HashMap<Integer,String>> result = new LinkedHashMap<>();
 
             if (settings.interactiveMode) {
-                if (settings.mode == null)
-                {
-                    settings.mode = "dep";
-                    if (settings.semanticParsing) {
-                        ruleFile = PathVariables.testPath + "testRulesUD1.txt";
-                    } else {
-                        ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
-                    }
-                }
+
                LOGGER.info("Starting interactive mode...\n");
                 Scanner s = new Scanner(System.in);
 
