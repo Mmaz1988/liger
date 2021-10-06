@@ -82,13 +82,15 @@ public class RuleParser {
         String fileString = null;
         try {
             fileString = new String(Files.readAllBytes(Paths.get(path.toString())));
+            this.rules = parseRuleFile(fileString);
         }catch(Exception e)
         {
             LOGGER.warning("Failed to load rule file");
-            e.printStackTrace();
+            this.rules = new ArrayList<>();
+       //     e.printStackTrace();
         }
 
-        this.rules = parseRuleFile(fileString);
+
     }
 
     public RuleParser(File path)
@@ -98,13 +100,16 @@ public class RuleParser {
         String fileString = null;
         try {
             fileString = new String(Files.readAllBytes(Paths.get(path.toString())));
+            this.rules = parseRuleFile(fileString);
         }catch(Exception e)
         {
             LOGGER.warning("Failed to load rule file");
-            e.printStackTrace();
+            this.rules = new ArrayList<>();
+         //   e.printStackTrace();
         }
 
-        this.rules = parseRuleFile(fileString);
+
+
     }
 
     public void addAnnotation()
@@ -446,15 +451,20 @@ public class RuleParser {
         {
             String val = matcher3.group(2);
             String dict = matcher3.group(3);
+            boolean replace = false;
 
-            for (String key : LinguisticDictionary.ld.get(dict).keySet())
-            {
-                if (LinguisticDictionary.ld.get(dict).get(key).contains(val))
+            if (LinguisticDictionary.ld.containsKey(dict)) {
+                for (String key : LinguisticDictionary.ld.get(dict).keySet()) {
+                    if (LinguisticDictionary.ld.get(dict).get(key).contains(val)) {
+                        matcher3.appendReplacement(sb3, key);
+                        replace = true;
+                    }
+                }
+                if (!replace)
                 {
-                    matcher3.appendReplacement(sb3,key);
+                    matcher3.appendReplacement(sb3, "undefined");
                 }
             }
-
         }
         matcher3.appendTail(sb3);
 

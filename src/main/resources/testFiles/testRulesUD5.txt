@@ -1,8 +1,0 @@
--replace(true);
-
-#a ccomp #b & #a LEMMA %a ==> #a MOD_COMP #c & #c MODAL %a.
-#a xcomp #b & #a LEMMA %a ==> #a MOD_COMP #c & #c MODAL %a.
-
-#a MOD_COMP #b MODAL %a & #a nsubj #c LEMMA %c ==> #b MOD_SUBJ %c.
-
-

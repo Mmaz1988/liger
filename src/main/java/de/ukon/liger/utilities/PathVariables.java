@@ -24,6 +24,7 @@ package de.ukon.liger.utilities;
 import de.ukon.liger.main.DbaMain;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileStore;
@@ -70,46 +71,64 @@ public class PathVariables {
     }
 */
 
-    public static void initializePathVariables()
-    {
-        if (workingDirectory != null)
-        {
-            testPath = workingDirectory + "testFiles\\";
-            dictPath = workingDirectory + "dicts\\";
+    public static void initializePathVariables() {
+        if (workingDirectory != null) {
+            if (!workingDirectory.endsWith(File.separator)) {
+                workingDirectory = workingDirectory + File.separator;
+            }
+            testPath = workingDirectory + "testFiles" + File.separator;
+            dictPath = workingDirectory + "dicts" + File.separator;
         }
         else
         {
-
         try {
-            testPath = returnResourcesFolder() + "testFiles\\";
-            dictPath = returnResourcesFolder() + "dicts\\";
+            workingDirectory = returnResourcesFolder();
+            if (!workingDirectory.endsWith(File.separator)) {
+                workingDirectory = workingDirectory + File.separator;
+            }
+            testPath = workingDirectory + "testFiles" + File.separator;
+            dictPath = workingDirectory + "dicts" + File.separator;
         }catch(Exception e)
         {
             System.out.println("Failed to locate working directory.");
+            e.printStackTrace();
         }
     }
     }
 
 
-    public static String returnResourcesFolder() throws URISyntaxException {
+
+
+    public static String returnResourcesFolder() throws FileNotFoundException {
 
 /*
         ClassLoader classLoader = PathVariables.class.getClassLoader();
         final URI uri = new URI(classLoader.getResource("").getPath());
-*/
+*/      File f = null;
 
+        try {
+            String fileString = System.getProperty("user.dir");
+            f = new File(fileString);
+            return f.toString() + File.separator + "liger_resources";
 
-    File f = new File(DbaMain.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            //  File f = new File(ClassLoader.getSystemClassLoader().getResource(".").toURI());
+        }
+        catch(Exception e)
+        {
+        LOGGER.warning("Failed to find working directory.");
+        LOGGER.info("Set resources directory to home directory: " + System.getProperty("user.home"));
+         f = new File(System.getProperty("user.home") + File.separator + "liger_resources" );
 
-     //  File f = new File(ClassLoader.getSystemClassLoader().getResource(".").toURI());
-
-     //   File f = null;
-
-        if (f == null)
-        {LOGGER.warning("Failed to find working directory.");
+         if (f.exists()) {
+             LOGGER.info("Set resources directory to home directory: " + System.getProperty("user.home"));
+             return f.toString();
+         }
+         else
+         {
+             throw new FileNotFoundException(f.toString());
+         }
         }
 
-        return f.toString();
 
  //      return uri.getPath();
     }

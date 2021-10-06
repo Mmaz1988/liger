@@ -22,12 +22,14 @@
 package de.ukon.liger.analysis;
 
 import com.google.gson.Gson;
+import de.ukon.liger.main.DbaMain;
 import de.ukon.liger.utilities.PathVariables;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class LinguisticDictionary {
 
@@ -48,7 +50,7 @@ public class LinguisticDictionary {
 */
 
     public static HashMap<String, HashMap<String, List<String>>> ld;
-
+    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
 
     public LinguisticDictionary() {
 try {
@@ -88,13 +90,14 @@ try {
         HashMap<String, List<String>> map_verbs = new HashMap<>();
 
         //File file = new File("C:\\Users\\User\\Documents\\Uni\\HiWi-Java\\ling_dict_eng.txt");
+        try{
         File file = new File(path_to_txt + file_name);
         BufferedReader br = new BufferedReader(new FileReader(file));
         //Key has to start with #
         //Lines should not end with ,
         // Block have to end with *
-        String line = null;
 
+       String line = null;
         while ((line = br.readLine()) != null) {
             String key = "";
 
@@ -134,6 +137,11 @@ try {
         //write2json(future_verbs);
         //json2hashmap("C:/Users/User/Documents/Uni/HiWi-Java/future_map.json");
         return lingDict;
+        }catch(Exception e)
+        {
+            LOGGER.warning("Failed to find or parse dictionary file at: " + path_to_txt + file_name);
+            return new HashMap<String, HashMap<String, List<String>>>();
+        }
     }
 
 
