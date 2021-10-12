@@ -176,6 +176,9 @@ import java.util.logging.Logger;
                         ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
                     }
                 }
+            } else
+            {
+                ruleFile = settings.ruleFile;
             }
 
             if (settings.mode == null)

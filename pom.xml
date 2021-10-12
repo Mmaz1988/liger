@@ -21,7 +21,7 @@
 	<repositories>
 		<repository>
 			<id>resources</id>
-			<url>file:${project.basedir}/resources</url>
+			<url>file:${project.basedir}/liger_resources</url>
 		</repository>
 	</repositories>
 
