@@ -24,11 +24,12 @@ package de.ukon.liger.webservice;
 
 import de.ukon.liger.claimanalysis.ClaimAnalysis;
 import de.ukon.liger.claimanalysis.ClaimComparisonReport;
-import de.ukon.liger.main.DbaMain;
+import de.ukon.liger.claimanalysis.Classifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
-import java.util.logging.Logger;
 
 @CrossOrigin
 @RestController
@@ -37,11 +38,11 @@ public class minimalPairController {
 
     public ClaimAnalysis ca;
 
-    public minimalPairController(ClaimAnalysis ca){
+    public minimalPairController(ClaimAnalysis ca) {
         this.ca = ca;
     }
 
-    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+    private final static Logger LOGGER = LoggerFactory.getLogger(minimalPairController.class);
 
     /*
     @CrossOrigin
@@ -62,7 +63,7 @@ public class minimalPairController {
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
-    @RequestMapping(value = "/compare_claims",consumes = "application/json")
+    @RequestMapping(value = "/compare_claims", consumes = "application/json")
     public ClaimComparisonReport compareClaims(@RequestBody ClaimRequest cr) {
 
         return ca.compareClaimRequest(cr);
@@ -75,16 +76,9 @@ public class minimalPairController {
      */
 
     @CrossOrigin
-    //(origins = "http://localhost:63342")
     @RequestMapping(value = "/claim_analysis", produces = "application/json")
-    public Set<String> produceClaimAnalysis(
-    @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
-
-
-
-
-
-        return null;
+    public Set<Classifier> produceClaimAnalysis(@RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
+        return ca.searchClassifiers(input);
     }
 
 

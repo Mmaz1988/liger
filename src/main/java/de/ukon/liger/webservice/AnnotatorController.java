@@ -35,6 +35,7 @@ import de.ukon.liger.utilities.VariableHandler;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -43,7 +44,7 @@ import java.util.logging.Logger;
 @CrossOrigin
 @RestController
 public class AnnotatorController {
-    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(AnnotatorController.class.getName());
 
 
 
@@ -97,7 +98,7 @@ public class AnnotatorController {
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
-        RuleParser rp = new RuleParser(fsList, new File(PathVariables.testPath + "testRulesUD4c.txt"));
+        RuleParser rp = new RuleParser(fsList, Paths.get(PathVariables.testPath + "testRulesUD4c.txt"));
         rp.addAnnotation2(fs);
 
         try {
@@ -145,7 +146,7 @@ public class AnnotatorController {
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
-        RuleParser rp = new RuleParser(fsList, new File(PathVariables.testPath + "testRulesUD1.txt"));
+        RuleParser rp = new RuleParser(fsList, Paths.get(PathVariables.testPath + "testRulesUD1.txt"));
         rp.addAnnotation2(fs);
 
         try {

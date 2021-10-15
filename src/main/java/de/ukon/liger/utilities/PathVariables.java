@@ -22,6 +22,8 @@
 package de.ukon.liger.utilities;
 
 import de.ukon.liger.main.DbaMain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -30,7 +32,7 @@ import java.net.URISyntaxException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.util.logging.Logger;
+import java.nio.file.Path;
 
 public class PathVariables {
 
@@ -40,7 +42,7 @@ public class PathVariables {
     //Path to the dict package
     public static String dictPath;
 
-    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+    private final static Logger LOGGER = LoggerFactory.getLogger(PathVariables.class);
 
     /*
 
@@ -93,6 +95,10 @@ public class PathVariables {
             System.out.println("Failed to locate working directory.");
             e.printStackTrace();
         }
+
+        LOGGER.info("dir " + workingDirectory);
+        LOGGER.info("test " + testPath);
+        LOGGER.info("dict " + dictPath);
     }
     }
 
@@ -115,7 +121,7 @@ public class PathVariables {
         }
         catch(Exception e)
         {
-        LOGGER.warning("Failed to find working directory.");
+        LOGGER.warn("Failed to find working directory.");
         LOGGER.info("Set resources directory to home directory: " + System.getProperty("user.home"));
          f = new File(System.getProperty("user.home") + File.separator + "liger_resources" );
 

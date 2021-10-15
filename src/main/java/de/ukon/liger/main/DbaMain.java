@@ -21,67 +21,57 @@
 
 package de.ukon.liger.main;
 /*
-     * "
-     *     Copyright (C) 2021 Mark-Matthias Zymla
-     *
-     *     This file is part of the abstract syntax annotator  (https://github.com/Mmaz1988/abstract-syntax-annotator-web/blob/master/README.md).
-     *
-     *     This program is free software: you can redistribute it and/or modify
-     *     it under the terms of the GNU General Public License as published by
-     *     the Free Software Foundation, either version 3 of the License, or
-     *     (at your option) any later version.
-     *
-     *     This program is distributed in the hope that it will be useful,
-     *     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     *     GNU General Public License for more details.
-     *
-     *     You should have received a copy of the GNU General Public License
-     *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-     * "
-     */
+ * "
+ *     Copyright (C) 2021 Mark-Matthias Zymla
+ *
+ *     This file is part of the abstract syntax annotator  (https://github.com/Mmaz1988/abstract-syntax-annotator-web/blob/master/README.md).
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * "
+ */
 
 
-    import de.ukon.liger.analysis.RuleParser.RuleParser;
+import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.SyntacticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
 import de.ukon.liger.syntax.ud.UDoperator;
-    import de.ukon.liger.syntax.xle.Fstructure;
-    import de.ukon.liger.syntax.xle.XLEoperator;
+import de.ukon.liger.syntax.xle.Fstructure;
+import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.DBASettings;
-import utilities.MyFormatter;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
 import de.ukon.liger.webservice.WebApplication;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import utilities.MyFormatter;
 
 import java.io.File;
 import java.util.*;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+public class DbaMain {
 
 
-    public class DbaMain {
-
-
-
-  //  public BufferedWriter outputWriter;
+    //  public BufferedWriter outputWriter;
     public static DBASettings settings;
-    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+    private final static Logger LOGGER = LoggerFactory.getLogger(DbaMain.class);
 
 
     public static void main(String[] args) {
 
-        LOGGER.setUseParentHandlers(false);
-        ConsoleHandler handler = new ConsoleHandler();
-        handler.setFormatter(new MyFormatter());
-        handler.setLevel(Level.ALL);
-        LOGGER.addHandler(handler);
-        LOGGER.setLevel(Level.ALL);
-
-        LOGGER.info("Starting linguistic rewrite system -- copyright 2021 Mark-Matthias Zymla");
+        LOGGER.info("Starting rewrite system -- copyright 2021 Mark-Matthias Zymla");
 
         initiateArguments(args);
     }
@@ -91,6 +81,7 @@ import java.util.logging.Logger;
 
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
+            LOGGER.info("GOT ARG: " + arg);
 
             switch (arg) {
 
@@ -100,6 +91,7 @@ import java.util.logging.Logger;
 
                 case "-res":
                     settings.resources = args[i + 1];
+                    LOGGER.info("Setting resource directory to " + settings.resources);
                     break;
                 case "-i":
                     settings.inputFile = args[i + 1];
@@ -139,16 +131,19 @@ import java.util.logging.Logger;
         if (settings.resources != null) {
             PathVariables.workingDirectory = settings.resources;
         }
+        LOGGER.info("Successsfully initialized working directory to " + PathVariables.workingDirectory);
         PathVariables.initializePathVariables();
 
+        LOGGER.info("dir " + PathVariables.workingDirectory);
+        LOGGER.info("test " + PathVariables.testPath);
+        LOGGER.info("dict " + PathVariables.dictPath);
 
-        if (settings.web)
-        {
+
+        if (settings.web) {
             LOGGER.info("Running system as web service ... ");
             WebApplication web = new WebApplication();
             web.main(new String[0]);
-        }
-        else {
+        } else {
             if (settings.outputFile != null) {
                 String outPath = settings.outputFile;
                 try {
@@ -160,9 +155,9 @@ import java.util.logging.Logger;
                     outFile.createNewFile();
                     //  outFile.createNewFile();
                     settings.setOutputWriter(outFile);
-                    LOGGER.info("Created output file: " +outFile.toString());
+                    LOGGER.info("Created output file: " + outFile.toString());
                 } catch (Exception e) {
-                   LOGGER.warning("Failed to write output to:" + outPath);
+                    LOGGER.warn("Failed to write output to:" + outPath);
                 }
             }
 
@@ -176,13 +171,11 @@ import java.util.logging.Logger;
                         ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
                     }
                 }
-            } else
-            {
+            } else {
                 ruleFile = settings.ruleFile;
             }
 
-            if (settings.mode == null)
-            {
+            if (settings.mode == null) {
                 settings.mode = "dep";
                 if (settings.semanticParsing) {
                     ruleFile = PathVariables.testPath + "testRulesUD1.txt";
@@ -193,11 +186,11 @@ import java.util.logging.Logger;
 
             LOGGER.info("Set rule file: " + ruleFile);
 
-            LinkedHashMap<String,HashMap<Integer,String>> result = new LinkedHashMap<>();
+            LinkedHashMap<String, HashMap<Integer, String>> result = new LinkedHashMap<>();
 
             if (settings.interactiveMode) {
 
-               LOGGER.info("Starting interactive mode...\n");
+                LOGGER.info("Starting interactive mode...\n");
                 Scanner s = new Scanner(System.in);
 
                 String input;
@@ -209,15 +202,15 @@ import java.util.logging.Logger;
                     //    break;
                 }
 
-                LinkedHashMap<String,SyntacticStructure> fs = parserInteractiveWrapper(settings.mode, input, ruleFile,result);
+                LinkedHashMap<String, SyntacticStructure> fs = parserInteractiveWrapper(settings.mode, input, ruleFile, result);
 
                 if (settings.semanticParsing) {
-                    semanticsInteractiveWrapper(fs,result);
+                    semanticsInteractiveWrapper(fs, result);
                 }
             } else {
-                LinkedHashMap<String,SyntacticStructure> fs  = fromFileWrapper(settings.inputFile, ruleFile,result);
+                LinkedHashMap<String, SyntacticStructure> fs = fromFileWrapper(settings.inputFile, ruleFile, result);
                 if (settings.semanticParsing) {
-                    semanticsInteractiveWrapper(fs,result);
+                    semanticsInteractiveWrapper(fs, result);
                 }
             }
 
@@ -225,8 +218,7 @@ import java.util.logging.Logger;
     }
 
     public static void
-    semanticsInteractiveWrapper(LinkedHashMap<String,SyntacticStructure> in, LinkedHashMap<String,HashMap<Integer,String>> result)
-    {
+    semanticsInteractiveWrapper(LinkedHashMap<String, SyntacticStructure> in, LinkedHashMap<String, HashMap<Integer, String>> result) {
 
 
         for (String key : in.keySet()) {
@@ -236,16 +228,15 @@ import java.util.logging.Logger;
 
             StringBuilder resultBuilder = new StringBuilder();
 
-                     resultBuilder.append("Result of the Glue derivation:");
+            resultBuilder.append("Result of the Glue derivation:");
             resultBuilder.append(semantics);
 
-            result.get(key).put(1,semantics);
+            result.get(key).put(1, semantics);
 
 
         }
 
-        for (String key : result.keySet())
-        {
+        for (String key : result.keySet()) {
             LOGGER.info("The rewrite system produced the following output:\n" + result.get(key).get(0));
             LOGGER.info("The GSWB produced the following output:\n" + result.get(key).get(1));
         }
@@ -255,9 +246,8 @@ import java.util.logging.Logger;
         report.append(System.lineSeparator());
         report.append("ID:      Added facts:     Glue solutions:\n");
 
-        for (String key : result.keySet())
-        {
-            report.append(String.format("%s\t\t\t%s\t\t\t%s",key,in.get(key).annotation.size(),result.get(key).get(1)));
+        for (String key : result.keySet()) {
+            report.append(String.format("%s\t\t\t%s\t\t\t%s", key, in.get(key).annotation.size(), result.get(key).get(1)));
         }
 
         LOGGER.info(report.toString());
@@ -265,15 +255,13 @@ import java.util.logging.Logger;
         LOGGER.info("Done");
     }
 
-    public static LinkedHashMap<String,SyntacticStructure>
-    parserInteractiveWrapper(String parserType, String input, String path, LinkedHashMap<String,HashMap<Integer,String>> result)
-    {
+    public static LinkedHashMap<String, SyntacticStructure>
+    parserInteractiveWrapper(String parserType, String input, String path, LinkedHashMap<String, HashMap<Integer, String>> result) {
         VariableHandler vh = new VariableHandler();
         SyntacticStructure fs = null;
         SyntaxOperator syn = null;
 
-        switch(parserType)
-        {
+        switch (parserType) {
             case "dep": {
                 syn = new UDoperator();
                 LOGGER.info("Created new dependency parser instance...");
@@ -288,59 +276,58 @@ import java.util.logging.Logger;
 
         assert syn != null;
         fs = syn.parseSingle(input);
-   //     System.out.println(fs.constraints);
+        //     System.out.println(fs.constraints);
 
         List<SyntacticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
         RuleParser rp = new RuleParser(new File(path));
         StringBuilder resultBuilder = new StringBuilder();
-        HashMap<Integer,String> syntaxResult = new HashMap<>();
+        HashMap<Integer, String> syntaxResult = new HashMap<>();
 
         rp.addAnnotation2(fs);
 
-        String sid = vh.returnNewVar(VariableHandler.variableType.SENTENCE_ID,null);
+        String sid = vh.returnNewVar(VariableHandler.variableType.SENTENCE_ID, null);
 
-        LinkedHashMap<String,SyntacticStructure> out = new LinkedHashMap<>();
-        out.put(sid,fs);
+        LinkedHashMap<String, SyntacticStructure> out = new LinkedHashMap<>();
+        out.put(sid, fs);
 
-            resultBuilder.append(sid + ": " + fs.sentence);
+        resultBuilder.append(sid + ": " + fs.sentence);
+        resultBuilder.append(System.lineSeparator());
+
+        try {
+            fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
+        } catch (Exception e) {
+            LOGGER.warn("Sorting annotation failed.");
+        }
+
+        resultBuilder.append("Annotation output:\n");
+
+        for (GraphConstraint g : fs.annotation) {
+            resultBuilder.append(g.toString());
             resultBuilder.append(System.lineSeparator());
+        }
 
-            try {
-                fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
-            } catch (Exception e) {
-               LOGGER.warning("Sorting annotation failed.");
-            }
+        resultBuilder.append("End of: " + sid);
 
-            resultBuilder.append("Annotation output:\n");
+        syntaxResult.put(0, resultBuilder.toString());
+        result.put(sid, syntaxResult);
 
-            for (GraphConstraint g : fs.annotation) {
-                resultBuilder.append(g.toString());
-                resultBuilder.append(System.lineSeparator());
-            }
-
-            resultBuilder.append("End of: " + sid);
-
-            syntaxResult.put(0,resultBuilder.toString());
-            result.put(sid,syntaxResult);
-
-    if(!settings.semanticParsing) {
-        LOGGER.info( resultBuilder.toString());
-    }
+        if (!settings.semanticParsing) {
+            LOGGER.info(resultBuilder.toString());
+        }
         return out;
 
     }
 
-    public static LinkedHashMap<String,SyntacticStructure>
-    fromFileWrapper(String inPath, String rulePath, LinkedHashMap<String,HashMap<Integer,String>> result)
-    {
+    public static LinkedHashMap<String, SyntacticStructure>
+    fromFileWrapper(String inPath, String rulePath, LinkedHashMap<String, HashMap<Integer, String>> result) {
 
         File inFile = new File(inPath);
 
         XLEoperator xle = new XLEoperator(new VariableHandler());
 
-        LinkedHashMap<String,SyntacticStructure> indexedFs;
+        LinkedHashMap<String, SyntacticStructure> indexedFs;
 
 
         if (inFile.isDirectory()) {
@@ -348,13 +335,10 @@ import java.util.logging.Logger;
 
             indexedFs = new LinkedHashMap<String, SyntacticStructure>();
 
-            for (int i = 0; i < files.length;i++)
-            {
+            for (int i = 0; i < files.length; i++) {
                 indexedFs.putAll(xle.fs2Java(files[i].toString()));
             }
-        }
-        else
-        {
+        } else {
             indexedFs = xle.fs2Java(inPath);
         }
 /*
@@ -362,16 +346,15 @@ import java.util.logging.Logger;
 
         fs = indexedFs.get(indexedFs.keySet().iterator().next());
 */
-     //   List<SyntacticStructure> fsList = new ArrayList<>();
-     //   fsList.add(fs);
+        //   List<SyntacticStructure> fsList = new ArrayList<>();
+        //   fsList.add(fs);
 
         RuleParser rp = new RuleParser(new File(rulePath));
 
 
-
         for (String key : indexedFs.keySet()) {
             StringBuilder resultBuilder = new StringBuilder();
-            HashMap<Integer,String> syntaxResult = new HashMap<>();
+            HashMap<Integer, String> syntaxResult = new HashMap<>();
             SyntacticStructure fs = indexedFs.get(key);
             LOGGER.info("Now annotating structure with id " + key + "...");
             rp.addAnnotation2(fs);
@@ -382,7 +365,7 @@ import java.util.logging.Logger;
             try {
                 fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
             } catch (Exception e) {
-                LOGGER.warning("Sorting annotation failed.");
+                LOGGER.warn("Sorting annotation failed.");
             }
 
             for (GraphConstraint g : fs.annotation) {
@@ -397,15 +380,14 @@ import java.util.logging.Logger;
             resultBuilder.append("End of: " + key + "\n");
             resultBuilder.append(System.lineSeparator());
 
-            syntaxResult.put(0,resultBuilder.toString());
-            result.put(key,syntaxResult);
+            syntaxResult.put(0, resultBuilder.toString());
+            result.put(key, syntaxResult);
 
         }
-        if(!settings.semanticParsing) {
-           for (String key : result.keySet())
-           {
-              LOGGER.info("The rewrite system produced the following output:\n" + result.get(key).get(0));
-           }
+        if (!settings.semanticParsing) {
+            for (String key : result.keySet()) {
+                LOGGER.info("The rewrite system produced the following output:\n" + result.get(key).get(0));
+            }
         }
 
         return indexedFs;

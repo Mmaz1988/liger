@@ -30,12 +30,14 @@ import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.SyntacticStructure;
 import de.ukon.liger.utilities.HelperMethods;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,7 +51,7 @@ public class RuleParser {
     private Set<String> usedKeys = new HashSet<>();
     private Set<Set<String>> usedReadings = new HashSet<>();
     public LinguisticDictionary dict = new LinguisticDictionary();
-    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+    private final static Logger LOGGER = LoggerFactory.getLogger(RuleParser.class);
 
 
 
@@ -74,18 +76,18 @@ public class RuleParser {
     }
 
 
-    public RuleParser(List<SyntacticStructure> fsList, File path)
+    public RuleParser(List<SyntacticStructure> fsList, Path path)
     {
         this.fsList = fsList;
         this.replace = false;
 
         String fileString = null;
         try {
-            fileString = new String(Files.readAllBytes(Paths.get(path.toString())));
+            fileString = new String(Files.readAllBytes(path));
             this.rules = parseRuleFile(fileString);
         }catch(Exception e)
         {
-            LOGGER.warning("Failed to load rule file");
+            LOGGER.error("Failed to load rule file");
             this.rules = new ArrayList<>();
        //     e.printStackTrace();
         }
@@ -103,7 +105,7 @@ public class RuleParser {
             this.rules = parseRuleFile(fileString);
         }catch(Exception e)
         {
-            LOGGER.warning("Failed to load rule file");
+            LOGGER.error("Failed to load rule file");
             this.rules = new ArrayList<>();
          //   e.printStackTrace();
         }
@@ -136,7 +138,7 @@ public class RuleParser {
         {
             Rule r = rules.get(k);
 
-            LOGGER.fine("Currently processing rule with index " + k + ":\n" +
+            LOGGER.debug("Currently processing rule with index " + k + ":\n" +
             "\t" + r.toString());
 
             HashMap<Integer, GraphConstraint> annotation = new HashMap<>();
@@ -249,7 +251,7 @@ public class RuleParser {
                                                 if ( c.getFsNode().equals(key2) && c.getRelationLabel().equals(graphMatcher.group(2)) &&
                                                 c.getReading().equals(context))
                                                 {
-                                                    LOGGER.finer("Rewritten value: " + c.getFsValue() + " into: " + newValue);
+                                                    LOGGER.trace("Rewritten value: " + c.getFsValue() + " into: " + newValue);
                                                     c.setFsValue(newValue);
                                                     replaceValue = true;
                                                 }
@@ -355,7 +357,7 @@ public class RuleParser {
                     }
                 } catch(Exception e)
                 {
-                    LOGGER.warning("Failed to parse rule right-hand side");
+                    LOGGER.warn("Failed to parse rule right-hand side");
                 }
             }
 
@@ -364,16 +366,16 @@ public class RuleParser {
                 //adds newly created constraints to the contents of queryParser so they are parsed in subsequent rules
                 qp.getFsIndices().putAll(annotation);
 
-                LOGGER.finer("Added the following facts:");
+                LOGGER.trace("Added the following facts:");
                List<String> addedFacts = new ArrayList<>();
                 for (Integer akey : annotation.keySet()) {
                     fs.annotation.add(annotation.get(akey));
                     addedFacts.add(annotation.get(akey).toString());
                 }
                 String added = String.join("\n",addedFacts);
-                LOGGER.finer("\n" + added);
+                LOGGER.trace("\n" + added);
 
-               LOGGER.fine("\t" + "Rule has been applied!");
+               LOGGER.debug("\t" + "Rule has been applied!");
 
             }
         }

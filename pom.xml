@@ -108,12 +108,25 @@
 							<jvmFlag>-XX:+UseContainerSupport</jvmFlag>
 							<jvmFlag>-XX:MaxRAMPercentage=90.0</jvmFlag>
 						</jvmFlags>
+						<args>
+							<arg>-res</arg>
+							<arg>/liger_resources</arg>
+							<arg>-web</arg>
+						</args>
 						<ports>
 							<port>8080</port>
 						</ports>
 						<creationTime>USE_CURRENT_TIMESTAMP</creationTime>
-						<mainClass>de.ukon.liger.webservice.WebApplication</mainClass>
+						<mainClass>de.ukon.liger.main.DbaMain</mainClass>
 					</container>
+					<extraDirectories>
+						<paths>
+							<path>
+								<from>liger_resources</from>
+								<into>/liger_resources</into>
+							</path>
+						</paths>
+					</extraDirectories>
 				</configuration>
 			</plugin>
 			<plugin>

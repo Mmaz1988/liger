@@ -27,9 +27,10 @@ import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.xle.FstructureElements.*;
 import de.ukon.liger.utilities.HelperMethods;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,7 +49,7 @@ public class FsProlog2Java {
     public static Pattern nonTerminals = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),var\\((\\d+)\\)");
     public static Pattern terminals = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),('.*')");
     public static Pattern cstructure = Pattern.compile("(semform_data|surfaceform)\\((.+?),(.+?),(.+?),(.+?)\\)");
-    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+    private final static Logger LOGGER = LoggerFactory.getLogger(FsProlog2Java.class);
 
     public ReadFsProlog In;
     //public LinkedHashMap<Integer, List<Object>> FsHash;
@@ -92,7 +93,7 @@ public class FsProlog2Java {
                 }
             }
             else {
-                LOGGER.warning(constraint + " threw an error");
+                LOGGER.warn(constraint + " threw an error");
             }
 
             // Collects keys for hashMap

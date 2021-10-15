@@ -49,7 +49,7 @@ public class XLEoperator extends SyntaxOperator {
     public VariableHandler vh;
 
     public String xlebashcommand = "/Users/red_queen/IdeaProjects/xlebatchparsing/resources/xlebash.sh";
-    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(XLEoperator.class.getName());
 
 
     public XLEoperator(VariableHandler vh)

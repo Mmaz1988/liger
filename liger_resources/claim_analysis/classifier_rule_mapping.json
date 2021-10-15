@@ -3,19 +3,19 @@
   "version": "1.0.0",
   "classifiers": {
     "CPST": {
-      "rules": "C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\testFiles\\testRulesUD4c.txt",
+      "rules": "testFiles/testRulesUD4c.txt",
       "query": "#a root #b MORPH #c TAM #d TENSE 'past'"
     },
     "CPRS": {
-      "rules": "C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\testFiles\\testRulesUD4c.txt",
+      "rules": "testFiles/testRulesUD4c.txt",
       "query": "#a root #b MORPH #c TAM #d TENSE 'pres'"
     },
     "CFUT": {
-      "rules": "C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\testFiles\\testRulesUD4c.txt",
+      "rules": "testFiles/testRulesUD4c.txt",
       "query": "#a root #b MORPH #c TAM #d TENSE 'future'"
     },
     "CPSP": {
-      "rules": "C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\testFiles\\testRulesUD4c.txt",
+      "rules": "testFiles/testRulesUD4c.txt",
       "query": "#a root #b MORPH #c TAM #d ASPECT 'perf'"
     }
   }

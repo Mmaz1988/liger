@@ -28,6 +28,8 @@ import glueSemantics.semantics.LexicalEntry;
 import de.ukon.liger.main.DbaMain;
 import main.Settings;
 import de.ukon.liger.packing.ChoiceVar;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import prover.LLProver;
 import prover.LLProver1;
 import de.ukon.liger.syntax.GraphConstraint;
@@ -39,14 +41,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.ConsoleHandler;
-import java.util.logging.Logger;
 
 public class GlueSemantics {
 
     public GlueParser glueParser = new GlueParser(true );
     public LLProver llprover;
 
-    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+    private final static Logger LOGGER = LoggerFactory.getLogger(GlueSemantics.class);
 
     public GlueSemantics()
     {}
@@ -101,8 +102,8 @@ public class GlueSemantics {
                     LexicalEntry le = glueParser.parseMeaningConstructor(mc);
                     lexicalEntries.add(le);
                 } catch (Exception e) {
-                    LOGGER.warning("Failed to parse meaning constructor " + mc);
-                    LOGGER.warning(e.getMessage());
+                    LOGGER.warn("Failed to parse meaning constructor " + mc);
+                    LOGGER.warn(e.getMessage());
                 }
             }
 
@@ -111,8 +112,8 @@ public class GlueSemantics {
             try {
                 llprover.deduce(s);
             } catch (Exception e) {
-                LOGGER.warning("Failed to deduce a meaning from f-structure: " + fs.local_id);
-                LOGGER.warning(e.getMessage());
+                LOGGER.warn("Failed to deduce a meaning from f-structure: " + fs.local_id);
+                LOGGER.warn(e.getMessage());
             }
 
 
@@ -121,7 +122,7 @@ public class GlueSemantics {
                 solutionBuilder.append(System.lineSeparator());
             }
 
-         LOGGER.fine(((LLProver1) llprover).getProofBuilder().toString());
+         LOGGER.debug(((LLProver1) llprover).getProofBuilder().toString());
 
 
         }

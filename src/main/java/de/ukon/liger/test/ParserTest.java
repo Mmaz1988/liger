@@ -41,7 +41,7 @@ import java.util.logging.Logger;
 public class ParserTest {
 
 
-    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(ParserTest.class.getName());
 
     @Test
     void testParser()

@@ -39,7 +39,7 @@ public class ReadFsProlog implements Serializable {
     public String sentenceID;
    public VariableHandler vh;
    public ChoiceSpace cp;
-    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(ReadFsProlog.class.getName());
 
     public ReadFsProlog(String sentenceID, String sentence, List<String> fsConstraints, VariableHandler vh)
     {

@@ -36,13 +36,15 @@ import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.HelperMethods;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -50,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class QueryParserTest {
 
     public static String testFolderPath;
-    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+    private final static Logger LOGGER = LoggerFactory.getLogger(QueryParserTest.class);
 
     public LinkedHashMap<String, SyntacticStructure> loadFs(int i)
     {
@@ -519,7 +521,7 @@ public class QueryParserTest {
             fslist.add(fs.get(key));
         }
 
-        RuleParser rp = new RuleParser(fslist,new File(testFolderPath + "testRules.txt"));
+        RuleParser rp = new RuleParser(fslist, Paths.get(testFolderPath + "testRules.txt"));
 
         rp.addAnnotation2(fslist.get(0));
 
@@ -588,7 +590,7 @@ public class QueryParserTest {
             fslist.add(fs.get(key));
         }
 
-        RuleParser rp = new RuleParser(fslist, new File(testFolderPath + "testRules2.txt"));
+        RuleParser rp = new RuleParser(fslist, Paths.get(testFolderPath + "testRules2.txt"));
 
         rp.addAnnotation2(fslist.get(0));
 
@@ -606,7 +608,7 @@ public class QueryParserTest {
             fslist.add(fs.get(key));
         }
 
-        RuleParser rp = new RuleParser(fslist, new File(testFolderPath + "testRules3.txt"));
+        RuleParser rp = new RuleParser(fslist, Paths.get(testFolderPath + "testRules3.txt"));
 
         rp.addAnnotation2(fslist.get(0));
 
@@ -626,7 +628,7 @@ public class QueryParserTest {
             fslist.add(fs.get(key));
         }
 
-        RuleParser rp = new RuleParser(fslist,new File( testFolderPath + "testRules3.txt"));
+        RuleParser rp = new RuleParser(fslist,Paths.get( testFolderPath + "testRules3.txt"));
 
         rp.addAnnotation2(fslist.get(0));
 
@@ -654,7 +656,7 @@ public class QueryParserTest {
             fslist.add(fs.get(key));
         }
 
-        RuleParser rp = new RuleParser(fslist,new File(testFolderPath + "testRules5.txt"));
+        RuleParser rp = new RuleParser(fslist,Paths.get(testFolderPath + "testRules5.txt"));
 
         rp.addAnnotation2(fslist.get(0));
 
@@ -682,7 +684,7 @@ public class QueryParserTest {
             fslist.add(fs.get(key));
         }
 
-        RuleParser rp = new RuleParser(fslist,new File(testFolderPath + "testRules5.txt"));
+        RuleParser rp = new RuleParser(fslist,Paths.get(testFolderPath + "testRules5.txt"));
 
         rp.addAnnotation2(fslist.get(0));
 

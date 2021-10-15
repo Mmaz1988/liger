@@ -24,12 +24,13 @@ package de.ukon.liger.analysis;
 import com.google.gson.Gson;
 import de.ukon.liger.main.DbaMain;
 import de.ukon.liger.utilities.PathVariables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class LinguisticDictionary {
 
@@ -50,7 +51,7 @@ public class LinguisticDictionary {
 */
 
     public static HashMap<String, HashMap<String, List<String>>> ld;
-    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+    private final static Logger LOGGER = LoggerFactory.getLogger(LinguisticDictionary.class);
 
     public LinguisticDictionary() {
 try {
@@ -139,7 +140,7 @@ try {
         return lingDict;
         }catch(Exception e)
         {
-            LOGGER.warning("Failed to find or parse dictionary file at: " + path_to_txt + file_name);
+            LOGGER.warn("Failed to find or parse dictionary file at: " + path_to_txt + file_name);
             return new HashMap<String, HashMap<String, List<String>>>();
         }
     }

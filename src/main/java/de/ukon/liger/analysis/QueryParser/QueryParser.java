@@ -27,9 +27,10 @@ import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.SyntacticStructure;
 import de.ukon.liger.utilities.HelperMethods;
 import de.ukon.liger.utilities.VariableHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
 public class QueryParser {
@@ -41,7 +42,7 @@ public class QueryParser {
     private VariableHandler vh = new VariableHandler();
     private Set<String> usedKeys = new HashSet<>();
     public HashMap<Set<SolutionKey>, HashMap<String,String>> fsValueBindings = new HashMap<>();
-    private final static Logger LOGGER = Logger.getLogger(DbaMain.class.getName());
+    private final static Logger LOGGER = LoggerFactory.getLogger(QueryParser.class);
     public ChoiceSpace cp;
 
 
@@ -154,7 +155,7 @@ public class QueryParser {
                     }
                     catch(IllegalArgumentException e)
                     {
-                        LOGGER.warning("Invalid fsNode variable! (Range: #f - #n)");
+                        LOGGER.warn("Invalid fsNode variable! (Range: #f - #n)");
                         queryList = new LinkedList<QueryExpression>();
                         break;
                     }
@@ -207,7 +208,7 @@ public class QueryParser {
                 }
             } catch(IllegalArgumentException e)
             {
-                LOGGER.finer("Element \"" + ((LinkedList<String>) queryDeque).get(i) + "\" not contained in current f-structure." );
+                LOGGER.trace("Element \"" + ((LinkedList<String>) queryDeque).get(i) + "\" not contained in current f-structure." );
                 return new LinkedList<QueryExpression>();
             }
         }
@@ -315,7 +316,7 @@ public class QueryParser {
                         continue;
                     }
                 } catch (Exception e) {
-                    LOGGER.warning("Invalid query snytax!\n" + e.getMessage());
+                    LOGGER.error("Invalid query snytax!", e);
                    // e.printStackTrace();
                 }
 
@@ -327,7 +328,7 @@ public class QueryParser {
                         previous = it.next();
                         current = it.next();
                     } catch (Exception e) {
-                       LOGGER.finer("Hit end of Query!");
+                       LOGGER.trace("Hit end of Query!");
                     }
 
                 }
