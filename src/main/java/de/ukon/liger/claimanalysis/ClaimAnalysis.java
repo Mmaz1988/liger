@@ -30,6 +30,7 @@ import de.ukon.liger.syntax.SyntacticStructure;
 import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.webservice.ClaimRequest;
+import edu.stanford.nlp.util.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -108,6 +109,12 @@ public class ClaimAnalysis {
             }
         }
         return classifiers;
+    }
+
+    public Set<Classifier> getNonPresentClassifiers(String input) {
+        final Set<Classifier> presentClassifiers = searchClassifiers(input);
+        final Set<Classifier> allClassifiers = Set.of(Classifier.values());
+        return Sets.diff(allClassifiers, presentClassifiers);
     }
 
 

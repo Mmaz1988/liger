@@ -78,7 +78,7 @@ public class minimalPairController {
     @CrossOrigin
     @RequestMapping(value = "/claim_analysis", produces = "application/json")
     public Set<Classifier> produceClaimAnalysis(@RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
-        return ca.searchClassifiers(input);
+        return ca.getNonPresentClassifiers(input);
     }
 
 
