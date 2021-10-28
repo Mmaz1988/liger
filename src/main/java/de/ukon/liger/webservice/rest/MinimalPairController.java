@@ -19,12 +19,13 @@
  * "
  */
 
-package de.ukon.liger.webservice;
+package de.ukon.liger.webservice.rest;
 
 
 import de.ukon.liger.claimanalysis.ClaimAnalysis;
 import de.ukon.liger.claimanalysis.ClaimComparisonReport;
 import de.ukon.liger.claimanalysis.Classifier;
+import de.ukon.liger.webservice.rest.dtos.ClaimRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -34,25 +35,15 @@ import java.util.Set;
 @CrossOrigin
 @RestController
 @RequestMapping("/claim_analysis")
-public class minimalPairController {
+public class MinimalPairController {
 
     public ClaimAnalysis ca;
 
-    public minimalPairController(ClaimAnalysis ca) {
+    public MinimalPairController(ClaimAnalysis ca) {
         this.ca = ca;
     }
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(minimalPairController.class);
-
-    /*
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @PostMapping(value = "/apply_rule", produces = "application/json", consumes = "application/json")
-    public TestGraph applyRuleRequest(@RequestBody AnnotationRequest request) {
-
-    }
-
-     */
+    private final static Logger LOGGER = LoggerFactory.getLogger(MinimalPairController.class);
 
     /***
      * This function checks whether a specific classifier has been applied to a sentence.
@@ -62,10 +53,8 @@ public class minimalPairController {
      */
 
     @CrossOrigin
-    //(origins = "http://localhost:63342")
     @RequestMapping(value = "/compare_claims", consumes = "application/json")
     public ClaimComparisonReport compareClaims(@RequestBody ClaimRequest cr) {
-
         return ca.compareClaimRequest(cr);
     }
 
@@ -74,7 +63,6 @@ public class minimalPairController {
      * @param
      * @return Set of classifiers that apply to the given claim.
      */
-
     @CrossOrigin
     @RequestMapping(value = "/claim_analysis", produces = "application/json")
     public Set<Classifier> produceClaimAnalysis(@RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {

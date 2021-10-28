@@ -32,11 +32,6 @@ import java.util.Collections;
 @SpringBootApplication
 public class WebApplication {
 
-	/*
-	public static void main(String[] args) {
-		SpringApplication.run(WebApplication.class, args);
-	}
-	 */
 	public static void main(String[] args) {
 		PathVariables.initializePathVariables();
 		SpringApplication app = new SpringApplication(WebApplication.class);
@@ -44,17 +39,4 @@ public class WebApplication {
 				.singletonMap("server.port", "8080"));
 		app.run(args);
 	}
-
-/*
-	@Bean
-	public WebMvcConfigurer corsConfigurer() {
-		return new WebMvcConfigurer() {
-			@Override
-			public void addCorsMappings(CorsRegistry registry) {
-				registry.addMapping("/annotate-javaconfig").allowedOrigins("http://localhost:8080");
-			}
-		};
-	}
-*/
-
 }

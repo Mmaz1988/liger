@@ -29,7 +29,7 @@ import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.syntax.SyntacticStructure;
 import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.utilities.PathVariables;
-import de.ukon.liger.webservice.ClaimRequest;
+import de.ukon.liger.webservice.rest.dtos.ClaimRequest;
 import edu.stanford.nlp.util.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

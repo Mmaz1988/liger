@@ -19,11 +19,12 @@
  * "
  */
 
-package de.ukon.liger.webservice;
+package de.ukon.liger.webservice.rest;
 
 import de.ukon.liger.analysis.RuleParser.RuleParser;
-import de.ukon.liger.main.DbaMain;
-import org.springframework.stereotype.Service;
+import de.ukon.liger.webservice.rest.dtos.AnnotationRequest;
+import de.ukon.liger.webservice.rest.dtos.TestGraph;
+import de.ukon.liger.webservice.rest.dtos.TestNode;
 import org.springframework.web.bind.annotation.*;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
@@ -33,7 +34,6 @@ import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
