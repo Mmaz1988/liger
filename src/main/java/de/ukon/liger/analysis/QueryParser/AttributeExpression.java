@@ -106,7 +106,9 @@ public class AttributeExpression extends QueryExpression {
                         }
 
                     }
-*/
+
+
+ */
             if (!containsAtribute)
             {
                 it.remove();

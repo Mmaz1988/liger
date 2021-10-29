@@ -350,7 +350,7 @@ public class RuleParser {
                             }
 
                             annotation.putAll(newConstraints);
-                            qp.getFsIndices().putAll(newConstraints);
+                           qp.getFsIndices().putAll(newConstraints);
                         }
                     }
                 } catch(Exception e)
