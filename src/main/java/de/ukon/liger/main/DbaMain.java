@@ -179,7 +179,12 @@ public class DbaMain {
                     } else {
                         ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
                     }
+                } else
+                {
+                    ruleFile = PathVariables.testPath + "testRulesLFG9.txt";
                 }
+
+
             } else {
                 ruleFile = settings.ruleFile;
             }

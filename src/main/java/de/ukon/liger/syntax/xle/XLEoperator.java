@@ -47,7 +47,7 @@ public class XLEoperator extends SyntaxOperator {
 
     public VariableHandler vh;
 
-    public String xlebashcommand = "/Users/red_queen/IdeaProjects/xlebatchparsing/resources/xlebash.sh";
+    public String xlebashcommand = "/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/liger_resources/xlebash.sh";
     private final static Logger LOGGER = Logger.getLogger(XLEoperator.class.getName());
 
 
@@ -129,7 +129,7 @@ public class XLEoperator extends SyntaxOperator {
         singletonList.add(sentence);
         parseSentences(singletonList);
 
-        File fsFile = new File("/Users/red_queen/IdeaProjects/syntax-annotator-glue/parser_output");
+        File fsFile = new File("/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/parser_output");
 
         if (fsFile.isDirectory()) {
             File[] files = fsFile.listFiles((d, name) -> name.endsWith(".pl"));
