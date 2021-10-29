@@ -21,10 +21,9 @@
 
 package de.ukon.liger.analysis.QueryParser;
 
-import de.ukon.liger.main.DbaMain;
 import de.ukon.liger.packing.ChoiceSpace;
 import de.ukon.liger.syntax.GraphConstraint;
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.utilities.HelperMethods;
 import de.ukon.liger.utilities.VariableHandler;
 import org.slf4j.Logger;
@@ -48,7 +47,7 @@ public class QueryParser {
 
     //TODO why are the values of the result hashmap empty?
 
-    public QueryParser(String query, SyntacticStructure fs)
+    public QueryParser(String query, LinguisticStructure fs)
     {
         this.query = query;
 
@@ -74,7 +73,7 @@ public class QueryParser {
 
     }
 
-    public QueryParser(SyntacticStructure fs)
+    public QueryParser(LinguisticStructure fs)
     {
 
         HashMap<Integer,GraphConstraint> fsIndexed = new HashMap<>();

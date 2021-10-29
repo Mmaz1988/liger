@@ -27,10 +27,9 @@ import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.Rule;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import glueSemantics.linearLogic.Premise;
-import de.ukon.liger.main.DbaMain;
 import org.junit.jupiter.api.Test;
 import de.ukon.liger.semantics.GlueSemantics;
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.xle.Fstructure;
 import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.HelperMethods;
@@ -39,7 +38,6 @@ import de.ukon.liger.utilities.VariableHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -54,7 +52,7 @@ public class QueryParserTest {
     public static String testFolderPath;
     private final static Logger LOGGER = LoggerFactory.getLogger(QueryParserTest.class);
 
-    public LinkedHashMap<String, SyntacticStructure> loadFs(int i)
+    public LinkedHashMap<String, LinguisticStructure> loadFs(int i)
     {
         PathVariables.workingDirectory = "C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\";
         PathVariables.initializePathVariables();
@@ -62,7 +60,7 @@ public class QueryParserTest {
         VariableHandler vh = new VariableHandler();
         XLEoperator xle = new XLEoperator(vh);
 
-        List<LinkedHashMap<String, SyntacticStructure>> fsList = new ArrayList<>();
+        List<LinkedHashMap<String, LinguisticStructure>> fsList = new ArrayList<>();
 
         System.out.println("C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\testFiles\\");
 
@@ -95,7 +93,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser()
 {
-    LinkedHashMap<String, SyntacticStructure> fs = loadFs(0);
+    LinkedHashMap<String, LinguisticStructure> fs = loadFs(0);
 
     for (String key : fs.keySet())
     {
@@ -111,7 +109,7 @@ public class QueryParserTest {
     @Test
     void testQueryParsera()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(1);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(1);
 
         for (String key : fs.keySet())
         {
@@ -128,7 +126,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser2()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(1);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(1);
 
         for (String key : fs.keySet())
         {
@@ -144,7 +142,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser3()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(0);
 
         for (String key : fs.keySet())
         {
@@ -160,7 +158,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser4a()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(0);
 
         for (String key : fs.keySet())
         {
@@ -176,7 +174,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser4b()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(1);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(1);
 
         for (String key : fs.keySet())
         {
@@ -191,7 +189,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser4c()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(0);
 
         for (String key : fs.keySet())
         {
@@ -207,7 +205,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser5()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(1);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(1);
 
         for (String key : fs.keySet())
         {
@@ -223,7 +221,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser5a()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(1);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(1);
 
         for (String key : fs.keySet())
         {
@@ -248,7 +246,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser6()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(1);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(1);
 
         for (String key : fs.keySet())
         {
@@ -265,7 +263,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser7()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(1);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(1);
 
         for (String key : fs.keySet())
         {
@@ -281,7 +279,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser8()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(1);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(1);
 
         for (String key : fs.keySet())
         {
@@ -297,7 +295,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser8b()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(1);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(1);
 
         for (String key : fs.keySet())
         {
@@ -313,7 +311,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser9()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(2);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(2);
 
         for (String key : fs.keySet())
         {
@@ -329,7 +327,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser10()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(2);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(2);
 
         for (String key : fs.keySet())
         {
@@ -345,7 +343,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser11()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(2);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(2);
 
         for (String key : fs.keySet())
         {
@@ -361,7 +359,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser12()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(2);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(2);
 
         for (String key : fs.keySet())
         {
@@ -377,7 +375,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser13()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(2);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(2);
 
         for (String key : fs.keySet())
         {
@@ -393,7 +391,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser14()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(7);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(7);
 
         for (String key : fs.keySet())
         {
@@ -409,7 +407,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser15()
     {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(8);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(8);
 
         for (String key : fs.keySet())
         {
@@ -445,9 +443,9 @@ public class QueryParserTest {
 
     @Test
     void testRuleParser() {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(2);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(2);
 
-        List<SyntacticStructure> fslist = new ArrayList<>();
+        List<LinguisticStructure> fslist = new ArrayList<>();
 
         for (String key : fs.keySet()) {
             fslist.add(fs.get(key));
@@ -467,9 +465,9 @@ public class QueryParserTest {
 
     @Test
     void testRuleParser2() {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(2);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(2);
 
-        List<SyntacticStructure> fslist = new ArrayList<>();
+        List<LinguisticStructure> fslist = new ArrayList<>();
 
         for (String key : fs.keySet()) {
             fslist.add(fs.get(key));
@@ -488,9 +486,9 @@ public class QueryParserTest {
     }
     @Test
     void testRuleParser3() {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(0);
 
-        List<SyntacticStructure> fslist = new ArrayList<>();
+        List<LinguisticStructure> fslist = new ArrayList<>();
 
         for (String key : fs.keySet()) {
             fslist.add(fs.get(key));
@@ -513,9 +511,9 @@ public class QueryParserTest {
 
     @Test
     void testRuleParser4() {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(3);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(3);
 
-        List<SyntacticStructure> fslist = new ArrayList<>();
+        List<LinguisticStructure> fslist = new ArrayList<>();
 
         for (String key : fs.keySet()) {
             fslist.add(fs.get(key));
@@ -531,9 +529,9 @@ public class QueryParserTest {
 
     @Test
     void testRuleParser5() {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(0);
 
-        List<SyntacticStructure> fslist = new ArrayList<>();
+        List<LinguisticStructure> fslist = new ArrayList<>();
 
         for (String key : fs.keySet()) {
             fslist.add(fs.get(key));
@@ -555,9 +553,9 @@ public class QueryParserTest {
 
     @Test
     void testRuleParser6() {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(0);
 
-        List<SyntacticStructure> fslist = new ArrayList<>();
+        List<LinguisticStructure> fslist = new ArrayList<>();
 
         for (String key : fs.keySet()) {
             fslist.add(fs.get(key));
@@ -582,9 +580,9 @@ public class QueryParserTest {
 
     @Test
     void testRuleParser7() {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(3);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(3);
 
-        List<SyntacticStructure> fslist = new ArrayList<>();
+        List<LinguisticStructure> fslist = new ArrayList<>();
 
         for (String key : fs.keySet()) {
             fslist.add(fs.get(key));
@@ -600,9 +598,9 @@ public class QueryParserTest {
 
     @Test
     void testRuleParser8() {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(3);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(3);
 
-        List<SyntacticStructure> fslist = new ArrayList<>();
+        List<LinguisticStructure> fslist = new ArrayList<>();
 
         for (String key : fs.keySet()) {
             fslist.add(fs.get(key));
@@ -618,11 +616,11 @@ public class QueryParserTest {
 
     @Test
     void testRuleParser9() {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(3);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(3);
 
         GlueSemantics sem = new GlueSemantics();
 
-        List<SyntacticStructure> fslist = new ArrayList<>();
+        List<LinguisticStructure> fslist = new ArrayList<>();
 
         for (String key : fs.keySet()) {
             fslist.add(fs.get(key));
@@ -646,11 +644,11 @@ public class QueryParserTest {
 
     @Test
     void testRuleParser10() {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(5);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(5);
 
         GlueSemantics sem = new GlueSemantics();
 
-        List<SyntacticStructure> fslist = new ArrayList<>();
+        List<LinguisticStructure> fslist = new ArrayList<>();
 
         for (String key : fs.keySet()) {
             fslist.add(fs.get(key));
@@ -674,11 +672,11 @@ public class QueryParserTest {
 
     @Test
     void testRuleParser11() {
-        LinkedHashMap<String, SyntacticStructure> fs = loadFs(6);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(6);
 
         GlueSemantics sem = new GlueSemantics();
 
-        List<SyntacticStructure> fslist = new ArrayList<>();
+        List<LinguisticStructure> fslist = new ArrayList<>();
 
         for (String key : fs.keySet()) {
             fslist.add(fs.get(key));
@@ -700,6 +698,48 @@ public class QueryParserTest {
 
     }
 
+
+    @Test
+    void testRuleParserRewrite1() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(2);
+
+        List<LinguisticStructure> fslist = new ArrayList<>();
+
+        for (String key : fs.keySet()) {
+            fslist.add(fs.get(key));
+        }
+
+        RuleParser rp = new RuleParser(fslist);
+
+        Rule r1 = new Rule("#g TNS-ASP #h TENSE 'past' & #h PERF '-_' =-> #i SEM 'event'",true);
+
+        rp.getRules().add(r1);
+
+        rp.addAnnotation2(fslist.get(0));
+
+        assertEquals(1, fslist.get(0).annotation.size());
+    }
+
+    @Test
+    void testRuleParserRewrite2() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(2);
+
+        List<LinguisticStructure> fslist = new ArrayList<>();
+
+        for (String key : fs.keySet()) {
+            fslist.add(fs.get(key));
+        }
+
+        RuleParser rp = new RuleParser(fslist);
+
+        Rule r1 = new Rule("#g TNS-ASP #h =-> 0",true);
+
+        rp.getRules().add(r1);
+
+        rp.addAnnotation2(fslist.get(0));
+
+        assertEquals(77, fslist.get(0).constraints.size());
+    }
 
     /**
      *Other tests

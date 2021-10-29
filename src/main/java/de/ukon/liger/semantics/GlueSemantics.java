@@ -25,7 +25,6 @@ import glueSemantics.linearLogic.Premise;
 import glueSemantics.linearLogic.Sequent;
 import glueSemantics.parser.GlueParser;
 import glueSemantics.semantics.LexicalEntry;
-import de.ukon.liger.main.DbaMain;
 import main.Settings;
 import de.ukon.liger.packing.ChoiceVar;
 import org.slf4j.Logger;
@@ -33,7 +32,8 @@ import org.slf4j.LoggerFactory;
 import prover.LLProver;
 import prover.LLProver1;
 import de.ukon.liger.syntax.GraphConstraint;
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
+import prover.LLProver2;
 import utilities.MyFormatter;
 
 import java.util.ArrayList;
@@ -52,7 +52,7 @@ public class GlueSemantics {
     public GlueSemantics()
     {}
 
-    public String calculateSemantics(SyntacticStructure fs) {
+    public String calculateSemantics(LinguisticStructure fs) {
         HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
 
         if(fs.cp.choices.size() > 1) {
@@ -86,7 +86,7 @@ public class GlueSemantics {
 
         for (Set<ChoiceVar> key : unpackedSem.keySet()) {
 
-            llprover = new LLProver1(new Settings(), new StringBuilder());
+            llprover = new LLProver2(new Settings(), new StringBuilder());
 
             LLProver.getLOGGER().setUseParentHandlers(false);
             ConsoleHandler handler = new ConsoleHandler();
@@ -122,7 +122,7 @@ public class GlueSemantics {
                 solutionBuilder.append(System.lineSeparator());
             }
 
-         LOGGER.debug(((LLProver1) llprover).getProofBuilder().toString());
+         LOGGER.debug(llprover.getProofBuilder().toString());
 
 
         }

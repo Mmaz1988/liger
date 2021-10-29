@@ -25,10 +25,9 @@ import de.ukon.liger.analysis.LinguisticDictionary;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.QueryParser.SolutionKey;
-import de.ukon.liger.main.DbaMain;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.utilities.HelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +43,7 @@ import java.util.regex.Pattern;
 public class RuleParser {
 
 
-    private List<SyntacticStructure> fsList;
+    private List<LinguisticStructure> fsList;
     private List<Rule> rules = new ArrayList<Rule>();
     private static Pattern graphPattern = Pattern.compile("(#.+?)\\s+(\\S+)\\s+(.+)");
     private Boolean replace;
@@ -55,20 +54,20 @@ public class RuleParser {
 
 
 
-    public RuleParser(List<SyntacticStructure> fsList)
+    public RuleParser(List<LinguisticStructure> fsList)
     {
         this.fsList = fsList;
         this.replace = false;
     }
 
-    public RuleParser(List<SyntacticStructure> fsList, String input)
+    public RuleParser(List<LinguisticStructure> fsList, String input)
     {
         this.fsList = fsList;
         this.replace = false;
         this.rules = parseRuleFile(input);
     }
 
-    public RuleParser(List<SyntacticStructure> fsList, String input, Boolean replace)
+    public RuleParser(List<LinguisticStructure> fsList, String input, Boolean replace)
     {
         this.fsList = fsList;
         this.replace = replace;
@@ -76,7 +75,7 @@ public class RuleParser {
     }
 
 
-    public RuleParser(List<SyntacticStructure> fsList, Path path)
+    public RuleParser(List<LinguisticStructure> fsList, Path path)
     {
         this.fsList = fsList;
         this.replace = false;
@@ -116,13 +115,13 @@ public class RuleParser {
 
     public void addAnnotation()
     {
-        for (SyntacticStructure fs : this.fsList)
+        for (LinguisticStructure fs : this.fsList)
         {
             addAnnotation2(fs);
         }
     }
 
-    public void addAnnotation2(SyntacticStructure fs)
+    public void addAnnotation2(LinguisticStructure fs)
     {
         resetRuleParser();
         QueryParser qp = new QueryParser(fs);
@@ -147,10 +146,9 @@ public class RuleParser {
             qp.generateQuery(r.getLeft());
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
-            if  (qpr.isSuccess)
+            if  (qpr.isSuccess && !r.getRight().equals("0"));
             {
                 List<String> search = r.splitGoal();
-
 
                 try {
                     //for (String searchString : search) {
@@ -361,19 +359,74 @@ public class RuleParser {
                 }
             }
 
+
+
+
+            if (r.isRewrite())
+            {
+                List<String> removedFacts = new ArrayList<>();
+                for (Set<SolutionKey> solution : qpr.result.keySet())
+                {
+                    for (String var : qpr.result.get(solution).keySet())
+                    {
+                        for (String index : qpr.result.get(solution).get(var).keySet())
+                        {
+                            for (Integer i : qpr.result.get(solution).get(var).get(index).keySet())
+                            {
+                                removedFacts.add(qp.getFsIndices().get(i).toString());
+                             //   usedKeys.remove(qp.getFsIndices().get(i).getFsNode());
+                                qp.getFsIndices().remove(i);
+
+                            }
+                        }
+                    }
+                }
+
+                LOGGER.debug("Removed the following facts:");
+                String removed = String.join("\n",removedFacts);
+                LOGGER.debug("\n" + removed);
+
+            }
+
+            HashMap<Integer,GraphConstraint> newIndexedInidces = new HashMap<>();
+            List<GraphConstraint> newConstraints = new ArrayList<>();
+
+            int keys = 0;
+
+            for (Integer i : qp.getFsIndices().keySet())
+            {
+                newIndexedInidces.put(keys,qp.getFsIndices().get(i));
+                newConstraints.add(qp.getFsIndices().get(i));
+                keys++;
+            }
+
+            qp.setFsIndices(newIndexedInidces);
+            fs.constraints = newConstraints;
+
             if (!annotation.keySet().isEmpty()) {
 
-                //adds newly created constraints to the contents of queryParser so they are parsed in subsequent rules
-                qp.getFsIndices().putAll(annotation);
 
-                LOGGER.trace("Added the following facts:");
+
+                for (Integer i : annotation.keySet())
+                {
+                    newIndexedInidces.put(keys,annotation.get(i));
+                    keys++;
+                }
+
+                //adds newly created constraints to the contents of queryParser so they are parsed in subsequent rules
+                qp.setFsIndices(newIndexedInidces);
+                fs.constraints = newConstraints;
+
+
+
+                LOGGER.debug("Added the following facts:");
                List<String> addedFacts = new ArrayList<>();
                 for (Integer akey : annotation.keySet()) {
                     fs.annotation.add(annotation.get(akey));
                     addedFacts.add(annotation.get(akey).toString());
                 }
                 String added = String.join("\n",addedFacts);
-                LOGGER.trace("\n" + added);
+                LOGGER.debug("\n" + added);
 
                LOGGER.debug("\t" + "Rule has been applied!");
 
@@ -575,8 +628,15 @@ public class RuleParser {
                     }
                 }
 
-                if (c =='=' && fileString.charAt(i + 1) == '=' && fileString.charAt(i + 2) == '>')
+                if (c =='=' &&
+                        (fileString.charAt(i + 1) == '=' || fileString.charAt(i + 1) == '-' )
+                        && fileString.charAt(i + 2) == '>')
                 {
+                    boolean rewrite = false;
+                    if (fileString.charAt(i + 1) == '-')
+                    {
+                      rewrite = true;
+                    }
                     i = i + 3;
                     c = fileString.charAt(i);
                     while (!(c == '.' && !String.valueOf(fileString.charAt(i+1)).matches(".")))
@@ -590,7 +650,7 @@ public class RuleParser {
                         }
                     }
 
-                    Rule r = new Rule(left.toString().trim(),right.toString().trim());
+                    Rule r = new Rule(left.toString().trim(),right.toString().trim(), rewrite);
                     out.add(r);
 
                     left = new StringBuilder();

@@ -21,7 +21,7 @@
 
 package de.ukon.liger.webservice;
 
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.utilities.HelperMethods;
 
@@ -45,7 +45,7 @@ public class TestGraph {
     }
 
 
-    public TestGraph(SyntacticStructure s)
+    public TestGraph(LinguisticStructure s)
     {
         this.graphElements = extractGraph(s);
     }
@@ -87,7 +87,7 @@ public class TestGraph {
         this.semantics = semantics;
     }
 
-    public List<TestNode> extractGraph(SyntacticStructure s)
+    public List<TestNode> extractGraph(LinguisticStructure s)
     {
         LinkedHashMap<Integer, HashMap<String,String>> nodes = new LinkedHashMap<>();
         List<TestNode> edges = new ArrayList<>();

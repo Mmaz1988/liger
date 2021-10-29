@@ -31,7 +31,7 @@ import edu.stanford.nlp.trees.TypedDependency;
 import de.ukon.liger.packing.ChoiceSpace;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
 import de.ukon.liger.test.QueryParserTest;
 import de.ukon.liger.utilities.VariableHandler;
@@ -61,7 +61,7 @@ public class UDoperator extends SyntaxOperator {
                 input = s.nextLine();
                 if (input.equals("quit"))
                     break;
-                SyntacticStructure out = udops.parseSingle(input);
+                LinguisticStructure out = udops.parseSingle(input);
                 System.out.println(out.constraints);
 
             }
@@ -86,7 +86,7 @@ public class UDoperator extends SyntaxOperator {
     }
 
     @Override
-    public SyntacticStructure parseSingle(String sentence) {
+    public LinguisticStructure parseSingle(String sentence) {
 
         //VariableHandler vh = new VariableHandler();
 
@@ -146,10 +146,10 @@ public class UDoperator extends SyntaxOperator {
         return ud;
     }
 
-    public LinkedHashMap<String, SyntacticStructure> parseTestfile (String test_file) {
+    public LinkedHashMap<String, LinguisticStructure> parseTestfile (String test_file) {
 
         File f = new File(test_file);
-        LinkedHashMap<String, SyntacticStructure> parsed_sentences_map = new LinkedHashMap<>();
+        LinkedHashMap<String, LinguisticStructure> parsed_sentences_map = new LinkedHashMap<>();
         List<String> sentences = new ArrayList<>();
 
         if (f.isDirectory()) {
@@ -173,14 +173,14 @@ public class UDoperator extends SyntaxOperator {
         }
         for (String sentence : sentences)
         {
-            SyntacticStructure parsed_sentence = parseSingle(sentence);
+            LinguisticStructure parsed_sentence = parseSingle(sentence);
             parsed_sentences_map.put(parsed_sentence.local_id,parsed_sentence);
 
         }
         return parsed_sentences_map;
     }
 
-    public void applyRulefile(LinkedHashMap<String,SyntacticStructure> input, String path)
+    public void applyRulefile(LinkedHashMap<String, LinguisticStructure> input, String path)
     {
 
     }
@@ -229,9 +229,9 @@ public class UDoperator extends SyntaxOperator {
     }*/
 
 
-    public static List<String> extractModals (SyntacticStructure fs) {
+    public static List<String> extractModals (LinguisticStructure fs) {
 
-        List<SyntacticStructure> fsList = new ArrayList<>();
+        List<LinguisticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
         RuleParser rp = new RuleParser(fsList, QueryParserTest.testFolderPath + "testRulesUD5.txt");
         rp.addAnnotation2(fs);
@@ -246,7 +246,7 @@ public class UDoperator extends SyntaxOperator {
         }
         List<List<GraphConstraint>> substructure = fs.getSubstructures("FEATURES");
         List<String> sent_modals = new ArrayList<>();
-        sent_modals.add(fs.sentence);
+        sent_modals.add(fs.text);
         for (List<GraphConstraint> sstr : substructure)
         {
             for (GraphConstraint g : sstr)
@@ -267,7 +267,7 @@ public class UDoperator extends SyntaxOperator {
     //TODO collect all sentence + modal strings in a list;
     public List<List<String>> extractModalsFromTestfile(String testfile)
     {
-      LinkedHashMap<String,SyntacticStructure> sentences =  parseTestfile(testfile);
+      LinkedHashMap<String, LinguisticStructure> sentences =  parseTestfile(testfile);
 
       List<List<String>> output = new ArrayList<>();
 
@@ -315,14 +315,14 @@ public class UDoperator extends SyntaxOperator {
 
 
 
-    public LinkedHashMap<String,SyntacticStructure> ud2Java(String inputPath)
+    public LinkedHashMap<String, LinguisticStructure> ud2Java(String inputPath)
     {
         //In
         //VariableHandler vh = new VariableHandler();
         File f = new File(inputPath);
 
         //Out
-        LinkedHashMap<String, SyntacticStructure> out = new LinkedHashMap<>();
+        LinkedHashMap<String, LinguisticStructure> out = new LinkedHashMap<>();
 
 // This filter will only include files ending with .py
 

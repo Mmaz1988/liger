@@ -47,5 +47,5 @@ public abstract class SyntaxOperator {
     public SyntaxOperator()
     {}
 
-    public abstract SyntacticStructure parseSingle(String sentence);
+    public abstract LinguisticStructure parseSingle(String sentence);
 }

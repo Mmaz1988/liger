@@ -26,10 +26,13 @@ import com.google.gson.JsonParser;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.webservice.ClaimRequest;
+import edu.stanford.nlp.pipeline.CoreDocument;
+import edu.stanford.nlp.pipeline.CoreSentence;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.util.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +56,7 @@ public class ClaimAnalysis {
     // public List<ClassifierProperties> classifierProperties;
     public Map<Classifier, ClassifierProperties> classifierMap;
     public final UDoperator ud = new UDoperator();
+    public StanfordCoreNLP pipeline;
 
     /**
      * The constructor reads in the json object describing the properties of the different classifiers.
@@ -90,7 +94,12 @@ public class ClaimAnalysis {
             this.classifierMap = cpMap;
         } catch (Exception e) {
             System.out.println("Failed to load file");
+            e.printStackTrace();
         }
+
+        Properties props = new Properties();
+        props.setProperty("annotators","tokenize,ssplit,sentiment");
+        this.pipeline = new StanfordCoreNLP(props);
 
     }
 
@@ -101,7 +110,7 @@ public class ClaimAnalysis {
 
     public Set<Classifier> searchClassifiers(String input) {
         Set<Classifier> classifiers = new HashSet<>();
-        SyntacticStructure synstr = ud.parseSingle(input);
+        LinguisticStructure synstr = ud.parseSingle(input);
 
         for (Classifier c : classifierMap.keySet()) {
             if (checkForClassifier(synstr, c)) {
@@ -130,20 +139,49 @@ public class ClaimAnalysis {
      * @return
      */
 
+
     public boolean checkForClassifier(String claim, Classifier classifier) {
-        SyntacticStructure synstr = ud.parseSingle(claim);
+
+        CoreDocument doc = new CoreDocument(claim);
+        this.pipeline.annotate(doc);
+
+
+        LinguisticStructure synstr = ud.parseSingle(claim);
+
         return checkForClassifier(synstr, classifier);
     }
 
+
+
+    public Map<String,Boolean> checkForClassifier2(String claim, Classifier classifier) {
+
+        CoreDocument doc = new CoreDocument(claim);
+        this.pipeline.annotate(doc);
+
+        Map<String,Boolean> sentenceMap = new HashMap<>();
+
+        for (CoreSentence sent : doc.sentences())
+        {
+            LinguisticStructure synstr = ud.parseSingle(sent.text());
+            sentenceMap.put(synstr.local_id,checkForClassifier(synstr,classifier));
+        }
+
+        return sentenceMap;
+    }
+
+
     //Second variant, so sentence is only parsed once
-    public boolean checkForClassifier(SyntacticStructure synstr, Classifier classifier) {
-        List<SyntacticStructure> syn = new ArrayList<>();
+    public boolean checkForClassifier(LinguisticStructure synstr, Classifier classifier) {
+        List<LinguisticStructure> syn = new ArrayList<>();
         syn.add(synstr);
 
         ClassifierProperties cp = classifierMap.get(classifier);
         if (classifier.equals(cp.cl)) {
-            RuleParser rp = new RuleParser(syn, Paths.get(PathVariables.workingDirectory + cp.path));
-            rp.addAnnotation();
+            if (!cp.path.equals(""));
+            {
+                RuleParser rp = new RuleParser(syn, Paths.get(PathVariables.workingDirectory + cp.path));
+                rp.addAnnotation();
+            }
 
             QueryParser qp = new QueryParser(cp.query, synstr);
             qp.generateQuery();
@@ -172,10 +210,10 @@ public class ClaimAnalysis {
 
         //First produce a UD parse for both structures
 
-        SyntacticStructure inputStructure = ud.parseSingle(input);
-        SyntacticStructure outputStructure = ud.parseSingle(output);
+        LinguisticStructure inputStructure = ud.parseSingle(input);
+        LinguisticStructure outputStructure = ud.parseSingle(output);
 
-        List<SyntacticStructure> inout = new ArrayList<>();
+        List<LinguisticStructure> inout = new ArrayList<>();
 
         inout.add(inputStructure);
         inout.add(outputStructure);
@@ -194,7 +232,7 @@ public class ClaimAnalysis {
         QueryParserResult[] qprs = new QueryParserResult[2];
 
         for (int i = 0; i < inout.size(); i++) {
-            SyntacticStructure fs = inout.get(i);
+            LinguisticStructure fs = inout.get(i);
             QueryParser qp = new QueryParser(queryString, fs);
             qp.generateQuery();
             qprs[i] = qp.parseQuery(qp.getQueryList());
@@ -220,4 +258,89 @@ public class ClaimAnalysis {
         return new ClaimComparisonReport(success, explanation);
     }
 
+
+
+    /**
+     * Checks if a specific claim satisfies a modification following a specific classifier.
+     *
+     * @param input      unmodified sentence
+     * @param output     modified sentence
+     * @param classifier
+     */
+    public ClaimComparisonReport compareMinimalPairElements2(String input, String output, Classifier classifier) {
+
+        //First produce a UD parse for both structures
+
+        CoreDocument inputDoc = new CoreDocument(input);
+        CoreDocument outputDoc = new CoreDocument(output);
+
+        this.pipeline.annotate(inputDoc);
+        this.pipeline.annotate(outputDoc);
+
+        List<LinguisticStructure> inputStructures = new ArrayList<>();
+        List<LinguisticStructure> outputStructures = new ArrayList<>();
+        List<LinguisticStructure> syntacticStructures = new ArrayList<>();
+
+        for (CoreSentence sent : inputDoc.sentences())
+        {
+            LinguisticStructure inputStructure = ud.parseSingle(sent.text());
+            inputStructures.add(inputStructure);
+            syntacticStructures.add(inputStructure);
+        }
+
+        for (CoreSentence sent : outputDoc.sentences())
+        {
+            LinguisticStructure outputStructure = ud.parseSingle(sent.text());
+            outputStructures.add(outputStructure);
+            syntacticStructures.add(outputStructure);
+        }
+
+
+
+        List<LinguisticStructure>[] inout = new List[2];
+
+        inout[0] = inputStructures;
+        inout[1] = outputStructures;
+
+        String inFile;
+        String queryString = "";
+        RuleParser rp;
+
+        //Find ClassifierProperties for specified classifier
+        inFile = classifierMap.get(classifier).path;
+        rp = new RuleParser(syntacticStructures, Paths.get(PathVariables.workingDirectory + inFile));
+        rp.addAnnotation();
+        queryString = classifierMap.get(classifier).query;
+
+        //Search for query to check whether classifier has been applied
+        QueryParserResult[] qprs = new QueryParserResult[2];
+
+        /*
+        for (int i = 0; i < inout.length; i++) {
+            LinguisticStructure fs = inout.get(i);
+            QueryParser qp = new QueryParser(queryString, fs);
+            qp.generateQuery();
+            qprs[i] = qp.parseQuery(qp.getQueryList());
+
+        }
+         */
+
+        boolean success = false;
+        String explanation = "";
+
+        if (!qprs[0].isSuccess && qprs[1].isSuccess) {
+            success = true;
+        }
+
+        if (!success) {
+            explanation = "Searching for explanation!";
+        }
+
+        if (qprs[0].isSuccess && qprs[1].isSuccess) {
+            explanation = "The two input claims receive the same value for classifier " + classifier;
+        }
+
+
+        return new ClaimComparisonReport(success, explanation);
+    }
 }

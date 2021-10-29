@@ -29,10 +29,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class SyntacticStructure {
+public class LinguisticStructure {
 
     public String local_id;
-    public String sentence;
+    public String text;
     public List<GraphConstraint> constraints;
     public ChoiceSpace cp;
 
@@ -40,17 +40,17 @@ public class SyntacticStructure {
 
 
 
-    public SyntacticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts)
+    public LinguisticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts)
     {
         this.local_id = local_id;
-        this.sentence = sentence;
+        this.text = sentence;
         this.constraints = fsFacts;
     }
 
-    public SyntacticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts, ChoiceSpace cp)
+    public LinguisticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts, ChoiceSpace cp)
     {
         this.local_id = local_id;
-        this.sentence = sentence;
+        this.text = sentence;
         this.constraints = fsFacts;
         this.cp = cp;
     }

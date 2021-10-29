@@ -22,12 +22,12 @@
 package de.ukon.liger.syntax.ud;
 
 
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.GraphConstraint;
 
 import java.util.List;
 
-public class UDstructure extends SyntacticStructure {
+public class UDstructure extends LinguisticStructure {
 
     public UDstructure(String id, String sentence, List<GraphConstraint> syntax)
     {

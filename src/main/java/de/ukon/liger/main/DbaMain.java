@@ -45,7 +45,7 @@ package de.ukon.liger.main;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
 import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.syntax.xle.Fstructure;
@@ -56,7 +56,6 @@ import de.ukon.liger.utilities.VariableHandler;
 import de.ukon.liger.webservice.WebApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import utilities.MyFormatter;
 
 import java.io.File;
 import java.util.*;
@@ -70,6 +69,16 @@ public class DbaMain {
 
 
     public static void main(String[] args) {
+
+        /*
+        LOGGER.setUseParentHandlers(false);
+        ConsoleHandler handler = new ConsoleHandler();
+        handler.setFormatter(new MyFormatter());
+        handler.setLevel(Level.ALL);
+        LOGGER.addHandler(handler);
+        LOGGER.setLevel(Level.ALL);
+         */
+
 
         LOGGER.info("Starting rewrite system -- copyright 2021 Mark-Matthias Zymla");
 
@@ -202,13 +211,13 @@ public class DbaMain {
                     //    break;
                 }
 
-                LinkedHashMap<String, SyntacticStructure> fs = parserInteractiveWrapper(settings.mode, input, ruleFile, result);
+                LinkedHashMap<String, LinguisticStructure> fs = parserInteractiveWrapper(settings.mode, input, ruleFile, result);
 
                 if (settings.semanticParsing) {
                     semanticsInteractiveWrapper(fs, result);
                 }
             } else {
-                LinkedHashMap<String, SyntacticStructure> fs = fromFileWrapper(settings.inputFile, ruleFile, result);
+                LinkedHashMap<String, LinguisticStructure> fs = fromFileWrapper(settings.inputFile, ruleFile, result);
                 if (settings.semanticParsing) {
                     semanticsInteractiveWrapper(fs, result);
                 }
@@ -218,11 +227,11 @@ public class DbaMain {
     }
 
     public static void
-    semanticsInteractiveWrapper(LinkedHashMap<String, SyntacticStructure> in, LinkedHashMap<String, HashMap<Integer, String>> result) {
+    semanticsInteractiveWrapper(LinkedHashMap<String, LinguisticStructure> in, LinkedHashMap<String, HashMap<Integer, String>> result) {
 
 
         for (String key : in.keySet()) {
-            SyntacticStructure fs = in.get(key);
+            LinguisticStructure fs = in.get(key);
             GlueSemantics sem = new GlueSemantics();
             String semantics = sem.calculateSemantics(fs);
 
@@ -255,10 +264,10 @@ public class DbaMain {
         LOGGER.info("Done");
     }
 
-    public static LinkedHashMap<String, SyntacticStructure>
+    public static LinkedHashMap<String, LinguisticStructure>
     parserInteractiveWrapper(String parserType, String input, String path, LinkedHashMap<String, HashMap<Integer, String>> result) {
         VariableHandler vh = new VariableHandler();
-        SyntacticStructure fs = null;
+        LinguisticStructure fs = null;
         SyntaxOperator syn = null;
 
         switch (parserType) {
@@ -278,7 +287,7 @@ public class DbaMain {
         fs = syn.parseSingle(input);
         //     System.out.println(fs.constraints);
 
-        List<SyntacticStructure> fsList = new ArrayList<>();
+        List<LinguisticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
         RuleParser rp = new RuleParser(new File(path));
@@ -289,10 +298,10 @@ public class DbaMain {
 
         String sid = vh.returnNewVar(VariableHandler.variableType.SENTENCE_ID, null);
 
-        LinkedHashMap<String, SyntacticStructure> out = new LinkedHashMap<>();
+        LinkedHashMap<String, LinguisticStructure> out = new LinkedHashMap<>();
         out.put(sid, fs);
 
-        resultBuilder.append(sid + ": " + fs.sentence);
+        resultBuilder.append(sid + ": " + fs.text);
         resultBuilder.append(System.lineSeparator());
 
         try {
@@ -320,20 +329,20 @@ public class DbaMain {
 
     }
 
-    public static LinkedHashMap<String, SyntacticStructure>
+    public static LinkedHashMap<String, LinguisticStructure>
     fromFileWrapper(String inPath, String rulePath, LinkedHashMap<String, HashMap<Integer, String>> result) {
 
         File inFile = new File(inPath);
 
         XLEoperator xle = new XLEoperator(new VariableHandler());
 
-        LinkedHashMap<String, SyntacticStructure> indexedFs;
+        LinkedHashMap<String, LinguisticStructure> indexedFs;
 
 
         if (inFile.isDirectory()) {
             File[] files = inFile.listFiles((d, name) -> name.endsWith(".pl"));
 
-            indexedFs = new LinkedHashMap<String, SyntacticStructure>();
+            indexedFs = new LinkedHashMap<String, LinguisticStructure>();
 
             for (int i = 0; i < files.length; i++) {
                 indexedFs.putAll(xle.fs2Java(files[i].toString()));
@@ -355,11 +364,11 @@ public class DbaMain {
         for (String key : indexedFs.keySet()) {
             StringBuilder resultBuilder = new StringBuilder();
             HashMap<Integer, String> syntaxResult = new HashMap<>();
-            SyntacticStructure fs = indexedFs.get(key);
+            LinguisticStructure fs = indexedFs.get(key);
             LOGGER.info("Now annotating structure with id " + key + "...");
             rp.addAnnotation2(fs);
 
-            resultBuilder.append(key + ": " + fs.sentence);
+            resultBuilder.append(key + ": " + fs.text);
             resultBuilder.append(System.lineSeparator());
 
             try {

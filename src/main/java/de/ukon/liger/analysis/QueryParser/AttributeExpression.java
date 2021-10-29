@@ -77,7 +77,7 @@ public class AttributeExpression extends QueryExpression {
                      }
                     }
 
-                    /*
+
                 Iterator<Integer> boundIter = boundIndices.keySet().iterator();
 
                     while (boundIter.hasNext())
@@ -94,7 +94,7 @@ public class AttributeExpression extends QueryExpression {
                         }
 
                     }
-*/
+
 /*
                     for (Integer key3 : boundIndices.keySet())
                     {

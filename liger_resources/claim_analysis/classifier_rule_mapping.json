@@ -2,6 +2,18 @@
   "name": "claim_analysis",
   "version": "1.0.0",
   "classifiers": {
+    "CNFN": {
+      "rules": "",
+      "query": "#a root #b xcomp #c"
+    },
+    "CFIN": {
+      "rules": "",
+      "query": "#a root #b ccomp #c"
+    },
+    "CMDV": {
+      "rules": "",
+      "query": "#a root #b aux #c & #c POS MD"
+    },
     "CPST": {
       "rules": "testFiles/testRulesUD4c.txt",
       "query": "#a root #b MORPH #c TAM #d TENSE 'past'"

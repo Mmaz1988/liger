@@ -22,7 +22,7 @@
 package de.ukon.liger.packing;
 
 import org.junit.jupiter.api.Test;
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.xle.FstructureElements.AttributeValuePair;
 import de.ukon.liger.syntax.xle.Prolog2Java.FsProlog2Java;
 import de.ukon.liger.syntax.xle.Prolog2Java.ReadFsProlog;
@@ -31,7 +31,6 @@ import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -51,7 +50,7 @@ public class VariableChoiceTest {
 
         XLEoperator xle = new XLEoperator(new VariableHandler());
 
-        List<LinkedHashMap<String, SyntacticStructure>> fsList = new ArrayList<>();
+        List<LinkedHashMap<String, LinguisticStructure>> fsList = new ArrayList<>();
 
         fsList.add(xle.fs2Java(testfile));
 

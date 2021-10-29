@@ -33,7 +33,8 @@ public class Rule {
 
     private String left;
     private String right;
-    private static Pattern rulePattern = Pattern.compile("(.+)==>(.+)");
+    private boolean rewrite;
+    private static Pattern rulePattern = Pattern.compile("(.+)=(=|-)>(.+)");
 
 
     private List<GraphConstraint> annotation;
@@ -42,10 +43,22 @@ public class Rule {
         generateRule(rule);
     }
 
+    public Rule(String rule, boolean rewrite) {
+        generateRule(rule);
+        this.rewrite = rewrite;
+    }
+
     public Rule(String left, String right)
     {
         this.left = left;
         this.right = right;
+    }
+
+    public Rule(String left, String right, boolean rewrite)
+    {
+        this.left = left;
+        this.right = right;
+        this.rewrite = rewrite;
     }
 
 
@@ -55,9 +68,12 @@ public class Rule {
         if (rm.matches())
         {
             this.left = rm.group(1);
-            this.right = rm.group(2);
+            this.right = rm.group(3);
         }
     }
+
+
+
 
 
     public String getLeft() {
@@ -107,5 +123,14 @@ public class Rule {
         return   left +  "==>" +
                  right;
     }
+
+    public boolean isRewrite() {
+        return rewrite;
+    }
+
+    public void setRewrite(boolean rewrite) {
+        this.rewrite = rewrite;
+    }
+
 }
 

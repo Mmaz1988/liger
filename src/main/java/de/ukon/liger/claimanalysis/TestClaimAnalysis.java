@@ -26,6 +26,8 @@ import de.ukon.liger.utilities.PathVariables;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -35,7 +37,7 @@ public class TestClaimAnalysis {
 
     public TestClaimAnalysis()
     {
-        PathVariables.workingDirectory = "C:\\Users\\Celeste\\IdeaProjects\\LiGER\\resources\\";
+        PathVariables.workingDirectory = "C:\\Users\\Celeste\\IdeaProjects\\LiGER\\liger_resources\\";
         PathVariables.initializePathVariables();
     }
 
@@ -150,5 +152,20 @@ public class TestClaimAnalysis {
         assertTrue(ca.searchClassifiers(input).size() == 1);
 
     }
+
+    @Test
+    void testSearchClassifiers2() throws IOException {
+    String input = "Jamie visited Erin. They played board games together.";
+
+    ClaimAnalysis ca = new ClaimAnalysis();
+
+        Map<String,Boolean> eval = ca.checkForClassifier2(input,Classifier.CPST);
+
+        for (String key : eval.keySet())
+        {
+         assertTrue(eval.get(key));
+        }
+    }
+
 
 }

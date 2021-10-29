@@ -21,7 +21,7 @@
 
 package de.ukon.liger.syntax.ud;
 
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.GraphConstraint;
 
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ public class UDtoTex {
                 input = s.nextLine();
                 if (input.equals("quit"))
                     break;
-                SyntacticStructure out = udops.parseSingle(input);
+                LinguisticStructure out = udops.parseSingle(input);
                 //System.out.println(out.constraints);
                 System.out.println(newString(input, out));
 
@@ -56,7 +56,7 @@ public class UDtoTex {
 
     }
 
-    public static String newString(String input, SyntacticStructure out) {
+    public static String newString(String input, LinguisticStructure out) {
         StringBuilder myString = new StringBuilder();
 
         myString.append("\\begin{dependency}\r\n" +
@@ -97,7 +97,7 @@ public class UDtoTex {
         return finalAString.toString();
     }
 
-    private static String getPOS(SyntacticStructure out) {
+    private static String getPOS(LinguisticStructure out) {
         StringBuilder bString = new StringBuilder();
         StringBuilder finalBString = new StringBuilder();
         List<GraphConstraint> tmp = out.constraints;
@@ -126,7 +126,7 @@ public class UDtoTex {
 
     }
 
-    private static String getEdges(SyntacticStructure out) {
+    private static String getEdges(LinguisticStructure out) {
         StringBuilder cString = new StringBuilder();
         StringBuilder finalCString = new StringBuilder();
 

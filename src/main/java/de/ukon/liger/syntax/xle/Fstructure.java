@@ -22,14 +22,14 @@
 package de.ukon.liger.syntax.xle;
 
 import de.ukon.liger.packing.ChoiceSpace;
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.GraphConstraint;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Fstructure extends SyntacticStructure {
+public class Fstructure extends LinguisticStructure {
 
     public boolean packed;
 
@@ -52,7 +52,7 @@ public class Fstructure extends SyntacticStructure {
 
         prologStringBuilder.append("% -*- coding: utf-8 -*-\n");
         prologStringBuilder.append(System.lineSeparator());
-        prologStringBuilder.append("fstructure("+this.sentence +",\n");
+        prologStringBuilder.append("fstructure("+this.text +",\n");
         prologStringBuilder.append("% Properties:\n");
         //Properties list can be empty
         prologStringBuilder.append("[],\n");

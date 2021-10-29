@@ -80,7 +80,7 @@ public void calculateSolutions()
             binding.put(getNodeVar(),new HashMap<>());
 
 
-            /*
+
             for (Integer key : getFsIndices().keySet())
         {
             if (getFsIndices().get(key).getFsNode().equals(fs))
@@ -88,7 +88,7 @@ public void calculateSolutions()
                 reference.get(fs).put(key,getFsIndices().get(key));
             }
             }
-            */
+
 
             // String key = getNodeVar()+fs;
             SolutionKey key = new SolutionKey(getNodeVar(),fs);

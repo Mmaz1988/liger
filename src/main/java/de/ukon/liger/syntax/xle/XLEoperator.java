@@ -21,10 +21,9 @@
 
 package de.ukon.liger.syntax.xle;
 
-import de.ukon.liger.main.DbaMain;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
 import de.ukon.liger.syntax.xle.FstructureElements.AttributeValuePair;
 import de.ukon.liger.syntax.xle.Prolog2Java.FsProlog2Java;
@@ -125,7 +124,7 @@ public class XLEoperator extends SyntaxOperator {
         }
     }
     @Override
-    public SyntacticStructure parseSingle(String sentence) {
+    public LinguisticStructure parseSingle(String sentence) {
         List<String> singletonList = new ArrayList<>();
         singletonList.add(sentence);
         parseSentences(singletonList);
@@ -136,7 +135,7 @@ public class XLEoperator extends SyntaxOperator {
             File[] files = fsFile.listFiles((d, name) -> name.endsWith(".pl"));
 
             for (int i = 0; i < files.length; i++) {
-                LinkedHashMap<String, SyntacticStructure> fsRef = fs2Java(files[i].getPath());
+                LinkedHashMap<String, LinguisticStructure> fsRef = fs2Java(files[i].getPath());
                 return fsRef.get(fsRef.keySet().iterator().next()) ;
             }
         }
@@ -175,12 +174,12 @@ public class XLEoperator extends SyntaxOperator {
 
         });
 
-        LinkedHashMap<String, SyntacticStructure> prologsJavaObjects = new LinkedHashMap<>();
+        LinkedHashMap<String, LinguisticStructure> prologsJavaObjects = new LinkedHashMap<>();
 
         for (int i = 0; i < listOfPrologFiles.size(); i++) {
 
                 String prologFilePath = listOfPrologFiles.get(i).toString();
-                LinkedHashMap<String, SyntacticStructure> prologJavaObject = fs2Java(prologFilePath);
+                LinkedHashMap<String, LinguisticStructure> prologJavaObject = fs2Java(prologFilePath);
 
                 for (String key : prologJavaObject.keySet())
                 {
@@ -191,7 +190,7 @@ public class XLEoperator extends SyntaxOperator {
         return prologsJavaObjects;
     }
 
-    public List<List<String>> extractModalsFromXLE(LinkedHashMap<String, SyntacticStructure> sentences)
+    public List<List<String>> extractModalsFromXLE(LinkedHashMap<String, LinguisticStructure> sentences)
     {
         List<List<String>> output = new ArrayList<>();
 
@@ -205,13 +204,13 @@ public class XLEoperator extends SyntaxOperator {
 
 
 
-    public LinkedHashMap<String, SyntacticStructure> fs2Java(String inputPath)
+    public LinkedHashMap<String, LinguisticStructure> fs2Java(String inputPath)
     {
         //In
         File f = new File(inputPath);
 
         //Out
-        LinkedHashMap<String,SyntacticStructure> out = new LinkedHashMap<>();
+        LinkedHashMap<String, LinguisticStructure> out = new LinkedHashMap<>();
 
 // This filter will only include files ending with .py
         FilenameFilter filter = new FilenameFilter() {
@@ -250,12 +249,12 @@ public class XLEoperator extends SyntaxOperator {
     }
 
     //Load single xle structure as a syntactic structure:
-    public SyntacticStructure xle2Java(String inputPath) throws IOException {
+    public LinguisticStructure xle2Java(String inputPath) throws IOException {
         //In
         File f = new File(inputPath);
 
         //Out
-        LinkedHashMap<String,SyntacticStructure> out = new LinkedHashMap<>();
+        LinkedHashMap<String, LinguisticStructure> out = new LinkedHashMap<>();
 
 // This filter will only include files ending with .py
         FilenameFilter filter = new FilenameFilter() {

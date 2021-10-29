@@ -23,10 +23,9 @@ package de.ukon.liger.test;
 
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import com.opencsv.CSVWriter;
-import de.ukon.liger.main.DbaMain;
 import org.junit.jupiter.api.Test;
 import de.ukon.liger.syntax.GraphConstraint;
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.PathVariables;
@@ -63,8 +62,8 @@ public class ParserTest {
         {
             for (String j: sentence )
             {
-                SyntacticStructure fs = parser.parseSingle(j);
-                List<SyntacticStructure> fsList = new ArrayList<>();
+                LinguisticStructure fs = parser.parseSingle(j);
+                List<LinguisticStructure> fsList = new ArrayList<>();
                 fsList.add(fs);
                 RuleParser rp = new RuleParser(fsList, PathVariables.testPath + "testRulesUD5.txt");
                 rp.addAnnotation2(fs);
@@ -183,7 +182,7 @@ public class ParserTest {
         //VariableHandler var_handler = new VariableHandler();
         VariableHandler vh = new VariableHandler();
         XLEoperator parser = new XLEoperator(vh);
-        LinkedHashMap<String, SyntacticStructure> test_file = parser.loadPrologFstructures();
+        LinkedHashMap<String, LinguisticStructure> test_file = parser.loadPrologFstructures();
         List<List<String>> sentences = parser.extractModalsFromXLE(test_file);
         Integer number_of_sentences = 13;
         //compare number of files in parser_output vs. expected (number of sentences)
@@ -193,7 +192,7 @@ public class ParserTest {
         data.add(new String[] { "Sentence", "Subject", "Modal" });
         for (String key : test_file.keySet())
         {
-                SyntacticStructure fs = test_file.get(key);
+                LinguisticStructure fs = test_file.get(key);
                 List<String[]> listModals = new ArrayList<>();
                 String subject = "";
                 String modal = "";
@@ -205,7 +204,7 @@ public class ParserTest {
                     //                 data.add(new String[] { j, subject, modal});
 
                     sentenceRep = new String[1][3];
-                    sentenceRep[0][0] = fs.sentence;
+                    sentenceRep[0][0] = fs.text;
                     sentenceRep[0][1] = "";
                     sentenceRep[0][2] = "";
                 }
@@ -244,7 +243,7 @@ public class ParserTest {
                     if (listModals.size() > 0)
                     {
                         sentenceRep = new String[listModals.size()][3];
-                        sentenceRep[0][0] = fs.sentence;
+                        sentenceRep[0][0] = fs.text;
                         for (int i = 0; i < listModals.size();i++)
                         {
                             if (i > 0) {
@@ -261,7 +260,7 @@ public class ParserTest {
                     }
                     else{
                         sentenceRep = new String[1][3];
-                        sentenceRep[0][0] = fs.sentence;
+                        sentenceRep[0][0] = fs.text;
                         sentenceRep[0][1] = "";
                         sentenceRep[0][2] = "";
                     }

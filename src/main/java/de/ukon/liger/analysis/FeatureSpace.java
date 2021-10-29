@@ -21,7 +21,7 @@
 
 package de.ukon.liger.analysis;
 
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,10 +47,10 @@ public class FeatureSpace {
 
             for (int i = 0; i < dataSet.size(); i++)
             {
-                SyntacticStructure str = (SyntacticStructure) dataSet.get(i);
-                String sentence = str.sentence;
+                LinguisticStructure str = (LinguisticStructure) dataSet.get(i);
+                String sentence = str.text;
                 table[i][0] = str.local_id;
-                table[i][1] = str.sentence;
+                table[i][1] = str.text;
                 for (int j = 2; j < arguments.size()+2; j++)
                 {
 
@@ -69,7 +69,7 @@ public class FeatureSpace {
 
         }
 
-        List<SyntacticStructure> structure = new ArrayList<>();
+        List<LinguisticStructure> structure = new ArrayList<>();
 
         List<String> arguments = Arrays.asList(args);
         FeatureSpace fs = new FeatureSpace(structure);

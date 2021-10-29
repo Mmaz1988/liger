@@ -22,18 +22,15 @@
 package de.ukon.liger.webservice;
 
 import de.ukon.liger.analysis.RuleParser.RuleParser;
-import de.ukon.liger.main.DbaMain;
-import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
-import de.ukon.liger.syntax.SyntacticStructure;
+import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -77,7 +74,7 @@ public class AnnotatorController {
 
         UDoperator parser = new UDoperator();
 
-        SyntacticStructure fs = parser.parseSingle(input);
+        LinguisticStructure fs = parser.parseSingle(input);
        // System.out.println(fs.constraints);
         LOGGER.fine(fs.constraints.toString());
 
@@ -93,9 +90,9 @@ public class AnnotatorController {
 
         UDoperator parser = new UDoperator();
 
-        SyntacticStructure fs = parser.parseSingle(input);
+        LinguisticStructure fs = parser.parseSingle(input);
         LOGGER.fine(fs.constraints.toString());
-        List<SyntacticStructure> fsList = new ArrayList<>();
+        List<LinguisticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
         RuleParser rp = new RuleParser(fsList, Paths.get(PathVariables.testPath + "testRulesUD4c.txt"));
@@ -140,10 +137,10 @@ public class AnnotatorController {
         input = new String(c);
          */
 
-        SyntacticStructure fs = parser.parseSingle(input);
+        LinguisticStructure fs = parser.parseSingle(input);
         LOGGER.fine(fs.constraints.toString());
       //  System.out.println(fs.constraints);
-        List<SyntacticStructure> fsList = new ArrayList<>();
+        List<LinguisticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
         RuleParser rp = new RuleParser(fsList, Paths.get(PathVariables.testPath + "testRulesUD1.txt"));
@@ -176,10 +173,10 @@ public class AnnotatorController {
      //   System.out.println(request.ruleString);
         UDoperator parser = new UDoperator();
 
-        SyntacticStructure fs = parser.parseSingle(request.sentence);
+        LinguisticStructure fs = parser.parseSingle(request.sentence);
         LOGGER.fine(fs.constraints.toString());
        // System.out.println(fs.constraints);
-        List<SyntacticStructure> fsList = new ArrayList<>();
+        List<LinguisticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
         RuleParser rp = new RuleParser(fsList, request.ruleString,true);
@@ -203,10 +200,10 @@ public class AnnotatorController {
         //   System.out.println(request.ruleString);
         XLEoperator parser = new XLEoperator(new VariableHandler());
         try {
-            SyntacticStructure fs = parser.xle2Java("some string");
+            LinguisticStructure fs = parser.xle2Java("some string");
 
        // System.out.println(fs.constraints);
-        List<SyntacticStructure> fsList = new ArrayList<>();
+        List<LinguisticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
         RuleParser rp = new RuleParser(fsList, request.ruleString,true);
