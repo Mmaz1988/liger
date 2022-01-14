@@ -105,7 +105,7 @@
 
 //Existential quantifier
 #g ^(SPEC) #h SEM #i VAR #j & #i RESTR #k & #i SIT #s &
-#g DET #l PRED %l & l == 'a' &
+#g DET #l PRED %l & %l == 'a' &
 #h ^(%) #m SEM #n FPS #b & #n SIT #o
 ==> #i GLUE [/P_<e,<s,t>>.[/Q_<e,<s,t>>.[/s_s.Ex_e[P(x)(s) \& Q(x)(s)]]]] : ((#j -o (#s -o #k)) -o ((#i -o (#o -o #n)) -o (#o -o #n))).
 
@@ -167,23 +167,31 @@
 
 
 //Subcategorization for verbs
+
+//Transitive verbs -- Type A
 #a SUBJ #b & #a OBJ #c & #a TNS-ASP #d & #a PRED %a &
 #a SEM #z FPS #e procP #f P-SUBJ #c SEM #j &
+#z SIT #y &
 #e initP #h INIT #i & #h I-SUBJ #b SEM #k ==>
-#e GLUE [/R_<e,<e,<v,t>>>.[/x_e.[/y_e.[/e_v.(strip(%a)(e) \& (R(x)(y)(e) \& (ag(e,x) \& pt(e,y))))]]]] : ((#b -o (#c -o (#i -o #h))) -o (#k -o (#j -o (#h -o #e))).
+#e GLUE [/R_<e,<e,<v,t>>>.[/x_e.[/y_e.[/s_s.[/e_v.(partOf(e,s) \& (strip(%a)(e) \& (R(x)(y)(e) \& (ag(e,x) \& pt(e,y)))))]]]]] : ((#b -o (#c -o (#i -o #h))) -o (#k -o (#j -o (#y -o (#h -o #e))))).
 
+//Transitive verbs -- Type B
+#a SUBJ #b & #a OBJ #c & #a TNS-ASP #d & #a PRED %a &
+#a SEM #z FPS #e procP #f P-SUBJ #b SEM #j &
+#z SIT #y &
+#e initP #h INIT #i & #h I-SUBJ #b SEM #j &
+#c SEM #k
+==>
+#e GLUE [/R_<e,<v,t>>.[/x_e.[/y_e.[/s_s.[/e_v.(partOf(e,s) \& (strip(%a)(e) \& (R(x)(e) \& (ag(e,x) \& pt(e,y)))))]]]]] : ((#b -o (#i -o #h)) -o (#j -o (#k -o (#y -o (#h -o #e))))).
+
+//Ditransitive verb
 #a SUBJ #b & #a OBJ #c & #a OBJ-TH #d & #a PRED %a &
 #d SEM #h &
 #a SEM #z FPS #e resP #f R-SUBJ #c SEM #g &
+#z SIT #y &
 #e initP #k INIT #l & #k I-SUBJ #b SEM #m ==>
-#e GLUE [/R_<e,<e,<e,<v,t>>>>.[/x_e.[/y_e.[/z_e.[/e_v.(strip(%a)(e) \& (R(x)(y)(z)(e) \& (ag(e,x) \& (theme(e,z) \& goal(e,y)))))]]]]] : ((#b -o (#c -o (#d -o (#l -o #k)))) -o (#m -o (#g -o (#h -o (#k -o #e)))).
+#e GLUE [/R_<e,<e,<e,<v,t>>>>.[/x_e.[/y_e.[/z_e.[/s_s.[/e_v.(partOf(e,s) \& (strip(%a)(e) \& (R(x)(y)(z)(e) \& (ag(e,x) \& (theme(e,z) \& goal(e,y))))))]]]]]] : ((#b -o (#c -o (#d -o (#l -o #k)))) -o (#m -o (#g -o (#h -o (#y -o (#k -o #e)))))).
 
-#a SUBJ #b & #a OBJ #c & #a TNS-ASP #d & #a PRED %a &
-#a SEM #z FPS #e procP #f P-SUBJ #b SEM #j &
-#e initP #h INIT #i & #h I-SUBJ #b SEM #j &
-#c SEM #k
- ==>
-#e GLUE [/R_<e,<v,t>>.[/x_e.[/y_e.[/e_v.(strip(%a)(e) \& (R(x)(e) \& (ag(e,x) \& pt(e,y))))]]]] : ((#b -o (#i -o #h)) -o (#j -o (#k -o (#h -o #e))))).
 
 //intransitive ohne PFS
 #a SUBJ #b SEM #c &
@@ -226,7 +234,7 @@
 
 //Closure
 #b FPS #c ==> #c CLOSURE #d.
-#b FPS #c initP #d & #c CLOSURE #e & #b SIT #f ==> #e GLUE [/P_<s,<v,t>>.[/s_s.Ee_v[P(s)(e)]]] : ((f -o (#d -o #c)) -o (#f -o #b)).
+#b FPS #c initP #d & #c CLOSURE #e & #b SIT #f ==> #e GLUE [/P_<s,<v,t>>.[/s_s.Ee_v[P(s)(e)]]] : ((#f -o (#d -o #c)) -o (#f -o #b)).
 #b FPS #c CLOSURE #e & #c CHECK #z & #b SIT #f ==> #e GLUE [/P_<s,<v,t>>.[/s_s.Ee_v[P(s)(e)]]] : ((#f -o (#z -o #c)) -o (#f -o #b)).
 
 
@@ -251,6 +259,7 @@
 #a SEM #b VIEWPOINT #c ASPECT 'impv' &
 #c VAR #d & #c RESTR #e &
 #b TEMP-REF #f &
+#b SIT #g
  ==>  #c GLUE [/M_<s,<s,t>>.[/P_<s,t>.[/s_s.Az_s[M(s)(z) -> P(z)]]]] : ((#d -o (#e -o #c)) -o ((#g -o #b) -o (#f -o #b))).
 
 #a SEM #b VIEWPOINT #c ASPECT 'prv' &

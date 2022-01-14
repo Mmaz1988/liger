@@ -24,6 +24,7 @@ package de.ukon.liger.syntax.ud;
 // Base class for creating glue semantic representations with a meaning side and a glue side
 
 import de.ukon.liger.analysis.RuleParser.RuleParser;
+import de.ukon.liger.utilities.HelperMethods;
 import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.process.Morphology;
 import edu.stanford.nlp.trees.GrammaticalStructure;
@@ -35,12 +36,15 @@ import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
 import de.ukon.liger.test.QueryParserTest;
 import de.ukon.liger.utilities.VariableHandler;
+import org.springframework.boot.actuate.endpoint.web.Link;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 
 //import edu.stanford.nlp.pipeline;
 //TODO Methoden sortieren
@@ -361,4 +365,62 @@ public class UDoperator extends SyntaxOperator {
 
         return out;
     }
+
+
+    public void compareParses(LinguisticStructure in, LinguisticStructure out)
+    {
+
+        List<GraphConstraint> inConstraints = new ArrayList<>(in.constraints);
+        List<GraphConstraint> outConstraints = new ArrayList<>(out.constraints);
+
+        String rootNodeIn = "";
+
+        for (GraphConstraint c : inConstraints)
+        {
+            if (c.getRelationLabel().equals("root"))
+            {
+                rootNodeIn = c.getFsValue().toString();
+            }
+        }
+
+        String rootNodeOut = "";
+
+        for (GraphConstraint c : outConstraints)
+        {
+            if (c.getRelationLabel().equals("root"))
+            {
+                rootNodeOut = c.getFsValue().toString();
+            }
+        }
+
+
+        String finalRootNodeIn = rootNodeIn;
+        LinkedList<GraphConstraint> inFeatures =
+                new LinkedList<>(inConstraints.stream().filter(c -> c.getFsNode().equals(finalRootNodeIn)).collect(Collectors.toList()));
+        String finalRootNodeOut = rootNodeOut;
+        LinkedList<GraphConstraint> outFeatures =
+              new LinkedList<>(outConstraints.stream().filter(c -> c.getFsNode().equals(finalRootNodeOut)).collect(Collectors.toList()));
+
+
+        Iterator<GraphConstraint> inIter = inFeatures.iterator();
+
+        while (inIter.hasNext()) {
+            GraphConstraint c = inIter.next();
+            Iterator<GraphConstraint> outIter = outFeatures.iterator();
+            if (!HelperMethods.isInteger(c.getFsValue())) {
+                while (outIter.hasNext()) {
+                    GraphConstraint c1 = outIter.next();
+
+                    if (c1.getRelationLabel().equals(c.getRelationLabel()) && c1.getFsValue().equals(c.getFsValue()))
+                    {
+                        outIter.remove();
+                        inIter.remove();
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+
 }
