@@ -98,7 +98,7 @@ public class ClaimAnalysis {
         }
 
         Properties props = new Properties();
-        props.setProperty("annotators","tokenize,ssplit,sentiment");
+        props.setProperty("annotators","tokenize,ssplit,sentiment,pos,parse");
         this.pipeline = new StanfordCoreNLP(props);
 
     }
