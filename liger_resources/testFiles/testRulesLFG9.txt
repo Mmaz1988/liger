@@ -156,10 +156,7 @@
 
 
 //INIT
-#a SEM #z FPS #b initP #c I-SUBJ #d & #c INIT #h & #b procP #e PROC #f & #e P-SUBJ #g ==>
-#c GLUE [/P_<v,t>.[/x_e.[/e_v.Ee1_v[Ee2_v[equals(e,to(e1,e2)) \& (init(e1,x) \& P(e2))]]]]] : ((#f -o #e) -o (#d -o (#h -o #c))).
-
-#a SEM #z FPS #b initP #c I-SUBJ #d & #c INIT #h & #b procP #e PROC #f & #e P-SUBJ 'undefined' ==>
+#a SEM #z FPS #b initP #c I-SUBJ #d & #c INIT #h & #b procP #e PROC #f ==>
 #c GLUE [/P_<v,t>.[/x_e.[/e_v.Ee1_v[Ee2_v[equals(e,to(e1,e2)) \& (init(e1,x) \& P(e2))]]]]] : ((#f -o #e) -o (#d -o (#h -o #c))).
 
 #a SEM #z FPS #b initP #c I-SUBJ #d & #c INIT #h & #b procP #e PROC #f & #e P-SUBJ #d ==>

@@ -249,7 +249,7 @@ public class RuleParser {
                                                 if ( c.getFsNode().equals(key2) && c.getRelationLabel().equals(graphMatcher.group(2)) &&
                                                 c.getReading().equals(context))
                                                 {
-                                                    LOGGER.trace("Rewritten value: " + c.getFsValue() + " into: " + newValue);
+                                                    LOGGER.debug("Rewritten value: " + c.getFsValue() + " into: " + newValue);
                                                     c.setFsValue(newValue);
                                                     replaceValue = true;
                                                 }
