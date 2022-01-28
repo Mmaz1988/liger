@@ -89,7 +89,7 @@ public class AnnotatorController {
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/annotate", produces = "application/json")
     public TestGraph annotationRequest2(
-            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
+            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) throws IOException {
 
         UDoperator parser = new UDoperator();
 
@@ -130,7 +130,7 @@ public class AnnotatorController {
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/semantics", produces = "application/json")
     public TestGraph semanticsRequest2(
-            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
+            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) throws IOException {
 
         UDoperator parser = new UDoperator();
 

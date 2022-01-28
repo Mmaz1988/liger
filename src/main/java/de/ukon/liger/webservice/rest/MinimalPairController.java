@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Set;
 
 @CrossOrigin
@@ -54,7 +55,7 @@ public class MinimalPairController {
 
     @CrossOrigin
     @RequestMapping(value = "/compare_claims", consumes = "application/json")
-    public ClaimComparisonReport compareClaims(@RequestBody ClaimRequest cr) {
+    public ClaimComparisonReport compareClaims(@RequestBody ClaimRequest cr) throws IOException {
         return ca.compareClaimRequest(cr);
     }
 
@@ -65,7 +66,7 @@ public class MinimalPairController {
      */
     @CrossOrigin
     @RequestMapping(value = "/claim_analysis", produces = "application/json")
-    public Set<Classifier> produceClaimAnalysis(@RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
+    public Set<Classifier> produceClaimAnalysis(@RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) throws IOException {
         return ca.getNonPresentClassifiers(input);
     }
 

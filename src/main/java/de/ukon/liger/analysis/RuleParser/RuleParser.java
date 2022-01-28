@@ -25,7 +25,6 @@ import de.ukon.liger.analysis.LinguisticDictionary;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.QueryParser.SolutionKey;
-import de.ukon.liger.main.DbaMain;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.SyntacticStructure;
@@ -54,30 +53,25 @@ public class RuleParser {
     private final static Logger LOGGER = LoggerFactory.getLogger(RuleParser.class);
 
 
-
-    public RuleParser(List<SyntacticStructure> fsList)
-    {
+    public RuleParser(List<SyntacticStructure> fsList) {
         this.fsList = fsList;
         this.replace = false;
     }
 
-    public RuleParser(List<SyntacticStructure> fsList, String input)
-    {
+    public RuleParser(List<SyntacticStructure> fsList, String input) {
         this.fsList = fsList;
         this.replace = false;
         this.rules = parseRuleFile(input);
     }
 
-    public RuleParser(List<SyntacticStructure> fsList, String input, Boolean replace)
-    {
+    public RuleParser(List<SyntacticStructure> fsList, String input, Boolean replace) {
         this.fsList = fsList;
         this.replace = replace;
         this.rules = parseRuleFile(input);
     }
 
 
-    public RuleParser(List<SyntacticStructure> fsList, Path path)
-    {
+    public RuleParser(List<SyntacticStructure> fsList, Path path) {
         this.fsList = fsList;
         this.replace = false;
 
@@ -95,51 +89,42 @@ public class RuleParser {
 
     }
 
-    public RuleParser(File path)
-    {
+    public RuleParser(File path) {
         this.replace = false;
 
-        String fileString = null;
         try {
-            fileString = new String(Files.readAllBytes(Paths.get(path.toString())));
+            String fileString = new String(Files.readAllBytes(Paths.get(path.toString())));
             this.rules = parseRuleFile(fileString);
-        }catch(Exception e)
-        {
-            LOGGER.error("Failed to load rule file");
+        } catch (Exception e) {
+            LOGGER.error("Failed to load rule file", e);
             this.rules = new ArrayList<>();
-         //   e.printStackTrace();
+            //   e.printStackTrace();
         }
-
 
 
     }
 
-    public void addAnnotation()
-    {
-        for (SyntacticStructure fs : this.fsList)
-        {
+    public void addAnnotation() {
+        for (SyntacticStructure fs : this.fsList) {
             addAnnotation2(fs);
         }
     }
 
-    public void addAnnotation2(SyntacticStructure fs)
-    {
+    public void addAnnotation2(SyntacticStructure fs) {
         resetRuleParser();
         QueryParser qp = new QueryParser(fs);
 
-        for (Integer key : qp.getFsIndices().keySet())
-        {
+        for (Integer key : qp.getFsIndices().keySet()) {
             usedKeys.add(qp.getFsIndices().get(key).getFsNode());
         }
 
         Integer key = qp.getFsIndices().keySet().size();
 
-        for (int k = 0; k < rules.size();k++)
-        {
+        for (int k = 0; k < rules.size(); k++) {
             Rule r = rules.get(k);
 
             LOGGER.debug("Currently processing rule with index " + k + ":\n" +
-            "\t" + r.toString());
+                    "\t" + r.toString());
 
             HashMap<Integer, GraphConstraint> annotation = new HashMap<>();
 
@@ -147,53 +132,48 @@ public class RuleParser {
             qp.generateQuery(r.getLeft());
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
-            if  (qpr.isSuccess)
-            {
+            if (qpr.isSuccess) {
                 List<String> search = r.splitGoal();
 
 
                 try {
                     //for (String searchString : search) {
-                    for (int i = 0; i < search.size(); i++)
-                    {
+                    for (int i = 0; i < search.size(); i++) {
                         String searchString = search.get(i).trim();
                         Matcher graphMatcher = graphPattern.matcher(searchString);
 
                         if (graphMatcher.matches()) {
                             Matcher nodeMatcher = HelperMethods.fsNodePattern.matcher(graphMatcher.group(1));
                             Matcher valueMatcher = HelperMethods.fsNodePattern.matcher(graphMatcher.group(3));
-                            HashMap<Integer,GraphConstraint> newConstraints = new HashMap<>();
+                            HashMap<Integer, GraphConstraint> newConstraints = new HashMap<>();
 
                             boolean valueMatches = valueMatcher.matches();
 
                             if (nodeMatcher.matches()) {
-                                    for (Set<SolutionKey> solutionKey : qpr.result.keySet())
-                                    {
-                                        Set<ChoiceVar> context = extractContexts(qpr.result.get(solutionKey), newConstraints);
-                                        if (variableIsAssigned(qpr,solutionKey,nodeMatcher.group(1))) {
+                                for (Set<SolutionKey> solutionKey : qpr.result.keySet()) {
+                                    Set<ChoiceVar> context = extractContexts(qpr.result.get(solutionKey), newConstraints);
+                                    if (variableIsAssigned(qpr, solutionKey, nodeMatcher.group(1))) {
 
                                         String key2 = qpr.result.get(solutionKey).get(nodeMatcher.group(1)).keySet().stream().findAny().get();
 
                                         if (valueMatches) {
-                                            if (variableIsAssigned(qpr,solutionKey,valueMatcher.group(1))) {
+                                            if (variableIsAssigned(qpr, solutionKey, valueMatcher.group(1))) {
 
-                                                    String key3 = qpr.result.get(solutionKey).get(valueMatcher.group(1)).keySet().stream().findAny().get();
-                                                        GraphConstraint c = new GraphConstraint();
-                                                        c.setReading(context);
-                                                        c.setFsNode(key2);
-                                                        c.setRelationLabel(graphMatcher.group(2));
-                                                        c.setFsValue(key3);
+                                                String key3 = qpr.result.get(solutionKey).get(valueMatcher.group(1)).keySet().stream().findAny().get();
+                                                GraphConstraint c = new GraphConstraint();
+                                                c.setReading(context);
+                                                c.setFsNode(key2);
+                                                c.setRelationLabel(graphMatcher.group(2));
+                                                c.setFsValue(key3);
 
-                                                        //Readings experiment start
-                                                for (Integer constraintKey : newConstraints.keySet())
-                                                {
+                                                //Readings experiment start
+                                                for (Integer constraintKey : newConstraints.keySet()) {
                                                     //TODO return unused context
 
 
                                                     GraphConstraint c1 = newConstraints.get(constraintKey);
                                                     if (c1.getFsNode().equals(key2) && c1.getRelationLabel().equals(c.getRelationLabel()) &&
-                                                        c1.getReading().equals(c.getReading()))
-                                                    {
+                                                            c1.getReading().equals(c.getReading())) {
                                                         ChoiceVar choice = new ChoiceVar("X1");
                                                         Set<ChoiceVar> newChoice = new HashSet<>();
                                                         newChoice.add(choice);
@@ -202,9 +182,9 @@ public class RuleParser {
                                                 }
                                                 //Readings experiment end
 
-                                                        qpr.result.get(solutionKey).get(nodeMatcher.group(1)).get(key2).put(key,c);
-                                                        newConstraints.put(key, c);
-                                                        key++;
+                                                qpr.result.get(solutionKey).get(nodeMatcher.group(1)).get(key2).put(key, c);
+                                                newConstraints.put(key, c);
+                                                key++;
 
 
                                             } else {
@@ -216,8 +196,6 @@ public class RuleParser {
                                                 }
                                                 newValues.get(valueMatcher.group(1)).add(newFsNode);
                                                 */
-
-
 
 
                                                 //   qp.getFsVarAssignment().put(valueMatcher.group(1),new HashSet<>());
@@ -232,7 +210,7 @@ public class RuleParser {
                                                 if (!qpr.result.get(solutionKey).keySet().contains(valueMatcher.group(1))) {
                                                     qpr.result.get(solutionKey).put(valueMatcher.group(1), new HashMap<>());
                                                 }
-                                                qpr.result.get(solutionKey).get(valueMatcher.group(1)).put(newFsNode,new HashMap<>());
+                                                qpr.result.get(solutionKey).get(valueMatcher.group(1)).put(newFsNode, new HashMap<>());
                                                 newConstraints.put(key, c);
                                                 key++;
 
@@ -241,16 +219,14 @@ public class RuleParser {
 
                                             String newValue = graphMatcher.group(3);
                                             if (replace) {
-                                             newValue  = replaceVars(qpr, solutionKey,graphMatcher.group(3));
+                                                newValue = replaceVars(qpr, solutionKey, graphMatcher.group(3));
                                             }
 
 
                                             boolean replaceValue = false;
-                                            for (GraphConstraint c : fs.annotation)
-                                            {
-                                                if ( c.getFsNode().equals(key2) && c.getRelationLabel().equals(graphMatcher.group(2)) &&
-                                                c.getReading().equals(context))
-                                                {
+                                            for (GraphConstraint c : fs.annotation) {
+                                                if (c.getFsNode().equals(key2) && c.getRelationLabel().equals(graphMatcher.group(2)) &&
+                                                        c.getReading().equals(context)) {
                                                     LOGGER.trace("Rewritten value: " + c.getFsValue() + " into: " + newValue);
                                                     c.setFsValue(newValue);
                                                     replaceValue = true;
@@ -268,8 +244,7 @@ public class RuleParser {
 
 
                                                 //Reading experiment start
-                                                for (Integer constraintKey : newConstraints.keySet())
-                                                {
+                                                for (Integer constraintKey : newConstraints.keySet()) {
                                                     //TODO return unused context
                                                     ChoiceVar choice = new ChoiceVar("A1");
                                                     Set<ChoiceVar> newChoice = new HashSet<>();
@@ -277,16 +252,11 @@ public class RuleParser {
 
                                                     GraphConstraint c1 = newConstraints.get(constraintKey);
                                                     if (c1.getFsNode().equals(key2) && c1.getRelationLabel().equals(graphMatcher.group(2)) &&
-                                                    c.getReading().equals(c1.getReading()))
-                                                    {
+                                                            c.getReading().equals(c1.getReading())) {
                                                         c.setReading(newChoice);
                                                     }
                                                 }
                                                 //Reading experiment end
-
-
-
-
 
 
                                                 qpr.result.get(solutionKey).get(nodeMatcher.group(1)).get(key2).put(key, c);
@@ -294,8 +264,7 @@ public class RuleParser {
                                                 key++;
                                             }
                                         }
-                            } else{
-
+                                    } else {
 
 
                                         String key2 = returnUnusedVar();
@@ -338,9 +307,8 @@ public class RuleParser {
                                             c.setRelationLabel(graphMatcher.group(2));
                                             c.setFsValue(graphMatcher.group(3));
 
-                                            if (replace)
-                                            {
-                                                c.setFsValue(replaceVars(qpr,solutionKey,(String) c.getFsValue()));
+                                            if (replace) {
+                                                c.setFsValue(replaceVars(qpr, solutionKey, (String) c.getFsValue()));
                                             }
 
                                             qpr.result.get(solutionKey).get(nodeMatcher.group(1)).get(key2).put(key, c);
@@ -355,8 +323,7 @@ public class RuleParser {
                             qp.getFsIndices().putAll(newConstraints);
                         }
                     }
-                } catch(Exception e)
-                {
+                } catch (Exception e) {
                     LOGGER.warn("Failed to parse rule right-hand side");
                 }
             }
@@ -367,20 +334,19 @@ public class RuleParser {
                 qp.getFsIndices().putAll(annotation);
 
                 LOGGER.trace("Added the following facts:");
-               List<String> addedFacts = new ArrayList<>();
+                List<String> addedFacts = new ArrayList<>();
                 for (Integer akey : annotation.keySet()) {
                     fs.annotation.add(annotation.get(akey));
                     addedFacts.add(annotation.get(akey).toString());
                 }
-                String added = String.join("\n",addedFacts);
+                String added = String.join("\n", addedFacts);
                 LOGGER.trace("\n" + added);
 
-               LOGGER.debug("\t" + "Rule has been applied!");
+                LOGGER.debug("\t" + "Rule has been applied!");
 
             }
         }
     }
-
 
 
     public List<Rule> getRules() {
@@ -393,14 +359,12 @@ public class RuleParser {
 
 
     // if (qp.getFsVarAssignment().containsKey(nodeMatcher.group(1)))
-    public Boolean variableIsAssigned(QueryParserResult qpr, Set<SolutionKey> solutionKey , String key)
-    {
-     return qpr.result.get(solutionKey).keySet().contains(key);
+    public Boolean variableIsAssigned(QueryParserResult qpr, Set<SolutionKey> solutionKey, String key) {
+        return qpr.result.get(solutionKey).keySet().contains(key);
     }
 
 
-    public String replaceVars(QueryParserResult qpr, Set<SolutionKey> solutionKey, String value)
-    {
+    public String replaceVars(QueryParserResult qpr, Set<SolutionKey> solutionKey, String value) {
         Matcher matcher = HelperMethods.fsNodePattern.matcher(value);
         Pattern lexPattern = Pattern.compile("(lex\\((.*?),(.*?)\\))");
 
@@ -408,17 +372,13 @@ public class RuleParser {
         StringBuffer sb = new StringBuffer();
 
         //Replace fsNode variables
-        while (matcher.find())
-        {
+        while (matcher.find()) {
 
-            if (qpr.result.get(solutionKey).containsKey(matcher.group(1)))
-            {
+            if (qpr.result.get(solutionKey).containsKey(matcher.group(1))) {
                 String key = qpr.result.get(solutionKey).get(matcher.group(1)).keySet().stream().findAny().get();
-                matcher.appendReplacement(sb,key);
-            }
-            else
-            {
-                matcher.appendReplacement(sb,returnUnusedVar());
+                matcher.appendReplacement(sb, key);
+            } else {
+                matcher.appendReplacement(sb, returnUnusedVar());
             }
         }
         matcher.appendTail(sb);
@@ -428,17 +388,15 @@ public class RuleParser {
         Matcher matcher2 = HelperMethods.valueVarPattern.matcher(replacedFsVars);
 
         StringBuffer sb2 = new StringBuffer();
-        while (matcher2.find())
-        {
+        while (matcher2.find()) {
             for (Set<SolutionKey> key : qpr.valueBindings.keySet()) {
-                if (solutionKey.containsAll(key))
-                {
-                if (qpr.valueBindings.get(key).containsKey(matcher2.group(1))) {
-                    String key2 = qpr.valueBindings.get(key).get(matcher2.group(1));
-                    matcher2.appendReplacement(sb2, key2);
-                    break;
+                if (solutionKey.containsAll(key)) {
+                    if (qpr.valueBindings.get(key).containsKey(matcher2.group(1))) {
+                        String key2 = qpr.valueBindings.get(key).get(matcher2.group(1));
+                        matcher2.appendReplacement(sb2, key2);
+                        break;
+                    }
                 }
-            }
             }
         }
 
@@ -449,8 +407,7 @@ public class RuleParser {
         Matcher matcher3 = lexPattern.matcher(replacedFsVars);
         StringBuffer sb3 = new StringBuffer();
 
-        while (matcher3.find())
-        {
+        while (matcher3.find()) {
             String val = matcher3.group(2);
             String dict = matcher3.group(3);
             boolean replace = false;
@@ -462,8 +419,7 @@ public class RuleParser {
                         replace = true;
                     }
                 }
-                if (!replace)
-                {
+                if (!replace) {
                     matcher3.appendReplacement(sb3, "undefined");
                 }
             }
@@ -476,12 +432,10 @@ public class RuleParser {
         return replacedFsVars;
     }
 
-    public String returnUnusedVar()
-    {
+    public String returnUnusedVar() {
         int i = usedKeys.size();
 
-        while (usedKeys.contains(Integer.toString(i)))
-        {
+        while (usedKeys.contains(Integer.toString(i))) {
             i++;
         }
 
@@ -499,8 +453,7 @@ public class RuleParser {
 
 
     //Parse rule file
-    public List<Rule> parseRuleFile(String fileString)
-    {
+    public List<Rule> parseRuleFile(String fileString) {
         int lineCounter = 0;
 
         List<Rule> out = new ArrayList<>();
@@ -525,81 +478,68 @@ public class RuleParser {
 
                 char c = fileString.charAt(i);
 
-                if (c == '-' && fileString.charAt(i+1) == 'r' && fileString.charAt(i+2) == 'e' && fileString.charAt(i+3) == 'p' &&
-                        fileString.charAt(i+4) == 'l' && fileString.charAt(i+5) == 'a' && fileString.charAt(i+6) == 'c' &&
-                        fileString.charAt(i+7) == 'e' &&
-                        fileString.charAt(i+8) == '(')
-                {
-                    i = i+9;
+                if (c == '-' && fileString.charAt(i + 1) == 'r' && fileString.charAt(i + 2) == 'e' && fileString.charAt(i + 3) == 'p' &&
+                        fileString.charAt(i + 4) == 'l' && fileString.charAt(i + 5) == 'a' && fileString.charAt(i + 6) == 'c' &&
+                        fileString.charAt(i + 7) == 'e' &&
+                        fileString.charAt(i + 8) == '(') {
+                    i = i + 9;
 
                     StringBuilder bool = new StringBuilder();
 
-                    while(!(fileString.charAt(i) == ')'))
-                    {
+                    while (!(fileString.charAt(i) == ')')) {
                         bool.append(fileString.charAt(i));
                         i++;
                     }
 
-                    if (bool.toString().equals("true"))
-                    {
+                    if (bool.toString().equals("true")) {
                         this.replace = true;
-                    }
-                    else
-                    {
+                    } else {
                         this.replace = false;
                     }
                     i++;
 
 
-                    while (String.valueOf(fileString.charAt(i)).matches("."))
-                    {
+                    while (String.valueOf(fileString.charAt(i)).matches(".")) {
                         i++;
                     }
-                    if (!String.valueOf(fileString.charAt(i)).matches("."))
-                    {
+                    if (!String.valueOf(fileString.charAt(i)).matches(".")) {
                         i++;
                         lineCounter++;
                     }
                 }
-                if (c == '/' && fileString.charAt(i+1) == '/')
-                {
-                    while (String.valueOf(fileString.charAt(i)).matches("."))
-                    {
+                if (c == '/' && fileString.charAt(i + 1) == '/') {
+                    while (String.valueOf(fileString.charAt(i)).matches(".")) {
                         i++;
                     }
 
-                    if (!String.valueOf(fileString.charAt(i)).matches("."))
-                    {
+                    if (!String.valueOf(fileString.charAt(i)).matches(".")) {
                         i++;
                         lineCounter++;
                     }
                 }
 
-                if (c =='=' && fileString.charAt(i + 1) == '=' && fileString.charAt(i + 2) == '>')
-                {
+                if (c == '=' && fileString.charAt(i + 1) == '=' && fileString.charAt(i + 2) == '>') {
                     i = i + 3;
                     c = fileString.charAt(i);
-                    while (!(c == '.' && !String.valueOf(fileString.charAt(i+1)).matches(".")))
-                    {
+                    while (!(c == '.' && !String.valueOf(fileString.charAt(i + 1)).matches("."))) {
                         right.append(c);
                         i++;
                         c = fileString.charAt(i);
-                        if ( c =='.' && i == fileString.length()-1)
-                        {
+                        if (c == '.' && i == fileString.length() - 1) {
                             break;
                         }
                     }
 
-                    Rule r = new Rule(left.toString().trim(),right.toString().trim());
+                    Rule r = new Rule(left.toString().trim(), right.toString().trim());
                     out.add(r);
 
                     left = new StringBuilder();
                     right = new StringBuilder();
-                    i = i+2;
+                    i = i + 2;
                 }
 
 
-                if (i < fileString.length()-1) {
+                if (i < fileString.length() - 1) {
                     c = fileString.charAt(i);
                     if (!String.valueOf(c).matches(".")) {
                         lineCounter++;
@@ -626,40 +566,34 @@ public class RuleParser {
     }
 */
 
-    public void resetRuleParser()
-    {
+    public void resetRuleParser() {
         usedKeys = new HashSet<>();
         usedReadings = new HashSet<>();
     }
 
-public Set<ChoiceVar> extractContexts( HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> result,
-                                       HashMap<Integer,GraphConstraint> newConstraints)
-{
- Set<ChoiceVar> out = new HashSet<>();
+    public Set<ChoiceVar> extractContexts(HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> result,
+                                          HashMap<Integer, GraphConstraint> newConstraints) {
+        Set<ChoiceVar> out = new HashSet<>();
 
- for (String key : result.keySet())
- {
-     for (String key2 : result.get(key).keySet()) {
-         for (Integer key3 : result.get(key).get(key2).keySet())
-         {
+        for (String key : result.keySet()) {
+            for (String key2 : result.get(key).keySet()) {
+                for (Integer key3 : result.get(key).get(key2).keySet()) {
 
-                 if (!result.get(key).get(key2).get(key3).getReading().stream().findAny().get().toString().equals("1") &&
-                        !newConstraints.keySet().contains(key3))
-                 {
-                     out.addAll(result.get(key).get(key2).get(key3).getReading());
-                 }
+                    if (!result.get(key).get(key2).get(key3).getReading().stream().findAny().get().toString().equals("1") &&
+                            !newConstraints.keySet().contains(key3)) {
+                        out.addAll(result.get(key).get(key2).get(key3).getReading());
+                    }
 
-         }
-     }
- }
-    if (!out.isEmpty())
-    {return  out;}
-    else
-    {
-        out.add(new ChoiceVar("1"));
-        return out;
+                }
+            }
+        }
+        if (!out.isEmpty()) {
+            return out;
+        } else {
+            out.add(new ChoiceVar("1"));
+            return out;
+        }
     }
-}
 }
 
 
