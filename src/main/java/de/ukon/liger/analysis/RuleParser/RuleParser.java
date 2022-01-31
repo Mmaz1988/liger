@@ -578,42 +578,53 @@ public class RuleParser {
 
                 char c = fileString.charAt(i);
 
-                if (c == '-' && fileString.charAt(i+1) == 'r' && fileString.charAt(i+2) == 'e' && fileString.charAt(i+3) == 'p' &&
-                        fileString.charAt(i+4) == 'l' && fileString.charAt(i+5) == 'a' && fileString.charAt(i+6) == 'c' &&
-                        fileString.charAt(i+7) == 'e' &&
-                        fileString.charAt(i+8) == '(')
-                {
-                    i = i+9;
 
-                    StringBuilder bool = new StringBuilder();
+                if (c == '-' && fileString.charAt(i+1) == '-') {
+                    c = fileString.charAt(i + 2);
+                    i = i + 2;
+                    if (c >= 97 && c <= 122 || c >= 48 && c <= 57) {
 
-                    while(!(fileString.charAt(i) == ')'))
-                    {
-                        bool.append(fileString.charAt(i));
+                        StringBuilder sb = new StringBuilder();
+
+                        //or sequence of letters
+                        while (((c >= 97 && c <= 122) || (c >= 48 && c <= 57))) {
+                            sb.append(c);
+                            i++;
+                            if (i < fileString.length()) {
+                                c = fileString.charAt(i);
+                            } else {
+                                break;
+                            }
+                        }
+
+                        if (sb.toString().equals("replace")) {
+                            i++;
+                            StringBuilder bool = new StringBuilder();
+                            while (!(fileString.charAt(i) == ')')) {
+                                bool.append(fileString.charAt(i));
+                                i++;
+                            }
+
+                            if (bool.toString().equals("true")) {
+                                this.replace = true;
+                            } else {
+                                this.replace = false;
+                            }
+                            i++;
+                        }
+
+                    }
+
+
+                    while (String.valueOf(fileString.charAt(i)).matches(".")) {
                         i++;
                     }
-
-                    if (bool.toString().equals("true"))
-                    {
-                        this.replace = true;
-                    }
-                    else
-                    {
-                        this.replace = false;
-                    }
-                    i++;
-
-
-                    while (String.valueOf(fileString.charAt(i)).matches("."))
-                    {
-                        i++;
-                    }
-                    if (!String.valueOf(fileString.charAt(i)).matches("."))
-                    {
+                    if (!String.valueOf(fileString.charAt(i)).matches(".")) {
                         i++;
                         lineCounter++;
                     }
                 }
+
                 if (c == '/' && fileString.charAt(i+1) == '/')
                 {
                     while (String.valueOf(fileString.charAt(i)).matches("."))

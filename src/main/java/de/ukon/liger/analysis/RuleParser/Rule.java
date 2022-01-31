@@ -104,7 +104,7 @@ public class Rule {
                 sb = new StringBuilder();
             }
 
-            if (right.charAt(i) == '\\')
+            if (right.charAt(i)  == '\\')
             {
                 i++;
             }
