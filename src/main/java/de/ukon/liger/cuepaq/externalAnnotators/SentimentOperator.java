@@ -1,4 +1,4 @@
-package de.ukon.liger.externalAnnotators;
+package de.ukon.liger.cuepaq.externalAnnotators;
 
 import de.ukon.liger.syntax.LinguisticStructure;
 import edu.stanford.nlp.pipeline.CoreDocument;

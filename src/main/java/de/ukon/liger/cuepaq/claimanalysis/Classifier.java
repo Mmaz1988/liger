@@ -1,4 +1,4 @@
-package de.ukon.liger.claimanalysis;
+package de.ukon.liger.cuepaq.claimanalysis;
 
 public enum Classifier {
     CNFN,

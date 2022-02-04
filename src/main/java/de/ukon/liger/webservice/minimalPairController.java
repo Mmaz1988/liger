@@ -22,9 +22,9 @@
 package de.ukon.liger.webservice;
 
 
-import de.ukon.liger.claimanalysis.ClaimAnalysis;
-import de.ukon.liger.claimanalysis.ClaimComparisonReport;
-import de.ukon.liger.claimanalysis.Classifier;
+import de.ukon.liger.cuepaq.claimanalysis.ClaimAnalysis;
+import de.ukon.liger.cuepaq.claimanalysis.ClaimComparisonReport;
+import de.ukon.liger.cuepaq.claimanalysis.Classifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;

@@ -19,14 +19,12 @@
  * "
  */
 
-package de.ukon.liger.claimanalysis;
+package de.ukon.liger.cuepaq.claimanalysis;
 
 import org.junit.jupiter.api.Test;
 import de.ukon.liger.utilities.PathVariables;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

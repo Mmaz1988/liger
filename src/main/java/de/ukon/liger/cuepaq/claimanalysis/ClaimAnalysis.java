@@ -19,7 +19,7 @@
  * "
  */
 
-package de.ukon.liger.claimanalysis;
+package de.ukon.liger.cuepaq.claimanalysis;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
