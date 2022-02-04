@@ -1,5 +1,8 @@
 package de.ukon.liger.claimanalysis;
 
+import de.ukon.liger.cuepaq.claimanalysis.Classifier;
+import de.ukon.liger.cuepaq.claimanalysis.ClassifierProperties;
+
 import java.util.Map;
 
 public class ClassifierRuleMapping {

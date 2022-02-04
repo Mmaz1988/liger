@@ -1,10 +1,9 @@
 package de.ukon.liger.webservice.rest;
 
-import de.ukon.liger.analysis.RuleParser.RuleParser;
-import de.ukon.liger.claimanalysis.ClaimAnalysis;
-import de.ukon.liger.claimanalysis.Classifier;
-import de.ukon.liger.claimanalysis.ClassifierProperties;
 import de.ukon.liger.claimanalysis.ClassifierRuleMapping;
+import de.ukon.liger.cuepaq.claimanalysis.ClaimAnalysis;
+import de.ukon.liger.cuepaq.claimanalysis.Classifier;
+import de.ukon.liger.cuepaq.claimanalysis.ClassifierProperties;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.webservice.rest.dtos.ClassifierRules;
 import org.slf4j.Logger;
