@@ -36,7 +36,7 @@ public class RuleController {
     @RequestMapping("/save")
     public boolean savevRules(ClassifierRules[] rules) throws IOException {
         Map<Classifier, ClassifierProperties> ruleMap = new HashMap<>();
-        Arrays.stream(rules).forEach(r -> ruleMap.put(r.getCl(), new ClassifierProperties(r.cl, r.path, r.query)));
+//        Arrays.stream(rules).forEach(r -> ruleMap.put(r.getCl(), new ClassifierProperties(r.cl, r.path, r.query)));
         final ClassifierRuleMapping classifierRuleMapping = ClaimAnalysis.readClassifierRuleMapping();
         classifierRuleMapping.setClassifiers(ruleMap);
         ClaimAnalysis.writeClassifierMap(classifierRuleMapping);
