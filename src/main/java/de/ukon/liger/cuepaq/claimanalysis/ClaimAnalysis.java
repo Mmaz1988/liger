@@ -22,8 +22,6 @@
 package de.ukon.liger.cuepaq.claimanalysis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
@@ -32,6 +30,7 @@ import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.webservice.rest.dtos.ClaimRequest;
+import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.CoreSentence;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
@@ -42,10 +41,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ClaimAnalysis {
@@ -125,7 +123,7 @@ public class ClaimAnalysis {
 
 
     public ClaimComparisonReport compareClaimRequest(ClaimRequest cr) {
-        return compareMinimalPairElements(cr.input, cr.output, Classifier.valueOf(cr.classifier));
+        return compareMinimalPair(cr.input, cr.output);
     }
 
     /**
@@ -193,6 +191,120 @@ public class ClaimAnalysis {
         }
 
         return false;
+    }
+
+    public ClaimComparisonReport compareMinimalPair(String arg1, String arg2)
+    {
+        boolean success = false;
+        java.lang.String explanation = "";
+
+        if (arg1.equals(arg2))
+        {
+            success = false;
+            explanation = "The two arguments are the same.";
+        }
+
+        CoreDocument cd1 = new CoreDocument(arg1);
+        pipeline.annotate(cd1);
+
+        CoreDocument cd2 = new CoreDocument(arg2);
+        pipeline.annotate(cd2);
+
+        List<CoreLabel> arg1tokens = cd1.tokens();
+        List<CoreLabel> arg2tokens = cd2.tokens();
+
+        int j = 0;
+
+        if (arg1tokens.size() == arg2tokens.size()) {
+            HashMap<String,LinkedHashMap<Integer, String>> distinctWord = new HashMap<>();
+            for (int i = 0; i < arg1tokens.size(); i++) {
+                if (!arg1tokens.get(i).word().equals(arg2tokens.get(i).word())) {
+                    j++;
+
+                    if (!distinctWord.containsKey("arg1"))
+                    {
+                        distinctWord.put("arg1",new LinkedHashMap<>());
+                    }
+                    distinctWord.get("arg1").put(i, arg1tokens.get(i).word());
+
+                    if (!distinctWord.containsKey("arg2"))
+                    {
+                        distinctWord.put("arg2",new LinkedHashMap<>());
+                    }
+                    distinctWord.get("arg2").put(i, arg2tokens.get(i).word());
+
+
+                }
+            }
+            success = j == 1;
+
+            if (j > 1)
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.append("The following words do not match in your minimal pair:\n");
+                for (Integer i : distinctWord.get("arg1").keySet())
+                {
+                    sb.append("Pos: " + i +" mismatch: " + distinctWord.get("arg1").get(i) +"/" + distinctWord.get("arg2").get(i));
+                    sb.append(System.lineSeparator());
+                }
+
+                explanation = sb.toString();
+            }
+
+        } else
+        {
+            j = Math.abs(arg1tokens.size() - arg2tokens.size());
+            if (!(j >= 2))
+            {
+
+                ListIterator<CoreLabel> iter1 = arg1tokens.listIterator();
+
+
+                while (iter1.hasNext())
+                {
+                    CoreLabel t1 = iter1.next();
+                    ListIterator<CoreLabel> iter2 = arg2tokens.listIterator();
+                    while(iter2.hasNext())
+                    {
+                        CoreLabel t2 = iter2.next();
+                        if (t1.word().equals(t2.word()))
+                        {
+                            iter1.remove();
+                            iter2.remove();
+                            break;
+                        }
+                    }
+                }
+
+                if ((!arg1tokens.isEmpty() && !arg2tokens.isEmpty()) ||
+                        (arg1tokens.isEmpty() && arg2tokens.isEmpty()))
+                {
+                    success = false;
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("The following words do not match in your minimal pair:\n");
+                        sb.append("Pos: " + "-" +" mismatch: " + arg1tokens.stream().map(CoreLabel::word).collect(Collectors.joining(", "))  +
+                                "/" + arg2tokens.stream().map(CoreLabel::word).collect(Collectors.joining(", ")));
+
+                    explanation = sb.toString();
+                }
+
+                if (arg1tokens.isEmpty() && arg2tokens.size() == 1)
+                {
+                    success = true;
+                }
+
+                if (arg2tokens.isEmpty() && arg1tokens.size() == 1)
+                {
+                    success =  true;
+                }
+            } else
+            {
+             success = false;
+             explanation = "More than one word has been added to your variation.";
+            }
+        }
+
+        return new ClaimComparisonReport(success,explanation);
     }
 
 
