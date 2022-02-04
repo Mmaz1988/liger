@@ -25,6 +25,8 @@ import org.junit.jupiter.api.Test;
 import de.ukon.liger.utilities.PathVariables;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -163,6 +165,52 @@ public class TestClaimAnalysis {
         {
          assertTrue(eval.get(key));
         }
+    }
+
+
+    @Test
+    public void testMinimalPairAnalyzer() throws IOException {
+        String arg1 = "John loves Mary.";
+        String arg2 = "John really loves Mary.";
+        String arg3 = "Maybe John loves Mary.";
+        String arg4 ="asdfasdf";
+        String arg5 = "";
+        String arg6 = "Peter really loves Tanja.";
+
+
+        ClaimAnalysis ca = new ClaimAnalysis();
+
+        List<ClaimComparisonReport>  reports = new ArrayList<>();
+
+        //false
+        reports.add(ca.compareMinimalPair(arg1,arg1));
+
+        //true
+        reports.add(ca.compareMinimalPair(arg1,arg2));
+        reports.add(ca.compareMinimalPair(arg2,arg1));
+
+        //true
+        reports.add(ca.compareMinimalPair(arg1,arg3));
+        reports.add(ca.compareMinimalPair(arg3,arg1));
+
+
+        //false
+        reports.add(ca.compareMinimalPair(arg2,arg3));
+        reports.add(ca.compareMinimalPair(arg3,arg2));
+        reports.add(ca.compareMinimalPair(arg1,arg4));
+        reports.add(ca.compareMinimalPair(arg4,arg1));
+        reports.add(ca.compareMinimalPair(arg1,arg5));
+        reports.add(ca.compareMinimalPair(arg5,arg1));
+
+        reports.add(ca.compareMinimalPair(arg6,arg1));
+        reports.add(ca.compareMinimalPair(arg1,arg6));
+
+        for (ClaimComparisonReport r : reports)
+        {
+            System.out.println(r.success + ">>\n" + r.explanation);
+        }
+
+
     }
 
 

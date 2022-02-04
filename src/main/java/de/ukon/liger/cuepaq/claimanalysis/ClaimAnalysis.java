@@ -69,7 +69,7 @@ public class ClaimAnalysis {
         LOGGER.warn("creating new claim analysis object");
 
         try {
-            LOGGER.warn("Trying to load json from {}", PathVariables.workingDirectory + "claim_analysis/classifier_rule_mapping.json");
+            LOGGER.warn("Trying to load json from {}", PathVariables.workingDirectory + "claim_analysis" + File.separator + "classifier_rule_mapping.json");
             this.classifierMap = readClassifierMap();
         } catch (Exception e) {
             System.out.println("Failed to load file");
@@ -172,9 +172,9 @@ public class ClaimAnalysis {
 
         ClassifierProperties cp = classifierMap.get(classifier);
         if (classifier.equals(cp.cl)) {
-            if (!cp.path.equals(""));
+            if (!cp.rules.equals(""));
             {
-                RuleParser rp = new RuleParser(syn, Paths.get(PathVariables.workingDirectory + cp.path));
+                RuleParser rp = new RuleParser(syn, Paths.get(PathVariables.workingDirectory + cp.rules));
                 rp.addAnnotation();
             }
 
@@ -332,7 +332,7 @@ public class ClaimAnalysis {
         RuleParser rp;
 
         //Find ClassifierProperties for specified classifier
-        inFile = classifierMap.get(classifier).path;
+        inFile = classifierMap.get(classifier).rules;
         rp = new RuleParser(inout, Paths.get(PathVariables.workingDirectory + inFile));
         rp.addAnnotation();
         queryString = classifierMap.get(classifier).query;
@@ -416,7 +416,7 @@ public class ClaimAnalysis {
         RuleParser rp;
 
         //Find ClassifierProperties for specified classifier
-        inFile = classifierMap.get(classifier).path;
+        inFile = classifierMap.get(classifier).rules;
         rp = new RuleParser(syntacticStructures, Paths.get(PathVariables.workingDirectory + inFile));
         rp.addAnnotation();
         queryString = classifierMap.get(classifier).query;

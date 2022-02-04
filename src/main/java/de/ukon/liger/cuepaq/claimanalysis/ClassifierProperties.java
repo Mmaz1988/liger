@@ -2,26 +2,26 @@ package de.ukon.liger.cuepaq.claimanalysis;
 
 public class ClassifierProperties {
     public Classifier cl;
-    public String path;
+    public String rules;
     public String query;
 
     public ClassifierProperties() {}
 
-    public ClassifierProperties(String cl, String path, String query) {
+    public ClassifierProperties(String cl, String rules, String query) {
         this.cl = Classifier.valueOf(cl);
-        this.path = path;
+        this.rules = rules;
         this.query = query;
     }
 
-    public ClassifierProperties(Classifier cl, String path, String query) {
+    public ClassifierProperties(Classifier cl, String rules, String query) {
         this.cl = cl;
-        this.path = path;
+        this.rules = rules;
         this.query = query;
     }
 
     public ClassifierProperties(ClassifierProperties cp) {
         this.cl = cp.cl;
-        this.path = cp.path;
+        this.rules = cp.rules;
         this.query = cp.query;
     }
 
@@ -33,12 +33,12 @@ public class ClassifierProperties {
         this.cl = cl;
     }
 
-    public String getPath() {
-        return path;
+    public String getRules() {
+        return rules;
     }
 
-    public void setPath(String path) {
-        this.path = path;
+    public void setRules(String rules) {
+        this.rules = rules;
     }
 
     public String getQuery() {
