@@ -19,17 +19,14 @@
  * "
  */
 
-package de.ukon.liger.webservice;
+package de.ukon.liger.webservice.rest.dtos;
 
-public class AnnotationRequest {
-    public String sentence;
-    public String ruleString;
+public class ClaimRequest {
 
-    public AnnotationRequest(String sentence, String ruleString)
-    {
-        this.sentence = sentence;
-        this.ruleString = ruleString;
-    }
+    public String input;
+    public String output;
+    public String classifier;
+
 
 
 }

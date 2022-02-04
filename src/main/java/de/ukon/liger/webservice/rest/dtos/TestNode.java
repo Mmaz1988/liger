@@ -19,10 +19,9 @@
  * "
  */
 
-package de.ukon.liger.webservice;
+package de.ukon.liger.webservice.rest.dtos;
 
 import java.util.HashMap;
-import java.util.List;
 
 public class TestNode {
     public HashMap<String, Object> data;

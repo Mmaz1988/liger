@@ -19,9 +19,12 @@
  * "
  */
 
-package de.ukon.liger.webservice;
+package de.ukon.liger.webservice.rest;
 
 import de.ukon.liger.analysis.RuleParser.RuleParser;
+import de.ukon.liger.webservice.rest.dtos.AnnotationRequest;
+import de.ukon.liger.webservice.rest.dtos.TestGraph;
+import de.ukon.liger.webservice.rest.dtos.TestNode;
 import org.springframework.web.bind.annotation.*;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
@@ -86,7 +89,7 @@ public class AnnotatorController {
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/annotate", produces = "application/json")
     public TestGraph annotationRequest2(
-            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
+            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) throws IOException {
 
         UDoperator parser = new UDoperator();
 
@@ -127,7 +130,7 @@ public class AnnotatorController {
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/semantics", produces = "application/json")
     public TestGraph semanticsRequest2(
-            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
+            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) throws IOException {
 
         UDoperator parser = new UDoperator();
 

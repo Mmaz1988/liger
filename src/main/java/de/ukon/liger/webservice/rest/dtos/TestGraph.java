@@ -19,7 +19,7 @@
  * "
  */
 
-package de.ukon.liger.webservice;
+package de.ukon.liger.webservice.rest.dtos;
 
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.GraphConstraint;

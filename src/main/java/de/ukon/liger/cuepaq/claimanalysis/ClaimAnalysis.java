@@ -21,6 +21,7 @@
 
 package de.ukon.liger.cuepaq.claimanalysis;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
@@ -29,6 +30,8 @@ import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.utilities.PathVariables;
+import de.ukon.liger.webservice.rest.dtos.ClaimRequest;
+import de.ukon.liger.webservice.rest.dtos.ClassifierRules;
 import de.ukon.liger.webservice.ClaimRequest;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.CoreSentence;
@@ -66,32 +69,11 @@ public class ClaimAnalysis {
      */
 
     public ClaimAnalysis() throws IOException {
-
         LOGGER.warn("creating new claim analysis object");
 
         try {
             LOGGER.warn("Trying to load json from {}", PathVariables.workingDirectory + "claim_analysis/classifier_rule_mapping.json");
-            File f = new File(PathVariables.workingDirectory + "claim_analysis/classifier_rule_mapping.json");
-
-            JsonObject jo = JsonParser.parseString(Files.readString(f.toPath(), Charset.defaultCharset())).getAsJsonObject();
-
-            List<ClassifierProperties> cpList = new ArrayList<>();
-            HashMap<Classifier, ClassifierProperties> cpMap = new HashMap<>();
-
-            JsonObject ja = jo.get("classifiers").getAsJsonObject();
-
-            for (String key : ja.keySet()) {
-
-                JsonObject content = ja.get(key).getAsJsonObject();
-                String rules = content.get("rules").getAsString();
-                String query = content.get("query").getAsString();
-                ClassifierProperties cp = new ClassifierProperties(key, rules, query);
-                cpList.add(cp);
-                cpMap.put(cp.cl, cp);
-            }
-
-            //     this.classifierProperties = cpList;
-            this.classifierMap = cpMap;
+            this.classifierMap = readClassifierMap();
         } catch (Exception e) {
             System.out.println("Failed to load file");
             e.printStackTrace();
@@ -100,7 +82,23 @@ public class ClaimAnalysis {
         Properties props = new Properties();
         props.setProperty("annotators","tokenize,ssplit,pos,parse,sentiment");
         this.pipeline = new StanfordCoreNLP(props);
+    }
 
+    public static ClassifierRuleMapping readClassifierRuleMapping() throws IOException {
+        File f = new File(PathVariables.workingDirectory + "claim_analysis/classifier_rule_mapping.json");
+
+        ObjectMapper om = new ObjectMapper();
+        return om.readValue(f, ClassifierRuleMapping.class);
+    }
+
+    public static Map<Classifier, ClassifierProperties> readClassifierMap() throws IOException {
+        return readClassifierRuleMapping().getClassifiers();
+    }
+
+    public static void writeClassifierMap(ClassifierRuleMapping rm) throws IOException {
+        File f = new File(PathVariables.workingDirectory + "claim_analysis/classifier_rule_mapping.json");
+        ObjectMapper om = new ObjectMapper();
+        om.writeValue(f, rm);
     }
 
     /***
