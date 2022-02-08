@@ -1,4 +1,4 @@
--replace(true);
+--replace(true);
 
 #a TNS-ASP #b ==> #a SEM #c & #c TEMP-REF #d & #d T-REF 'undefined' & #c SIT #s.
 #a PTYPE 'sem' ==> #a SEM #b & #b SIT #s.
