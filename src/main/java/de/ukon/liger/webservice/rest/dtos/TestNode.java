@@ -35,7 +35,7 @@ public class TestNode {
     public TestNode(String id, String type) {
         HashMap<String, Object> data = new HashMap<>();
         data.put("id", id);
-        data.put("type", type);
+        data.put("node_type", type);
 
         this.data = data;
     }
@@ -44,7 +44,7 @@ public class TestNode {
     {
         HashMap<String,Object> data = new HashMap<>();
         data.put("id",id);
-        data.put("type",type);
+        data.put("node_type",type);
         data.put("avp",avp);
 
         this.data = data;
@@ -58,7 +58,7 @@ public class TestNode {
         data.put("source",source);
         data.put("target",target);
         data.put("label",label);
-        data.put("type",type);
+        data.put("edge_type",type);
 
         this.data = data;
 

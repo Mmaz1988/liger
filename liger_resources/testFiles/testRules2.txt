@@ -1,4 +1,4 @@
--replace(true);
+--replace(true);
 
 #g ^(SPEC) #h & #g QUANT #i ==> #h SEM #l & #l VAR #j & #l RESTR #k.
 #g ^(SPEC) #h & #g DET #i ==> #h SEM #l & #l VAR #j & #l RESTR #k.

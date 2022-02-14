@@ -1,4 +1,4 @@
--replace(true);
+--replace(true);
 #g TNS-ASP #h & #g PRED %h ==> #g SEM #i & #i EV #j & #i GLUE [/e_v.strip(%h)(e)] : (#j -o #i).
 
 #g ^(SPEC) #h & #g QUANT #i ==> #h SEM #l & #l VAR #j & #l RESTR #k.

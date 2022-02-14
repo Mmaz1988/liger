@@ -54,7 +54,7 @@ public class QueryParserTest {
 
     public LinkedHashMap<String, LinguisticStructure> loadFs(int i)
     {
-        PathVariables.workingDirectory = "C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\";
+        PathVariables.workingDirectory = "C:\\Users\\Celeste\\IdeaProjects\\LiGER\\liger_resources\\";
         PathVariables.initializePathVariables();
         testFolderPath = PathVariables.testPath;
         VariableHandler vh = new VariableHandler();
@@ -62,7 +62,6 @@ public class QueryParserTest {
 
         List<LinkedHashMap<String, LinguisticStructure>> fsList = new ArrayList<>();
 
-        System.out.println("C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\testFiles\\");
 
         fsList.add(xle.fs2Java(testFolderPath + "testdirS1.pl"));
         fsList.add(xle.fs2Java(testFolderPath + "testdirS2.pl"));

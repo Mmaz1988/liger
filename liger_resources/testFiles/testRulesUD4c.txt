@@ -1,4 +1,4 @@
--replace(true);
+--replace(true);
 
 //Finite forms
 #a POS VBZ & #a TOKEN %a ==> #a MORPH #b & #b FIN '+' & #b FORM 'pres' & #b HEAD %a.

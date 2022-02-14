@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class RuleParser {
 
@@ -335,7 +336,7 @@ public class RuleParser {
 
             if (r.isRewrite())
             {
-                List<String> removedFacts = new ArrayList<>();
+                List<GraphConstraint> removedFacts = new ArrayList<>();
                 for (Set<SolutionKey> solution : qpr.result.keySet())
                 {
                     for (String var : qpr.result.get(solution).keySet())
@@ -344,17 +345,32 @@ public class RuleParser {
                         {
                             for (Integer i : qpr.result.get(solution).get(var).get(index).keySet())
                             {
-                                removedFacts.add(qp.getFsIndices().get(i).toString());
+                                removedFacts.add(qp.getFsIndices().get(i));
                              //   usedKeys.remove(qp.getFsIndices().get(i).getFsNode());
-                                qp.getFsIndices().remove(i);
+                           //     qp.getFsIndices().remove(i);
 
                             }
                         }
                     }
                 }
 
+                Iterator<GraphConstraint> constraintIterator = fs.constraints.iterator();
+
+//TODO Find a prettier way to remove
+        while (constraintIterator.hasNext())
+        {
+            GraphConstraint next = constraintIterator.next();
+                    for (GraphConstraint c1 : removedFacts)
+                    {
+                        if (next.equals(c1))
+                        {
+                            constraintIterator.remove();
+                        }
+                    }
+                }
+
                 LOGGER.debug("Removed the following facts:");
-                String removed = String.join("\n",removedFacts);
+                String removed = String.join("\n",removedFacts.stream().map(Object::toString).collect(Collectors.toList()));
                 LOGGER.debug("\n" + removed);
 
             }
@@ -372,7 +388,7 @@ public class RuleParser {
             }
 
             qp.setFsIndices(newIndexedInidces);
-            fs.constraints = newConstraints;
+         //   fs.constraints = newConstraints;
 
             if (!annotation.keySet().isEmpty()) {
 
@@ -386,7 +402,7 @@ public class RuleParser {
 
                 //adds newly created constraints to the contents of queryParser so they are parsed in subsequent rules
                 qp.setFsIndices(newIndexedInidces);
-                fs.constraints = newConstraints;
+         //       fs.constraints = newConstraints;
 
 
 
