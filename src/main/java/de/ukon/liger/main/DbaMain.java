@@ -180,6 +180,11 @@ public class DbaMain {
                         ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
                     }
                 }
+
+                if (settings.mode == "lfg")
+                {
+                 ruleFile = PathVariables.testPath + "testRulesLFG9.txt";
+                }
             } else {
                 ruleFile = settings.ruleFile;
             }
