@@ -50,7 +50,7 @@
 #h REF 'unspec' &
 #h TYPE 'rheme'.
 
-#a TNS-ASP #b & #a PRED %a & #a SEM #z & #a SUBJ #c & #a OBJ #d & strip(%a) == 'bakeproc' &
+#a TNS-ASP #b & #a PRED %a & #a SEM #z & #a SUBJ #c & #a OBJ #d & strip(%a) == 'bake' &
 #z FPS #e & #e CHECK #x ==>
 #e CHECK '-' &
 #e initP #f &
