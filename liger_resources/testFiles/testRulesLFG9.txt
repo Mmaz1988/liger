@@ -37,7 +37,7 @@
 #a TNS-ASP #b & #a PRED %a & #a SEM #z  ==>
 #z FPS #y & #y CHECK #x.
 
-#a TNS-ASP #b & #a PRED %a & #a SEM #z & #a SUBJ #c & #a OBJ #d & strip(%a) == 'kiss' &
+#a TNS-ASP #b & #a PRED %a & #a SEM #z & #a SUBJ #c & #a OBJ #d & strip(%a) == 'push' &
 #z FPS #e & #e CHECK #x ==>
 #e CHECK '-' &
 #e initP #f &
@@ -50,7 +50,7 @@
 #h REF 'unspec' &
 #h TYPE 'rheme'.
 
-#a TNS-ASP #b & #a PRED %a & #a SEM #z & #a SUBJ #c & #a OBJ #d & strip(%a) == 'visit' &
+#a TNS-ASP #b & #a PRED %a & #a SEM #z & #a SUBJ #c & #a OBJ #d & strip(%a) == 'bakeproc' &
 #z FPS #e & #e CHECK #x ==>
 #e CHECK '-' &
 #e initP #f &
