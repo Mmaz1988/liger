@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
-import de.ukon.liger.syntax.ud.UDoperator;
+//import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
@@ -69,6 +69,7 @@ public class AnnotatorController {
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
     }
 
+    /*
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/parse", produces = "application/json")
@@ -84,7 +85,9 @@ public class AnnotatorController {
         return new TestGraph(fs);
 
     }
+     */
 
+    /*
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/annotate", produces = "application/json")
@@ -126,6 +129,10 @@ public class AnnotatorController {
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
     }
 
+     */
+
+    /*
+
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/semantics", produces = "application/json")
@@ -134,11 +141,11 @@ public class AnnotatorController {
 
         UDoperator parser = new UDoperator();
 
-        /*
-        char[] c = input.toCharArray();
-        c[0] = Character.toLowerCase(c[0]);
-        input = new String(c);
-         */
+
+        //char[] c = input.toCharArray();
+        //c[0] = Character.toLowerCase(c[0]);
+        //input = new String(c);
+
 
         LinguisticStructure fs = parser.parseSingle(input);
         LOGGER.fine(fs.constraints.toString());
@@ -167,6 +174,10 @@ public class AnnotatorController {
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
     }
 
+    */
+
+    /*
+
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rule", produces = "application/json", consumes = "application/json")
@@ -192,6 +203,9 @@ public class AnnotatorController {
     return new TestGraph(fs.constraints,fs.annotation,semantics);
 
     }
+
+
+     */
 
 
     @CrossOrigin

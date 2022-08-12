@@ -47,7 +47,7 @@ import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
-import de.ukon.liger.syntax.ud.UDoperator;
+//import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.syntax.xle.Fstructure;
 import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.DBASettings;
@@ -281,11 +281,14 @@ public class DbaMain {
         SyntaxOperator syn = null;
 
         switch (parserType) {
+
+            /*
             case "dep": {
                 syn = new UDoperator();
                 LOGGER.info("Created new dependency parser instance...");
                 break;
             }
+             */
             case "lfg": {
                 syn = new XLEoperator(vh);
                 LOGGER.info("Created new XLE parser instance ...");
