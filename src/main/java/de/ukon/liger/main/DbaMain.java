@@ -139,8 +139,13 @@ public class DbaMain {
 
         if (settings.resources != null) {
             PathVariables.workingDirectory = settings.resources;
+        } else
+        {
+            PathVariables.initializePathVariables();
         }
-        LOGGER.info("Successsfully initialized working directory to " + PathVariables.workingDirectory);
+
+
+        LOGGER.info("Successfully initialized working directory to " + PathVariables.workingDirectory);
         PathVariables.initializePathVariables();
 
         LOGGER.info("dir " + PathVariables.workingDirectory);

@@ -22,6 +22,7 @@
 package de.ukon.liger.cuepaq.claimanalysis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.xml.bind.v2.TODO;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
@@ -66,6 +67,11 @@ public class ClaimAnalysis {
      */
 
     public ClaimAnalysis() throws IOException {
+        /*TODO The test for this class throws an error, because the working directory is null. It works if you initialize
+        them right here but it seems a bit hacky.
+        * */
+
+        PathVariables.initializePathVariables();
         LOGGER.warn("creating new claim analysis object");
 
         try {
@@ -170,11 +176,16 @@ public class ClaimAnalysis {
         List<LinguisticStructure> syn = new ArrayList<>();
         syn.add(synstr);
 
-        ClassifierProperties cp = classifierMap.get(classifier);
+      //  ClassifierProperties cp = classifierMap.get(classifier);
+
+        ClassifierProperties cp = new ClassifierProperties(classifier,
+                classifierMap.get(classifier).getRules(),
+                classifierMap.get(classifier).getQuery());
+
         if (classifier.equals(cp.cl)) {
             if (!cp.rules.equals(""));
             {
-                RuleParser rp = new RuleParser(syn, Paths.get(PathVariables.workingDirectory + cp.rules));
+                RuleParser rp = new RuleParser(syn, cp.rules);
                 rp.addAnnotation();
             }
 
@@ -333,7 +344,7 @@ public class ClaimAnalysis {
 
         //Find ClassifierProperties for specified classifier
         inFile = classifierMap.get(classifier).rules;
-        rp = new RuleParser(inout, Paths.get(PathVariables.workingDirectory + inFile));
+        rp = new RuleParser(inout,inFile);
         rp.addAnnotation();
         queryString = classifierMap.get(classifier).query;
 

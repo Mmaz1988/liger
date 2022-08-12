@@ -37,7 +37,7 @@ public class TestClaimAnalysis {
 
     public TestClaimAnalysis()
     {
-        PathVariables.workingDirectory = "C:\\Users\\Celeste\\IdeaProjects\\LiGER\\liger_resources\\";
+    //    PathVariables.workingDirectory = "C:\\Users\\Celeste\\IdeaProjects\\LiGER\\liger_resources\\";
         PathVariables.initializePathVariables();
     }
 
