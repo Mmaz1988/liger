@@ -25,72 +25,74 @@ import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.utilities.HelperMethods;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
-public class TestGraph {
+public class LigerWebGraph {
 
-    public List<TestNode> graphElements;
+    public List<LigerGraphComponent> graphElements;
     public String semantics;
-
-    public TestGraph(List<TestNode> graphElements) {
+    public LigerWebGraph(List<LigerGraphComponent> graphElements) {
         this.graphElements = graphElements;
     }
-
-    public TestGraph(List<TestNode> graphElements, String semantics) {
+    public LigerWebGraph(List<LigerGraphComponent> graphElements, String semantics) {
         this.graphElements = graphElements;
         this.semantics = semantics;
     }
 
 
-    public TestGraph(LinguisticStructure s)
+    public LigerWebGraph(LinguisticStructure s)
     {
         this.graphElements = extractGraph(s);
     }
 
-    public TestGraph(List<GraphConstraint> syntax, List<GraphConstraint> annotation)
+    public LigerWebGraph(List<GraphConstraint> syntax, List<GraphConstraint> annotation)
     {
-        HashMap<String,List<TestNode>> synMap = extractGraph2(syntax,"input");
-        HashMap<String,List<TestNode>> annMap = extractGraph2(annotation, "annotation");
+        HashMap<String,List<LigerGraphComponent>> synMap = extractGraph2(syntax,"input");
+        HashMap<String,List<LigerGraphComponent>> annMap = extractGraph2(annotation, "annotation");
 
-        List<TestNode> nodes = new ArrayList<>();
+        List<LigerGraphComponent> nodes = new ArrayList<>();
         nodes.addAll(synMap.get("nodes"));
-        nodes.addAll(annMap.get("nodes"));
-        List<TestNode> edges = new ArrayList<>();
-        nodes.addAll(synMap.get("edges"));
-        nodes.addAll(annMap.get("edges"));
 
-        List<TestNode> data = new ArrayList<>();
+        HashSet<Object> ids = nodes.stream().map(p ->  p.data.get("id")).collect(Collectors.toCollection(HashSet::new));
+
+        nodes.addAll(annMap.get("nodes").stream().filter(p -> !ids.contains(p.data.get("id"))).collect(Collectors.toList()));
+        List<LigerGraphComponent> edges = new ArrayList<>();
+        edges.addAll(synMap.get("edges"));
+        edges.addAll(annMap.get("edges"));
+
+        List<LigerGraphComponent> data = new ArrayList<>();
         data.addAll(nodes);
         data.addAll(edges);
         this.graphElements = data;
     }
 
-    public TestGraph(List<GraphConstraint> syntax, List<GraphConstraint> annotation, String semantics)
+    public LigerWebGraph(List<GraphConstraint> syntax, List<GraphConstraint> annotation, String semantics)
     {
-        HashMap<String,List<TestNode>> synMap = extractGraph2(syntax,"input");
-        HashMap<String,List<TestNode>> annMap = extractGraph2(annotation, "annotation");
+        HashMap<String,List<LigerGraphComponent>> synMap = extractGraph2(syntax,"input");
+        HashMap<String,List<LigerGraphComponent>> annMap = extractGraph2(annotation, "annotation");
 
-        List<TestNode> nodes = new ArrayList<>();
+        List<LigerGraphComponent> nodes = new ArrayList<>();
         nodes.addAll(synMap.get("nodes"));
-        nodes.addAll(annMap.get("nodes"));
-        List<TestNode> edges = new ArrayList<>();
-        nodes.addAll(synMap.get("edges"));
-        nodes.addAll(annMap.get("edges"));
 
-        List<TestNode> data = new ArrayList<>();
+        HashSet<Object> ids = nodes.stream().map(p ->  p.data.get("id")).collect(Collectors.toCollection(HashSet::new));
+
+        nodes.addAll(annMap.get("nodes").stream().filter(p -> !ids.contains(p.data.get("id"))).collect(Collectors.toList()));
+        List<LigerGraphComponent> edges = new ArrayList<>();
+        edges.addAll(synMap.get("edges"));
+        edges.addAll(annMap.get("edges"));
+
+        List<LigerGraphComponent> data = new ArrayList<>();
         data.addAll(nodes);
         data.addAll(edges);
         this.graphElements = data;
         this.semantics = semantics;
     }
 
-    public List<TestNode> extractGraph(LinguisticStructure s)
+    public List<LigerGraphComponent> extractGraph(LinguisticStructure s)
     {
         LinkedHashMap<Integer, HashMap<String,String>> nodes = new LinkedHashMap<>();
-        List<TestNode> edges = new ArrayList<>();
+        List<LigerWebEdge> edges = new ArrayList<>();
 
         for (int i = 0; i < s.constraints.size(); i++)
         {
@@ -110,7 +112,7 @@ public class TestGraph {
                     nodes.put(fsNode,new HashMap<>());
                 }
                 //TestNode(String id, String source, String target, String label, String type)
-                edges.add(new TestNode("rid" + g.getFsNode() + rel + g.getFsValue().toString(),
+                edges.add(new LigerWebEdge("rid" + g.getFsNode() + rel + g.getFsValue().toString(),
                         g.getFsNode(),g.getFsValue().toString(),
                         g.getRelationLabel(),"edge"));
 
@@ -121,29 +123,29 @@ public class TestGraph {
 
         }
 
-        List<TestNode> testNodes = new ArrayList<>();
+        List<LigerWebNode> testNodes = new ArrayList<>();
 
         for (Integer key : nodes.keySet())
         {
             if (!nodes.get(key).keySet().isEmpty()) {
-                testNodes.add(new TestNode(key.toString(), "input", nodes.get(key)));
+                testNodes.add(new LigerWebNode(key.toString(), "input", nodes.get(key)));
             } else
             {
-                testNodes.add(new TestNode(key.toString(),"input"));
+                testNodes.add(new LigerWebNode(key.toString(),"input"));
             }
         }
 
-        List<TestNode> output = new ArrayList<>();
+        List<LigerGraphComponent> output = new ArrayList<>();
         output.addAll(testNodes);
         output.addAll(edges);
         return output;
     }
 
 
-    public HashMap<String,List<TestNode>> extractGraph2(List<GraphConstraint> input,String type)
+    public HashMap<String,List<LigerGraphComponent>> extractGraph2(List<GraphConstraint> input, String type)
     {
         LinkedHashMap<Integer, HashMap<String,String>> nodes = new LinkedHashMap<>();
-        List<TestNode> edges = new ArrayList<>();
+        List<LigerGraphComponent> edges = new ArrayList<>();
 
         for (int i = 0; i < input.size(); i++)
         {
@@ -163,7 +165,7 @@ public class TestGraph {
                     nodes.put(Integer.parseInt(g.getFsValue().toString()),new HashMap<>());
                 }
                 //TestNode(String id, String source, String target, String label, String type)
-                edges.add(new TestNode("rid" + g.getFsNode() + rel + g.getFsValue().toString(),
+                edges.add(new LigerWebEdge("rid" + g.getFsNode() + rel + g.getFsValue().toString(),
                         g.getFsNode(),g.getFsValue().toString(),
                         g.getRelationLabel(),"edge"));
 
@@ -174,19 +176,19 @@ public class TestGraph {
 
         }
 
-        List<TestNode> testNodes = new ArrayList<>();
+        List<LigerGraphComponent> testNodes = new ArrayList<>();
 
         for (Integer key : nodes.keySet())
         {
             if (!nodes.get(key).keySet().isEmpty()) {
-                testNodes.add(new TestNode(key.toString(), type, nodes.get(key)));
+                testNodes.add(new LigerWebNode(key.toString(), type, nodes.get(key)));
             } else
             {
-                testNodes.add(new TestNode(key.toString(),type));
+                testNodes.add(new LigerWebNode(key.toString(),type));
             }
         }
 
-        HashMap<String,List<TestNode>> output = new HashMap<>();
+        HashMap<String,List<LigerGraphComponent>> output = new HashMap<>();
         output.put("nodes",testNodes);
         output.put("edges",edges);
 

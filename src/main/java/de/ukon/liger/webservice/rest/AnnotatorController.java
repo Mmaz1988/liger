@@ -22,9 +22,9 @@
 package de.ukon.liger.webservice.rest;
 
 import de.ukon.liger.analysis.RuleParser.RuleParser;
-import de.ukon.liger.webservice.rest.dtos.AnnotationRequest;
-import de.ukon.liger.webservice.rest.dtos.TestGraph;
-import de.ukon.liger.webservice.rest.dtos.TestNode;
+import de.ukon.liger.syntax.Ling2Graph;
+import de.ukon.liger.webservice.rest.dtos.*;
+import org.apache.commons.collections.map.SingletonMap;
 import org.springframework.web.bind.annotation.*;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 @CrossOrigin
@@ -52,27 +53,27 @@ public class AnnotatorController {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @RequestMapping(value = "/graph-test", produces = "application/json")
-    public TestGraph produceGraph(
+    public LigerWebGraph produceGraph(
             @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String in) {
 
-        TestNode node1 = new TestNode("1", "input");
-        TestNode node2 = new TestNode("2", "annotation");
-        TestNode edge1 = new TestNode("12", "1", "2", "projection", "proj");
+        LigerWebNode node1 = new LigerWebNode("1", "input");
+        LigerWebNode node2 = new LigerWebNode("2", "annotation");
+        LigerWebEdge edge1 = new LigerWebEdge("12", "1", "2", "projection", "proj");
 
-        List<TestNode> nodeList = new ArrayList<>();
+        List<LigerGraphComponent> nodeList = new ArrayList<>();
         nodeList.add(node1);
         nodeList.add(node2);
         nodeList.add(edge1);
 
 
-        return new TestGraph(nodeList);
+        return new LigerWebGraph(nodeList);
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
     }
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/parse", produces = "application/json")
-    public TestGraph parseRequest(
+    public LigerWebGraph parseRequest(
             @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
 
         UDoperator parser = new UDoperator();
@@ -81,14 +82,14 @@ public class AnnotatorController {
        // System.out.println(fs.constraints);
         LOGGER.fine(fs.constraints.toString());
 
-        return new TestGraph(fs);
+        return new LigerWebGraph(fs);
 
     }
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/annotate", produces = "application/json")
-    public TestGraph annotationRequest2(
+    public LigerWebGraph annotationRequest2(
             @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) throws IOException {
 
         UDoperator parser = new UDoperator();
@@ -120,7 +121,9 @@ public class AnnotatorController {
        LOGGER.info("Done");
 
 
-        return new TestGraph(fs.constraints,fs.annotation);
+        LigerWebGraph res = new LigerWebGraph(fs.constraints,fs.annotation);
+
+        return res;
 
         //return new TestGraph(nodeList);
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
@@ -129,7 +132,7 @@ public class AnnotatorController {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/semantics", produces = "application/json")
-    public TestGraph semanticsRequest2(
+    public LigerWebGraph semanticsRequest2(
             @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) throws IOException {
 
         UDoperator parser = new UDoperator();
@@ -163,14 +166,14 @@ public class AnnotatorController {
 
 
 
-        return new TestGraph(fs.constraints,fs.annotation,semantics);
+        return new LigerWebGraph(fs.constraints,fs.annotation,semantics);
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
     }
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rule", produces = "application/json", consumes = "application/json")
-    public TestGraph applyRuleRequest(@RequestBody AnnotationRequest request) {
+    public LigerWebGraph applyRuleRequest(@RequestBody AnnotationRequest request) {
 
     //    System.out.println(request.sentence);
      //   System.out.println(request.ruleString);
@@ -189,7 +192,7 @@ public class AnnotatorController {
         String semantics = sem.calculateSemantics(fs);
 
 
-    return new TestGraph(fs.constraints,fs.annotation,semantics);
+    return new LigerWebGraph(fs.constraints,fs.annotation,semantics);
 
     }
 
@@ -197,7 +200,7 @@ public class AnnotatorController {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/annotate_xle", produces = "application/json", consumes = "application/json")
-    public TestGraph annotateXLEoutput(@RequestBody AnnotationRequest request) throws IOException {
+    public LigerWebGraph annotateXLEoutput(@RequestBody AnnotationRequest request) throws IOException {
 
         //    System.out.println(request.sentence);
         //   System.out.println(request.ruleString);
@@ -216,7 +219,7 @@ public class AnnotatorController {
         String semantics = sem.calculateSemantics(fs);
 
 
-        return new TestGraph(fs.constraints,fs.annotation,semantics);
+        return new LigerWebGraph(fs.constraints,fs.annotation,semantics);
 
         }catch(Exception e)
         {
@@ -225,5 +228,17 @@ public class AnnotatorController {
         return null;
     }
 
+
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/query", produces = "application/json", consumes = "application/json")
+    public Map<String, Boolean> checkQuery(@RequestBody AnnotationRequest request) throws IOException {
+
+            boolean success = true;
+    
+
+
+        return new SingletonMap("success",success);
+    }
 
 }

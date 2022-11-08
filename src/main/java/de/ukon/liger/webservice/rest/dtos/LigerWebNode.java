@@ -23,8 +23,7 @@ package de.ukon.liger.webservice.rest.dtos;
 
 import java.util.HashMap;
 
-public class TestNode {
-    public HashMap<String, Object> data;
+public class LigerWebNode extends LigerGraphComponent {
 
     /*
                 { // edge ab
@@ -32,7 +31,7 @@ public class TestNode {
             }
      */
 
-    public TestNode(String id, String type) {
+    public LigerWebNode(String id, String type) {
         HashMap<String, Object> data = new HashMap<>();
         data.put("id", id);
         data.put("node_type", type);
@@ -40,7 +39,7 @@ public class TestNode {
         this.data = data;
     }
 
-    public TestNode(String id, String type, HashMap<String, String> avp)
+    public LigerWebNode(String id, String type, HashMap<String, String> avp)
     {
         HashMap<String,Object> data = new HashMap<>();
         data.put("id",id);
@@ -51,7 +50,7 @@ public class TestNode {
     }
 
     //Edge
-    public TestNode(String id, String source, String target, String label, String type)
+    public LigerWebNode(String id, String source, String target, String label, String type)
     {
         HashMap<String,Object> data = new HashMap<>();
         data.put("id",id);

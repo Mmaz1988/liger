@@ -31,5 +31,4 @@ public class AnnotationRequest {
         this.ruleString = ruleString;
     }
 
-
 }
