@@ -24,9 +24,7 @@ package de.ukon.liger.webservice.rest;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
-import de.ukon.liger.syntax.Ling2Graph;
 import de.ukon.liger.webservice.rest.dtos.*;
-import org.apache.commons.collections.map.SingletonMap;
 import org.springframework.web.bind.annotation.*;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
@@ -43,12 +41,12 @@ import java.util.logging.Logger;
 
 @CrossOrigin
 @RestController
-public class AnnotatorController {
-    private final static Logger LOGGER = Logger.getLogger(AnnotatorController.class.getName());
+public class LigerController {
+    private final static Logger LOGGER = Logger.getLogger(LigerController.class.getName());
 
     private UDoperator parser = new UDoperator();
 
-    public AnnotatorController(){};
+    public LigerController(){};
 
 
     @CrossOrigin
@@ -226,6 +224,15 @@ public class AnnotatorController {
         return null;
     }
 
+
+    /**
+     * This method returns a json object that stores a boolean in a map<String,String> if the syntactic analysis of a sentence
+     * satisfies a LiGER query. 
+     * @param takes an AnnotationRequest as input (a map<String,String> with two keys: "sentence" and "ruleString"
+     *              "ruleString" here corresponds to the query!
+     * @return a singleton map (key: "success") indicating whether a search was successful or failed
+     * @throws IOException
+     */
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
