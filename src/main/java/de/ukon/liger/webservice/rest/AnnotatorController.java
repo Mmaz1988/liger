@@ -21,6 +21,8 @@
 
 package de.ukon.liger.webservice.rest;
 
+import de.ukon.liger.analysis.QueryParser.QueryParser;
+import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.syntax.Ling2Graph;
 import de.ukon.liger.webservice.rest.dtos.*;
@@ -36,10 +38,7 @@ import de.ukon.liger.utilities.VariableHandler;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 @CrossOrigin
@@ -47,7 +46,9 @@ import java.util.logging.Logger;
 public class AnnotatorController {
     private final static Logger LOGGER = Logger.getLogger(AnnotatorController.class.getName());
 
+    private UDoperator parser = new UDoperator();
 
+    public AnnotatorController(){};
 
 
     @CrossOrigin
@@ -120,10 +121,7 @@ public class AnnotatorController {
 
        LOGGER.info("Done");
 
-
-        LigerWebGraph res = new LigerWebGraph(fs.constraints,fs.annotation);
-
-        return res;
+        return new LigerWebGraph(fs.constraints,fs.annotation);
 
         //return new TestGraph(nodeList);
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
@@ -232,13 +230,21 @@ public class AnnotatorController {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/query", produces = "application/json", consumes = "application/json")
-    public Map<String, Boolean> checkQuery(@RequestBody AnnotationRequest request) throws IOException {
+    public Map<String,String> checkQuery(@RequestBody AnnotationRequest request) throws IOException {
 
-            boolean success = true;
-    
+        LinguisticStructure fs = parser.parseSingle(request.sentence);
+        LOGGER.fine(fs.constraints.toString());
+        //  System.out.println(fs.constraints);
 
+        QueryParser qp = new QueryParser(fs);
+        qp.generateQuery(request.ruleString);
 
-        return new SingletonMap("success",success);
+        QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+        Map<String,String> success = new HashMap();
+        success.put("success",qpr.isSuccess.toString());
+
+        return success;
     }
 
 }
