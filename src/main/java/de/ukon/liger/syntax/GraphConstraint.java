@@ -38,10 +38,11 @@ public class GraphConstraint implements Serializable {
     private String nodeIdentifier;
     private String relationLabel;
     private Object fsValue;
+    private Boolean projection;
 
 
     public GraphConstraint()
-    {}
+    {this.projection = false;}
 
     public GraphConstraint(Set<ChoiceVar> reading, Integer fsNode, String relationLabel, Object fsValue)
     {
@@ -49,7 +50,18 @@ public class GraphConstraint implements Serializable {
         this.nodeIdentifier = fsNode.toString();
         this.relationLabel = relationLabel;
         this.fsValue = fsValue;
+        this.projection = false;
     //    this.pathNodes = new HashSet<>();
+    }
+
+    public GraphConstraint(Set<ChoiceVar> reading, Integer fsNode, String relationLabel, Object fsValue, Boolean projection)
+    {
+        this.reading = reading;
+        this.nodeIdentifier = fsNode.toString();
+        this.relationLabel = relationLabel;
+        this.fsValue = fsValue;
+        this.projection = projection;
+        //    this.pathNodes = new HashSet<>();
     }
 
     @Override
@@ -102,6 +114,10 @@ public class GraphConstraint implements Serializable {
         if (this.getRelationLabel().equals("in_set") || this.getRelationLabel().equals("subsume"))
         {
             return String.format("cf(%1$s,%2$s(%3$s,var(%4$s)))",choice,getRelationLabel(),value,nodeIdentifier);
+        }
+        else if (this.projection)
+        {
+            return String.format("cf(%1$s,eq(proj(var(%2$s),'%3$s'),%4$s))",choice,nodeIdentifier,getRelationLabel(),value);
         }
         else
         {

@@ -48,7 +48,7 @@ public class FsProlog2Java {
     public static Pattern subsume = Pattern.compile("subsume\\((.*),var\\((\\d+)\\)\\)");
     public static Pattern nonTerminals = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),var\\((\\d+)\\)");
     //TODO check wether a projection can be a simple attribute
-    public static Pattern projections = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),var\\((\\d+)\\)");
+    public static Pattern projections = Pattern.compile("proj\\(var\\((\\d+)\\),('.*')\\),var\\((\\d+)\\)");
     public static Pattern terminals = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),('.*')");
   //  public static Pattern projections = Pattern.compile("proj\\(var\\((\\d+)\\),('.*')\\),('.*')");
     public static Pattern cstructure = Pattern.compile("(semform_data|surfaceform)\\((.+?),(.+?),(.+?),(.+?)\\)");
@@ -80,6 +80,7 @@ public class FsProlog2Java {
             Matcher adjunctMatcher = adjuncts.matcher(constraint);
             Matcher setMatcher = inSet.matcher(constraint);
             Matcher nonTerminalMatcher = nonTerminals.matcher(constraint);
+            Matcher projectionMatcher = projections.matcher(constraint);
             Matcher terminalsMatcher = terminals.matcher(constraint);
             Matcher cstructureMatcher = cstructure.matcher(constraint);
             Matcher subsumeMatcher = subsume.matcher(constraint);
@@ -133,6 +134,14 @@ public class FsProlog2Java {
                 Integer key = Integer.parseInt(nonTerminalMatcher.group(1));
                 List<AttributeValuePair> values = fsHash.get(context).get(key);
                 NonTerminalAVP avp = new NonTerminalAVP(nonTerminalMatcher.group(2), nonTerminalMatcher.group(3));
+                values.add(avp);
+                continue;
+            }
+
+            if (projectionMatcher.find()) {
+                Integer key = Integer.parseInt(projectionMatcher.group(1));
+                List<AttributeValuePair> values = fsHash.get(context).get(key);
+                Projection avp = new Projection(projectionMatcher.group(2), projectionMatcher.group(3));
                 values.add(avp);
                 continue;
             }
@@ -245,6 +254,14 @@ public class FsProlog2Java {
             {
                 for (AttributeValuePair avp : fsHash.get(ambKey).get(key))
                 {
+
+                    Boolean projection = false;
+                    if (avp instanceof Projection)
+                    {
+                        projection = true;
+                    }
+
+
                     String attribute = avp.attribute;
                     String value = avp.value;
 
@@ -269,7 +286,7 @@ public class FsProlog2Java {
                         }
                     }
 
-                    out.add(new GraphConstraint(ambKey,key,attribute,value));
+                    out.add(new GraphConstraint(ambKey,key,attribute,value,projection));
                 }
 
 

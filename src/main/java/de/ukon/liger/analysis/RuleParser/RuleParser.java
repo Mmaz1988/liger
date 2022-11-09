@@ -600,14 +600,15 @@ public class RuleParser {
 
                 if (c == '/' && fileString.charAt(i+1) == '/')
                 {
+                    i++;
                     while (String.valueOf(fileString.charAt(i)).matches("."))
                     {
                         i++;
                     }
 
                     if (!String.valueOf(fileString.charAt(i)).matches(".")) {
-                        i++;
                         lineCounter++;
+                        continue;
                     }
                 }
 
@@ -647,6 +648,7 @@ public class RuleParser {
                     }
                     left.append(c);
                 }
+
 
             }
         }
