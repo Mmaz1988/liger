@@ -21,11 +21,11 @@
 
 package de.ukon.liger.webservice.rest.dtos;
 
-public class AnnotationRequest {
+public class LigerRequest {
     public String sentence;
     public String ruleString;
 
-    public AnnotationRequest(String sentence, String ruleString)
+    public LigerRequest(String sentence, String ruleString)
     {
         this.sentence = sentence;
         this.ruleString = ruleString;

@@ -58,6 +58,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class DbaMain {
@@ -68,7 +69,7 @@ public class DbaMain {
     private final static Logger LOGGER = LoggerFactory.getLogger(DbaMain.class);
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         /*
         LOGGER.setUseParentHandlers(false);
@@ -85,7 +86,7 @@ public class DbaMain {
         initiateArguments(args);
     }
 
-    public static void initiateArguments(String[] args) {
+    public static void initiateArguments(String[] args) throws IOException {
         settings = new DBASettings();
 
         for (int i = 0; i < args.length; i++) {
@@ -133,7 +134,7 @@ public class DbaMain {
         runDBA();
     }
 
-    public static void runDBA() {
+    public static void runDBA() throws IOException {
 
         //    LinguisticDictionary ld = new LinguisticDictionary();
 
@@ -227,11 +228,24 @@ public class DbaMain {
                     semanticsInteractiveWrapper(fs, result);
                 }
             } else {
-                LinkedHashMap<String, LinguisticStructure> fs = fromFileWrapper(settings.inputFile, ruleFile, result);
+                LinkedHashMap<String, LinguisticStructure> fs = fromFileWrapper(result);
                 if (settings.semanticParsing) {
                     semanticsInteractiveWrapper(fs, result);
                 }
             }
+
+            if (settings.outputFile != null) {
+                for (String key : result.keySet()) {
+                    settings.outputWriter.append(result.get(key).get(0));
+                    if (settings.semanticParsing) {
+                        settings.outputWriter.append(result.get(key).get(1));
+                    }
+                    settings.outputWriter.close();
+                }
+                }
+
+            System.out.println("LiGER annotation complete.");
+            System.exit(0);
 
         }
     }
@@ -339,10 +353,16 @@ public class DbaMain {
 
     }
 
-    public static LinkedHashMap<String, LinguisticStructure>
-    fromFileWrapper(String inPath, String rulePath, LinkedHashMap<String, HashMap<Integer, String>> result) {
+    /**
+     * This function serves to load .pl files produced by the XLE.
+     * @param result
+     * @return
+     */
 
-        File inFile = new File(inPath);
+    public static LinkedHashMap<String, LinguisticStructure>
+    fromFileWrapper(LinkedHashMap<String, HashMap<Integer, String>> result) throws IOException {
+
+        File inFile = new File(settings.inputFile);
 
         XLEoperator xle = new XLEoperator(new VariableHandler());
 
@@ -358,7 +378,7 @@ public class DbaMain {
                 indexedFs.putAll(xle.fs2Java(files[i].toString()));
             }
         } else {
-            indexedFs = xle.fs2Java(inPath);
+            indexedFs = xle.fs2Java(settings.inputFile);
         }
 /*
         List<SyntacticStructure> fsList = new ArrayList<>();
@@ -368,7 +388,7 @@ public class DbaMain {
         //   List<SyntacticStructure> fsList = new ArrayList<>();
         //   fsList.add(fs);
 
-        RuleParser rp = new RuleParser(new File(rulePath));
+        RuleParser rp = new RuleParser(new File(settings.ruleFile));
 
 
         for (String key : indexedFs.keySet()) {

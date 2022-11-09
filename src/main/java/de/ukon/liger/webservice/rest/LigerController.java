@@ -169,7 +169,7 @@ public class LigerController {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rule", produces = "application/json", consumes = "application/json")
-    public LigerWebGraph applyRuleRequest(@RequestBody AnnotationRequest request) {
+    public LigerWebGraph applyRuleRequest(@RequestBody LigerRequest request) {
 
     //    System.out.println(request.sentence);
      //   System.out.println(request.ruleString);
@@ -196,7 +196,7 @@ public class LigerController {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/annotate_xle", produces = "application/json", consumes = "application/json")
-    public LigerWebGraph annotateXLEoutput(@RequestBody AnnotationRequest request) throws IOException {
+    public LigerWebGraph annotateXLEoutput(@RequestBody LigerRequest request) throws IOException {
 
         //    System.out.println(request.sentence);
         //   System.out.println(request.ruleString);
@@ -227,7 +227,7 @@ public class LigerController {
 
     /**
      * This method returns a json object that stores a boolean in a map<String,String> if the syntactic analysis of a sentence
-     * satisfies a LiGER query. 
+     * satisfies a LiGER query.
      * @param takes an AnnotationRequest as input (a map<String,String> with two keys: "sentence" and "ruleString"
      *              "ruleString" here corresponds to the query!
      * @return a singleton map (key: "success") indicating whether a search was successful or failed
@@ -237,7 +237,7 @@ public class LigerController {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/query", produces = "application/json", consumes = "application/json")
-    public Map<String,String> checkQuery(@RequestBody AnnotationRequest request) throws IOException {
+    public Map<String,String> checkQuery(@RequestBody LigerRequest request) throws IOException {
 
         LinguisticStructure fs = parser.parseSingle(request.sentence);
         LOGGER.fine(fs.constraints.toString());

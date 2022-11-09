@@ -47,7 +47,10 @@ public class FsProlog2Java {
     public static Pattern inSet = Pattern.compile("in_set\\((.*),var\\((\\d+)\\)\\)");
     public static Pattern subsume = Pattern.compile("subsume\\((.*),var\\((\\d+)\\)\\)");
     public static Pattern nonTerminals = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),var\\((\\d+)\\)");
+    //TODO check wether a projection can be a simple attribute
+    public static Pattern projections = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),var\\((\\d+)\\)");
     public static Pattern terminals = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),('.*')");
+  //  public static Pattern projections = Pattern.compile("proj\\(var\\((\\d+)\\),('.*')\\),('.*')");
     public static Pattern cstructure = Pattern.compile("(semform_data|surfaceform)\\((.+?),(.+?),(.+?),(.+?)\\)");
     private final static Logger LOGGER = LoggerFactory.getLogger(FsProlog2Java.class);
 
