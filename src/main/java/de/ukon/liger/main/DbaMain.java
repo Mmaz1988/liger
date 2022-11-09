@@ -407,10 +407,12 @@ public class DbaMain {
                 LOGGER.warn("Sorting annotation failed.");
             }
 
+            /*
             for (GraphConstraint g : fs.annotation) {
                 resultBuilder.append(g.toString());
                 resultBuilder.append(System.lineSeparator());
             }
+             */
 
             resultBuilder.append(System.lineSeparator());
             resultBuilder.append(((Fstructure) fs).writeToProlog(true));

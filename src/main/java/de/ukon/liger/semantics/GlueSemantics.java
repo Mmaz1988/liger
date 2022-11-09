@@ -117,12 +117,14 @@ public class GlueSemantics {
             }
 
 
+            
+
             for (Premise p : llprover.getSolutions()) {
                 solutionBuilder.append(p.toString());
                 solutionBuilder.append(System.lineSeparator());
             }
 
-         LOGGER.debug(llprover.getProofBuilder().toString());
+       //  LOGGER.debug(llprover.getProofBuilder().toString());
 
 
         }
