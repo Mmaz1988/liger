@@ -136,7 +136,7 @@ public class DbaMain {
 
 
         runDBA();
-        System.exit(0);
+     //   System.exit(0);
     }
 
     public static void runDBA() throws IOException {
@@ -288,8 +288,8 @@ public class DbaMain {
 
             result.get(key).put(1, semantics);
 
-            System.out.println("Meaning constructors:");
-            System.out.println(sem.returnMeaningConstructors(fs));
+       //     System.out.println("Meaning constructors:");
+       //     System.out.println(sem.returnMeaningConstructors(fs));
 
         }
 
