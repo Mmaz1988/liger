@@ -127,16 +127,11 @@ public class DbaMain {
                     settings.semanticParsing = true;
                     break;
 
-                case "-mc":
-                    settings.mcs = true;
-                    break;
-
             }
         }
 
 
         runDBA();
-        System.exit(0);
     }
 
     public static void runDBA() throws IOException {
@@ -237,36 +232,19 @@ public class DbaMain {
                 if (settings.semanticParsing) {
                     semanticsInteractiveWrapper(fs, result);
                 }
-
-                if (settings.mcs)
-                {
-                    semanticsMeaningConstructorWrapper(fs,result);
-                }
             }
 
             if (settings.outputFile != null) {
-                if (!settings.mcs) {
-                    for (String key : result.keySet()) {
-                        settings.outputWriter.append(result.get(key).get(0));
-                        if (settings.semanticParsing) {
-                            settings.outputWriter.append(result.get(key).get(1));
-                        }
-                        settings.outputWriter.close();
-                    }
-                } else
-                {
-                    for (String key : result.keySet())
-                    {
+                for (String key : result.keySet()) {
+                    settings.outputWriter.append(result.get(key).get(0));
+                    if (settings.semanticParsing) {
                         settings.outputWriter.append(result.get(key).get(1));
                     }
                     settings.outputWriter.close();
                 }
                 }
 
-        //    System.out.println();
-        //    System.out.println("LiGER annotation complete.");
-
-            LOGGER.info("LiGER annotation complete\n");
+            System.out.println("LiGER annotation complete.");
             System.exit(0);
 
         }
@@ -288,8 +266,6 @@ public class DbaMain {
 
             result.get(key).put(1, semantics);
 
-            System.out.println("Meaning constructors:");
-            System.out.println(sem.returnMeaningConstructors(fs));
 
         }
 
@@ -308,38 +284,6 @@ public class DbaMain {
         }
 
         LOGGER.info(report.toString());
-
-        LOGGER.info("Done");
-    }
-
-    public static void
-    semanticsMeaningConstructorWrapper(LinkedHashMap<String, LinguisticStructure> in, LinkedHashMap<String, HashMap<Integer, String>> result) {
-
-
-        for (String key : in.keySet()) {
-            StringBuilder resultBuilder = new StringBuilder();
-            LinguisticStructure fs = in.get(key);
-            GlueSemantics sem = new GlueSemantics();
-            String semantics = sem.returnMeaningConstructors(fs);
-
-
-            resultBuilder.append("LiGER generated the following meaning constructors:");
-            resultBuilder.append(semantics);
-            result.get(key).put(1, semantics);
-        }
-
-//            System.out.println("Meaning constructors:");
-//            System.out.println(sem.returnMeaningConstructors(fs));
-
-
-
-        /*
-        for (String key : result.keySet()) {
-            LOGGER.info("The rewrite system produced the following output:\n" + result.get(key).get(0));
-            LOGGER.info("The GSWB produced the following output:\n" + result.get(key).get(1));
-        }
-         */
-
 
         LOGGER.info("Done");
     }
