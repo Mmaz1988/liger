@@ -52,6 +52,51 @@ public class GlueSemantics {
     public GlueSemantics()
     {}
 
+
+    public String returnMeaningConstructors(LinguisticStructure fs){
+
+        HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
+        if(fs.cp.choices.size() > 1) {
+            for (Set<ChoiceVar> choice : fs.cp.choices) {
+                if (!choice.equals(fs.cp.rootChoice)) {
+                    unpackedSem.put(choice, new ArrayList<>());
+                }
+            }
+        }else
+        {
+            unpackedSem.put(fs.cp.rootChoice,new ArrayList<>());
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        for (GraphConstraint c : fs.annotation) {
+            if (c.getRelationLabel().equals("GLUE")) {
+                if (unpackedSem.containsKey(c.getReading())) {
+                    unpackedSem.get(c.getReading()).add(c.getFsValue().toString());
+                } else {
+                    for (Set<ChoiceVar> key : unpackedSem.keySet()) {
+                        unpackedSem.get(key).add(c.getFsValue().toString());
+                    }
+                }
+            }
+        }
+
+        for (Set<ChoiceVar> key : unpackedSem.keySet())
+        {
+            sb.append("{");
+            sb.append(System.lineSeparator());
+            for (String s : unpackedSem.get(key))
+            {
+                sb.append(s);
+                sb.append(System.lineSeparator());
+            }
+            sb.append("}");
+            sb.append(System.lineSeparator());
+        }
+
+        return sb.toString();
+    }
+
     public String calculateSemantics(LinguisticStructure fs) {
         HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
 
@@ -117,7 +162,7 @@ public class GlueSemantics {
             }
 
 
-            
+
 
             for (Premise p : llprover.getSolutions()) {
                 solutionBuilder.append(p.toString());

@@ -46,11 +46,15 @@ public class DBASettings {
 
     public Boolean web;
 
+    //For meaning constructor output
+    public Boolean mcs;
+
     public DBASettings()
     {
         this.interactiveMode = true;
         this.semanticParsing = false;
         this.web = false;
+        this.mcs = false;
     }
 
     public void setOutputWriter(File file)
