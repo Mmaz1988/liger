@@ -8,8 +8,8 @@ stages:
   - k8:debug
 
 variables:
-  URL_SUFFIX: liger.sperrle.dbvis.de
-  K8_NAMESPACE: sperrle
+  URL_SUFFIX: liger.vollmer.dbvis.de
+  K8_NAMESPACE: vollmer
   RELEASE_NAME_PROJECT: ${CI_PROJECT_NAME}
   USE_LEGACY_RELEASE_NAME: "no"
 
