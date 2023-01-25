@@ -24,7 +24,9 @@ package de.ukon.liger.webservice.rest;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
+import de.ukon.liger.segmentation.SegmenterMain;
 import de.ukon.liger.webservice.rest.dtos.*;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import org.springframework.web.bind.annotation.*;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
@@ -45,8 +47,13 @@ public class LigerController {
     private final static Logger LOGGER = Logger.getLogger(LigerController.class.getName());
 
     private UDoperator parser = new UDoperator();
+    private StanfordCoreNLP pipeline;
 
-    public LigerController(){};
+    public LigerController(){
+        Properties props = new Properties();
+        props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,parse,sentiment,udfeats");
+        pipeline = new StanfordCoreNLP(props);
+    };
 
 
     @CrossOrigin
@@ -254,4 +261,17 @@ public class LigerController {
         return success;
     }
 
+    /**
+     * Segments and annotates an incoming argument using Stanford CoreNLP.
+     * @param request
+     * @return
+     * @throws IOException
+     */
+
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/query", produces = "application/json", consumes = "application/json")
+    public String annotateArgument(@RequestBody LigerArgument request) throws IOException {
+        return SegmenterMain.coreAnnotationArgument(request,this.pipeline);
+    }
 }

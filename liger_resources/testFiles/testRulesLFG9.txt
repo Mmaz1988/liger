@@ -24,7 +24,8 @@
 
 //Aspect rules
 #a TNS-ASP #b PROG '+_' & #a SEM #c ==> #c VIEWPOINT #d & #d ASPECT 'impv' & #d A-RESTR 'ongoing'.
-#a TNS-ASP #b PROG '-_' & #a SEM #c ==> #c VIEWPOINT #d & #d ASPECT 'prv' & #d A-RESTR 'bounded'.
+#a TNS-ASP #b PROG '-_' & #a SEM #c ==> #c VIEWPOINT #d & #d ASPECT 'undefined'.
+#a TNS-ASP #b TENSE %x & #b PROG '-_' & #a SEM #c ==> #c VIEWPOINT #d & #d ASPECT 'prv' & #d A-RESTR 'bounded'.
 #a TNS-ASP #b PERF '+_' & #a SEM #c ==> #c ASP-TENSE #d & #d A-REF 'past'.
 
 //Tier 2 aspect example
@@ -264,6 +265,11 @@
 #b TEMP-REF #f &
 #b SIT #g
  ==>  #c GLUE [/M_<s,<s,t>>.[/P_<s,t>.[/s_s.Ez_s[M(s)(z) \& P(z)]]]] : ((#d -o (#e -o #c)) -o ((#g -o #b) -o (#f -o #b))).
+
+#a SEM #b VIEWPOINT #c ASPECT 'undefined' &
+#b TEMP-REF #f &
+#b SIT #g
+ ==>  #c GLUE [/P_<s,t>.[/s_s.P(s)]] : ((#g -o #b) -o (#f -o #b)).
 
 //Tense values
 

@@ -122,6 +122,21 @@ public class HelperMethods {
         return newString.toString();
     }
 
+    /**
+     * IDs are strings consisting of a type identifier (e.g. w for word) and an integer. For example
+     * @param id
+     * @return
+     */
+    public static int getIntegerFromID(String id)
+    {
+        Pattern p = Pattern.compile("([a-z]|[A-Z])*(\\d+)");
+        Matcher pm = p.matcher(id);
+        if (pm.matches())
+        {
+            return Integer.parseInt(pm.group(2));
+        }
+        return 0;
+    }
 
 
 
