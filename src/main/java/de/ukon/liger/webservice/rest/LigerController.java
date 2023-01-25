@@ -270,7 +270,7 @@ public class LigerController {
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
-    @PostMapping(value = "/query", produces = "application/json", consumes = "application/json")
+    @PostMapping(value = "/annotate_argument", produces = "application/json", consumes = "application/json")
     public String annotateArgument(@RequestBody LigerArgument request) throws IOException {
         return SegmenterMain.coreAnnotationArgument(request,this.pipeline);
     }
