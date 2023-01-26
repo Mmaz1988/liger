@@ -27,6 +27,7 @@ import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.segmentation.SegmenterMain;
 import de.ukon.liger.webservice.rest.dtos.*;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
@@ -47,6 +48,10 @@ public class LigerController {
     private final static Logger LOGGER = Logger.getLogger(LigerController.class.getName());
 
     private UDoperator parser = new UDoperator();
+
+    @Autowired
+    private LigerService ligerService;
+
   //  private StanfordCoreNLP pipeline;
 
     public LigerController(){
@@ -281,5 +286,18 @@ public class LigerController {
     }
 
      */
+
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/annotate_gkr", produces = "application/json", consumes = "application/json")
+    public Map<String,Object> annotateArgument(@RequestBody LigerRequest request) throws IOException {
+
+
+        GkrDTO gkrData = new GkrDTO(request.sentence, request.ruleString);
+
+      Object o = ligerService.accessGKR(gkrData);
+
+        return null;
+    }
 
 }

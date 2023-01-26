@@ -3,6 +3,7 @@ package de.ukon.liger.segmentation;
 
 import de.ukon.liger.annotation.*;
 import de.ukon.liger.utilities.HelperMethods;
+import de.ukon.liger.webservice.rest.LigerService;
 import de.ukon.liger.webservice.rest.dtos.LigerArgument;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
