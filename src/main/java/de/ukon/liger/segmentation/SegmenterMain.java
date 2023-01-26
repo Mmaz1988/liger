@@ -9,10 +9,7 @@ import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.CoreSentence;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -109,7 +106,7 @@ public class SegmenterMain {
 
     }
 
-    public static String coreAnnotationArgument(LigerArgument ligerArgument, StanfordCoreNLP pipeline) {
+    public static Map<String,Object> coreAnnotationArgument(LigerArgument ligerArgument, StanfordCoreNLP pipeline) {
 
         //    CoreDocument doc = new CoreDocument(text);
 
@@ -198,9 +195,10 @@ public class SegmenterMain {
         }
 
         ArgumentAnnotation argument = new ArgumentAnnotation("arg1",(LigerAnnotation) docs[0][1],(LigerAnnotation) docs[1][1]);
+        argument.argumentRelation = ligerArgument.relation;
+        argument.text = ligerArgument.premise + " " + ligerArgument.conclusion;
 
-
-        return argument.returnAsJson();
+        return argument.returnLigerAnnotation();
     }
 
 }

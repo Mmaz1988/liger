@@ -235,7 +235,7 @@ public class LigerController {
     /**
      * This method returns a json object that stores a boolean in a map<String,String> if the syntactic analysis of a sentence
      * satisfies a LiGER query.
-     * @param takes an AnnotationRequest as input (a map<String,String> with two keys: "sentence" and "ruleString"
+     * takes an AnnotationRequest as input (a map<String,String> with two keys: "sentence" and "ruleString"
      *              "ruleString" here corresponds to the query!
      * @return a singleton map (key: "success") indicating whether a search was successful or failed
      * @throws IOException
@@ -271,7 +271,8 @@ public class LigerController {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/annotate_argument", produces = "application/json", consumes = "application/json")
-    public String annotateArgument(@RequestBody LigerArgument request) throws IOException {
-        return SegmenterMain.coreAnnotationArgument(request,this.pipeline);
+    public Map<String,Object> annotateArgument(@RequestBody LigerArgument request) throws IOException {
+        Map<String,Object> output = SegmenterMain.coreAnnotationArgument(request,this.pipeline);
+        return output;
     }
 }

@@ -28,8 +28,8 @@ public class ArgumentAnnotation extends LigerAnnotation{
         ligerMap.put("text",this.text);
         ligerMap.put("id",this.id);
 
-        ligerMap.put("premise",this.premise);
-        ligerMap.put("conclusion",this.conclusion);
+        ligerMap.put("premise",this.premise.returnLigerAnnotation());
+        ligerMap.put("conclusion",this.conclusion.returnLigerAnnotation());
 
         ligerMap.put("annotations",this.annotations);
 
