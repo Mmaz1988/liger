@@ -7,13 +7,15 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.LinkedHashMap;
+
 @Service
 public class LigerService {
 
     private RestTemplate restTemplate = new RestTemplate();
 
 
-    public Object accessGKR(GkrDTO gkrData){
+    public LinkedHashMap accessGKR(GkrDTO gkrData){
 
         final HttpHeaders httpHeaders = new HttpHeaders();
 
@@ -26,7 +28,7 @@ public class LigerService {
 
         String gkrURL = "https://public.gkr.services.lingvis.io/gkr/sentence";
 
-        Object result =  restTemplate.postForObject(gkrURL, requestHttpEntity,Object.class);
+       LinkedHashMap result =  restTemplate.postForObject(gkrURL, requestHttpEntity,LinkedHashMap.class);
 
         return result;
     }

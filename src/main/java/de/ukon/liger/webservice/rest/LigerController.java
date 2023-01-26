@@ -51,15 +51,14 @@ public class LigerController {
 
     @Autowired
     private LigerService ligerService;
-
-  //  private StanfordCoreNLP pipeline;
+    private StanfordCoreNLP pipeline;
 
     public LigerController(){
-        /*
+
         Properties props = new Properties();
         props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,parse,sentiment,udfeats");
         pipeline = new StanfordCoreNLP(props);
-      */
+
     };
 
 
@@ -276,16 +275,24 @@ public class LigerController {
      * @throws IOException
      */
 
-    /*
+
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/annotate_argument", produces = "application/json", consumes = "application/json")
     public Map<String,Object> annotateArgument(@RequestBody LigerArgument request) throws IOException {
+
+        GkrDTO gkrDTOpremise = new GkrDTO(request.premise,"");
+        GkrDTO gkrDTOconclusion = new GkrDTO(request.conclusion,"");
+
+        LinkedHashMap premiseGKR = ligerService.accessGKR(gkrDTOpremise);
+        LinkedHashMap conclusionGKR = ligerService.accessGKR(gkrDTOconclusion);
+
+
         Map<String,Object> output = SegmenterMain.coreAnnotationArgument(request,this.pipeline);
         return output;
     }
 
-     */
+
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
