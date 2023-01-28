@@ -63,7 +63,7 @@ variables:
   HELM_CHART_VERSION: 3.7.0
   #
   # Helm values.yaml
-  HELM_VALUES_YAML: ./jelm-values.yaml
+  HELM_VALUES_YAML: ./helm-values.yaml
   #
   # Dockerfile location (default in root)
   DOCKERFILE_LOC: ./Dockerfile
