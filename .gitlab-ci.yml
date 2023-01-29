@@ -1,32 +1,94 @@
+###################################################
+# This is an example pipeline designed to work    #
+# with this helm chart.                           #
+# Please use it and modify it at your discretion. #
+# This example is update with the latest version  #
+# of the helm chart.                              #
+###################################################
 stages:
   - prepare
-  - prepare+test
-  - build+test
+  - build
   - build:image
   - deploy
   - k8:verify
   - k8:debug
 
 variables:
+  # The suffix of the url (suffix.tld):
+  # feature     branches: branch-name.suffix.tld
+  # staging:    staging.suffix.tld
+  # production: suffix.tld
   URL_SUFFIX: liger.sperrle.dbvis.de
-  K8_NAMESPACE: sperrle
+  #
+  # The namespace for kubernetes
+  K8_NAMESPACE: lingvis-services
+  #
+  # The release name is combined using this project name, the environment, 
+  # as well as an optional suffix for the git branch name
+  # Example: findc202-review-230-this-is-my-git-branch
+  # The default here is the GitLab project name. You may overwrite this here.
   RELEASE_NAME_PROJECT: ${CI_PROJECT_NAME}
+  #
+  # This value is chosen carefully as a default and there should be no need to change this if you do not alter the
+  # release name with a prefix or suffix (i.e., change the length of the release name manually)
+  # An example would be that a second deployment is made, (e.g., redis) and the second deployment is named as
+  # $_RELEASE_NAME_PROJECT-redis. In this case, you should 
+  # reduce this value by the suffix including the dash (i.e., -redis => 6) to 47.
+  RELEASE_NAME_MAX_LENGTH: 53
+  #
+  # If you have old deployments, especially PVCs, they use the 
+  # naming format "$ENV-$PROJECT-$BRANCH", for example, "review-project-26-my-branch".
+  # In the new pipeline this format has been changed to "$PROJECT-$ENV-$BRANCH",
+  # for example, "project-review-26-my-branch".
+  # This new format is more useful as it will group all deployments, pods, etc. for
+  # one project together.
+  # You can turn on legacy mode by switching to "yes" to continue using the old name format.
+  # This is useful if you have old resources, such as PVCs and don't want to migrate them.
   USE_LEGACY_RELEASE_NAME: "no"
-
+  #
+  # Deploy production on tags (yes / no)
+  # If "no", the production deployment will be done when pushed to staging (e.g., master)
   DEPLOY_ON_TAGS: "yes"
+  #
+  # Build and deploy feature branches (yes / no)
   DEPLOY_FB: "yes"
+  #
+  # The name of the staging branch
   STAGING_BRANCH: master
-  HELM_CHART: registry.dbvis.de/support/websites/generic-helm-chart
-  HELM_CHART_VERSION: v2.6.0
+  #
+  # Helm chart (default dbvis-generic-chart)
+  HELM_CHART: oci://registry.dbvis.de/support/websites/generic-helm-chart/dbvis-generic
+  #
+  # Helm chart version
+  HELM_CHART_VERSION: 3.7.0
+  #
+  # Helm values.yaml
   HELM_VALUES_YAML: ./helm-values.yaml
-
+  #
+  # Dockerfile location (default in root)
+  DOCKERFILE_LOC: ./Dockerfile
+  #
+  # Docker context (default root)
   DOCKER_CONTEXT: ./
-  HELM_TIMEOUT: 2m0s
-  HELM_IMAGE: alpine/helm:3.5.4
-  KUBECTL_IMAGE: bitnami/kubectl:1.21.0
-
+  #
+  # Helm Timeout.
+  # Helm will wait until all deployed resources (pods,ingress,etc) show ready state
+  # Increase the timeout if you deploy things that have a long start up time.
+  HELM_TIMEOUT: 10m0s
+  #
+  # Helm image
+  HELM_IMAGE: alpine/helm:3.9.1
+  #
+  # Kubectl image
+  KUBECTL_IMAGE: bitnami/kubectl:1.24.3
+  #
+  # 
   REPLICA_COUNT_PRODUCTION: 1
+  #
+  #
   REPLICA_COUNT_STAGING: 1
+  #
+  #
   REPLICA_COUNT_FB: 1
 
   MVN_CACHE_KEY: cuepaq-liger
@@ -99,7 +161,7 @@ variables:
 ###########################################
 
 export-environment:
-  image: alpine:latest
+  image: alpine:3.17.1
   stage: prepare
   script:
     - echo $CI_COMMIT_BRANCH
@@ -109,7 +171,7 @@ export-environment:
       if $(echo "$CI_COMMIT_TAG" | grep -q -E "^v[0-9]+(.[0-9]+)?(.[0-9]+)?")
       then
         VERSION=${CI_COMMIT_TAG}
-      else
+      else 
         VERSION=${CI_COMMIT_SHORT_SHA}
       fi
     # the current URL suffix
@@ -148,13 +210,13 @@ export-environment:
     # Determine URL, ReplicaCount, and ReleaseName based on ENV_TYPE
     - |
       if [ "${ENV_TYPE}" == "staging" ]
-      then
+      then 
         URL_PREFIX="staging."
         REPLICA_COUNT="${REPLICA_COUNT_STAGING}"
       fi
     - |
       if [ "${ENV_TYPE}" == "review" ]
-      then
+      then 
         URL_PREFIX="${SHORTENED_CI_COMMIT_REF_SLUG}."
         REPLICA_COUNT="${REPLICA_COUNT_FB}"
       fi
@@ -173,12 +235,12 @@ export-environment:
     - URL_LENGTH=$(echo "${URL_FULL}" | wc -m)
     - |
       if [ "${URL_LENGTH}" -gt "63" ]
-      then
+      then 
         echo -e "\n\n!!!The URL ${URL_FULL} is too long (>63 characters) for lets encrypt certificates!!!\n\n"
         exit 1
       fi
     # generating the release name from the environment name and remove invalid characters and shorten it
-    - RELEASE_NAME=$(echo "${RELEASE_NAME_RAW}" | tr / - | tr . - | tr _ - | tr '[:upper:]' '[:lower:]' | cut -c -53 | sed -E 's#-+$##')
+    - RELEASE_NAME=$(echo "${RELEASE_NAME_RAW}" | tr / - | tr . - | tr _ - | tr '[:upper:]' '[:lower:]' | cut -c -${RELEASE_NAME_MAX_LENGTH} | sed -E 's#-+$##')
     # The name of your helm release (e.g. name of deployment in kubernetes, e.g.: production-YOUR_GITLAB_PROJECT_NAME OR review-YOUR_GITLAB_PROJECT_NAME-BRANCH_NAME)
     - echo "RELEASE_NAME=${RELEASE_NAME}" >> var.env
     # all the stuff into the var.env (can be either "production", "staging", "review")
@@ -190,17 +252,18 @@ export-environment:
     - echo "URL_FULL=${URL_FULL}" >> var.env
     # the number of replicas as per settings above
     - echo "REPLICA_COUNT=${REPLICA_COUNT}" >> var.env
+    # setting container environment (kaniko bug)
+    - echo "container=kube" >> var.env
     # DEBUG
     - cat var.env
   needs: []
   artifacts:
-    reports:
-      dotenv:
-        - var.env
+    paths:
+      - ./var.env
     expire_in: 300 days
   interruptible: true
   tags:
-    - docker
+    - no-cache
 
 ###########################################
 # DOCKERIZE
@@ -212,6 +275,9 @@ dockerize-backend:
   variables:
     MAVEN_OPTS: "-Dmaven.repo.local=.m2 -Dmaven.test.skip=true"
   script:
+    # needed for VERSION
+    - set -a
+    - source var.env
     - IMG="${CI_REGISTRY_IMAGE}:${VERSION}"
     - ./mvnw --batch-mode compile jib:build -Dimage=$IMG | grep -vE "^\[INFO\] Download(ing|ed) from"
     - |
@@ -242,20 +308,44 @@ dockerize-backend:
     name: $HELM_IMAGE
     entrypoint: ["sh", "-c", "apk add bash sed && /bin/bash"]
   script:
-    - export HELM_EXPERIMENTAL_OCI=1
-    - echo ${CI_REGISTRY_PASSWORD} | helm registry login -u ${CI_REGISTRY_USER} --password-stdin ${HELM_CHART}
-    - helm chart list
-    - helm chart pull ${HELM_CHART}:${HELM_CHART_VERSION}
-    - helm chart export ${HELM_CHART}:${HELM_CHART_VERSION}
+    - source ./var.env
+    # set default namespace
+    - export HELM_NAMESPACE=${K8_NAMESPACE}
+    # Login helm into docker registry
+    - echo ${CI_REGISTRY_PASSWORD} | helm registry login -u ${CI_REGISTRY_USER} --password-stdin ${CI_REGISTRY}
     # dry run to install chart
-    - helm upgrade --namespace=${K8_NAMESPACE} --dry-run --debug --install -f "${HELM_VALUES_YAML}" --set app.image.tag="${VERSION}" --set app.ingress.url=${URL_FULL} --set app.replicaCount=${REPLICA_COUNT} --set app.image.repository=${CI_REGISTRY_IMAGE} ${RELEASE_NAME} ./dbvis-generic
+    - >
+      helm upgrade 
+      ${RELEASE_NAME} 
+      ${HELM_CHART} 
+      --version ${HELM_CHART_VERSION} 
+      --dry-run 
+      --debug 
+      --install 
+      -f "${HELM_VALUES_YAML}" 
+      --set app.image.tag="${VERSION}" 
+      --set app.ingress.url=${URL_FULL} 
+      --set app.replicaCount=${REPLICA_COUNT} 
+      --set app.image.repository=${CI_REGISTRY_IMAGE}
     # actually install chart
-    - helm upgrade --namespace=${K8_NAMESPACE} --install --atomic --wait --timeout "${HELM_TIMEOUT}" -f "${HELM_VALUES_YAML}" --set app.image.tag="${VERSION}" --set app.ingress.url=${URL_FULL} --set app.replicaCount=${REPLICA_COUNT} --set app.image.repository=${CI_REGISTRY_IMAGE} ${RELEASE_NAME} ./dbvis-generic
+    - >
+      helm upgrade 
+      ${RELEASE_NAME} 
+      ${HELM_CHART} 
+      --version ${HELM_CHART_VERSION} 
+      --install 
+      --atomic 
+      --timeout "${HELM_TIMEOUT}" 
+      -f "${HELM_VALUES_YAML}" 
+      --set app.image.tag="${VERSION}" 
+      --set app.ingress.url=${URL_FULL} 
+      --set app.replicaCount=${REPLICA_COUNT} 
+      --set app.image.repository=${CI_REGISTRY_IMAGE}
   dependencies:
     - export-environment
-  interruptible: true
+  interruptible: false
   tags:
-    - docker
+    - no-cache
 
 .deploy:
   <<: *deploy-template
@@ -264,7 +354,6 @@ dockerize-backend:
     RUN_ON_FB: "no"
     RUN_ON_MASTER: "no"
     RUN_ON_TAG: "no"
-    VALUES_PATH: "."
   environment:
     url: https://$URL_FULL
     name: $ENV_TYPE/$CI_PROJECT_NAME/$CI_COMMIT_REF_SLUG
@@ -304,42 +393,68 @@ deploy-production:
 .verify:
   <<: *rules
   stage: k8:verify
-  image: curlimages/curl:latest
+  image: curlimages/curl:7.87.0
   dependencies:
     - export-environment
   script:
-    - curl -v --fail --connect-timeout 10 --max-time 10 --retry 20 --retry-delay 10 --retry-max-time 120 "${URL_FULL}"
+    - source ./var.env
+    - >
+      curl 
+      -v 
+      --fail 
+      --connect-timeout 10 
+      --max-time 10 
+      --retry 20 
+      --retry-delay 10 
+      --retry-max-time 120 
+      "${URL_FULL}"
   retry: 2
   interruptible: true
   tags:
-    - docker
+    - no-cache
 
 verify-fb:
   extends: .verify
   variables:
     ENV_TYPE: review
     RUN_ON_FB: "yes"
-  needs:
-    - export-environment
-    - deploy-fb
 
 verify-staging:
   extends: .verify
   variables:
     ENV_TYPE: staging
     RUN_ON_MASTER: "yes"
-  needs:
-    - export-environment
-    - deploy-staging
 
 verify-production:
   extends: .verify
   variables:
     ENV_TYPE: production
     RUN_ON_TAG: "yes"
-  needs:
-    - export-environment
-    - deploy-production
+
+
+debug k8 cluster state:
+  stage: k8:debug
+  image:
+    name: $KUBECTL_IMAGE
+    entrypoint: [""]
+  script:
+    - source ./var.env
+    # set default namespace
+    - export HELM_NAMESPACE=${K8_NAMESPACE}
+    - "kubectl describe node || :"
+    - "kubectl describe service \"${RELEASE_NAME}\" || :"
+    - "kubectl describe ingress \"${RELEASE_NAME}\" || :"
+    - "kubectl describe deployment \"${RELEASE_NAME}\" || :"
+    - "kubectl describe replicaset \"${RELEASE_NAME}\" || :"
+    - "kubectl describe pod \"${RELEASE_NAME}\" || :"
+    - "kubectl describe pvc \"${RELEASE_NAME}\" || :"
+    - "kubectl describe pv \"${RELEASE_NAME}\" || :"
+    - "kubectl logs $(kubectl get pods | awk -v pattern=\"${RELEASE_NAME}\" '$0 ~ pattern {print $1;exit}') || :"
+  when: always
+  tags:
+    - no-cache
+  allow_failure: true
+  interruptible: true
 
 ###########################################
 # CLEANUP NEW ENV
@@ -356,17 +471,26 @@ verify-production:
     RUN_ON_MASTER: "no"
     RUN_ON_TAG: "no"
   script:
+    # set default namespace
+    - export HELM_NAMESPACE=${K8_NAMESPACE}
     - echo $KUBECONFIG
     # we cannot use the RELEASE_NAME from the export-environment job as the remove job needs to be independent
-    - RELEASE_NAME=$(echo "${RELEASE_NAME_PROJECT}/${ENV_TYPE}/${CI_COMMIT_REF_SLUG}" | tr / - | tr . - | tr _ - | tr '[:upper:]' '[:lower:]' | cut -c -53 | sed -E 's#-+$##')
+    - |
+      if [ "${USE_LEGACY_RELEASE_NAME}" == "yes" ]
+      then
+        RELEASE_NAME_RAW="${ENV_TYPE}/${RELEASE_NAME_PROJECT}/${CI_COMMIT_REF_SLUG}"
+      else
+        RELEASE_NAME_RAW="${RELEASE_NAME_PROJECT}/${ENV_TYPE}/${CI_COMMIT_REF_SLUG}"
+      fi
+    - RELEASE_NAME=$(echo "${RELEASE_NAME_RAW}" | tr / - | tr . - | tr _ - | tr '[:upper:]' '[:lower:]' | cut -c -${RELEASE_NAME_MAX_LENGTH} | sed -E 's#-+$##')
     # DEBUG
     - echo $RELEASE_NAME
-    - helm delete --namespace=${K8_NAMESPACE} --dry-run --debug ${RELEASE_NAME}
-    - helm delete --namespace=${K8_NAMESPACE} ${RELEASE_NAME}
+    - helm delete --dry-run --debug ${RELEASE_NAME}
+    - helm delete ${RELEASE_NAME}
   dependencies: []
   allow_failure: true
   tags:
-    - docker
+    - no-cache
 
 remove-deployment-fb:
   extends: .remove-deployment
