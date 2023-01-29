@@ -287,8 +287,14 @@ public class LigerController {
         LinkedHashMap premiseGKR = ligerService.accessGKR(gkrDTOpremise);
         LinkedHashMap conclusionGKR = ligerService.accessGKR(gkrDTOconclusion);
 
+        List<LinkedHashMap> argumentGKRs = new ArrayList<>();
 
-        Map<String,Object> output = SegmenterMain.coreAnnotationArgument(request,this.pipeline);
+        argumentGKRs.add(0,premiseGKR);
+        argumentGKRs.add(1,conclusionGKR);
+
+
+
+        Map<String,Object> output = SegmenterMain.coreAnnotationArgument(request,argumentGKRs, this.pipeline);
         return output;
     }
 
@@ -302,9 +308,9 @@ public class LigerController {
 
         GkrDTO gkrData = new GkrDTO(request.sentence, request.ruleString);
 
-      Object o = ligerService.accessGKR(gkrData);
+      LinkedHashMap o = ligerService.accessGKR(gkrData);
 
-        return null;
+        return o;
     }
 
 }

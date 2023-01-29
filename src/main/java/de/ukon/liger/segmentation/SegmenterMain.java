@@ -86,9 +86,9 @@ public class SegmenterMain {
             //constituent complexity features
             s.annotations.put("number_of_constituents",sent.constituencyParse().constituents().size());
             s.annotations.put("constituent_parse_depth",sent.constituencyParse().depth());
-            s.annotations.put("constituent_depth_length_ratio", (float) sent.tokens().size()-1/sent.constituencyParse().depth());
-            s.annotations.put("nps_per_constituent_ratio", (float) sent.nounPhrases().size()/sent.constituencyParse().constituents().size());
-            s.annotations.put("vps_per_constituent_ratio",(float) sent.verbPhrases().size()/sent.constituencyParse().constituents().size());
+            s.annotations.put("constituent_depth_length_ratio", (double) sent.tokens().size()-1/sent.constituencyParse().depth());
+            s.annotations.put("nps_per_constituent_ratio", (double) sent.nounPhrases().size()/sent.constituencyParse().constituents().size());
+            s.annotations.put("vps_per_constituent_ratio",(double) sent.verbPhrases().size()/sent.constituencyParse().constituents().size());
 
             s.annotations.put("number_of_named_entities",sent.entityMentions().size());
 
@@ -107,7 +107,7 @@ public class SegmenterMain {
 
     }
 
-    public static Map<String,Object> coreAnnotationArgument(LigerArgument ligerArgument, StanfordCoreNLP pipeline) {
+    public static Map<String,Object> coreAnnotationArgument(LigerArgument ligerArgument, List<LinkedHashMap> semanticParses,  StanfordCoreNLP pipeline) {
 
         //    CoreDocument doc = new CoreDocument(text);
 
@@ -116,9 +116,11 @@ public class SegmenterMain {
 
         String relation = ligerArgument.relation;
 
-        Object[][] docs = new Object[2][2];
+        Object[][] docs = new Object[2][3];
         docs[0][0] = premiseDoc;
         docs[1][0] = conclusionDoc;
+        docs[0][1] = semanticParses.get(0);
+        docs[1][1] = semanticParses.get(1);
 
         int annotations = 0;
 
@@ -187,15 +189,16 @@ public class SegmenterMain {
                 sents++;
             }
 
-            docs[i][1] = annotation;
+            docs[i][2] = annotation;
 
 
         //    System.out.println(annotation.returnLigerAnnotation());
           //  System.out.println(annotation.returnAsJson());
             //System.out.println(HelperMethods.getIntegerFromID("w5"));
+            annotations++;
         }
 
-        ArgumentAnnotation argument = new ArgumentAnnotation("arg1",(LigerAnnotation) docs[0][1],(LigerAnnotation) docs[1][1]);
+        ArgumentAnnotation argument = new ArgumentAnnotation("arg1",(LigerAnnotation) docs[0][2],(LigerAnnotation) docs[1][2]);
         argument.argumentRelation = ligerArgument.relation;
         argument.text = ligerArgument.premise + " " + ligerArgument.conclusion;
 
