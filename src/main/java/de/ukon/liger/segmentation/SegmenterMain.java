@@ -4,6 +4,7 @@ package de.ukon.liger.segmentation;
 import de.ukon.liger.annotation.*;
 import de.ukon.liger.utilities.HelperMethods;
 import de.ukon.liger.webservice.rest.LigerService;
+import de.ukon.liger.webservice.rest.dtos.GkrDTO;
 import de.ukon.liger.webservice.rest.dtos.LigerArgument;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
@@ -107,7 +108,7 @@ public class SegmenterMain {
 
     }
 
-    public static Map<String,Object> coreAnnotationArgument(LigerArgument ligerArgument, List<LinkedHashMap> semanticParses,  StanfordCoreNLP pipeline) {
+    public static Map<String,Object> coreAnnotationArgument(LigerArgument ligerArgument,  StanfordCoreNLP pipeline) {
 
         //    CoreDocument doc = new CoreDocument(text);
 
@@ -116,11 +117,10 @@ public class SegmenterMain {
 
         String relation = ligerArgument.relation;
 
-        Object[][] docs = new Object[2][3];
+        Object[][] docs = new Object[2][2];
         docs[0][0] = premiseDoc;
         docs[1][0] = conclusionDoc;
-        docs[0][1] = semanticParses.get(0);
-        docs[1][1] = semanticParses.get(1);
+
 
         int annotations = 0;
 
@@ -164,6 +164,8 @@ public class SegmenterMain {
                 for (Word w : wordList) {
                     s.addElementAnnotation(w);
                 }
+
+                //Adding complexity annotations
                 annotation.addElementAnnotation(s);
 
                 s.annotations.put("sentiment", sent.sentiment());
@@ -187,9 +189,14 @@ public class SegmenterMain {
 
                 //  words++;
                 sents++;
+
+                //Adding semantic annotations
+                LinkedHashMap gkrData = loadGKR(sent.text(),"");
+
+                System.out.println(gkrData);
             }
 
-            docs[i][2] = annotation;
+            docs[i][1] = annotation;
 
 
         //    System.out.println(annotation.returnLigerAnnotation());
@@ -198,11 +205,17 @@ public class SegmenterMain {
             annotations++;
         }
 
-        ArgumentAnnotation argument = new ArgumentAnnotation("arg1",(LigerAnnotation) docs[0][2],(LigerAnnotation) docs[1][2]);
+        ArgumentAnnotation argument = new ArgumentAnnotation("arg1",(LigerAnnotation) docs[0][1],(LigerAnnotation) docs[1][1]);
         argument.argumentRelation = ligerArgument.relation;
         argument.text = ligerArgument.premise + " " + ligerArgument.conclusion;
 
         return argument.returnLigerAnnotation();
+    }
+
+
+    public static LinkedHashMap loadGKR(String sentence, String context){
+        GkrDTO gkrDTO = new GkrDTO(sentence,context);
+        return LigerService.accessGKR(gkrDTO);
     }
 
 }

@@ -12,10 +12,10 @@ import java.util.LinkedHashMap;
 @Service
 public class LigerService {
 
-    private RestTemplate restTemplate = new RestTemplate();
+    private static RestTemplate restTemplate = new RestTemplate();
 
 
-    public LinkedHashMap accessGKR(GkrDTO gkrData){
+    public static LinkedHashMap accessGKR(GkrDTO gkrData){
 
         final HttpHeaders httpHeaders = new HttpHeaders();
 
