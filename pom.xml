@@ -176,7 +176,7 @@
 							<resources>
 								<resource>
 									<directory>${basedir}/liger_resources</directory>
-									<filtering>true</filtering>
+<!--									<filtering>true</filtering>-->
 								</resource>
 							</resources>
 						</configuration>
