@@ -39,7 +39,7 @@ app:
     extraAnnotations: |
       nginx.ingress.kubernetes.io/proxy-body-size: 120m
 
-    readinessProbe: |
+  readinessProbe: |
     httpGet:
       path: {{ .Values.app.health }}
       port: {{ .Values.app.port }}
