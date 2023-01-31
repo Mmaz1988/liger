@@ -26,7 +26,10 @@ import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.segmentation.SegmenterMain;
 import de.ukon.liger.webservice.rest.dtos.*;
+import edu.stanford.nlp.pipeline.CoreDocument;
+import edu.stanford.nlp.pipeline.CoreSentence;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
@@ -47,14 +50,17 @@ public class LigerController {
     private final static Logger LOGGER = Logger.getLogger(LigerController.class.getName());
 
     private UDoperator parser = new UDoperator();
-  //  private StanfordCoreNLP pipeline;
+
+    @Autowired
+    private LigerService ligerService;
+    private StanfordCoreNLP pipeline;
 
     public LigerController(){
-        /*
+
         Properties props = new Properties();
         props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,parse,sentiment,udfeats");
         pipeline = new StanfordCoreNLP(props);
-      */
+
     };
 
 
@@ -264,6 +270,44 @@ public class LigerController {
         return success;
     }
 
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/query_args", produces = "application/json", consumes = "application/json")
+    public Set<String> checkArgsForQuery(@RequestBody LigerArgumentListQuery request) throws IOException {
+
+        Set<String> matchingArgs = new HashSet<>();
+
+        for (String id : request.mpg_arguments.keySet()) {
+
+            LigerArgument  arg = request.mpg_arguments.get(id);
+
+            CoreDocument doc = new CoreDocument(arg.premise);
+
+
+            this.pipeline.annotate(doc);
+
+            for (CoreSentence sent : doc.sentences()) {
+
+                LinguisticStructure fs = parser.parseSingle(sent.text());
+                //LOGGER.fine(fs.constraints.toString());
+                //  System.out.println(fs.constraints);
+
+                QueryParser qp = new QueryParser(fs);
+                qp.generateQuery(request.query);
+
+                QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+                if (qpr.isSuccess) {
+                    matchingArgs.add(id);
+                }
+                break;
+            }
+        }
+        return matchingArgs;
+    }
+
+
+
     /**
      * Segments and annotates an incoming argument using Stanford CoreNLP.
      * @param request
@@ -271,15 +315,42 @@ public class LigerController {
      * @throws IOException
      */
 
-    /*
+
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/annotate_argument", produces = "application/json", consumes = "application/json")
     public Map<String,Object> annotateArgument(@RequestBody LigerArgument request) throws IOException {
-        Map<String,Object> output = SegmenterMain.coreAnnotationArgument(request,this.pipeline);
+
+        /*
+        GkrDTO gkrDTOpremise = new GkrDTO(request.premise,"");
+        GkrDTO gkrDTOconclusion = new GkrDTO(request.conclusion,"");
+
+        LinkedHashMap premiseGKR = ligerService.accessGKR(gkrDTOpremise);
+        LinkedHashMap conclusionGKR = ligerService.accessGKR(gkrDTOconclusion);
+
+        List<LinkedHashMap> argumentGKRs = new ArrayList<>();
+
+        argumentGKRs.add(0,premiseGKR);
+        argumentGKRs.add(1,conclusionGKR);
+*/
+
+        Map<String,Object> output = SegmenterMain.coreAnnotationArgument(request, this.pipeline);
         return output;
     }
 
-     */
+
+
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/annotate_gkr", produces = "application/json", consumes = "application/json")
+    public Map<String,Object> annotateArgument(@RequestBody LigerRequest request) throws IOException {
+
+
+        GkrDTO gkrData = new GkrDTO(request.sentence, request.ruleString);
+
+      LinkedHashMap o = ligerService.accessGKR(gkrData);
+
+        return o;
+    }
 
 }
