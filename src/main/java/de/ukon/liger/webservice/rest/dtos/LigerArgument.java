@@ -5,6 +5,8 @@ public class LigerArgument {
     public String conclusion;
     public String relation;
 
+    public String arg_id;
+
     public LigerArgument(String premise, String conclusion, String relation)
     {
         this.premise = premise;
