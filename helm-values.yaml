@@ -60,13 +60,13 @@ app:
     successThreshold: 1
 
   # allow 5 minutes of startup time (60 failureThreshold * 5 periodSeconds = 300)
-  startupProbe: |
-    httpGet:
-      path: {{ .Values.app.health }}
-      port: {{ .Values.app.port }}
-    timeoutSeconds: 3
-    periodSeconds: 5
-    failureThreshold: 60
+#  startupProbe: |
+#    httpGet:
+#      path: {{ .Values.app.health }}
+#      port: {{ .Values.app.port }}
+#    timeoutSeconds: 3
+#    periodSeconds: 5
+#    failureThreshold: 60
 
 
 # regcred: regcred
