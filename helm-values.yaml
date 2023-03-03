@@ -39,34 +39,34 @@ app:
     extraAnnotations: |
       nginx.ingress.kubernetes.io/proxy-body-size: 120m
 
-  readinessProbe: |
-    httpGet:
-      path: {{ .Values.app.health }}
-      port: {{ .Values.app.port }}
-    initialDelaySeconds: 5
-    timeoutSeconds: 5
-    periodSeconds: 5
-    failureThreshold: 3
-    successThreshold: 1
+  # readinessProbe: |
+  #   httpGet:
+  #     path: {{ .Values.app.health }}
+  #     port: {{ .Values.app.port }}
+  #   initialDelaySeconds: 5
+  #   timeoutSeconds: 5
+  #   periodSeconds: 5
+  #   failureThreshold: 3
+  #   successThreshold: 1
 
-  livenessProbe: |
-    httpGet:
-      path: {{ .Values.app.health }}
-      port: {{ .Values.app.port }}
-    initialDelaySeconds: 5
-    timeoutSeconds: 5
-    periodSeconds: 5
-    failureThreshold: 4
-    successThreshold: 1
+  # livenessProbe: |
+  #   httpGet:
+  #     path: {{ .Values.app.health }}
+  #     port: {{ .Values.app.port }}
+  #   initialDelaySeconds: 5
+  #   timeoutSeconds: 5
+  #   periodSeconds: 5
+  #   failureThreshold: 4
+  #   successThreshold: 1
 
-  # allow 5 minutes of startup time (60 failureThreshold * 5 periodSeconds = 300)
-  startupProbe: |
-    httpGet:
-      path: {{ .Values.app.health }}
-      port: {{ .Values.app.port }}
-    timeoutSeconds: 3
-    periodSeconds: 5
-    failureThreshold: 60
+  # # allow 5 minutes of startup time (60 failureThreshold * 5 periodSeconds = 300)
+  # startupProbe: |
+  #   httpGet:
+  #     path: {{ .Values.app.health }}
+  #     port: {{ .Values.app.port }}
+  #   timeoutSeconds: 3
+  #   periodSeconds: 5
+  #   failureThreshold: 60
 
 
 # regcred: regcred
