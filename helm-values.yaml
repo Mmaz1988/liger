@@ -29,15 +29,15 @@ app:
     memory: 6Gi
     ephemeralStorage: 2Gi
 
-#  pvc:
-#    enabled: true
-#    accessMode: ReadWriteOnce
-#    storage: 5Gi
-#    mountPath: "/usr/local/visargue"
+    #  pvc:
+    #    enabled: true
+    #    accessMode: ReadWriteOnce
+    #    storage: 5Gi
+    #    mountPath: "/usr/local/visargue"
 
-  ingress:
-    extraAnnotations: |
-      nginx.ingress.kubernetes.io/proxy-body-size: 120m
+    ingress:
+      extraAnnotations: |
+        nginx.ingress.kubernetes.io/proxy-body-size: 120m
 
-# regcred: regcred
+  # regcred: regcred
 
