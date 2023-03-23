@@ -41,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class ChoiceTest {
 
 
-    String testfile = "C:\\Users\\Celeste\\IdeaProjects\\SpringDemo\\resources\\testFiles\\testdirS11.pl";
+    String testfile = "/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/liger_resources/testFiles/testdirS11.pl";
     //C:\Users\Celeste\IdeaProjects\SpringDemo\resources\testFiles\testdirS11.pl
 
 

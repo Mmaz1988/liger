@@ -10,9 +10,12 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.CoreSentence;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import org.springframework.boot.actuate.endpoint.web.Link;
 
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Takes a text as input and returns a segmented annotation structure
@@ -190,10 +193,54 @@ public class SegmenterMain {
                 //  words++;
                 sents++;
 
-                //Adding semantic annotations
-                LinkedHashMap gkrData = loadGKR(sent.text(),"");
+                try {
+                    //Adding semantic annotations
+                    LinkedHashMap<String, Object> gkrData = loadGKR(sent.text(), "");
 
-                System.out.println(gkrData);
+                    LinkedHashMap<String, Object> rolesCtxAndPropsGraph = (LinkedHashMap<String, Object>) gkrData.get("rolesCtxAndPropertiesGraph");
+                    LinkedHashMap<String, Object> ctxGraph = (LinkedHashMap<String, Object>) gkrData.get("contextGraph");
+
+                    List<LinkedHashMap> nodes = (List<LinkedHashMap>) ctxGraph.get("nodes");
+                    List<LinkedHashMap> edges = (List<LinkedHashMap>) ctxGraph.get("edges");
+
+
+                    Optional<LinkedHashMap> optional = nodes.stream().filter(x -> "top".equals(x.get("label"))).findFirst();
+
+                    if (optional.isPresent()) {
+                        LinkedHashMap top = optional.get();
+
+                        List<LinkedHashMap> daughters = edges.stream().filter(x ->
+                                x.get("sourceVertexId").equals(top.get("id"))).collect(Collectors.toList());
+
+                        int veridicalNodes = 0;
+                        int averidicalNodes = 0;
+                        int antiveridicalNodes = 0;
+
+
+                        //Recursive search required
+                        for (LinkedHashMap daughter : daughters) {
+                            if (daughter.get("label").equals("veridical")) {
+
+                            } else if ((daughter.get("label").equals("averidical"))) {
+
+                            } else if (daughter.get("label").equals("antiveridical")) {
+
+                            }
+
+                        }
+
+
+                    }
+                }catch(Exception e)
+                {
+                    System.out.println("Semantic annotation failed.");
+                }
+
+
+
+
+
+
             }
 
             docs[i][1] = annotation;

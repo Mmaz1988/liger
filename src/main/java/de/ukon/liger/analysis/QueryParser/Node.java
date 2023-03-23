@@ -96,6 +96,7 @@ public void calculateSolutions()
             out.put(Collections.singleton(key),binding);
         }
 
+
         setSolution(out);
 
 }

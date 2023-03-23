@@ -212,4 +212,16 @@ public class ChoiceSpace {
         int index = allVariables.size()-1;
         return allVariables.get(index);
     }
+
+
+    public boolean dominates(ChoiceVar a, ChoiceVar b)
+    {
+
+        for (ChoiceNode cn : this.choiceNodes)
+        {
+
+        }
+
+        return true;
+    }
 }

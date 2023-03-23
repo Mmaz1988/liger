@@ -44,6 +44,8 @@ public class ConjointExpression extends QueryExpression {
     public void calculateSolutions()
     {
     setSolution(previous.getSolution());
+    setConjoinedSolutions(previous.getConjoinedSolutions());
+    getConjoinedSolutions().add(previous.getSolution());
     }
 
 

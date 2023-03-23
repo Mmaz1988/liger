@@ -11,14 +11,14 @@ public class LigerAnnotation {
     public String text;
 
     //Annotations at current level (attribute/value pairs)
-    public Map<String,Object> annotations;
+    public LinkedHashMap<String,Object> annotations;
     //Annotation at any level (words and spans); Only top level annotation should have elementAnnotations
     public LinkedHashMap<String,LigerAnnotation> elementAnnotations;
     public String id;
     public AnnotationTypes type;
 
     public LigerAnnotation(String id){
-        this.annotations = new HashMap<>();
+        this.annotations = new LinkedHashMap<>();
         this.elementAnnotations = new LinkedHashMap<>();
         this.id = id;
         this.type = AnnotationTypes.liger;
@@ -26,7 +26,7 @@ public class LigerAnnotation {
 
     public LigerAnnotation(String id, String text){
         this.text = text;
-        this.annotations = new HashMap<>();
+        this.annotations = new LinkedHashMap<>();
         this.elementAnnotations = new LinkedHashMap<>();
         this.id = id;
         this.type = AnnotationTypes.liger;
@@ -68,7 +68,7 @@ public class LigerAnnotation {
         }
 
         LinkedHashMap<String,Object> output = new LinkedHashMap<>();
-        output.put("ligerAnnotation",ligerMap);
+        output.put("liger_annotation",ligerMap);
 
         return output;
 
@@ -79,6 +79,40 @@ public class LigerAnnotation {
         Gson gson = new Gson();
 
         return gson.toJson(this.returnLigerAnnotation());
+    }
+
+    /*
+    public static LigerAnnotation loadJson(LinkedHashMap<String,Object> json)
+    {
+
+       for (String key : json.keySet())
+       {
+           if (key.equals(AnnotationTypes.sentences.toString()))
+           {
+               for (Object sentence : ((LinkedHashMap) json.get(key)).keySet())
+               {
+
+               }
+           }
+       }
+
+        return null;
+    }
+
+
+     */
+    public void raiseAnnotation(String id, String attribute){
+
+        for (String keys : this.elementAnnotations.keySet()){
+            if (keys.equals(id))
+            {
+                if (this.elementAnnotations.get(keys).annotations.containsKey(attribute))
+                {
+                    this.annotations.put(attribute,this.elementAnnotations.get(keys).annotations.get(attribute));
+                }
+            }
+
+        }
     }
 
 }

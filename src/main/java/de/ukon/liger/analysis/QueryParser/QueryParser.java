@@ -136,9 +136,9 @@ public class QueryParser {
                 if (fsM.matches()) {
                     try {
                         if (getVh().getReservedVariables().get(VariableHandler.variableType.FS_NODE)
-                                .contains(fsM.group(1)) || isInteger(fsM.group(1)) ) {
+                                .contains(fsM.group(1)) || HelperMethods.isInteger(fsM.group(1)) ) {
 
-                            if (!usedFsNodes.containsKey(fsM.group(1)) && !isInteger(fsM.group(1))) {
+                            if (!usedFsNodes.containsKey(fsM.group(1)) && !HelperMethods.isInteger(fsM.group(1))) {
                                 Node newNode = new Node(deque.get(i), fsM.group(1), getFsIndices(), this);
                                 usedFsNodes.put(fsM.group(1),newNode);
                                 queryList.add(i, newNode);
@@ -171,7 +171,7 @@ public class QueryParser {
                 }
                 else if (isAttribute(deque.get(i), getFsIndices())) {
                     queryList.add(i, new Attribute(deque.get(i), getFsIndices(), this));
-                } else if (isValue(deque.get(i), getFsIndices())) {
+                } else if (HelperMethods.isValue(deque.get(i), getFsIndices())) {
                     Boolean var = false;
                     Boolean strip = false;
 
@@ -357,50 +357,7 @@ public class QueryParser {
     }
 
 
-    public boolean isValue(String query, HashMap<Integer, GraphConstraint> fsIndices)
-    {
-        for (Integer key : fsIndices.keySet())
-        {
-            if (fsIndices.get(key).getFsValue().equals(query))
-            {
-                return true;
-            }
-        }
 
-        Matcher m = HelperMethods.valueVarPattern.matcher(query);
-        Matcher sm = HelperMethods.stripPattern.matcher(query);
-        Matcher vm = HelperMethods.valueStringPattern.matcher(query);
-
-        if (m.matches())
-        {
-            return true;
-        }
-
-        if (sm.matches())
-        {
-            return true;
-        }
-
-        if (vm.matches())
-        {
-            return true;
-        }
-return false;
-    }
-
-
-    public static boolean isInteger(String s)
-    {
-        try
-        {
-            Integer.parseInt(s);
-            return true;
-        }
-        catch(Exception e)
-        {
-            return false;
-        }
-    }
 
     public void resetParser()
     {

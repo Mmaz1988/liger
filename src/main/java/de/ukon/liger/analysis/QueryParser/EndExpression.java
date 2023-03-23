@@ -35,6 +35,8 @@ public class EndExpression extends QueryExpression{
 
 
             setSolution(exp.getSolution());
+            setConjoinedSolutions(exp.getConjoinedSolutions());
+            getConjoinedSolutions().add(exp.getSolution());
 
 
     }
