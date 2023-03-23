@@ -24,6 +24,7 @@ package de.ukon.liger.analysis.QueryParser;
 import de.ukon.liger.syntax.GraphConstraint;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -88,6 +89,8 @@ public class ValueExpression extends QueryExpression {
                         }
                         }
 
+                HashSet<Integer> nonBoundIndices = new HashSet<>();
+
                 for (Integer key2 : boundIndices.keySet()) {
                 if (boundIndices.get(key2).getRelationLabel().equals(left.getQuery())) {
 
@@ -110,10 +113,19 @@ public class ValueExpression extends QueryExpression {
 
                         if (boundIndices.get(key2).getFsValue().equals(varMatch)) {
                             matchingIndices.put(key2, boundIndices.get(key2));
+                        } else if (!right.var)
+                        {
+                            //Delete non-matching values
+                            nonBoundIndices.add(key2);
+                            //boundIndices.remove(key2);
                         }
+
 
                 }
                 }
+
+                boundIndices.keySet().removeAll(nonBoundIndices);
+
                 if (matchingIndices.keySet().isEmpty())
                 {
                     it.remove();
@@ -128,6 +140,7 @@ public class ValueExpression extends QueryExpression {
             if (!fsIndices.keySet().isEmpty()) {
                 setSolution(out);
                 setFsIndices(fsIndices);
+                setConjoinedSolutions(left.getConjoinedSolutions());
       //          getParser().fsNodeBindings = out;
             }
         }

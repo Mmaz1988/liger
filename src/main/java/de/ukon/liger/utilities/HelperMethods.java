@@ -21,6 +21,9 @@
 
 package de.ukon.liger.utilities;
 
+import de.ukon.liger.syntax.GraphConstraint;
+
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -139,6 +142,50 @@ public class HelperMethods {
     }
 
 
+    public static boolean isValue(String query, HashMap<Integer, GraphConstraint> fsIndices)
+    {
+        for (Integer key : fsIndices.keySet())
+        {
+            if (fsIndices.get(key).getFsValue().equals(query))
+            {
+                return true;
+            }
+        }
+
+        Matcher m = HelperMethods.valueVarPattern.matcher(query);
+        Matcher sm = HelperMethods.stripPattern.matcher(query);
+        Matcher vm = HelperMethods.valueStringPattern.matcher(query);
+
+        if (m.matches())
+        {
+            return true;
+        }
+
+        if (sm.matches())
+        {
+            return true;
+        }
+
+        if (vm.matches())
+        {
+            return true;
+        }
+        return false;
+    }
+
+
+    public static boolean isInteger(String s)
+    {
+        try
+        {
+            Integer.parseInt(s);
+            return true;
+        }
+        catch(Exception e)
+        {
+            return false;
+        }
+    }
 
 
 

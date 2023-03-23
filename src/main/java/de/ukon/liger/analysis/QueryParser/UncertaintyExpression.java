@@ -123,7 +123,7 @@ public class UncertaintyExpression extends QueryExpression {
             }
         }
 
-
+        setConjoinedSolutions(left.getConjoinedSolutions());
         setSolution(out);
         //  getParser().fsNodeBindings = out;
     }

@@ -90,7 +90,10 @@ public class AttributeExpression extends QueryExpression {
                             containsAtribute = true;
                         } else
                         {
-                            boundIter.remove();
+                            //TODO if statement should avoid deletion of previously relevant facts
+                        //    if (!left.getSolution().get(key).get(left.getNodeVar()).get(nodeRef).containsKey(key3)) {
+                                boundIter.remove();
+                      //      }
                         }
 
                     }
@@ -114,6 +117,7 @@ public class AttributeExpression extends QueryExpression {
         }
             setNodeVar(left.getNodeVar());
             setSolution(out);
+            setConjoinedSolutions(left.getConjoinedSolutions());
             setFsIndices(fsIndices);
     }
 

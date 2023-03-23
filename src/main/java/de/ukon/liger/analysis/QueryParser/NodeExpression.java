@@ -82,12 +82,14 @@ public class NodeExpression extends QueryExpression {
                 }
 
                     setFsIndices(right.getFsIndices());
+                setConjoinedSolutions(left.getConjoinedSolutions());
                     setSolution(out);
 
             }
             else
             {
                 setSolution(left.getSolution());
+                setConjoinedSolutions(left.getConjoinedSolutions());
                 /*
                 for (Set<SolutionKey> key : left.getSolution().keySet())
                 {
@@ -106,6 +108,7 @@ public class NodeExpression extends QueryExpression {
         {
             setFsIndices(left.getFsIndices());
             setSolution(left.getSolution());
+            setConjoinedSolutions(left.getConjoinedSolutions());
         }
         else {
 
@@ -162,6 +165,7 @@ public class NodeExpression extends QueryExpression {
                 }
             }
 
+            setConjoinedSolutions(left.getConjoinedSolutions());
             setSolution(solution);
 
                 //This collects the constraints that are currently bound by the righthand side variable.
