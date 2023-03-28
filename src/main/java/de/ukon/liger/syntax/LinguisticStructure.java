@@ -58,7 +58,26 @@ public class LinguisticStructure {
         return jsonMap;
     }
 
+    public static LinguisticStructure parseFromJson(LinkedHashMap input)
+    {
+     LinguisticStructure ls = new LinguisticStructure();
 
+     ls.local_id = (String) input.get("id");
+     ls.text = (String) input.get("text");
+     ls.constraints = (List<GraphConstraint>) ((List) input.get("constraints")).
+             stream().map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList());
+
+     ls.annotation = (List<GraphConstraint>) ((List) input.get("annotations")).
+                stream().map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList());
+
+     ls.cp = ChoiceSpace.parseJson((LinkedHashMap<String, Object>) input.get("choiceSpace"));
+
+        return ls;
+    }
+
+
+    public LinguisticStructure()
+    {}
 
     public LinguisticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts)
     {

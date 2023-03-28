@@ -72,7 +72,7 @@ public class ChoiceTest {
     public void testFromAndToJson()
     {
         PathVariables.initializePathVariables();
-        String testfile = PathVariables.testPath + "testdirS13.pl";
+        String testfile = PathVariables.testPath + "testdirS12.pl";
 
         XLEoperator xle = new XLEoperator(new VariableHandler());
 
