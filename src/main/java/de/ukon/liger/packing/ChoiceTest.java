@@ -21,6 +21,7 @@
 
 package de.ukon.liger.packing;
 
+import de.ukon.liger.utilities.PathVariables;
 import org.junit.jupiter.api.Test;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.xle.FstructureElements.AttributeValuePair;
@@ -41,13 +42,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class ChoiceTest {
 
 
-    String testfile = "/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/liger_resources/testFiles/testdirS11.pl";
+
     //C:\Users\Celeste\IdeaProjects\SpringDemo\resources\testFiles\testdirS11.pl
 
 
     @Test
     public void testChoiceParsing()
     {
+        PathVariables.initializePathVariables();
+        String testfile = PathVariables.testPath + "testdirS11.pl";
+
         XLEoperator xle = new XLEoperator(new VariableHandler());
 
         List<LinkedHashMap<String, LinguisticStructure>> fsList = new ArrayList<>();
@@ -62,6 +66,30 @@ public class ChoiceTest {
         System.out.println(fs.cp.toString());
         System.out.println(fs.cp.choices);
         assertEquals(1,fs.cp.choiceNodes.size());
+    }
+
+    @Test
+    public void testFromAndToJson()
+    {
+        PathVariables.initializePathVariables();
+        String testfile = PathVariables.testPath + "testdirS12.pl";
+
+        XLEoperator xle = new XLEoperator(new VariableHandler());
+
+        List<LinkedHashMap<String, LinguisticStructure>> fsList = new ArrayList<>();
+
+        fsList.add(xle.fs2Java(testfile));
+
+        ReadFsProlog fs = ReadFsProlog.readPrologFile(new File(testfile),new VariableHandler());
+
+        LinkedHashMap jsonMap = fs.cp.toJson();
+
+        ChoiceSpace cp2 = ChoiceSpace.parseJson(jsonMap);
+
+        assertEquals(fs.cp.choiceNodes ,cp2.choiceNodes);
+
+
+
     }
 
 

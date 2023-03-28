@@ -35,10 +35,63 @@ public class ChoiceSpace {
     public static Pattern choicePattern = Pattern.compile("\\[(.+)\\],(.+)");
     public static Pattern orPattern = Pattern.compile("or\\((.+)\\)");
     public static String inputString;
+    private static String[] choiceArray = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
 
     public Set<ChoiceVar> rootChoice = new HashSet<ChoiceVar>(Collections.singleton(new ChoiceVar("1")));
     public List<ChoiceNode> choiceNodes;
     public Set<Set<ChoiceVar>> choices = new HashSet<>();
+
+    public List<String> allVariables = new ArrayList<>();
+
+
+
+    public LinkedHashMap<String,Object> toJson()
+    {
+        LinkedHashMap<String,Object> jsonMap = new LinkedHashMap<>();
+
+        jsonMap.put("rootChoice",this.rootChoice.stream().map(ChoiceVar::toJson).collect(Collectors.toList()));
+        jsonMap.put("choiceNodes",this.choiceNodes.stream().map(ChoiceNode::toJson).collect(Collectors.toList()));
+
+        List<List<LinkedHashMap>> cs = new ArrayList<>();
+
+        for (Set<ChoiceVar> c : choices)
+        {
+            cs.add(c.stream().map(ChoiceVar::toJson).collect(Collectors.toList()));
+        }
+
+        jsonMap.put("choices",cs);
+
+        jsonMap.put("allVars",allVariables);
+
+        return jsonMap;
+    }
+
+    public static ChoiceSpace parseJson(LinkedHashMap<String,Object> input){
+        ChoiceSpace cp = new ChoiceSpace();
+
+        cp.rootChoice = (Set<ChoiceVar>) ((List) input.get("rootChoice")).stream().
+                map(x -> ChoiceVar.parseJson((LinkedHashMap<String, String>) x)).collect(Collectors.toSet());
+        cp.choiceNodes = (List<ChoiceNode>) ((List) input.get("choiceNodes")).stream().
+                map(x -> ChoiceNode.parseJson((LinkedHashMap<String, String>) x)).collect(Collectors.toList());
+
+        List<List<LinkedHashMap>> cs = (List<List<LinkedHashMap>>) input.get("choices");
+
+        Set<Set<ChoiceVar>> choiceSet = new HashSet<>();
+
+        for (List<LinkedHashMap> c : cs)
+        {
+            choiceSet.add(c.stream().map(x -> ChoiceVar.parseJson(x)).collect(Collectors.toSet()));
+        }
+
+        cp.choices = choiceSet;
+
+        cp.allVariables= (List<String>) input.get("allVars");
+
+
+        return cp;
+    }
+
+
 
 
     public ChoiceSpace(List<String> choices)
@@ -46,8 +99,6 @@ public class ChoiceSpace {
        choiceNodes = parseChoiceSpace(choices);
     }
     public  ChoiceSpace() {}
-    public List<String> allVariables = new ArrayList<>();
-    private static String[] choiceArray = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
 
 
     public static Set<ChoiceVar> parseChoice(String choice)
@@ -126,7 +177,10 @@ public class ChoiceSpace {
                 inputString=inputString.substring(3,inputString.length());
                 temp.clear();
                 temp= buildOrMother(temp);
-                mother.add(Stream.of(temp).map(n -> new HashSet(n) {}).collect(Collectors.toSet()).iterator().next());
+                //mother.add(Stream.of(temp).map(n -> new HashSet(n) {}).collect(Collectors.toSet()));
+
+                mother.add(temp);
+
             }
             int comma = inputString.indexOf(",");
             int par = inputString.indexOf(")");

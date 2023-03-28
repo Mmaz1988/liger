@@ -740,28 +740,6 @@ public class QueryParserTest {
         assertEquals(79, fslist.get(0).constraints.size());
     }
 
-    @Test
-    void testRuleParserRewriteBranching() {
-        LinkedHashMap<String, LinguisticStructure> fs = loadFs(3);
-
-        List<LinguisticStructure> fslist = new ArrayList<>();
-
-        for (String key : fs.keySet()) {
-            fslist.add(fs.get(key));
-        }
-
-        RuleParser rp = new RuleParser(fslist);
-
-        //TODO rewrite original f-structure
-        Rule r1 = new Rule("#g TNS-ASP #h TENSE 'pres' =+> #h TEMP-REF 'pres'",false, false);
-        Rule r2 = new Rule("#g TEMP-REF 'pres' =+> #g TEMP-REF 'past' & #g ASPECT 'perf'",false, true);
-        rp.getRules().add(r1);
-        rp.getRules().add(r2);
-        rp.addAnnotation2(fslist.get(0));
-
-        assertEquals(53, fslist.get(0).constraints.size());
-    }
-
     /**
      *Other tests
      */

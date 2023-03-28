@@ -24,10 +24,8 @@ package de.ukon.liger.syntax;
 import de.ukon.liger.packing.ChoiceSpace;
 import de.ukon.liger.utilities.HelperMethods;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class LinguisticStructure {
 
@@ -36,9 +34,50 @@ public class LinguisticStructure {
     public List<GraphConstraint> constraints;
     public ChoiceSpace cp;
 
+
+    //TODO move annotation to general LigerAnnotation structure
     public List<GraphConstraint> annotation = new ArrayList<>();
 
 
+    public LinkedHashMap<String,Object> toJson()
+    {
+        LinkedHashMap<String,Object> jsonMap = new LinkedHashMap<>();
+        jsonMap.put("id",this.local_id);
+        jsonMap.put("text",this.text);
+
+        List<LinkedHashMap> jsonConstraints = this.constraints.stream()
+                .map(GraphConstraint::toJson).collect(Collectors.toList());
+        jsonMap.put("constraints",jsonConstraints);
+
+        List<LinkedHashMap> jsonAnnotations = this.annotation.stream()
+                .map(GraphConstraint::toJson).collect(Collectors.toList());
+        jsonMap.put("annotations",jsonAnnotations);
+
+        jsonMap.put("choiceSpace",this.cp.toJson());
+
+        return jsonMap;
+    }
+
+    public static LinguisticStructure parseFromJson(LinkedHashMap input)
+    {
+     LinguisticStructure ls = new LinguisticStructure();
+
+     ls.local_id = (String) input.get("id");
+     ls.text = (String) input.get("text");
+     ls.constraints = (List<GraphConstraint>) ((List) input.get("constraints")).
+             stream().map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList());
+
+     ls.annotation = (List<GraphConstraint>) ((List) input.get("annotations")).
+                stream().map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList());
+
+     ls.cp = ChoiceSpace.parseJson((LinkedHashMap<String, Object>) input.get("choiceSpace"));
+
+        return ls;
+    }
+
+
+    public LinguisticStructure()
+    {}
 
     public LinguisticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts)
     {

@@ -21,7 +21,7 @@
 
 package de.ukon.liger.packing;
 
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ChoiceNode {
@@ -35,6 +35,62 @@ public class ChoiceNode {
         this.daughterNodes = daughterNodes;
     }
 
+
+    public LinkedHashMap<String,Object> toJson()
+    {
+        LinkedHashMap<String,Object> jsonMap = new LinkedHashMap<>();
+
+        jsonMap.put("daughterNodes", this.daughterNodes.stream().map(ChoiceVar::toJson).collect(Collectors.toList()));
+
+        jsonMap.put("mother",motherNodeToJson(this.choiceNode));
+
+        return jsonMap;
+    }
+    public List<Object> motherNodeToJson(Set<Object> motherSet)
+    {
+
+        List<Object> motherNodes = new ArrayList<>();
+
+        for (Object choiceSet : motherSet)
+        {
+            //Add a linked Hashmap describing a choicevar
+            if (choiceSet instanceof ChoiceVar){
+                motherNodes.add(((ChoiceVar) choiceSet).toJson());
+            } else {
+                List<Object> nested = motherNodeToJson((Set<Object>) choiceSet);
+                motherNodes.add(nested);
+            }
+        }
+        return motherNodes;
+    }
+
+    public static ChoiceNode parseJson(LinkedHashMap input){
+
+        Set<Object> mother = new HashSet<>();
+
+        mother.addAll(parseChoiceSetfromJson((List<Object>) input.get("mother")));
+
+        Set<ChoiceVar> daughter = (Set<ChoiceVar>) ((List) input.get("daughterNodes")).stream().map(x -> ChoiceVar.parseJson((LinkedHashMap) x)).collect(Collectors.toSet());
+        return new ChoiceNode(mother,daughter);
+    }
+
+    public static List<Object> parseChoiceSetfromJson(List<Object> inputList){
+
+    List<Object> choiceList = new ArrayList<>();
+
+    for (Object input : inputList)
+    {
+     if (input instanceof LinkedHashMap)
+     {
+         choiceList.add(ChoiceVar.parseJson((LinkedHashMap<String, String>) input));
+     } else
+     {
+         List<Object> nested = parseChoiceSetfromJson((List<Object>) input);
+         choiceList.add(nested);
+     }
+    }
+    return choiceList;
+    }
     @Override
     public String toString()
     {
@@ -51,5 +107,19 @@ public class ChoiceNode {
 
         return "choice(" + daughter + "," + mother + ")";
 
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChoiceNode choiceVar = (ChoiceNode) o;
+        return Objects.equals(this.choiceNode, choiceVar.choiceNode) &&
+                Objects.equals(this.daughterNodes, choiceVar.daughterNodes);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(choiceNode, daughterNodes);
     }
 }
