@@ -146,6 +146,7 @@ public class EqualityExpression extends QueryExpression {
 
 
         setFsIndices(left.getFsIndices());
+        setConjoinedSolutions(left.getConjoinedSolutions());
         setSolution(out);
   //      getParser().fsNodeBindings = out;
     }

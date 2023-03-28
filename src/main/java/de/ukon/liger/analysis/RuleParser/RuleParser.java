@@ -140,6 +140,8 @@ public class RuleParser {
                 List<String> search = r.splitGoal();
 
                 try {
+                    boolean fixedContext = false;
+                    Set<ChoiceVar> context = new HashSet<>();
                     //for (String searchString : search) {
                     for (int i = 0; i < search.size(); i++) {
                         String searchString = search.get(i).trim();
@@ -154,7 +156,10 @@ public class RuleParser {
 
                             if (nodeMatcher.matches()) {
                                 for (Set<SolutionKey> solutionKey : qpr.result.keySet()) {
-                                    Set<ChoiceVar> context = extractContexts(qpr.result.get(solutionKey), newConstraints);
+
+                                    if (!fixedContext){
+                                        context = extractContexts(qpr.result.get(solutionKey), newConstraints);
+                                }
                                     if (variableIsAssigned(qpr, solutionKey, nodeMatcher.group(1))) {
 
                                         String key2 = qpr.result.get(solutionKey).get(nodeMatcher.group(1)).keySet().stream().findAny().get();
@@ -230,10 +235,42 @@ public class RuleParser {
                                             for (GraphConstraint c : fs.annotation) {
                                                 if (c.getFsNode().equals(key2) && c.getRelationLabel().equals(graphMatcher.group(2)) &&
                                                         c.getReading().equals(context)) {
+                                                    if (r.isBranch()) {
+
+                                                        //TODO Return new choice var dynimcally
+                                                        ChoiceVar current = new ChoiceVar("A1");
+                                                        ChoiceVar branch = new ChoiceVar("A2");
+
+                                                        Set<ChoiceVar> currentSet = new HashSet<>();
+                                                        currentSet.add(current);
+                                                        Set<ChoiceVar> branchSet = new HashSet<>();
+                                                        branchSet.add(branch);
+
+                                                        c.setReading(currentSet);
+
+                                                        GraphConstraint c1 = new GraphConstraint();
+                                                        c1.setReading(branchSet);
+                                                        c1.setFsNode(key2);
+                                                        c1.setRelationLabel(graphMatcher.group(2));
+                                                        c1.setFsValue(newValue);
+
+                                                        context = branchSet;
+                                                        fixedContext = true;
+
+                                                        qpr.result.get(solutionKey).get(nodeMatcher.group(1)).get(key2).put(key, c1);
+                                                        newConstraints.put(key, c1);
+                                                        key++;
+
+                                                        LOGGER.debug("Added new branch: " + branch.toString());
+
+                                                        replaceValue = true;
+
+                                                    } else {
                                                     LOGGER.debug("Rewritten value: " + c.getFsValue() + " into: " + newValue);
                                                     c.setFsValue(newValue);
                                                     replaceValue = true;
                                                 }
+                                            }
                                             }
 
                                             //TODO
@@ -247,6 +284,8 @@ public class RuleParser {
 
 
                                                 //Reading experiment start
+
+/*
                                                 for (Integer constraintKey : newConstraints.keySet()) {
                                                     //TODO return unused context
                                                     ChoiceVar choice = new ChoiceVar("A1");
@@ -259,6 +298,8 @@ public class RuleParser {
                                                         c.setReading(newChoice);
                                                     }
                                                 }
+
+ */
                                                 //Reading experiment end
 
 
@@ -613,13 +654,17 @@ public class RuleParser {
                 }
 
                 if (c =='=' &&
-                        (fileString.charAt(i + 1) == '=' || fileString.charAt(i + 1) == '-' )
+                        (fileString.charAt(i + 1) == '=' || fileString.charAt(i + 1) == '-' || fileString.charAt(i + 1) == '+')
                         && fileString.charAt(i + 2) == '>')
                 {
                     boolean rewrite = false;
+                    boolean branch = false;
                     if (fileString.charAt(i + 1) == '-')
                     {
                       rewrite = true;
+                    } else if (fileString.charAt(i + 1) == '+')
+                    {
+                        branch = true;
                     }
                     i = i + 3;
                     c = fileString.charAt(i);
@@ -632,7 +677,7 @@ public class RuleParser {
                         }
                     }
 
-                    Rule r = new Rule(left.toString().trim(),right.toString().trim(), rewrite);
+                    Rule r = new Rule(left.toString().trim(),right.toString().trim(), rewrite,branch);
                     out.add(r);
 
                     left = new StringBuilder();
@@ -674,6 +719,7 @@ public class RuleParser {
         usedReadings = new HashSet<>();
     }
 
+
     public Set<ChoiceVar> extractContexts(HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> result,
                                           HashMap<Integer, GraphConstraint> newConstraints) {
         Set<ChoiceVar> out = new HashSet<>();
@@ -698,6 +744,8 @@ public class RuleParser {
         }
     }
 }
+
+
 
 
 

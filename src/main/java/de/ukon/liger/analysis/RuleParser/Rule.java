@@ -34,7 +34,9 @@ public class Rule {
     private String left;
     private String right;
     private boolean rewrite;
-    private static Pattern rulePattern = Pattern.compile("(.+)=(=|-)>(.+)");
+
+    private  boolean branch;
+    private static Pattern rulePattern = Pattern.compile("(.+)=(=|-|\\+)>(.+)");
 
 
     private List<GraphConstraint> annotation;
@@ -48,6 +50,12 @@ public class Rule {
         this.rewrite = rewrite;
     }
 
+    public Rule(String rule, boolean rewrite, boolean branch) {
+        generateRule(rule);
+        this.rewrite = rewrite;
+        this.branch = branch;
+    }
+
     public Rule(String left, String right)
     {
         this.left = left;
@@ -59,6 +67,14 @@ public class Rule {
         this.left = left;
         this.right = right;
         this.rewrite = rewrite;
+    }
+
+    public Rule(String left, String right, boolean rewrite, boolean branch)
+    {
+        this.left = left;
+        this.right = right;
+        this.rewrite = rewrite;
+        this.branch = branch;
     }
 
 
@@ -130,6 +146,14 @@ public class Rule {
 
     public void setRewrite(boolean rewrite) {
         this.rewrite = rewrite;
+    }
+
+    public boolean isBranch() {
+        return branch;
+    }
+
+    public void setBranch(boolean branch) {
+        this.branch = branch;
     }
 
 }

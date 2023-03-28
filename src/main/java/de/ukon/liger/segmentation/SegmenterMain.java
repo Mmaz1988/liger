@@ -2,6 +2,9 @@ package de.ukon.liger.segmentation;
 
 
 import de.ukon.liger.annotation.*;
+import de.ukon.liger.syntax.LinguisticStructure;
+import de.ukon.liger.syntax.SyntaxOperator;
+import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.utilities.HelperMethods;
 import de.ukon.liger.webservice.rest.LigerService;
 import de.ukon.liger.webservice.rest.dtos.GkrDTO;
@@ -10,14 +13,20 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.CoreSentence;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import org.springframework.boot.actuate.endpoint.web.Link;
 
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Takes a text as input and returns a segmented annotation structure
  */
 public class SegmenterMain {
+
+
+    private SyntaxOperator udOperator = new UDoperator();
 
 
     public static void main(String[] args){
@@ -108,7 +117,7 @@ public class SegmenterMain {
 
     }
 
-    public static Map<String,Object> coreAnnotationArgument(LigerArgument ligerArgument,  StanfordCoreNLP pipeline) {
+    public static Map<String,Object> coreAnnotationArgument(LigerArgument ligerArgument,  StanfordCoreNLP pipeline, UDoperator udOps) {
 
         //    CoreDocument doc = new CoreDocument(text);
 
@@ -187,13 +196,90 @@ public class SegmenterMain {
                         map(object -> Objects.toString(object, null)).
                         collect(Collectors.joining(",")));
 
+
+                s.annotations.put("ud_parse",  udOps.parseSingle(sent.text()).toJson());
+
                 //  words++;
                 sents++;
 
-                //Adding semantic annotations
-                LinkedHashMap gkrData = loadGKR(sent.text(),"");
+                try {
+                    //Adding semantic annotations
+                    LinkedHashMap<String, Object> gkrData = loadGKR(sent.text(), "");
 
-                System.out.println(gkrData);
+                //    LinkedHashMap<String, Object> rolesCtxAndPropsGraph = (LinkedHashMap<String, Object>) gkrData.get("rolesCtxAndPropertiesGraph");
+                  //  LinkedHashMap<String, Object> ctxGraph = (LinkedHashMap<String, Object>) gkrData.get("contextGraph");
+                    LinkedHashMap<String, Object> ctxConceptGraph = (LinkedHashMap<String, Object>) gkrData.get("rolesAndCtxGraph");
+
+                   // List<LinkedHashMap> ctxNodes = (List<LinkedHashMap>) ctxGraph.get("nodes");
+
+                    List<LinkedHashMap> nodes = (List<LinkedHashMap>) ctxConceptGraph.get("nodes");
+                    List<LinkedHashMap> edges = (List<LinkedHashMap>) ctxConceptGraph.get("edges");
+
+
+                    List<LinkedHashMap> contextEdges = edges.stream().filter(x -> x.get("label").equals("ctx_hd")).collect(Collectors.toList());
+
+                    List<LinkedHashMap> contextNodes = new ArrayList<>();
+
+                    /*
+                    for (LinkedHashMap edge : contextEdges)
+                    {
+                        for (LinkedHashMap node : nodes)
+                        {
+                            if (edge.get("sourceVertixId").equals(node.get("id")))
+                            {
+                                contextNodes.add(node);
+                                break;
+                            }
+                        }
+                    }
+
+                     */
+
+                    contextEdges.forEach(edge -> {
+                        nodes.stream()
+                                .filter(node -> edge.get("sourceVertexId").equals(node.get("id")))
+                                .findFirst()
+                                .ifPresent(contextNodes::add);
+                    });
+
+
+                    Optional<LinkedHashMap> optional = contextNodes.stream().filter(x -> "top".equals(x.get("label"))).findFirst();
+
+                    if (optional.isPresent()) {
+                        LinkedHashMap top = optional.get();
+
+                        List<LinkedHashMap> daughters = edges.stream().filter(x ->
+                                x.get("sourceVertexId").equals(top.get("id"))).collect(Collectors.toList());
+
+                        int veridicalNodes = 0;
+                        int averidicalNodes = 0;
+                        int antiveridicalNodes = 0;
+
+
+                        //Recursive search required
+                        for (LinkedHashMap daughter : daughters) {
+                            if (daughter.get("label").equals("veridical")) {
+
+                            } else if ((daughter.get("label").equals("averidical"))) {
+
+                            } else if (daughter.get("label").equals("antiveridical")) {
+
+                            }
+
+                        }
+
+
+                    }
+                }catch(Exception e)
+                {
+                    System.out.println("Semantic annotation failed.");
+                }
+
+
+
+
+
+
             }
 
             docs[i][1] = annotation;

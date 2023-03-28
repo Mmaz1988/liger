@@ -34,11 +34,19 @@
 
 #a T-REF %a & %a != 'undefined' & #a CHECK '-' ==> #a EVAL #b.
 
-//Aspect rules
-#a TNS-ASP #b PROG '+_' & #a SEM #c ==> #c VIEWPOINT #d & #d ASPECT 'impv' & #d A-RESTR 'ongoing'.
-#a TNS-ASP #b PROG '-_' & #a SEM #c ==> #c VIEWPOINT #d & #d ASPECT 'undefined'.
-#a TNS-ASP #b TENSE %x & #b PROG '-_' & #a SEM #c VIEWPOINT #d ASPECT 'undefined' ==> #d ASPECT 'prv' & #d A-RESTR 'bounded'.
-#a TNS-ASP #b PERF '+_' & #a SEM #c ==> #c ASP-TENSE #d & #d A-REF 'past'.
+//undefined FPS for transitive verbs
+#a TNS-ASP #b & #a PRED %a & #a SEM #z  ==>
+#z FPS #y & #y CHECK '+'.
+
+
+#a TNS-ASP #b & #a SEM #c ==> #c VIEWPOINT #e & #e ASPECT 'undefined'.
+
+
+//Perfect interpretation
+#a TNS-ASP #b PERF '+_' & #a SEM #c TEMP-REF #d T-REF 'pres' =+> #d T-REF 'past'.
+#a TNS-ASP #b PERF '+_' & #a SEM #c TEMP-REF #d T-REF 'pres' ==> #c ASP-TENSE #e & #e A-REF 'past'.
+
+
 
 //Tier 2 aspect example
 #a T-REF 'undefined' &
@@ -46,9 +54,6 @@
 #b VIEWPOINT #f ASPECT 'prv'
 ==>  #a T-REF 'future' & #a EVAL #d.
 
-//undefined FPS for transitive verbs
-#a TNS-ASP #b & #a PRED %a & #a SEM #z  ==>
-#z FPS #y & #y CHECK '+'.
 
 #a TNS-ASP #b & #a PRED %a & #a SEM #z & #a SUBJ #c & #a OBJ #d & strip(%a) == 'push' &
 #z FPS #e & #e CHECK '+' ==>
@@ -118,7 +123,7 @@
 
 //Existential quantifier
 #g ^(SPEC) #h SEM #i VAR #j & #i RESTR #k & #i SIT #s &
-#g DET #l PRED %l & %l == 'a' &
+#g DET #l PRED %l & %l == 'eine' &
 #h ^(%) #m SEM #n FPS #b & #n SIT #o
 ==> #i GLUE [/P_<e,<s,t>>.[/Q_<e,<s,t>>.[/s_s.Ex_e[P(x)(s) \& Q(x)(s)]]]] : ((#j -o (#s -o #k)) -o ((#i -o (#o -o #n)) -o (#o -o #n))).
 
@@ -213,9 +218,6 @@
 #a SEM #z FPS #f EVENT #y & #f CHECK '+' & #z SIT #x ==>
 #f GLUE [/R_<v,t>.[/x_e.[/y_e.[/s_s.[/e_v.(R(e) \& (partOf(e,s) \& (ag(e,x) \& pt(e,y))))]]]]] : ((#y -o #f) -o (#c -o (#e -o (#x -o (#y -o #f))))).
 
-
-
-
 //Verb template for comp verbs
 #a SUBJ #b SEM #c &
 #a SEM #j &
@@ -246,10 +248,10 @@
 ==> #b COND #k & #k GLUE [/P_t.[/Q_t.(P -> Q)]]  : (#h -o (#b -o #k)).
 
 //modification
-#g SEM #j SIT #l & #j FPS #o CHECK '+' &
+#g SEM #j SIT #l & #j FPS #o CHECK #p &
 #g ADJUNCT #e in_set #h OBJ #m SEM #a  & #h SEM #b SIT #c
 ==> #h GLUE [/P_<v,t>.[/Q_<s,<v,t>>.[/s_s.[/e_v.(P(e) \& Q(s)(e))]]]] : ((#p -o #b) -o ((#l -o (#p -o #o)) -o (#l -o (#p -o #o)))) &
- #e GLUE [/y_e.[/e_v.with(e,y)]] : (#a -o (#p -o #b)).
+ #e GLUE [/y_e.[/e_v.with(e,y)]] : (#a -o (#p-o #b)).
 
 //Closure
 #b FPS #c ==> #c CLOSURE #d.
@@ -306,8 +308,8 @@
 //Aspectual tense
 
 #a SEM #b TEMP-REF #c EVAL #d &
-#b ASP-TENSE #e A-REF 'past' &
- ==>
+#b ASP-TENSE #e A-REF 'past'
+==>
 #e A-REF' #f & #f GLUE [/t_s.[/t2_s.before(t,t2)]] :(#e -o (#c -o #e)) .
 
 //Present reference
@@ -350,8 +352,14 @@
 //aspectual tense closure
 #a SEM #b ASP-TENSE #c A-REF %a &
 #b TEMP-REF #e &
- %a != 'undefined'
+ %a == 'undefined'
 ==> #c GLUE [/T_<s,<s,t>>.[/P_<s,t>.[/s_s.Er_s[T(r)(s) \& P(r)]]]] : ((#c -o (#e -o #c)) -o ((#e -o #b) -o (#e -o #b))).
+
+//aspectual tense closure, replace undefined condition with specific condition because of unwanted ambiguity
+#a SEM #b ASP-TENSE #c A-REF 'past' &
+#b TEMP-REF #e &
+==> #c GLUE [/T_<s,<s,t>>.[/P_<s,t>.[/s_s.Er_s[T(r)(s) \& P(r)]]]] : ((#c -o (#e -o #c)) -o ((#e -o #b) -o (#e -o #b))).
+
 
 //unspec absolute closure
 #a SEM #b TEMP-REF #c T-REF %a & %a == 'undefined' & #c EVAL #d & #c CHECK '-'

@@ -35,6 +35,10 @@ public abstract class QueryExpression {
 
     private HashMap<Set<SolutionKey>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> solution = new HashMap<>();
 
+
+
+    private List<HashMap<Set<SolutionKey>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>>> conjoinedSolutions = new ArrayList<>();
+
     public QueryExpression()
     {
 
@@ -152,6 +156,14 @@ public abstract class QueryExpression {
         HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> merged = new HashMap<>();
 
         return null;
+    }
+
+    public List<HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>>> getConjoinedSolutions() {
+        return conjoinedSolutions;
+    }
+
+    public void setConjoinedSolutions(List<HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>>> conjoinedSolutions) {
+        this.conjoinedSolutions = conjoinedSolutions;
     }
 
 }

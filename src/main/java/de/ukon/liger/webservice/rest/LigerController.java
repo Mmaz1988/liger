@@ -184,6 +184,47 @@ public class LigerController {
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
+    @PostMapping(value = "/semantics_xle", produces = "application/json")
+    public LigerWebGraph semanticsRequestXLE(
+            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) throws IOException {
+
+        XLEoperator parser = new XLEoperator(new VariableHandler());
+
+        /*
+        char[] c = input.toCharArray();
+        c[0] = Character.toLowerCase(c[0]);
+        input = new String(c);
+         */
+
+        LinguisticStructure fs = parser.parseSingle(input);
+        LOGGER.fine(fs.constraints.toString());
+        //  System.out.println(fs.constraints);
+        List<LinguisticStructure> fsList = new ArrayList<>();
+        fsList.add(fs);
+
+        RuleParser rp = new RuleParser(fsList, Paths.get(PathVariables.testPath + "testRulesLFG9.txt"));
+        rp.addAnnotation2(fs);
+
+        try {
+            fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
+        } catch (Exception e) {
+            LOGGER.warning("Sorting annotation failed.");
+        }
+
+        GlueSemantics sem = new GlueSemantics();
+        String semantics = sem.calculateSemantics(fs);
+
+
+        //  return new TestGraph(nodeList,semantics);
+
+
+
+        return new LigerWebGraph(fs.constraints,fs.annotation,semantics);
+        //new Greeting(counter.incrementAndGet(),String.format(template,in));
+    }
+
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rule", produces = "application/json", consumes = "application/json")
     public LigerWebGraph applyRuleRequest(@RequestBody LigerRequest request) {
 
@@ -334,7 +375,7 @@ public class LigerController {
         argumentGKRs.add(1,conclusionGKR);
 */
 
-        Map<String,Object> output = SegmenterMain.coreAnnotationArgument(request, this.pipeline);
+        Map<String,Object> output = SegmenterMain.coreAnnotationArgument(request, this.pipeline, parser);
         return output;
     }
 
@@ -351,6 +392,16 @@ public class LigerController {
       LinkedHashMap o = ligerService.accessGKR(gkrData);
 
         return o;
+    }
+
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/raise_feature", produces = "application/json", consumes = "application/json")
+    public Map<String,Object> raiseFeature(@RequestBody LinkedHashMap request) throws IOException {
+
+
+
+        return null;
     }
 
 }
