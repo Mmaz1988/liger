@@ -22,15 +22,16 @@
 package de.ukon.liger.packing;
 
 
+import java.util.LinkedHashMap;
 import java.util.Objects;
 
 public class ChoiceVar {
 
     public String choiceID;
     //e.g. A,B,C,...
-    public String level;
+ //   public String level;
     //e.g. 1,2,3,...
-    public String choice;
+  //  public String choice;
     public Boolean propValue;
 
     public ChoiceVar(String choiceID)
@@ -62,4 +63,33 @@ public class ChoiceVar {
     {
         return choiceID;
     }
+
+
+    public LinkedHashMap<String,String> toJson() {
+        LinkedHashMap<String,String> out = new LinkedHashMap<>();
+        out.put("choiceID",this.choiceID);
+        if (this.propValue != null) {
+            out.put("propValue", this.propValue.toString());
+        } else
+        {
+            out.put("propValue","null");
+        }
+
+        return out;
+    }
+
+    public static ChoiceVar parseJson(LinkedHashMap<String,String> input)
+    {
+        ChoiceVar c = new ChoiceVar(input.get("choiceID"));
+        if (input.get("propValue") != "null") {
+            c.propValue = Boolean.parseBoolean(input.get("propValue"));
+        } else
+        {
+            c.propValue = null;
+        }
+
+       return c;
+    }
+
+
 }

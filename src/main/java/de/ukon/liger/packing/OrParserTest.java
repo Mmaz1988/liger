@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class OrParserTest {
 
-    String testfile = "C:\\Users\\charl\\IdeaProjects\\abstract-syntax-annotator-web\\resources\\testFiles\\testdirS13.pl";
+    String testfile = "/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/liger_resources/testFiles/testdirS13.pl";
 
 
 

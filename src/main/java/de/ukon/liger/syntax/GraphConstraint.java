@@ -23,10 +23,12 @@ package de.ukon.liger.syntax;
 
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.utilities.HelperMethods;
+import org.springframework.boot.actuate.endpoint.web.Link;
 
+import java.awt.*;
 import java.io.Serializable;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class GraphConstraint implements Serializable {
@@ -37,14 +39,14 @@ public class GraphConstraint implements Serializable {
     private Set<ChoiceVar> reading;
     private String nodeIdentifier;
     private String relationLabel;
-    private Object fsValue;
+    private String fsValue;
     private Boolean projection;
 
 
     public GraphConstraint()
     {this.projection = false;}
 
-    public GraphConstraint(Set<ChoiceVar> reading, Integer fsNode, String relationLabel, Object fsValue)
+    public GraphConstraint(Set<ChoiceVar> reading, Integer fsNode, String relationLabel, String fsValue)
     {
         this.reading = reading;
         this.nodeIdentifier = fsNode.toString();
@@ -54,7 +56,7 @@ public class GraphConstraint implements Serializable {
     //    this.pathNodes = new HashSet<>();
     }
 
-    public GraphConstraint(Set<ChoiceVar> reading, Integer fsNode, String relationLabel, Object fsValue, Boolean projection)
+    public GraphConstraint(Set<ChoiceVar> reading, Integer fsNode, String relationLabel, String fsValue, Boolean projection)
     {
         this.reading = reading;
         this.nodeIdentifier = fsNode.toString();
@@ -89,6 +91,53 @@ public class GraphConstraint implements Serializable {
         return sb.toString();
 
     }
+
+
+    public LinkedHashMap<String,Object> toJson()
+    {
+        LinkedHashMap<String,Object> constraintProperties = new LinkedHashMap<>();
+
+        List<LinkedHashMap> choices = new ArrayList<>();
+
+        for (ChoiceVar cv : this.getReading())
+        {
+            choices.add(cv.toJson());
+        }
+
+        constraintProperties.put("choiceVars",choices);
+        constraintProperties.put("sourceNode",this.nodeIdentifier);
+        constraintProperties.put("relationLabel",this.relationLabel);
+        constraintProperties.put("targetNode",this.fsValue);
+        constraintProperties.put("projection",this.projection.toString());
+
+
+
+        return constraintProperties;
+    }
+
+    public static GraphConstraint parseJson(LinkedHashMap<String,Object> input) {
+        GraphConstraint g = new GraphConstraint();
+        if (input.containsKey("projection")) {
+            g.projection = Boolean.parseBoolean((String) input.get("projection"));
+        }
+
+        Set<ChoiceVar> choiceVars = new HashSet<>();
+
+        if (input.containsKey("choiceVars")) {
+            for (LinkedHashMap cv : (List<LinkedHashMap>) input.get("choiceVars")) {
+                choiceVars.add(ChoiceVar.parseJson(cv));
+            }
+        }
+
+        g.setReading(choiceVars);
+
+        g.setFsNode((String) input.get("sourceNode"));
+        g.setRelationLabel((String) input.get("relationLabel"));
+        g.setFsValue((String) input.get("targetNode"));
+
+        return g;
+    }
+
 
     public String toPrologString(){
 
@@ -181,7 +230,7 @@ public class GraphConstraint implements Serializable {
         return fsValue;
     }
 
-    public void setFsValue(Object fsValue) {
+    public void setFsValue(String fsValue) {
         this.fsValue = fsValue;}
 
 

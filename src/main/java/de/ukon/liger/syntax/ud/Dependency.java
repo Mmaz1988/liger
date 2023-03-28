@@ -33,8 +33,6 @@ public class Dependency implements Serializable {
     private List<GraphConstraint> syntax;
     private String name;
     private LinkedHashMap<Integer,String> wordList;
-
-
     private String sentence;
 
     public Dependency(List<GraphConstraint> syntax, String name)
