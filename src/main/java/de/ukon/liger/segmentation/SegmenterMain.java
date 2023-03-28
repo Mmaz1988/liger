@@ -197,14 +197,44 @@ public class SegmenterMain {
                     //Adding semantic annotations
                     LinkedHashMap<String, Object> gkrData = loadGKR(sent.text(), "");
 
-                    LinkedHashMap<String, Object> rolesCtxAndPropsGraph = (LinkedHashMap<String, Object>) gkrData.get("rolesCtxAndPropertiesGraph");
-                    LinkedHashMap<String, Object> ctxGraph = (LinkedHashMap<String, Object>) gkrData.get("contextGraph");
+                //    LinkedHashMap<String, Object> rolesCtxAndPropsGraph = (LinkedHashMap<String, Object>) gkrData.get("rolesCtxAndPropertiesGraph");
+                  //  LinkedHashMap<String, Object> ctxGraph = (LinkedHashMap<String, Object>) gkrData.get("contextGraph");
+                    LinkedHashMap<String, Object> ctxConceptGraph = (LinkedHashMap<String, Object>) gkrData.get("rolesAndCtxGraph");
 
-                    List<LinkedHashMap> nodes = (List<LinkedHashMap>) ctxGraph.get("nodes");
-                    List<LinkedHashMap> edges = (List<LinkedHashMap>) ctxGraph.get("edges");
+                   // List<LinkedHashMap> ctxNodes = (List<LinkedHashMap>) ctxGraph.get("nodes");
+
+                    List<LinkedHashMap> nodes = (List<LinkedHashMap>) ctxConceptGraph.get("nodes");
+                    List<LinkedHashMap> edges = (List<LinkedHashMap>) ctxConceptGraph.get("edges");
 
 
-                    Optional<LinkedHashMap> optional = nodes.stream().filter(x -> "top".equals(x.get("label"))).findFirst();
+                    List<LinkedHashMap> contextEdges = edges.stream().filter(x -> x.get("label").equals("ctx_hd")).collect(Collectors.toList());
+
+                    List<LinkedHashMap> contextNodes = new ArrayList<>();
+
+                    /*
+                    for (LinkedHashMap edge : contextEdges)
+                    {
+                        for (LinkedHashMap node : nodes)
+                        {
+                            if (edge.get("sourceVertixId").equals(node.get("id")))
+                            {
+                                contextNodes.add(node);
+                                break;
+                            }
+                        }
+                    }
+
+                     */
+
+                    contextEdges.forEach(edge -> {
+                        nodes.stream()
+                                .filter(node -> edge.get("sourceVertexId").equals(node.get("id")))
+                                .findFirst()
+                                .ifPresent(contextNodes::add);
+                    });
+
+
+                    Optional<LinkedHashMap> optional = contextNodes.stream().filter(x -> "top".equals(x.get("label"))).findFirst();
 
                     if (optional.isPresent()) {
                         LinkedHashMap top = optional.get();
