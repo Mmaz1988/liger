@@ -110,7 +110,8 @@ public class UDoperator extends SyntaxOperator {
 
                 Set<ChoiceVar> context = new HashSet<>();
                 context.add(new ChoiceVar("1"));
-                cp.choices.add(context);
+                cp.choiceNodes = new ArrayList<>();
+                cp.choices = new HashSet<>();
 
                 GraphConstraint dc = new GraphConstraint(context, dep.gov().index(),
                         dep.reln().toString(),

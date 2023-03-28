@@ -375,7 +375,7 @@ public class LigerController {
         argumentGKRs.add(1,conclusionGKR);
 */
 
-        Map<String,Object> output = SegmenterMain.coreAnnotationArgument(request, this.pipeline);
+        Map<String,Object> output = SegmenterMain.coreAnnotationArgument(request, this.pipeline, parser);
         return output;
     }
 

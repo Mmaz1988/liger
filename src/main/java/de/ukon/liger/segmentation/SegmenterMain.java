@@ -2,6 +2,9 @@ package de.ukon.liger.segmentation;
 
 
 import de.ukon.liger.annotation.*;
+import de.ukon.liger.syntax.LinguisticStructure;
+import de.ukon.liger.syntax.SyntaxOperator;
+import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.utilities.HelperMethods;
 import de.ukon.liger.webservice.rest.LigerService;
 import de.ukon.liger.webservice.rest.dtos.GkrDTO;
@@ -21,6 +24,9 @@ import java.util.stream.Stream;
  * Takes a text as input and returns a segmented annotation structure
  */
 public class SegmenterMain {
+
+
+    private SyntaxOperator udOperator = new UDoperator();
 
 
     public static void main(String[] args){
@@ -111,7 +117,7 @@ public class SegmenterMain {
 
     }
 
-    public static Map<String,Object> coreAnnotationArgument(LigerArgument ligerArgument,  StanfordCoreNLP pipeline) {
+    public static Map<String,Object> coreAnnotationArgument(LigerArgument ligerArgument,  StanfordCoreNLP pipeline, UDoperator udOps) {
 
         //    CoreDocument doc = new CoreDocument(text);
 
@@ -189,6 +195,9 @@ public class SegmenterMain {
                 s.annotations.put("named_entities", sent.entityMentions().stream().
                         map(object -> Objects.toString(object, null)).
                         collect(Collectors.joining(",")));
+
+
+                s.annotations.put("ud_parse",  udOps.parseSingle(sent.text()).toJson());
 
                 //  words++;
                 sents++;
