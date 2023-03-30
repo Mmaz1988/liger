@@ -1,6 +1,0 @@
--replace(true);
-
-//future tense with 'will'
-
-#g aux #h LEMMA be & #f root #g LEMMA go & #g xcomp #d POS VB ==> #d TENSE 'fut'.
-

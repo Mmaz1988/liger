@@ -114,7 +114,7 @@ public class LigerController {
         List<LinguisticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
-        RuleParser rp = new RuleParser(fsList, Paths.get(PathVariables.testPath + "testRulesUD4c.txt"));
+        RuleParser rp = new RuleParser(fsList, Paths.get(PathVariables.testPath + "testRulesUD4b.txt"));
         rp.addAnnotation2(fs);
 
         try {
