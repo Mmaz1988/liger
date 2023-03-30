@@ -238,14 +238,11 @@ public class LigerController {
         List<LinguisticStructure> fsList = new ArrayList<>();
         fsList.add(fs);
 
-        RuleParser rp = new RuleParser(fsList, request.ruleString,true);
+        RuleParser rp = new RuleParser(fsList, request.ruleString);
         rp.addAnnotation2(fs);
 
-        GlueSemantics sem = new GlueSemantics();
-        String semantics = sem.calculateSemantics(fs);
 
-
-    return new LigerWebGraph(fs.constraints,fs.annotation,semantics);
+    return new LigerWebGraph(fs.constraints,fs.annotation);
 
     }
 
