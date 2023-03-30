@@ -46,6 +46,10 @@ public class RuleParser {
 
     private List<LinguisticStructure> fsList;
     private List<Rule> rules = new ArrayList<Rule>();
+
+
+
+    private List<String> appliedRules = new ArrayList<>();
     private static Pattern graphPattern = Pattern.compile("(#.+?)\\s+(\\S+)\\s+(.+)");
     private Boolean replace;
     private Set<String> usedKeys = new HashSet<>();
@@ -457,6 +461,7 @@ public class RuleParser {
                 LOGGER.debug("\n" + added);
 
                 LOGGER.debug("\t" + "Rule has been applied!");
+                this.appliedRules.add(r.toString());
 
             }
         }
@@ -742,6 +747,14 @@ public class RuleParser {
             out.add(new ChoiceVar("1"));
             return out;
         }
+    }
+
+    public List<String> getAppliedRules() {
+        return appliedRules;
+    }
+
+    public void setAppliedRules(List<String> appliedRules) {
+        this.appliedRules = appliedRules;
     }
 }
 
