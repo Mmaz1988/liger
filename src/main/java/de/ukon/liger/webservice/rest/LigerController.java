@@ -226,7 +226,7 @@ public class LigerController {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rule", produces = "application/json", consumes = "application/json")
-    public LigerWebGraph applyRuleRequest(@RequestBody LigerRequest request) {
+    public LigerRuleAnnotation applyRuleRequest(@RequestBody LigerRequest request) {
 
     //    System.out.println(request.sentence);
      //   System.out.println(request.ruleString);
@@ -241,9 +241,12 @@ public class LigerController {
         RuleParser rp = new RuleParser(fsList, request.ruleString);
         rp.addAnnotation2(fs);
 
+        GlueSemantics sem = new GlueSemantics();
+        String semantics = sem.calculateSemantics(fs);
 
-    return new LigerWebGraph(fs.constraints,fs.annotation);
+        LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation,semantics);
 
+    return new LigerRuleAnnotation(lg,rp.getAppliedRules(),sem.returnMeaningConstructors(fs));
     }
 
 

@@ -136,8 +136,8 @@ public class Rule {
 
     @Override
     public String toString() {
-        return   left +  "==>" +
-                 right;
+        return   left +  " ==> " +
+                 right + ".";
     }
 
     public boolean isRewrite() {
