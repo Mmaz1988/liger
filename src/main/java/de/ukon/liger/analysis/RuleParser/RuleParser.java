@@ -273,6 +273,8 @@ public class RuleParser {
                                                     LOGGER.debug("Rewritten value: " + c.getFsValue() + " into: " + newValue);
                                                     c.setFsValue(newValue);
                                                     replaceValue = true;
+
+                                                    appliedRules.add(r.toString());
                                                 }
                                             }
                                             }

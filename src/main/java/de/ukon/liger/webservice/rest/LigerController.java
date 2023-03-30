@@ -241,9 +241,12 @@ public class LigerController {
         RuleParser rp = new RuleParser(fsList, request.ruleString);
         rp.addAnnotation2(fs);
 
-        LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation);
+        GlueSemantics sem = new GlueSemantics();
+        String semantics = sem.calculateSemantics(fs);
 
-    return new LigerRuleAnnotation(lg,rp.getAppliedRules());
+        LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation,semantics);
+
+    return new LigerRuleAnnotation(lg,rp.getAppliedRules(),sem.returnMeaningConstructors(fs));
     }
 
 
