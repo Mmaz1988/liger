@@ -58,6 +58,11 @@ public class RuleParser {
     private final static Logger LOGGER = LoggerFactory.getLogger(RuleParser.class);
 
 
+    public RuleParser(String input) {
+        this.replace = false;
+        this.rules = parseRuleFile(input);
+    }
+
     public RuleParser(List<LinguisticStructure> fsList) {
         this.fsList = fsList;
         this.replace = false;
@@ -94,6 +99,23 @@ public class RuleParser {
 
     }
 
+    public RuleParser(Path path) {
+        this.replace = false;
+
+        String fileString = null;
+        try {
+            fileString = new String(Files.readAllBytes(path));
+            this.rules = parseRuleFile(fileString);
+        }catch(Exception e)
+        {
+            LOGGER.error("Failed to load rule file");
+            this.rules = new ArrayList<>();
+            //     e.printStackTrace();
+        }
+
+
+    }
+
     public RuleParser(File path) {
         this.replace = false;
 
@@ -109,13 +131,7 @@ public class RuleParser {
 
     }
 
-    public void addAnnotation()
-    {
-        for (LinguisticStructure fs : this.fsList)
-        {
-            addAnnotation2(fs);
-        }
-    }
+
 
     public void addAnnotation2(LinguisticStructure fs) {
         resetRuleParser();
@@ -230,14 +246,16 @@ public class RuleParser {
                                         } else {
 
                                             String newValue = graphMatcher.group(3);
+                                            String newLabel = graphMatcher.group(2);
                                             if (replace) {
-                                                newValue = replaceVars(qpr, solutionKey, graphMatcher.group(3));
+                                                newValue = replaceVars(qpr, solutionKey, newValue);
+                                                newLabel = replaceVars(qpr, solutionKey, newLabel);
                                             }
 
 
                                             boolean replaceValue = false;
                                             for (GraphConstraint c : fs.annotation) {
-                                                if (c.getFsNode().equals(key2) && c.getRelationLabel().equals(graphMatcher.group(2)) &&
+                                                if (c.getFsNode().equals(key2) && c.getRelationLabel().equals(newLabel) &&
                                                         c.getReading().equals(context)) {
                                                     if (r.isBranch()) {
 
@@ -255,7 +273,7 @@ public class RuleParser {
                                                         GraphConstraint c1 = new GraphConstraint();
                                                         c1.setReading(branchSet);
                                                         c1.setFsNode(key2);
-                                                        c1.setRelationLabel(graphMatcher.group(2));
+                                                        c1.setRelationLabel(newLabel);
                                                         c1.setFsValue(newValue);
 
                                                         context = branchSet;
@@ -270,8 +288,10 @@ public class RuleParser {
                                                         replaceValue = true;
 
                                                     } else {
+                                                        //TODO log info about relation label
                                                     LOGGER.debug("Rewritten value: " + c.getFsValue() + " into: " + newValue);
                                                     c.setFsValue(newValue);
+                                                    c.setRelationLabel(newLabel);
                                                     replaceValue = true;
 
                                                     appliedRules.add(r.toString());
@@ -285,7 +305,7 @@ public class RuleParser {
                                                 GraphConstraint c = new GraphConstraint();
                                                 c.setReading(context);
                                                 c.setFsNode(key2);
-                                                c.setRelationLabel(graphMatcher.group(2));
+                                                c.setRelationLabel(newLabel);
                                                 c.setFsValue(newValue);
 
 
@@ -359,6 +379,7 @@ public class RuleParser {
 
                                             if (replace) {
                                                 c.setFsValue(replaceVars(qpr, solutionKey, (String) c.getFsValue()));
+                                                c.setRelationLabel(replaceVars(qpr,solutionKey,c.getRelationLabel()));
                                             }
 
                                             qpr.result.get(solutionKey).get(nodeMatcher.group(1)).get(key2).put(key, c);

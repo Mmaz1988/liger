@@ -1,11 +1,14 @@
 package de.ukon.liger.segmentation;
 
 
+import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.annotation.*;
+import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
 import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.utilities.HelperMethods;
+import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.webservice.rest.LigerService;
 import de.ukon.liger.webservice.rest.dtos.GkrDTO;
 import de.ukon.liger.webservice.rest.dtos.LigerArgument;
@@ -15,6 +18,7 @@ import edu.stanford.nlp.pipeline.CoreSentence;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import org.springframework.boot.actuate.endpoint.web.Link;
 
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -24,7 +28,6 @@ import java.util.stream.Stream;
  * Takes a text as input and returns a segmented annotation structure
  */
 public class SegmenterMain {
-
 
     private SyntaxOperator udOperator = new UDoperator();
 
@@ -196,45 +199,34 @@ public class SegmenterMain {
                         map(object -> Objects.toString(object, null)).
                         collect(Collectors.joining(",")));
 
-
-                s.annotations.put("ud_parse",  udOps.parseSingle(sent.text()).toJson());
-
                 //  words++;
-                sents++;
 
                 try {
                     //Adding semantic annotations
                     LinkedHashMap<String, Object> gkrData = loadGKR(sent.text(), "");
 
                 //    LinkedHashMap<String, Object> rolesCtxAndPropsGraph = (LinkedHashMap<String, Object>) gkrData.get("rolesCtxAndPropertiesGraph");
-                  //  LinkedHashMap<String, Object> ctxGraph = (LinkedHashMap<String, Object>) gkrData.get("contextGraph");
-                    LinkedHashMap<String, Object> ctxConceptGraph = (LinkedHashMap<String, Object>) gkrData.get("rolesAndCtxGraph");
+                    LinkedHashMap<String, Object> ctxGraph = (LinkedHashMap<String, Object>) gkrData.get("contextGraph");
+                  //  LinkedHashMap<String, Object> ctxConceptGraph = (LinkedHashMap<String, Object>) gkrData.get("rolesAndCtxGraph");
 
                    // List<LinkedHashMap> ctxNodes = (List<LinkedHashMap>) ctxGraph.get("nodes");
 
-                    List<LinkedHashMap> nodes = (List<LinkedHashMap>) ctxConceptGraph.get("nodes");
-                    List<LinkedHashMap> edges = (List<LinkedHashMap>) ctxConceptGraph.get("edges");
+                    List<LinkedHashMap> edges = (List<LinkedHashMap>) ctxGraph.get("edges");
 
 
-                    List<LinkedHashMap> contextEdges = edges.stream().filter(x -> x.get("label").equals("ctx_hd")).collect(Collectors.toList());
+                   // int contextHeads = edges.stream().filter(x -> x.get("label").equals("ctx_hd")).collect(Collectors.toList()).size();
+                    int veridicalHeads = edges.stream().filter(x -> x.get("label").equals("veridical")).collect(Collectors.toList()).size() + 1;
+                    int averidicalHeads = edges.stream().filter(x -> x.get("label").equals("averidical")).collect(Collectors.toList()).size();
+                    int antiveridicalHeads = edges.stream().filter(x -> x.get("label").equals("antiveridical")).collect(Collectors.toList()).size();
 
-                    List<LinkedHashMap> contextNodes = new ArrayList<>();
+
+                    s.annotations.put("veridical_ratio", (float) veridicalHeads/edges.size());
+                    s.annotations.put("averidical_ratio", (float) averidicalHeads / edges.size());
+                    s.annotations.put("antiveridical_ratio", (float) antiveridicalHeads / edges.size());
+
+
 
                     /*
-                    for (LinkedHashMap edge : contextEdges)
-                    {
-                        for (LinkedHashMap node : nodes)
-                        {
-                            if (edge.get("sourceVertixId").equals(node.get("id")))
-                            {
-                                contextNodes.add(node);
-                                break;
-                            }
-                        }
-                    }
-
-                     */
-
                     contextEdges.forEach(edge -> {
                         nodes.stream()
                                 .filter(node -> edge.get("sourceVertexId").equals(node.get("id")))
@@ -242,6 +234,11 @@ public class SegmenterMain {
                                 .ifPresent(contextNodes::add);
                     });
 
+
+                     */
+
+
+                    /*
 
                     Optional<LinkedHashMap> optional = contextNodes.stream().filter(x -> "top".equals(x.get("label"))).findFirst();
 
@@ -251,9 +248,7 @@ public class SegmenterMain {
                         List<LinkedHashMap> daughters = edges.stream().filter(x ->
                                 x.get("sourceVertexId").equals(top.get("id"))).collect(Collectors.toList());
 
-                        int veridicalNodes = 0;
-                        int averidicalNodes = 0;
-                        int antiveridicalNodes = 0;
+
 
 
                         //Recursive search required
@@ -269,17 +264,97 @@ public class SegmenterMain {
                         }
 
 
-                    }
+                     */
+
                 }catch(Exception e)
                 {
                     System.out.println("Semantic annotation failed.");
+                }
+
+                LinguisticStructure parse = null;
+
+                try {
+
+                    UDoperator udParser = new UDoperator();
+
+                    parse = udParser.parseSingle(sent.text());
+
+                    List<LinguisticStructure> fsList = new ArrayList<>();
+                    fsList.add(parse);
+
+                    RuleParser rp = new RuleParser(Paths.get(PathVariables.testPath + "mpgFeatureRules.txt"));
+                    rp.addAnnotation2(parse);
+
+                    RuleParser rp2 = new RuleParser(Paths.get(PathVariables.testPath + "testRulesUD4b.txt"));
+                    rp2.addAnnotation2(parse);
+
+                    List<GraphConstraint> modals = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("MODAL")).collect(Collectors.toList());
+                    s.annotations.put("modals", String.join(",", modals.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+
+                    List<GraphConstraint> propAtts = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("prop-attitude")).collect(Collectors.toList());
+                    s.annotations.put("prop-atts", String.join(",", propAtts.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+                    
+                    List<GraphConstraint> embeddingVerbs = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("embedding-verb")).collect(Collectors.toList());
+                    s.annotations.put("embedding-verbs", String.join(",", embeddingVerbs.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+
+                    List<GraphConstraint> nounMods = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("noun-advmod")).collect(Collectors.toList());
+                    s.annotations.put("noun-mods", String.join(",", nounMods.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+
+                    List<GraphConstraint> verbMods = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("verb-advmod")).collect(Collectors.toList());
+                    s.annotations.put("verb-mods", String.join(",", verbMods.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+
+                    List<GraphConstraint> tamConstraint = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("TAM")).collect(Collectors.toList());
+
+                    Set<Object> tamNodes = tamConstraint.stream().map(GraphConstraint::getFsValue).collect(Collectors.toSet());
+
+                    List<GraphConstraint> tenseAnnos = new ArrayList<>();
+                            for (Object node : tamNodes) {
+                               tenseAnnos.addAll(parse.annotation.stream().filter(x -> x.getFsNode().equals(node.toString()) && x.getRelationLabel().equals("TENSE")).collect(Collectors.toList()));
+                            }
+                    s.annotations.put("tense-markers", String.join(",", tenseAnnos.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+
+                    List<GraphConstraint> aspectAnnos = new ArrayList<>();
+                    for (Object node : tamNodes) {
+                        aspectAnnos.addAll(parse.annotation.stream().filter(x -> x.getFsNode().equals(node.toString()) && x.getRelationLabel().equals("ASPECT")).collect(Collectors.toList()));
+                    }
+                    s.annotations.put("aspect-markers", String.join(",", aspectAnnos.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+
+                            /*
+                    s.annotations.put("named_entities", sent.entityMentions().stream().
+                            map(object -> Objects.toString(object, null)).
+                            collect(Collectors.joining(",")));
+                             */
+
+                    /*
+                    List<Object> annotatedWords = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("word_annotation")).map(GraphConstraint::getFsValue).collect(Collectors.toList());
+
+                    List<GraphConstraint> allAnnotations = new ArrayList<>();
+
+                    for (Object node : annotatedWords)
+                    {
+                     List<GraphConstraint> las = parse.annotation.stream().filter(x -> x.getFsNode().equals(node.toString())).collect(Collectors.toList());
+                     allAnnotations.addAll(las);
+                    }
+
+                     */
+
+
+
+                    s.annotations.put("ud_parse",  parse.toJson());
+
+
+
+                }
+                catch (Exception e)
+                {
+                    System.out.println("Rewrite annotation failed.");
                 }
 
 
 
 
 
-
+                sents++;
             }
 
             docs[i][1] = annotation;
