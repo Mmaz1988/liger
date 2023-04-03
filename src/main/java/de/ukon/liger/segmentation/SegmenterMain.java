@@ -288,13 +288,14 @@ public class SegmenterMain {
                     RuleParser rp2 = new RuleParser(Paths.get(PathVariables.testPath + "testRulesUD4b.txt"));
                     rp2.addAnnotation2(parse);
 
+                    List<GraphConstraint> modals = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("MODAL")).collect(Collectors.toList());
+                    s.annotations.put("modals", String.join(",", modals.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+
                     List<GraphConstraint> propAtts = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("prop-attitude")).collect(Collectors.toList());
                     s.annotations.put("prop-atts", String.join(",", propAtts.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
-
-
-
+                    
                     List<GraphConstraint> embeddingVerbs = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("embedding-verb")).collect(Collectors.toList());
-                    s.annotations.put("embeddingVerbs", String.join(",", embeddingVerbs.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+                    s.annotations.put("embedding-verbs", String.join(",", embeddingVerbs.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
 
                     List<GraphConstraint> nounMods = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("noun-advmod")).collect(Collectors.toList());
                     s.annotations.put("noun-mods", String.join(",", nounMods.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
@@ -310,13 +311,13 @@ public class SegmenterMain {
                             for (Object node : tamNodes) {
                                tenseAnnos.addAll(parse.annotation.stream().filter(x -> x.getFsNode().equals(node.toString()) && x.getRelationLabel().equals("TENSE")).collect(Collectors.toList()));
                             }
-                    s.annotations.put("tense_markers", String.join(",", tenseAnnos.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+                    s.annotations.put("tense-markers", String.join(",", tenseAnnos.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
 
                     List<GraphConstraint> aspectAnnos = new ArrayList<>();
                     for (Object node : tamNodes) {
                         aspectAnnos.addAll(parse.annotation.stream().filter(x -> x.getFsNode().equals(node.toString()) && x.getRelationLabel().equals("ASPECT")).collect(Collectors.toList()));
                     }
-                    s.annotations.put("aspect_markers", String.join(",", aspectAnnos.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+                    s.annotations.put("aspect-markers", String.join(",", aspectAnnos.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
 
                             /*
                     s.annotations.put("named_entities", sent.entityMentions().stream().
