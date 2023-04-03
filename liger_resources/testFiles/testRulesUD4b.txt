@@ -1,4 +1,4 @@
--replace(true);
+--replace(true);
 
 //Finite forms
 #a POS VBZ & #a TOKEN %a ==> #a M-STR #b & #b TENSE 'pres' & #b HEAD %a.

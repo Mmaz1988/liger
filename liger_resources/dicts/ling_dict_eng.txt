@@ -17,6 +17,15 @@ suggest, recommend, will
 
 //distinguish xcomp modals vs. comp modals?
 
+>ud-cats
+***
+#noun
+NN, NNS, NNP, NNPS, PRP
+
+***
+#verb
+VB, VBD, VBG, VBN, VBP, VBZ, JJR, JJS
+
 >xcomp-veridicality
 ***
 #veridical
@@ -89,4 +98,5 @@ must, have
 #EPISTEMIC
 #must
 #should
+
 
