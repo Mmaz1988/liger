@@ -5,7 +5,7 @@
 #a POS VBP & #a TOKEN %a ==> #a M-STR #b & #b FIN '+' & #b TENSE 'pres' & #b HEAD %a.
 #a POS VBD & #a TOKEN %a ==> #a M-STR #b & #b FIN '+' & #b TENSE 'past' & #b HEAD %a.
 #a POS MD & #a TOKEN %a ==> #a M-STR #b & #b FIN '+' & #b TENSE 'lex(%a,tense)' & #b HEAD %a.
-
+#a POS JJ & #a TOKEN %a & #a cop #b TOKEN %b ==> #a M-STR #c & #c HEAD %b %a.
 
 //Non-finite forms
 #a POS VBG & #a TOKEN %a ==> #a M-STR #b & #b FIN '-' & #b HEAD %a & #b FORM 'prpart'.
