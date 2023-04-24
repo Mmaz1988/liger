@@ -19,7 +19,7 @@
  * "
  */
 
-package de.ukon.liger.syntax.xle.Prolog2Java;
+package de.ukon.liger.syntax.xle.prolog2java;
 
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.utilities.HelperMethods;

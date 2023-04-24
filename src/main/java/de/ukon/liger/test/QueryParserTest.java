@@ -54,7 +54,7 @@ public class QueryParserTest {
 
     public LinkedHashMap<String, LinguisticStructure> loadFs(int i)
     {
-        PathVariables.workingDirectory = "/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/liger_resources";
+        PathVariables.workingDirectory = "C:\\Users\\Celeste\\IdeaProjects\\LiGER\\liger_resources";
         PathVariables.initializePathVariables();
         testFolderPath = PathVariables.testPath;
         VariableHandler vh = new VariableHandler();

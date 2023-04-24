@@ -19,8 +19,11 @@
  * "
  */
 
-package de.ukon.liger.syntax.xle.FstructureElements;
+package de.ukon.liger.syntax.xle.avp_elements;
 
-public class FsMatrix {
-    public PredAVP pred;
+public class SubsumeRel extends AttributeValuePair {
+    public SubsumeRel(String value) {
+        this.attribute = "subsume";
+        this.value = value;
+    }
 }

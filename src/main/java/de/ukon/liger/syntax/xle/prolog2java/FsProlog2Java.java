@@ -19,13 +19,12 @@
  * "
  */
 
-package de.ukon.liger.syntax.xle.Prolog2Java;
+package de.ukon.liger.syntax.xle.prolog2java;
 
-import de.ukon.liger.main.DbaMain;
 import de.ukon.liger.packing.ChoiceSpace;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
-import de.ukon.liger.syntax.xle.FstructureElements.*;
+import de.ukon.liger.syntax.xle.avp_elements.*;
 import de.ukon.liger.utilities.HelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +50,22 @@ public class FsProlog2Java {
     public static Pattern projections = Pattern.compile("proj\\(var\\((\\d+)\\),('.*')\\),var\\((\\d+)\\)");
     public static Pattern terminals = Pattern.compile("attr\\(var\\((\\d+)\\),('.*')\\),('.*')");
   //  public static Pattern projections = Pattern.compile("proj\\(var\\((\\d+)\\),('.*')\\),('.*')");
+
+    //C-structure matcher
+    //matches trees, projections (phi), and c-projections
+    /*
+    cf(1,subtree(1764,'ROOT',1763,293)),
+	cf(1,phi(1764,var(0))),
+	cf(1,cproj(1764,var(23))),
+     */
     public static Pattern cstructure = Pattern.compile("(semform_data|surfaceform)\\((.+?),(.+?),(.+?),(.+?)\\)");
+
+    public static Pattern subtreePattern = Pattern.compile("cf\\((.+?),subtree\\((.+?),(.+?),(.+?),(.+?)\\)\\)");
+    public static Pattern terminalPattern = Pattern.compile("cf\\((.+?),terminal\\((.+?),(.+?),(.+?)\\)\\)");
+    public static Pattern phiPattern = Pattern.compile("cf\\((.+?),phi\\((.+?),(var\\(\\d+\\))\\)\\)");
+    public static Pattern cprojPattern = Pattern.compile("cf\\((.+?),cproj\\((.+?),(var\\(\\d+\\))\\)\\)");
+    public static Pattern fspan = Pattern.compile("cf\\((.+?),fspan\\((.+),(.+),(.+)\\)\\)");
+
     private final static Logger LOGGER = LoggerFactory.getLogger(FsProlog2Java.class);
 
     public ReadFsProlog In;
@@ -66,7 +80,7 @@ public class FsProlog2Java {
     public static  LinkedHashMap<Set<ChoiceVar>,LinkedHashMap<Integer, List<AttributeValuePair>>> fs2Hash(ReadFsProlog plFs) {
         // This method creates a hashmap from prolog input
 
-        List<String> constraints = plFs.prolog;
+        List<String> constraints = plFs.fstr;
         LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash =
                 new LinkedHashMap<>();
 
@@ -82,7 +96,6 @@ public class FsProlog2Java {
             Matcher nonTerminalMatcher = nonTerminals.matcher(constraint);
             Matcher projectionMatcher = projections.matcher(constraint);
             Matcher terminalsMatcher = terminals.matcher(constraint);
-            Matcher cstructureMatcher = cstructure.matcher(constraint);
             Matcher subsumeMatcher = subsume.matcher(constraint);
 
             Set<ChoiceVar> context = null;
@@ -201,23 +214,25 @@ public class FsProlog2Java {
                 continue;
             }
 
-            if (cstructureMatcher.find())
-            {
-                if (!fsHash.get(context).containsKey(-1))
-                {
-                    fsHash.get(context).put(-1,new ArrayList<AttributeValuePair>());
-                }
-                else {
-                    List<AttributeValuePair> values = fsHash.get(context).get(-1);
-                    CsCorrespondence csc = new CsCorrespondence(cstructureMatcher.group(1),
-                            Arrays.asList(cstructureMatcher.group(2),
-                                            cstructureMatcher.group(3),
-                                            cstructureMatcher.group(4),
-                                            cstructureMatcher.group(5)));
-                    values.add(csc);
-                }
-            }
+        }
 
+        /*
+         public static Pattern subtreePattern = Pattern.compile("cf\\((.+?),subtree\\((.+?),(.+?),(.+?),(.+?)\\)\\)");
+    public static Pattern terminalPattern = Pattern.compile("cf\\((.+?),terminal\\((.+?),(.+?),(.+?)\\)\\)");
+    public static Pattern phiPattern = Pattern.compile("cf\\((.+?),phi\\((.+?),(var\\(\\d+\\))\\)\\)");
+    public static Pattern cprojPattern = Pattern.compile("cf\\((.+?),cproj\\((.+?),(var\\(\\d+\\))\\)\\)");
+    public static Pattern fspan
+         */
+
+
+
+        for (String cstrConstraint : plFs.cstr)
+        {
+        Matcher subTreeMatcher = subtreePattern.matcher(cstrConstraint);
+        Matcher terminalMatcher = terminalPattern.matcher(cstrConstraint);
+        Matcher phiMatcher = phiPattern.matcher(cstrConstraint);
+        Matcher cprojMatcher = cprojPattern.matcher(cstrConstraint);
+        Matcher fspanMatcher = fspan.matcher(cstrConstraint);
 
         }
 

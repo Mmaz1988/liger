@@ -19,14 +19,15 @@
  * "
  */
 
-package de.ukon.liger.syntax.xle.FstructureElements;
+package de.ukon.liger.syntax.xle.avp_elements;
 
-public class NonTerminalAVP extends AttributeValuePair {
-    public NonTerminalAVP(String attr, String val)
+import java.util.List;
+
+public class CsCorrespondence extends AttributeValuePair {
+
+    public CsCorrespondence(String attribute, List<String> value)
     {
-        this.attribute = attr;
-        this.value = val;
+        this.attribute = attribute;
+        this.value = value.toString();
     }
 }
-
-

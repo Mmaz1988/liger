@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.Query;
+import javax.management.QueryExp;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -349,7 +350,30 @@ public class GraphParser {
 
             for (int i = 0; i < parseStructure.size(); i++)
             {
+
+                //Instantiate previous, current and next element if possible
                 QueryExpression current = parseStructure.get(i);
+                QueryExpression previous = null;
+                if (i > 0){
+                    previous = parseStructure.get(i-1);
+                }
+                QueryExpression next = null;
+
+                if (i < parseStructure.size() - 1)
+                {
+                    next = parseStructure.get(i+1);
+                }
+
+
+                //the next element is an equality move up one index to calculate equality from previous and next value
+               // if ((previous == null || previous instanceof Conjunction ) && next != null)
+
+                    if (next instanceof Equality)
+                    {
+                       i++;
+                       continue;
+                    }
+
 
 
                 if (current instanceof Attribute)

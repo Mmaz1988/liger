@@ -1,13 +1,10 @@
 package de.ukon.liger.syntax;
 
-import de.ukon.liger.packing.ChoiceSpace;
-import de.ukon.liger.syntax.xle.Prolog2Java.ReadFsProlog;
 import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

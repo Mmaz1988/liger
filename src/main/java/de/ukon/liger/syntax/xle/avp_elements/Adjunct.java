@@ -19,15 +19,13 @@
  * "
  */
 
-package de.ukon.liger.syntax.xle.FstructureElements;
+package de.ukon.liger.syntax.xle.avp_elements;
 
-import java.util.List;
 
-public class CsCorrespondence extends AttributeValuePair {
-
-    public CsCorrespondence(String attribute, List<String> value)
+public class Adjunct extends AttributeValuePair {
+    public Adjunct(String value)
     {
-        this.attribute = attribute;
-        this.value = value.toString();
+        this.attribute = "'ADJUNCT'";
+        this.value = value;
     }
 }

@@ -19,16 +19,8 @@
  * "
  */
 
-package de.ukon.liger.syntax.xle.FstructureElements;
+package de.ukon.liger.syntax.xle.avp_elements;
 
-
-
-
-public class AdjunctSet extends AttributeValuePair {
-
-    public AdjunctSet(String value){
-        this.attribute = "in_set";
-        this.value = value;
-    }
-
+public class FsMatrix {
+    public PredAVP pred;
 }

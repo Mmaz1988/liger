@@ -19,7 +19,7 @@
  * "
  */
 
-package de.ukon.liger.syntax.xle.FstructureElements;
+package de.ukon.liger.syntax.xle.avp_elements;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
