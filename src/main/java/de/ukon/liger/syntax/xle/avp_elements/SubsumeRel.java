@@ -22,8 +22,9 @@
 package de.ukon.liger.syntax.xle.avp_elements;
 
 public class SubsumeRel extends AttributeValuePair {
-    public SubsumeRel(String value) {
+    public SubsumeRel(String value, String projection) {
         this.attribute = "subsume";
         this.value = value;
+        this.projection = projection;
     }
 }

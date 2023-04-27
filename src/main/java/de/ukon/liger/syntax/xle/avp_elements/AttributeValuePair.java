@@ -28,13 +28,14 @@ public class AttributeValuePair implements Serializable {
 
     public String attribute;
     public String value;
-
+    public String projection;
 
     public AttributeValuePair()
     {
         super();
         this.attribute = "'null'";
         this.value = null;
+        this.projection =null;
     }
 
 

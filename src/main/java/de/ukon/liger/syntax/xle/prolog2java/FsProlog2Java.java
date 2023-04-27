@@ -28,6 +28,7 @@ import de.ukon.liger.syntax.xle.avp_elements.*;
 import de.ukon.liger.utilities.HelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.integration.IntegrationGraphEndpoint;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -58,13 +59,14 @@ public class FsProlog2Java {
 	cf(1,phi(1764,var(0))),
 	cf(1,cproj(1764,var(23))),
      */
-    public static Pattern cstructure = Pattern.compile("(semform_data|surfaceform)\\((.+?),(.+?),(.+?),(.+?)\\)");
+    public static Pattern semForm = Pattern.compile("cf\\((.+?),semform_data\\((.+?),(.+?),(.+?),(.+?)\\)");
+    public static Pattern surfaceForm = Pattern.compile("cf\\((.+?),surfaceform\\((.+?),(.+?),(.+?),(.+?)\\)");
 
     public static Pattern subtreePattern = Pattern.compile("cf\\((.+?),subtree\\((.+?),(.+?),(.+?),(.+?)\\)\\)");
-    public static Pattern terminalPattern = Pattern.compile("cf\\((.+?),terminal\\((.+?),(.+?),(.+?)\\)\\)");
-    public static Pattern phiPattern = Pattern.compile("cf\\((.+?),phi\\((.+?),(var\\(\\d+\\))\\)\\)");
+    public static Pattern terminalPattern = Pattern.compile("cf\\((.+?),terminal\\((.+?),(.+?),\\[(.+?)\\]\\)\\)");
+    public static Pattern phiPattern = Pattern.compile("cf\\((.+?),phi\\((.+?),var\\((\\d+)\\)\\)\\)");
     public static Pattern cprojPattern = Pattern.compile("cf\\((.+?),cproj\\((.+?),(var\\(\\d+\\))\\)\\)");
-    public static Pattern fspan = Pattern.compile("cf\\((.+?),fspan\\((.+),(.+),(.+)\\)\\)");
+    public static Pattern fspan = Pattern.compile("cf\\((.+?),fspan\\(var\\((.+)\\),(.+),(.+)\\)\\)");
 
     private final static Logger LOGGER = LoggerFactory.getLogger(FsProlog2Java.class);
 
@@ -137,7 +139,7 @@ public class FsProlog2Java {
 
                 List<AttributeValuePair> values =
                         fsHash.get(context).get(Integer.parseInt(adjunctMatcher.group(1)));
-                Adjunct avp = new Adjunct(adjunctMatcher.group(2));
+                Adjunct avp = new Adjunct(adjunctMatcher.group(2),"f");
                 values.add(avp);
                 continue;
             }
@@ -146,7 +148,7 @@ public class FsProlog2Java {
             if (nonTerminalMatcher.find()) {
                 Integer key = Integer.parseInt(nonTerminalMatcher.group(1));
                 List<AttributeValuePair> values = fsHash.get(context).get(key);
-                NonTerminalAVP avp = new NonTerminalAVP(nonTerminalMatcher.group(2), nonTerminalMatcher.group(3));
+                NonTerminalAVP avp = new NonTerminalAVP(nonTerminalMatcher.group(2), nonTerminalMatcher.group(3),"f");
                 values.add(avp);
                 continue;
             }
@@ -177,7 +179,7 @@ public class FsProlog2Java {
                     var = setMatcher.group(1);
                 }
 
-                AdjunctSet avp = new AdjunctSet(var);
+                AdjunctSet avp = new AdjunctSet(var,"f");
                 values.add(avp);
                 continue;
             }
@@ -199,7 +201,7 @@ public class FsProlog2Java {
                     var = setMatcher.group(1);
                 }
 
-                SubsumeRel avp = new SubsumeRel(var);
+                SubsumeRel avp = new SubsumeRel(var,"f");
                 values.add(avp);
                 continue;
             }
@@ -209,7 +211,7 @@ public class FsProlog2Java {
             if (terminalsMatcher.find()) {
                 Integer key = Integer.parseInt(terminalsMatcher.group(1));
                 List<AttributeValuePair> values = fsHash.get(context).get(key);
-                TerminalAVP avp = new TerminalAVP(terminalsMatcher.group(2), terminalsMatcher.group(3));
+                TerminalAVP avp = new TerminalAVP(terminalsMatcher.group(2), terminalsMatcher.group(3),"f");
                 values.add(avp);
                 continue;
             }
@@ -233,6 +235,206 @@ public class FsProlog2Java {
         Matcher phiMatcher = phiPattern.matcher(cstrConstraint);
         Matcher cprojMatcher = cprojPattern.matcher(cstrConstraint);
         Matcher fspanMatcher = fspan.matcher(cstrConstraint);
+        Matcher semFormMatcher = semForm.matcher(cstrConstraint);
+        Matcher surfaceFormMatcher = surfaceForm.matcher(cstrConstraint);
+
+
+        if (subTreeMatcher.find()) {
+            String context = subTreeMatcher.group(1);
+            String mother = subTreeMatcher.group(2);
+            String category = subTreeMatcher.group(3);
+            String left = subTreeMatcher.group(4);
+            String right = subTreeMatcher.group(5);
+
+            Set<ChoiceVar> choiceVar = null;
+
+            choiceVar = ChoiceSpace.parseChoice(context);
+            plFs.cp.choices.add(choiceVar);
+
+            if (!fsHash.containsKey(choiceVar)) {
+                LinkedHashMap<Integer, List<AttributeValuePair>> fsConstraints = new LinkedHashMap<>();
+                fsHash.put(choiceVar, fsConstraints);
+                fsConstraints.put(Integer.parseInt(mother), new ArrayList<>());
+                fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("left", left,"c"));
+                fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("right", right,"c"));
+                fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("CAT", category,"c"));
+
+
+            } else {
+                if (!fsHash.get(choiceVar).containsKey(Integer.parseInt(mother))) {
+                    List<AttributeValuePair> avps = new ArrayList<>();
+                    fsHash.get(choiceVar).put(Integer.parseInt(mother), avps);
+                }
+
+                fsHash.get(choiceVar).get(Integer.parseInt(mother)).add(new NonTerminalAVP("left", left,"c"));
+                fsHash.get(choiceVar).get(Integer.parseInt(mother)).add(new NonTerminalAVP("right", right,"c"));
+                fsHash.get(choiceVar).get(Integer.parseInt(mother)).add(new NonTerminalAVP("CAT", category,"c"));
+
+            }
+        }
+
+        if (terminalMatcher.find())
+        {
+            String context = terminalMatcher.group(1);
+            String mother = terminalMatcher.group(2);
+            String category = terminalMatcher.group(3);
+            String terminal = terminalMatcher.group(4);
+
+            Set<ChoiceVar> choiceVar = null;
+
+            choiceVar = ChoiceSpace.parseChoice(context);
+            plFs.cp.choices.add(choiceVar);
+
+            if (!fsHash.containsKey(choiceVar)) {
+                LinkedHashMap<Integer, List<AttributeValuePair>> fsConstraints = new LinkedHashMap<>();
+                fsHash.put(choiceVar, fsConstraints);
+                fsConstraints.put(Integer.parseInt(mother), new ArrayList<>());
+                fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("CAT", category,"c"));
+                fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("terminal",terminal,"c"));
+
+            } else {
+                if (!fsHash.get(choiceVar).containsKey(Integer.parseInt(mother))) {
+                    List<AttributeValuePair> avps = new ArrayList<>();
+                    fsHash.get(choiceVar).put(Integer.parseInt(mother), avps);
+                }
+
+                fsHash.get(choiceVar).get(Integer.parseInt(mother)).add(new NonTerminalAVP("terminal", terminal,"c"));
+                fsHash.get(choiceVar).get(Integer.parseInt(mother)).add(new NonTerminalAVP("CAT", category,"c"));
+
+            }
+
+        }
+
+            if (phiMatcher.find())
+            {
+                String context = phiMatcher.group(1);
+                String mother = phiMatcher.group(2);
+                String daughter = phiMatcher.group(3);
+
+                Set<ChoiceVar> choiceVar = null;
+
+                choiceVar = ChoiceSpace.parseChoice(context);
+                plFs.cp.choices.add(choiceVar);
+
+                if (!fsHash.containsKey(choiceVar)) {
+                    LinkedHashMap<Integer, List<AttributeValuePair>> fsConstraints = new LinkedHashMap<>();
+                    fsHash.put(choiceVar, fsConstraints);
+                    fsConstraints.put(Integer.parseInt(mother), new ArrayList<>());
+                    fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("phi", daughter,"c::"));
+
+
+                } else {
+                    if (!fsHash.get(choiceVar).containsKey(Integer.parseInt(mother))) {
+                        List<AttributeValuePair> avps = new ArrayList<>();
+                        fsHash.get(choiceVar).put(Integer.parseInt(mother), avps);
+                    }
+
+                    fsHash.get(choiceVar).get(Integer.parseInt(mother)).add(new NonTerminalAVP("phi", daughter,"c::"));
+
+
+                }
+
+            }
+
+            /*
+            	cf(1,semform_data(1,18,1,5)),
+	cf(1,semform_data(3,102,6,10)),
+	cf(1,semform_data(9,178,16,20)),
+	cf(1,semform_data(12,192,21,24)),
+	cf(1,semform_data(13,222,25,29)),
+	cf(1,fspan(var(0),1,30)),
+	cf(1,fspan(var(11),1,5)),
+	cf(1,fspan(var(2),11,29)),
+	cf(1,fspan(var(4),16,20)),
+	cf(1,fspan(var(10),25,29)),
+	cf(1,surfaceform(1,'John',1,5)),
+	cf(1,surfaceform(48,'said',6,10)),
+	cf(1,surfaceform(112,'that',11,15)),
+	cf(1,surfaceform(161,'Mary',16,20)),
+	cf(1,surfaceform(189,'was',21,24)),
+	cf(1,surfaceform(218,'sick',25,29)),
+	cf(1,surfaceform(236,'.',29,30))
+             */
+
+            //"cf\\((.+?),fspan\\((.+),(.+),(.+)\\)\\)"
+
+            if (fspanMatcher.find()) {
+                String context = fspanMatcher.group(1);
+                String mother = fspanMatcher.group(2);
+                String start = fspanMatcher.group(3);
+                String end = fspanMatcher.group(4);
+
+
+                Set<ChoiceVar> choiceVar = null;
+
+                choiceVar = ChoiceSpace.parseChoice(context);
+                plFs.cp.choices.add(choiceVar);
+
+                if (!fsHash.containsKey(choiceVar)) {
+                    LinkedHashMap<Integer, List<AttributeValuePair>> fsConstraints = new LinkedHashMap<>();
+                    fsHash.put(choiceVar, fsConstraints);
+                    fsConstraints.put(Integer.parseInt(mother), new ArrayList<>());
+                    fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("start", "int(" + start + ")","f"));
+                    fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("end","int(" + end + ")","f"));
+
+
+                } else {
+                    if (!fsHash.get(choiceVar).containsKey(Integer.parseInt(mother))) {
+                        List<AttributeValuePair> avps = new ArrayList<>();
+                        fsHash.get(choiceVar).put(Integer.parseInt(mother), avps);
+                    }
+
+                    fsHash.get(choiceVar).get(Integer.parseInt(mother)).add(new NonTerminalAVP("start", "int(" + start + ")","f"));
+                    fsHash.get(choiceVar).get(Integer.parseInt(mother)).add(new NonTerminalAVP("end","int(" + end + ")","f"));
+                }
+            }
+
+            /*
+
+            	cf(1,semform_data(12,192,21,24)),
+	            cf(1,surfaceform(48,'said',6,10)),
+                public static Pattern semForm = Pattern.compile("cf\\((.+?),semform_data\\((.+?),(.+?),(.+?),(.+?)\\)");
+    public static Pattern surfaceForm = Pattern.compile("cf\\((.+?),surfaceform\\((.+?),(.+?),(.+?),(.+?)\\)");
+             */
+
+            if (surfaceFormMatcher.find()) {
+                String context = surfaceFormMatcher.group(1);
+                String mother = surfaceFormMatcher.group(2);
+                String surfaceString = surfaceFormMatcher.group(3);
+                String start = surfaceFormMatcher.group(4);
+                String end = surfaceFormMatcher.group(5);
+
+
+
+                Set<ChoiceVar> choiceVar = null;
+
+                choiceVar = ChoiceSpace.parseChoice(context);
+                plFs.cp.choices.add(choiceVar);
+
+                if (!fsHash.containsKey(choiceVar)) {
+                    LinkedHashMap<Integer, List<AttributeValuePair>> fsConstraints = new LinkedHashMap<>();
+                    fsHash.put(choiceVar, fsConstraints);
+                    fsConstraints.put(Integer.parseInt(mother), new ArrayList<>());
+                    fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("token",surfaceString,"c"));
+                    fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("start", "int(" +start + ")","c"));
+                    fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("end", "int(" + end +")","c"));
+
+
+                } else {
+                    if (!fsHash.get(choiceVar).containsKey(Integer.parseInt(mother))) {
+                        List<AttributeValuePair> avps = new ArrayList<>();
+                        fsHash.get(choiceVar).put(Integer.parseInt(mother), avps);
+                    }
+                    fsHash.get(choiceVar).get(Integer.parseInt(mother)).add(new NonTerminalAVP("token",surfaceString,"c"));
+                    fsHash.get(choiceVar).get(Integer.parseInt(mother)).add(new NonTerminalAVP("start", "int(" + start + ")","f"));
+                    fsHash.get(choiceVar).get(Integer.parseInt(mother)).add(new NonTerminalAVP("end","int(" + end + ")","f"));
+                }
+            }
+
+
+            //TODO semform data.. Do we need it?
+
+
 
         }
 

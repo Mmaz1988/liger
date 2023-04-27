@@ -38,6 +38,7 @@ public class PredAVP extends AttributeValuePair
     {
         this.attribute = attr;
         this.value = val;
+        this.projection = "f::";
     }
 
     public static String pred2Tex(AttributeValuePair avp, LinkedHashMap<Integer,List<AttributeValuePair>> fsHash)

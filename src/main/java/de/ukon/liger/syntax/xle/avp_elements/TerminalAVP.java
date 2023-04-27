@@ -24,10 +24,11 @@ package de.ukon.liger.syntax.xle.avp_elements;
 
 public class TerminalAVP extends AttributeValuePair {
 
-    public TerminalAVP(String attr, String val)
+    public TerminalAVP(String attr, String val, String projection)
     {
         this.attribute = attr;
         this.value = val;
+        this.projection = projection;
     }
 
 

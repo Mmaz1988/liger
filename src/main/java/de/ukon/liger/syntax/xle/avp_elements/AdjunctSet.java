@@ -26,9 +26,10 @@ package de.ukon.liger.syntax.xle.avp_elements;
 
 public class AdjunctSet extends AttributeValuePair {
 
-    public AdjunctSet(String value){
+    public AdjunctSet(String value, String projection){
         this.attribute = "in_set";
         this.value = value;
+        this.projection = projection;
     }
 
 }

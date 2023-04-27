@@ -302,6 +302,8 @@ public class QueryParserTest {
 
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
+            String fstr =  ((Fstructure) fs.get(key)).writeToProlog(false);
+
             assertEquals(3,qpr.result.keySet().size());
         }
 
