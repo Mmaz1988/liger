@@ -54,8 +54,8 @@ public class QueryParserTest {
 
     public LinkedHashMap<String, LinguisticStructure> loadFs(int i)
     {
-        PathVariables.workingDirectory = "C:\\Users\\Celeste\\IdeaProjects\\LiGER\\liger_resources";
         PathVariables.initializePathVariables();
+
         testFolderPath = PathVariables.testPath;
         VariableHandler vh = new VariableHandler();
         XLEoperator xle = new XLEoperator(vh);

@@ -1,4 +1,4 @@
-package de.ukon.liger.segmentation;
+package de.ukon.liger.annotators;
 
 
 import de.ukon.liger.analysis.RuleParser.RuleParser;
@@ -7,7 +7,6 @@ import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
 import de.ukon.liger.syntax.ud.UDoperator;
-import de.ukon.liger.utilities.HelperMethods;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.webservice.rest.LigerService;
 import de.ukon.liger.webservice.rest.dtos.GkrDTO;
@@ -16,13 +15,10 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.CoreSentence;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import org.springframework.boot.actuate.endpoint.web.Link;
 
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Takes a text as input and returns a segmented annotation structure

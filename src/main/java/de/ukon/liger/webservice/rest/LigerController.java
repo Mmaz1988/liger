@@ -24,7 +24,7 @@ package de.ukon.liger.webservice.rest;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
-import de.ukon.liger.segmentation.SegmenterMain;
+import de.ukon.liger.annotators.SegmenterMain;
 import de.ukon.liger.webservice.rest.dtos.*;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.CoreSentence;
