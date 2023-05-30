@@ -106,7 +106,8 @@
 #a PRED %a & #a PRON-REL #b & #a SUBJ #b &
 #a SEM #z & #b SEM #y &
 #a ^(in_set>ADJUNCT) #c SEM #d VAR #e & #d RESTR #f & #d SIT #s
-==> #y GLUE [/P_<e,t>.[/Q_<e,t>.[/x_e.(P(x) \& Q(x))]]] : ((#e -o #f) -o ((#y -o #z) -o (#e -o #f))).
+//==> #y GLUE [/P_<e,t>.[/Q_<e,t>.[/x_e.(P(x) \& Q(x))]]] : ((#e -o #f) -o ((#y -o #z) -o (#e -o #f))).
+==> #y GLUE [lam(P,lam(Q,drs([],[and(merge(drs([X],[]),app(P,X)),app(Q,X))])))] : ((#e -o #f) -o ((#y -o #z) -o (#e -o #f))).
 
 //NP Quantifier instantiation
 
@@ -114,35 +115,45 @@
 #g ^(SPEC) #h SEM #i VAR #j & #i RESTR #k & #i SIT #s &
 #g QUANT #l PRED %l & %l == 'every' &
 #h ^(%) #m SEM #n FPS #b & #n SIT #o
-==> #i GLUE [/P_<e,<s,t>>.[/Q_<e,<s,t>>.[/s_s.Ax_e[P(x)(s) -> Q(x)(s)]]]] : ((#j -o (#s -o #k)) -o ((#i -o (#o -o #n)) -o (#o -o #n))).
+//==> #i GLUE [/P_<e,<s,t>>.[/Q_<e,<s,t>>.[/s_s.Ax_e[P(x)(s) -> Q(x)(s)]]]] : ((#j -o (#s -o #k)) -o ((#i -o (#o -o #n)) -o (#o -o #n))).
+//==> #i GLUE [lam(P,lam(Q,drs([],[imp(merge(drs([X],[]),app(P,X)),app(Q,X))]))))] : ((#j -o (#s -o #k)) -o ((#i -o (#o -o #n)) -o (#o -o #n))).
+==> #i GLUE [lam(P,lam(Q,lam(S,drs([],[imp(merge(drs([X],[]),app(app(P,X),S),app(app(Q,X),S)]))))] : ((#j -o (#s -o #k)) -o ((#i -o (#o -o #n)) -o (#o -o #n))).
 
 //Existential quantifier
 #g ^(SPEC) #h SEM #i VAR #j & #i RESTR #k & #i SIT #s &
 #g DET #l PRED %l & %l == 'a' &
 #h ^(%) #m SEM #n FPS #b & #n SIT #o
-==> #i GLUE [/P_<e,<s,t>>.[/Q_<e,<s,t>>.[/s_s.Ex_e[P(x)(s) \& Q(x)(s)]]]] : ((#j -o (#s -o #k)) -o ((#i -o (#o -o #n)) -o (#o -o #n))).
+//==> #i GLUE [/P_<e,<s,t>>.[/Q_<e,<s,t>>.[/s_s.Ex_e[P(x)(s) \& Q(x)(s)]]]] : ((#j -o (#s -o #k)) -o ((#i -o (#o -o #n)) -o (#o -o #n))).
+//==> #i GLUE [lam(R,lam(S,merge(drs([X],[]),merge(app(R,X),app(S,X))))))] : ((#j -o (#s -o #k)) -o ((#i -o (#o -o #n)) -o (#o -o #n))).
+==> #i GLUE [lam(P,lam(Q,lam(S,merge(drs([X],[]),merge(app(app(P,X),S),app(app(Q,X),S)))))] : ((#j -o (#s -o #k)) -o ((#i -o (#o -o #n)) -o (#o -o #n))).
+
 
 
 #g ^(SPEC) #h SEM #i VAR #j & #i RESTR #k & #i SIT #s &
 #g DET #l DET-TYPE 'def'
-==> #i GLUE [/P_<e,<s,t>>.Ix_e[P(x)]] : ((#j -o (#s -o #k)) -o #i).
+//==> #i GLUE [/P_<e,<s,t>>.Ix_e[P(x)]] : ((#j -o (#s -o #k)) -o #i).
+==> #i GLUE [lam(P,drs([],[the(merge(drs([X],[]),app(P,X)))]))] : ((#j -o (#s -o #k)) -o #i).
 
 //==> #i SIT #s & #i GLUE [/P_<e,<s,t>>.[/Q_<e,<s,t>>.[/s_s.the(P(x)(s),Q(x)(s))]]] : ((#j -o (#s -o #k)) -o ((#i -o (#o -o #n)) -o (#o -o #n))).
 
 
 //predicates for Quantifiers
-#g SEM #j VAR #i & #j RESTR #k & #j SIT #a & #g PRED %g ==> #a GLUE [/x_e.[/s_s.strip(%g)(x,s)]] : (#i -o (#a -o #k)).
+//#g SEM #j VAR #i & #j RESTR #k & #j SIT #a & #g PRED %g ==> #a GLUE [/x_e.[/s_s.strip(%g)(x,s)]] : (#i -o (#a -o #k)).
+#g SEM #j VAR #i & #j RESTR #k & #j SIT #a & #g PRED %g ==> #a GLUE [lam(X,lam(S,drs([],[rel(strip(%g),X,S)])))] : (#i -o (#a -o #k)).
 
 
 //modification
 #g SEM #j VAR #i & #j RESTR #k & #j SIT #l &
 #g ADJUNCT #e in_set #h OBJ #m SEM #a  & #h SEM #b SIT #c
-==> #h GLUE [/P_<e,<s,t>>.[/Q_<e,<s,t>>.[/x_e.[/s_s.(P(x)(s) \& Q(x)(s))]]]] : ((#j -o (#c -o #b)) -o ((#i -o (#l -o #k)) -o (#i -o (#l -o #k)))) &
- #e GLUE [/y_e.[/x_e.[/s_s.with(x,y,s)]]] : (#a -o (#j -o (#c -o #b))).
+//==> #h GLUE [/P_<e,<s,t>>.[/Q_<e,<s,t>>.[/x_e.[/s_s.(P(x)(s) \& Q(x)(s))]]]] : ((#j -o (#c -o #b)) -o ((#i -o (#l -o #k)) -o (#i -o (#l -o #k)))) &
+// #e GLUE [/y_e.[/x_e.[/s_s.with(x,y,s)]]] : (#a -o (#j -o (#c -o #b))).
+==> #h GLUE [lam(P,lam(Q,lam(X,lam(S,drs([],[and(app(app(P,X),S),app(app(Q,X),S))])))))] : ((#j -o (#c -o #b)) -o ((#i -o (#l -o #k)) -o (#i -o (#l -o #k)))) &
+ #e GLUE [lam(Y,lam(X,lam(S,drs([],[rel(with,X,Y,S]))))] : (#a -o (#j -o (#c -o #b))).
 
 //FPS rules
 
-#a SEM #z FPS #y CHECK '+' & #a PRED %a ==> #y EVENT #x & #x GLUE [/e_v.strip(%a)(e)] : (#x -o #y).
+//#a SEM #z FPS #y CHECK '+' & #a PRED %a ==> #y EVENT #x & #x GLUE [/e_v.strip(%a)(e)] : (#x -o #y).
+#a SEM #z FPS #y CHECK '+' & #a PRED %a ==> #y EVENT #x & #x GLUE [lam(E,drs([],[pred(strip(%a),E)]))] : (#x -o #y).
 
 #a XP #b REF 'unspec' & #b TYPE 'rheme' ==> #b GLUE y : #b.
 
@@ -154,26 +165,31 @@
 #a resP #d &
 #d RES #e &
 #d R-SUBJ #f ==>
-#b GLUE [/x_e.[/y_e.[/e_v.(have(e) \& (ag(e,x) \& th(e,y)))]]] : (#f -o (#c -o (#e -o #b))) &
-#d GLUE [/P_<e,<v,t>>.[/x_e.[/e_v.(res(e,x) \& P(x)(e))]]] : ((#f -o (#e -o #b)) -o (#f -o (#e -o #d))).
+//#b GLUE [/x_e.[/y_e.[/e_v.(have(e) \& (ag(e,x) \& th(e,y)))]]] : (#f -o (#c -o (#e -o #b))) &
+//#d GLUE [/P_<e,<v,t>>.[/x_e.[/e_v.(res(e,x) \& P(x)(e))]]] : ((#f -o (#e -o #b)) -o (#f -o (#e -o #d))).
+#b GLUE [lam(X,lam(Y,lam(E,drs([],[and(and(pred(have,E),rel(ag,E,X)),rel(th,E,Y))]))))] : (#f -o (#c -o (#e -o #b))) &
+#d GLUE [lam(P,lam(X,lam(E,drs([],[and(rel(res,E,X),app(app(P,X),E))]))))] : ((#f -o (#e -o #b)) -o (#f -o (#e -o #d))).
 
 //PROC
 #d SEM #z FPS #b procP #c PROC #d & #c P-SUBJ 'undefined' &
 #b resP #g RES #d &
 #b XP #f TYPE 'possession' & #f REF #j ==>
-#c GLUE [/P_<v,t>.[/e_v.Ee1_v[Ee2_v[equals(e,to(e1,e2)) \& (proc(e1) \& P(e2))]]]] : ((#d -o #g) -o (#d -o #c)).
+//#c GLUE [/P_<v,t>.[/e_v.Ee1_v[Ee2_v[equals(e,to(e1,e2)) \& (proc(e1) \& P(e2))]]]] : ((#d -o #g) -o (#d -o #c)).
+#c GLUE [lam(P,lam(E,merge(drs([E1,E2],[]),and(and(rel(equals,E,rel(to,E1,E2)),pred(proc,E1)),app(P,E2)))))] : ((#d -o #g) -o (#d -o #c)).
 
 #a SEM #z FPS #b procP #c PROC #d & #c P-SUBJ #e & #b XP #f TYPE 'rheme' ==>
-#c GLUE [/y_s.[/x_e.[/e_v.proc(e,x,y)]]] : (#f -o (#e -o (#d -o #c))).
-
+//#c GLUE [/y_s.[/x_e.[/e_v.proc(e,x,y)]]] : (#f -o (#e -o (#d -o #c))).
+#c GLUE [lam(Y,lam(X,lam(E,drs([],[rel(proc,E,X,Y)]))))] : (#f -o (#e -o (#d -o #c))).
 
 
 //INIT
 #a SEM #z FPS #b initP #c I-SUBJ #d & #c INIT #h & #b procP #e PROC #f ==>
-#c GLUE [/P_<v,t>.[/x_e.[/e_v.Ee1_v[Ee2_v[equals(e,to(e1,e2)) \& (init(e1,x) \& P(e2))]]]]] : ((#f -o #e) -o (#d -o (#h -o #c))).
+//#c GLUE [/P_<v,t>.[/x_e.[/e_v.Ee1_v[Ee2_v[equals(e,to(e1,e2)) \& (init(e1,x) \& P(e2))]]]]] : ((#f -o #e) -o (#d -o (#h -o #c))).
+#c GLUE [lam(P,lam(X,lam(E,merge(drs([E1,E2],[]),and(and(rel(equals,E,rel(to,E1,E2)),rel(init,E1,X)),app(P,E2))))))] : ((#f -o #e) -o (#d -o (#h -o #c))).
 
 #a SEM #z FPS #b initP #c I-SUBJ #d & #c INIT #h & #b procP #e PROC #f & #e P-SUBJ #d ==>
-#c GLUE [/P_<e,<v,t>>.[/x_e.[/e_v.Ee1_v[Ee2_v[equals(e,to(e1,e2)) \& (init(e1,x) \& P(x)(e2))]]]]] : ((#d -o (#f -o #e)) -o (#d -o (#h -o #c))).
+//#c GLUE [/P_<e,<v,t>>.[/x_e.[/e_v.Ee1_v[Ee2_v[equals(e,to(e1,e2)) \& (init(e1,x) \& P(x)(e2))]]]]] : ((#d -o (#f -o #e)) -o (#d -o (#h -o #c))).
+#c GLUE [lam(P,lam(X,lam(E,merge(drs([E1,E2],[]),and(and(rel(equals,E,rel(to,E1,E2)),rel(init,E1,X)),app(app(P,X),E2))))))] : ((#d -o (#f -o #e)) -o (#d -o (#h -o #c))).
 
 
 //Subcategorization for verbs
@@ -183,7 +199,8 @@
 #a SEM #z FPS #e procP #f P-SUBJ #c SEM #j &
 #z SIT #y &
 #e initP #h INIT #i & #h I-SUBJ #b SEM #k ==>
-#e GLUE [/R_<e,<e,<v,t>>>.[/x_e.[/y_e.[/s_s.[/e_v.(partOf(e,s) \& (strip(%a)(e) \& (R(x)(y)(e) \& (ag(e,x) \& pt(e,y)))))]]]]] : ((#b -o (#c -o (#i -o #h))) -o (#k -o (#j -o (#y -o (#h -o #e))))).
+//#e GLUE [/R_<e,<e,<v,t>>>.[/x_e.[/y_e.[/s_s.[/e_v.(partOf(e,s) \& (strip(%a)(e) \& (R(x)(y)(e) \& (ag(e,x) \& pt(e,y)))))]]]]] : ((#b -o (#c -o (#i -o #h))) -o (#k -o (#j -o (#y -o (#h -o #e))))).
+#e GLUE [lam(R,lam(X,lam(Y,lam(S,lam(E,drs([],[and(and(and(and(and(rel(partOf,E,S),pred(strip(%a),E)),app(app(app(R,X),Y),E))),rel(ag,E,X)),rel(pt,E,Y))]))))))] : ((#b -o (#c -o (#i -o #h))) -o (#k -o (#j -o (#y -o (#h -o #e))))).
 
 //Transitive verbs -- Type B
 #a SUBJ #b & #a OBJ #c & #a TNS-ASP #d & #a PRED %a &
@@ -192,7 +209,8 @@
 #e initP #h INIT #i & #h I-SUBJ #b SEM #j &
 #c SEM #k
 ==>
-#e GLUE [/R_<e,<v,t>>.[/x_e.[/y_e.[/s_s.[/e_v.(partOf(e,s) \& (strip(%a)(e) \& (R(x)(e) \& (ag(e,x) \& pt(e,y)))))]]]]] : ((#b -o (#i -o #h)) -o (#j -o (#k -o (#y -o (#h -o #e))))).
+//#e GLUE [/R_<e,<v,t>>.[/x_e.[/y_e.[/s_s.[/e_v.(partOf(e,s) \& (strip(%a)(e) \& (R(x)(e) \& (ag(e,x) \& pt(e,y)))))]]]]] : ((#b -o (#i -o #h)) -o (#j -o (#k -o (#y -o (#h -o #e))))).
+#e GLUE [lam(R,lam(X,lam(Y,lam(S,lam(E,drs([],[and(and(and(and(and(rel(partOf,E,S),pred(strip(%a),E)),app(app(R,X),E))),rel(ag,E,X)),rel(pt,E,Y))]))))))] : ((#b -o (#i -o #h)) -o (#j -o (#k -o (#y -o (#h -o #e))))).
 
 //Ditransitive verb
 #a SUBJ #b & #a OBJ #c & #a OBJ-TH #d & #a PRED %a &
@@ -200,18 +218,21 @@
 #a SEM #z FPS #e resP #f R-SUBJ #c SEM #g &
 #z SIT #y &
 #e initP #k INIT #l & #k I-SUBJ #b SEM #m ==>
-#e GLUE [/R_<e,<e,<e,<v,t>>>>.[/x_e.[/y_e.[/z_e.[/s_s.[/e_v.(partOf(e,s) \& (strip(%a)(e) \& (R(x)(y)(z)(e) \& (ag(e,x) \& (theme(e,z) \& goal(e,y))))))]]]]]] : ((#b -o (#c -o (#d -o (#l -o #k)))) -o (#m -o (#g -o (#h -o (#y -o (#k -o #e)))))).
+//#e GLUE [/R_<e,<e,<e,<v,t>>>>.[/x_e.[/y_e.[/z_e.[/s_s.[/e_v.(partOf(e,s) \& (strip(%a)(e) \& (R(x)(y)(z)(e) \& (ag(e,x) \& (theme(e,z) \& goal(e,y))))))]]]]]] : ((#b -o (#c -o (#d -o (#l -o #k)))) -o (#m -o (#g -o (#h -o (#y -o (#k -o #e)))))).
+#e GLUE [lam(R,lam(X,lam(Y,lam(Z,lam(S,lam(E,drs([],[and(and(and(and(and(rel(partOf,E,S),pred(strip(%a),E)),app(app(app(app(R,X),Y),Z),E)),rel(ag,E,X)),rel(theme,E,Z)),rel(goal,E,Y))])))))))] : ((#b -o (#c -o (#d -o (#l -o #k)))) -o (#m -o (#g -o (#h -o (#y -o (#k -o #e)))))).
 
 
 //intransitive ohne PFS
 #a SUBJ #b SEM #c &
 #a SEM #z FPS #f EVENT #y & #f CHECK '+' & #z SIT #x ==>
-#f GLUE [/R_<v,t>.[/x_e.[/s_s.[/e_v.(R(e) \& (partOf(e,s) \& ag(e,x)))]]]] : ((#y -o #f) -o (#c -o (#x -o (#y -o #f)))).
+//#f GLUE [/R_<v,t>.[/x_e.[/s_s.[/e_v.(R(e) \& (partOf(e,s) \& ag(e,x)))]]]] : ((#y -o #f) -o (#c -o (#x -o (#y -o #f)))).
+#f GLUE [lam(R,lam(X,lam(S,lam(E,drs([],[and(and(app(R,E),rel(partOf,E,S)),rel(ag,E,X))])))))] : ((#y -o #f) -o (#c -o (#x -o (#y -o #f)))).
 
 //transitive ohne FPS
 #a SUBJ #b SEM #c & #a OBJ #d SEM #e &
 #a SEM #z FPS #f EVENT #y & #f CHECK '+' & #z SIT #x ==>
-#f GLUE [/R_<v,t>.[/x_e.[/y_e.[/s_s.[/e_v.(R(e) \& (partOf(e,s) \& (ag(e,x) \& pt(e,y))))]]]]] : ((#y -o #f) -o (#c -o (#e -o (#x -o (#y -o #f))))).
+//#f GLUE [/R_<v,t>.[/x_e.[/y_e.[/s_s.[/e_v.(R(e) \& (partOf(e,s) \& (ag(e,x) \& pt(e,y))))]]]]] : ((#y -o #f) -o (#c -o (#e -o (#x -o (#y -o #f))))).
+#f GLUE [lam(R,lam(X,lam(Y,lam(S,lam(E,drs([],[and(and(and(app(R,E),rel(partOf,E,S)),rel(ag,E,X)),rel(pt,E,Y))]))))))] : ((#y -o #f) -o (#c -o (#e -o (#x -o (#y -o #f))))).
 
 
 
@@ -222,7 +243,8 @@
 #a COMP #d SEM #e TEMP-REF #f EVAL #g T-REF %i &
 #j FPS #h EVENT #i &
 #j SIT #k
- ==> #h GLUE [/R_<v,t>.[/P_<s,t>.[/x_e.[/s_s.[/e_v.(R(e) \& (partOf(e,s) \& (ag(e,x) \& th(e,P(s)))))]]]]] : ((#i -o #h) -o ((#g -o #e) -o (#c -o (#k -o (#i -o #h))))).
+// ==> #h GLUE [/R_<v,t>.[/P_<s,t>.[/x_e.[/s_s.[/e_v.(R(e) \& (partOf(e,s) \& (ag(e,x) \& th(e,P(s)))))]]]]] : ((#i -o #h) -o ((#g -o #e) -o (#c -o (#k -o (#i -o #h))))).
+ ==> #h GLUE [lam(R,lam(P,lam(X,lam(S,lam(E,drs([],[and(and(and(app(R,E),rel(partOf,E,S)),rel(ag,E,X)),rel(th,E,app(P,S)))]))))))] : ((#i -o #h) -o ((#g -o #e) -o (#c -o (#k -o (#i -o #h))))).
 
 //XCOMP
 //Verb template for comp verbs
@@ -231,30 +253,37 @@
 #a XCOMP #d SEM #e TEMP-REF #f EVAL #g T-REF %i &
 #j FPS #h EVENT #i &
 #j SIT #k
- ==> #h GLUE [/R_<v,t>.[/P_<e,<s,t>>.[/x_e.[/s_s.[/e_v.(R(e) \& (partOf(e,s) \& (ag(e,x) \& th(e,P(x)(s)))))]]]]] : ((#i -o #h) -o ((#c -o (#g -o #e)) -o (#c -o (#k -o (#i -o #h))))).
+// ==> #h GLUE [/R_<v,t>.[/P_<e,<s,t>>.[/x_e.[/s_s.[/e_v.(R(e) \& (partOf(e,s) \& (ag(e,x) \& th(e,P(x)(s)))))]]]]] : ((#i -o #h) -o ((#c -o (#g -o #e)) -o (#c -o (#k -o (#i -o #h))))).
+ ==> #h GLUE [lam(R,lam(P,lam(X,lam(S,lam(E,drs([],[and(and(and(app(R,E),rel(partOf,E,S)),rel(ag,E,X)),rel(th,E,app(app(P,X),S)))]))))))] : ((#i -o #h) -o ((#c -o (#g -o #e)) -o (#c -o (#k -o (#i -o #h))))).
 
 //Bound-variable (cf) Conditional
 
 #a SEM #b TEMP-REF #c EVAL #d & #a VTYPE 'modal' &
 #a !(ADJUNCT>in_set) #f PRED %a & strip(%a) == 'if' &
 #f OBJ #g SEM #h TEMP-REF #i EVAL #j
-==> #b COND #k & #k GLUE [/P_<s,t>.[/Q_<s,t>.[/s_s.(P(s) -> Q(s))]]]  : ((#j -o #h) -o ((#d -o #b) -o (#j -o #b))).
+//==> #b COND #k & #k GLUE [/P_<s,t>.[/Q_<s,t>.[/s_s.(P(s) -> Q(s))]]]  : ((#j -o #h) -o ((#d -o #b) -o (#j -o #b))).
+==> #b COND #k & #k GLUE [lam(P,lam(Q,lam(S,drs([],[imp(app(P,S),app(Q,S))]))))]  : ((#j -o #h) -o ((#d -o #b) -o (#j -o #b))).
 
 #a SEM #b TEMP-REF #c EVAL #d & #a VTYPE 'main' &
 #a !(ADJUNCT>in_set) #f PRED %a & strip(%a) == 'if' &
 #f OBJ #g SEM #h TEMP-REF #i EVAL #j
-==> #b COND #k & #k GLUE [/P_t.[/Q_t.(P -> Q)]]  : (#h -o (#b -o #k)).
+//==> #b COND #k & #k GLUE [/P_t.[/Q_t.(P -> Q)]]  : (#h -o (#b -o #k)).
+==> #b COND #k & #k GLUE [lam(P,lam(Q,drs([],[imp(P,Q])))]  : (#h -o (#b -o #k)).
 
 //modification
 #g SEM #j SIT #l & #j FPS #o CHECK '+' &
 #g ADJUNCT #e in_set #h OBJ #m SEM #a  & #h SEM #b SIT #c
-==> #h GLUE [/P_<v,t>.[/Q_<s,<v,t>>.[/s_s.[/e_v.(P(e) \& Q(s)(e))]]]] : ((#p -o #b) -o ((#l -o (#p -o #o)) -o (#l -o (#p -o #o)))) &
- #e GLUE [/y_e.[/e_v.with(e,y)]] : (#a -o (#p -o #b)).
+//==> #h GLUE [/P_<v,t>.[/Q_<s,<v,t>>.[/s_s.[/e_v.(P(e) \& Q(s)(e))]]]] : ((#p -o #b) -o ((#l -o (#p -o #o)) -o (#l -o (#p -o #o)))) &
+// #e GLUE [/y_e.[/e_v.with(e,y)]] : (#a -o (#p -o #b)).
+ ==> #h GLUE [lam(P,lam(Q,lam(S,lam(E,drs([],[and(app(P,E),app(app(Q,S),E))])))))] : ((#p -o #b) -o ((#l -o (#p -o #o)) -o (#l -o (#p -o #o)))) &
+ #e GLUE [lam(Y,lam(X,drs([],[rel(with,E,Y)])))] : (#a -o (#p -o #b)).
 
 //Closure
 #b FPS #c ==> #c CLOSURE #d.
-#b FPS #c initP #d & #c CLOSURE #e & #b SIT #f ==> #e GLUE [/P_<s,<v,t>>.[/s_s.Ee_v[P(s)(e)]]] : ((#f -o (#d -o #c)) -o (#f -o #b)).
-#b FPS #c CLOSURE #e & #c EVENT #z & #c CHECK '+' & #b SIT #f ==> #e GLUE [/P_<s,<v,t>>.[/s_s.Ee_v[P(s)(e)]]] : ((#f -o (#z -o #c)) -o (#f -o #b)).
+//#b FPS #c initP #d & #c CLOSURE #e & #b SIT #f ==> #e GLUE [/P_<s,<v,t>>.[/s_s.Ee_v[P(s)(e)]]] : ((#f -o (#d -o #c)) -o (#f -o #b)).
+//#b FPS #c CLOSURE #e & #c EVENT #z & #c CHECK '+' & #b SIT #f ==> #e GLUE [/P_<s,<v,t>>.[/s_s.Ee_v[P(s)(e)]]] : ((#f -o (#z -o #c)) -o (#f -o #b)).
+#b FPS #c initP #d & #c CLOSURE #e & #b SIT #f ==> #e GLUE [lam(P,lam(S,drs([E],[app(app(P,S),E)])))] : ((#f -o (#d -o #c)) -o (#f -o #b)).
+#b FPS #c CLOSURE #e & #c EVENT #z & #c CHECK '+' & #b SIT #f ==> #e GLUE [lam(P,lam(S,drs([E],[app(app(P,S),E)])))] : ((#f -o (#z -o #c)) -o (#f -o #b)).
 
 
 
@@ -267,30 +296,35 @@
 #a SEM #b VIEWPOINT #c A-RESTR 'ongoing' &
 #c VAR #d & #c RESTR #e &
 #c ASP-RESTR' #f ==>
-#f GLUE [/s_s.[/t_s.ongoing(t,s)]] : (#d -o (#e -o #c)).
+//#f GLUE [/s_s.[/t_s.ongoing(t,s)]] : (#d -o (#e -o #c)).
+#f GLUE [lam(S,lam(T,drs([],[rel(ongoing,T,S)])))] : (#d -o (#e -o #c)).
 
 #a SEM #b VIEWPOINT #c A-RESTR 'bounded' &
 #c VAR #d & #c RESTR #e &
 #c ASP-RESTR' #f ==>
-#f GLUE [/s_s.[/t_s.bounded(t,s)]] : (#d -o (#e -o #c)).
+//#f GLUE [/s_s.[/t_s.bounded(t,s)]] : (#d -o (#e -o #c)).
+#f GLUE [lam(S,lam(T,drs([],[rel(bounded,T,S)])))] : (#d -o (#e -o #c)).
 
 
 #a SEM #b VIEWPOINT #c ASPECT 'impv' &
 #c VAR #d & #c RESTR #e &
 #b TEMP-REF #f &
 #b SIT #g
- ==>  #c GLUE [/M_<s,<s,t>>.[/P_<s,t>.[/s_s.Az_s[M(s)(z) -> P(z)]]]] : ((#d -o (#e -o #c)) -o ((#g -o #b) -o (#f -o #b))).
+// ==>  #c GLUE [/M_<s,<s,t>>.[/P_<s,t>.[/s_s.Az_s[M(s)(z) -> P(z)]]]] : ((#d -o (#e -o #c)) -o ((#g -o #b) -o (#f -o #b))).
+ ==>  #c GLUE [lam(M,lam(P,lam(S,drs([],[imp(merge(drs([Z],[]),app(app(M,S),Z)),app(P,Z))]))))] : ((#d -o (#e -o #c)) -o ((#g -o #b) -o (#f -o #b))).
 
 #a SEM #b VIEWPOINT #c ASPECT 'prv' &
 #c VAR #d & #c RESTR #e &
 #b TEMP-REF #f &
 #b SIT #g
- ==>  #c GLUE [/M_<s,<s,t>>.[/P_<s,t>.[/s_s.Ez_s[M(s)(z) \& P(z)]]]] : ((#d -o (#e -o #c)) -o ((#g -o #b) -o (#f -o #b))).
+// ==>  #c GLUE [/M_<s,<s,t>>.[/P_<s,t>.[/s_s.Ez_s[M(s)(z) \& P(z)]]]] : ((#d -o (#e -o #c)) -o ((#g -o #b) -o (#f -o #b))).
+ ==>  #c GLUE [lam(M,lam(P,lam(S,merge(drs([Z],[]),and(app(app(M,S),Z),app(P,Z))))))] : ((#d -o (#e -o #c)) -o ((#g -o #b) -o (#f -o #b))).
 
 #a SEM #b VIEWPOINT #c ASPECT 'undefined' &
 #b TEMP-REF #f &
 #b SIT #g
- ==>  #c GLUE [/P_<s,t>.[/s_s.P(s)]] : ((#g -o #b) -o (#f -o #b)).
+// ==>  #c GLUE [/P_<s,t>.[/s_s.P(s)]] : ((#g -o #b) -o (#f -o #b)).
+ ==>  #c GLUE [lam(P,lam(S,drs([],[app(P,S)])))] : ((#g -o #b) -o (#f -o #b)).
 
 //Tense values
 
@@ -298,68 +332,84 @@
 
 //Past reference
 #a SEM #b TEMP-REF #c T-REF 'past' & #c EVAL #d & #c CHECK '-' ==>
-#c T-REF' #e & #e GLUE [/t_s.[/t2_s.before(t,t2)]] : (#c -o (#d -o #c)).
+//#c T-REF' #e & #e GLUE [/t_s.[/t2_s.before(t,t2)]] : (#c -o (#d -o #c)).
+#c T-REF' #e & #e GLUE [lam(T,lam(T2,drs([],[rel(before,T,T2)])))] : (#c -o (#d -o #c)).
 
 #a SEM #b TEMP-REF #c T-REF 'past' & #c EVAL #d & #c CHECK '+' ==>
-#c T-REF' #e & #e GLUE [/t_s.[/t2_s.before(t,t2)]] : (#c -o (#d -o #c)).
+//#c T-REF' #e & #e GLUE [/t_s.[/t2_s.before(t,t2)]] : (#c -o (#d -o #c)).
+#c T-REF' #e & #e GLUE [lam(T,lam(T2,drs([],[rel(before,T,T2)])))] : (#c -o (#d -o #c)).
 
 //Aspectual tense
 
 #a SEM #b TEMP-REF #c EVAL #d &
 #b ASP-TENSE #e A-REF 'past' &
  ==>
-#e A-REF' #f & #f GLUE [/t_s.[/t2_s.before(t,t2)]] :(#e -o (#c -o #e)) .
+//#e A-REF' #f & #f GLUE [/t_s.[/t2_s.before(t,t2)]] :(#e -o (#c -o #e)) .
+#e A-REF' #f & #f GLUE [lam(T,lam(T2,drs([],[rel(before,T,T2)])))] :(#e -o (#c -o #e)) .
 
 //Present reference
 #a SEM #b TEMP-REF #c T-REF 'pres' & #c EVAL #d & #c CHECK '-' ==>
-#c T-REF' #e & #e GLUE [/t_s.[/t2_s.overlap(t,t2)]] : (#c -o (#d -o #c)).
+//#c T-REF' #e & #e GLUE [/t_s.[/t2_s.overlap(t,t2)]] : (#c -o (#d -o #c)).
+#c T-REF' #e & #e GLUE [lam(T,lam(T2,drs([],[rel(overlap,T,T2)])))] : (#c -o (#d -o #c)).
 
 #a SEM #b TEMP-REF #c T-REF 'pres' & #c EVAL #d & #c CHECK '+' ==>
-#c T-REF' #e & #e GLUE [/t_s.[/t2_s.overlap(t,t2)]] : (#c -o (#d -o #c)).
+//#c T-REF' #e & #e GLUE [/t_s.[/t2_s.overlap(t,t2)]] : (#c -o (#d -o #c)).
+#c T-REF' #e & #e GLUE [lam(T,lam(T2,drs([],[rel(overlap,T,T2)])))] : (#c -o (#d -o #c)).
 
 //Non-future
 #a SEM #b TEMP-REF #c T-REF 'non-future' & #c EVAL #d & #c CHECK '-' ==>
-#c T-REF' #e & #e GLUE {[/t_s.[/t2_s.before(t,t2)]],[/t_s.[/t2_s.overlap(t,t2)]]} : (#c -o (#d -o #c)).
+//#c T-REF' #e & #e GLUE {[/t_s.[/t2_s.before(t,t2)]],[/t_s.[/t2_s.overlap(t,t2)]]} : (#c -o (#d -o #c)).
+#c T-REF' #e & #e GLUE {[lam(T,lam(T2,drs([],[rel(before,T,T2)])))],[lam(T,lam(T2,drs([],[rel(overlap,T,T2)])))]} : (#c -o (#d -o #c)).
 
 #a SEM #b TEMP-REF #c T-REF 'non-future' & #c EVAL #d T-REF %a ==>
-#c T-REF' #e & #e GLUE {[/t_s.[/t2_s.before(t,t2)]],[/t_s.[/t2_s.overlap(t,t2)]]} : (#c -o (#d -o #c)).
+//#c T-REF' #e & #e GLUE {[/t_s.[/t2_s.before(t,t2)]],[/t_s.[/t2_s.overlap(t,t2)]]} : (#c -o (#d -o #c)).
+#c T-REF' #e & #e GLUE {[lam(T,lam(T2,drs([],[rel(before,T,T2)])))],[lam(T,lam(T2,drs([],[rel(overlap,T,T2)])))]} : (#c -o (#d -o #c)).
 
 //Non-past
 #a SEM #b TEMP-REF #c T-REF 'non-past' & #c EVAL #d & #c CHECK '-' ==>
-#c T-REF' #e & #e GLUE {[/t_s.[/t2_s.after(t,t2)]],[/t_s.[/t2_s.overlap(t,t2)]]} : (#c -o (#d -o #c)).
+//#c T-REF' #e & #e GLUE {[/t_s.[/t2_s.after(t,t2)]],[/t_s.[/t2_s.overlap(t,t2)]]} : (#c -o (#d -o #c)).
+#c T-REF' #e & #e GLUE {[lam(T,lam(T2,drs([],[rel(after,T,T2)])))],[lam(T,lam(T2,drs([],[rel(overlap,T,T2)])))]} : (#c -o (#d -o #c)).
 
 #a SEM #b TEMP-REF #c T-REF 'non-past' & #c EVAL #d T-REF %a ==>
-#c T-REF' #e & #e GLUE {[/t_s.[/t2_s.after(t,t2)]],[/t_s.[/t2_s.overlap(t,t2)]]} : (#c -o (#d -o #c)).
+//#c T-REF' #e & #e GLUE {[/t_s.[/t2_s.after(t,t2)]],[/t_s.[/t2_s.overlap(t,t2)]]} : (#c -o (#d -o #c)).
+#c T-REF' #e & #e GLUE {[lam(T,lam(T2,drs([],[rel(after,T,T2)])))],[lam(T,lam(T2,drs([],[rel(overlap,T,T2)])))]} : (#c -o (#d -o #c)).
 
 //Future reference
 #a SEM #b TEMP-REF #c T-REF 'future' & #c EVAL #d & #c CHECK '-' ==>
-#c T-REF' #e & #e GLUE [/t_s.[/t2_s.after(t,t2)]] : (#c -o (#d -o #c)).
+//#c T-REF' #e & #e GLUE [/t_s.[/t2_s.after(t,t2)]] : (#c -o (#d -o #c)).
+#c T-REF' #e & #e GLUE [lam(T,lam(T2,drs([],[rel(after,T,T2)])))] : (#c -o (#d -o #c)).
 
 #a SEM #b TEMP-REF #c T-REF 'future' & #c EVAL #d T-REF %a ==>
-#c T-REF' #e & #e GLUE [/t_s.[/t2_s.after(t,t2)]] : (#c -o (#d -o #c)).
+//#c T-REF' #e & #e GLUE [/t_s.[/t2_s.after(t,t2)]] : (#c -o (#d -o #c)).
+#c T-REF' #e & #e GLUE [lam(T,lam(T2,drs([],[rel(after,T,T2)])))] : (#c -o (#d -o #c)).
 
 
 //absolute tense closure
 #a SEM #b TEMP-REF #c T-REF %a & %a != 'undefined' & #c EVAL #d & #c CHECK '-'
-==> #c GLUE [/T_<s,<s,t>>.[/P_<s,t>.[/s_s.Er_s[T(r)(s) \& P(r)]]]] : ((#c -o (#d -o #c)) -o ((#c -o #b) -o (#d -o #b))).
+//==> #c GLUE [/T_<s,<s,t>>.[/P_<s,t>.[/s_s.Er_s[T(r)(s) \& P(r)]]]] : ((#c -o (#d -o #c)) -o ((#c -o #b) -o (#d -o #b))).
+==> #c GLUE [lam(T,lam(P,lam(S,merge(drs([R],[]),and(app(app(T,R),S),app(P,R))))))] : ((#c -o (#d -o #c)) -o ((#c -o #b) -o (#d -o #b))).
 
 //relative tense closure
 #a SEM #b TEMP-REF #c T-REF %a & %a != 'undefined' & #c EVAL #d T-REF %b
-==> #c GLUE [/T_<s,<s,t>>.[/P_<s,t>.[/s_s.Er_s[T(r)(s) \& P(r)]]]] : ((#c -o (#d -o #c)) -o ((#c -o #b) -o (#d -o #b))).
+//==> #c GLUE [/T_<s,<s,t>>.[/P_<s,t>.[/s_s.Er_s[T(r)(s) \& P(r)]]]] : ((#c -o (#d -o #c)) -o ((#c -o #b) -o (#d -o #b))).
+==> #c GLUE [lam(T,lam(P,lam(S,merge(drs([R],[]),and(app(app(T,R),S),app(P,R))))))] : ((#c -o (#d -o #c)) -o ((#c -o #b) -o (#d -o #b))).
 
 //aspectual tense closure
 #a SEM #b ASP-TENSE #c A-REF %a &
 #b TEMP-REF #e &
  %a != 'undefined'
-==> #c GLUE [/T_<s,<s,t>>.[/P_<s,t>.[/s_s.Er_s[T(r)(s) \& P(r)]]]] : ((#c -o (#e -o #c)) -o ((#e -o #b) -o (#e -o #b))).
+//==> #c GLUE [/T_<s,<s,t>>.[/P_<s,t>.[/s_s.Er_s[T(r)(s) \& P(r)]]]] : ((#c -o (#e -o #c)) -o ((#e -o #b) -o (#e -o #b))).
+==> #c GLUE [lam(T,lam(P,lam(S,merge(drs([R],[]),and(app(app(T,R),S),app(P,R))))))] : ((#c -o (#e -o #c)) -o ((#e -o #b) -o (#e -o #b))).
 
 //unspec absolute closure
 #a SEM #b TEMP-REF #c T-REF %a & %a == 'undefined' & #c EVAL #d & #c CHECK '-'
-==> #c GLUE [/P_<s,t>.[/s_s.P(s)]] : ((#c -o #b) -o (#d -o #b)).
+//==> #c GLUE [/P_<s,t>.[/s_s.P(s)]] : ((#c -o #b) -o (#d -o #b)).
+==> #c GLUE [lam(P,lam(S,drs([],[app(P,S)])))] : ((#c -o #b) -o (#d -o #b)).
 
 //unspec relative closure
 #a SEM #b TEMP-REF #c T-REF %a & %a == 'undefined' & #c EVAL #d T-REF %b
-==> #c GLUE [/P_<s,t>.[/s_s.P(s)]] : ((#c -o #b) -o (#d -o #b)).
+//==> #c GLUE [/P_<s,t>.[/s_s.P(s)]] : ((#c -o #b) -o (#d -o #b)).
+==> #c GLUE [lam(P,lam(S,drs([],[app(P,S)])))] : ((#c -o #b) -o (#d -o #b)).
 
 
 
