@@ -140,9 +140,16 @@ public class GlueSemantics {
 
             List<LexicalEntry> lexicalEntries = new ArrayList<>();
 
-            for (String mc : unpackedSem.get(key)) {
-         //       System.out.println(mc);
+            for (String mc : unpackedSem.get(key))
+            {
+                System.out.println(mc);
+            }
 
+
+            for (String mc : unpackedSem.get(key)) {
+                //       System.out.println(mc);
+
+                System.out.println(mc);
                 try {
                     LexicalEntry le = glueParser.parseMeaningConstructor(mc);
                     lexicalEntries.add(le);
@@ -169,7 +176,7 @@ public class GlueSemantics {
                 solutionBuilder.append(System.lineSeparator());
             }
 
-       //  LOGGER.debug(llprover.getProofBuilder().toString());
+            //  LOGGER.debug(llprover.getProofBuilder().toString());
 
 
         }
