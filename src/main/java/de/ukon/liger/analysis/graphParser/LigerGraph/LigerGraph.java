@@ -14,16 +14,14 @@ public class LigerGraph extends LigerObject {
 
     public List<LigerNode> nodes;
     public List<LigerEdge> edges;
-
     public ChoiceSpace cp;
 
     public Set<String> attributes;
-
     public Set<String> relations;
 
     public Set<String> values;
 
-
+    public String id;
 
     public LigerGraph()
     {
@@ -168,7 +166,14 @@ public class LigerGraph extends LigerObject {
     public String toString(){
         StringBuilder sb = new StringBuilder();
 
-    return null;
+        sb.append("liger_graph, nodes_size: ");
+        sb.append(this.nodes.size() + ", ");
+        sb.append("edges_size: ");
+        sb.append(this.edges.size() + ", ");
+
+
+
+    return sb.toString();
     }
 
 

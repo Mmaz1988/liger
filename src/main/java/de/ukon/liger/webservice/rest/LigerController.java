@@ -24,7 +24,7 @@ package de.ukon.liger.webservice.rest;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
-import de.ukon.liger.segmentation.SegmenterMain;
+import de.ukon.liger.annotators.SegmenterMain;
 import de.ukon.liger.webservice.rest.dtos.*;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.CoreSentence;
@@ -249,6 +249,32 @@ public class LigerController {
     return new LigerRuleAnnotation(lg,rp.getAppliedRules(),sem.returnMeaningConstructors(fs));
     }
 
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/apply_rule_xle", produces = "application/json", consumes = "application/json")
+    public LigerRuleAnnotation applyRuleRequestXLE(@RequestBody LigerRequest request) {
+
+        //    System.out.println(request.sentence);
+        //   System.out.println(request.ruleString);
+        XLEoperator parser = new XLEoperator(new VariableHandler());
+
+        LinguisticStructure fs = parser.parseSingle(request.sentence);
+        LOGGER.fine(fs.constraints.toString());
+        // System.out.println(fs.constraints);
+        List<LinguisticStructure> fsList = new ArrayList<>();
+        fsList.add(fs);
+
+        RuleParser rp = new RuleParser(fsList, request.ruleString);
+        rp.addAnnotation2(fs);
+
+        GlueSemantics sem = new GlueSemantics();
+        String semantics = sem.calculateSemantics(fs);
+
+        LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation,semantics);
+
+        return new LigerRuleAnnotation(lg,rp.getAppliedRules(),sem.returnMeaningConstructors(fs));
+    }
+
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
@@ -259,7 +285,7 @@ public class LigerController {
         //   System.out.println(request.ruleString);
         XLEoperator parser = new XLEoperator(new VariableHandler());
         try {
-            LinguisticStructure fs = parser.xle2Java("some string");
+            LinguisticStructure fs = parser.parseSingle(request.sentence);
 
        // System.out.println(fs.constraints);
         List<LinguisticStructure> fsList = new ArrayList<>();

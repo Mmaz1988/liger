@@ -19,13 +19,14 @@
  * "
  */
 
-package de.ukon.liger.syntax.xle.FstructureElements;
+package de.ukon.liger.syntax.xle.avp_elements;
 
 public class NonTerminalAVP extends AttributeValuePair {
-    public NonTerminalAVP(String attr, String val)
+    public NonTerminalAVP(String attr, String val, String projection)
     {
         this.attribute = attr;
         this.value = val;
+        this.projection = projection;
     }
 }
 

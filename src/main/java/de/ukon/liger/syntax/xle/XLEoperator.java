@@ -25,9 +25,10 @@ import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
-import de.ukon.liger.syntax.xle.FstructureElements.AttributeValuePair;
-import de.ukon.liger.syntax.xle.Prolog2Java.FsProlog2Java;
-import de.ukon.liger.syntax.xle.Prolog2Java.ReadFsProlog;
+import de.ukon.liger.syntax.ud.UDoperator;
+import de.ukon.liger.syntax.xle.avp_elements.AttributeValuePair;
+import de.ukon.liger.syntax.xle.prolog2java.FsProlog2Java;
+import de.ukon.liger.syntax.xle.prolog2java.ReadFsProlog;
 import de.ukon.liger.utilities.VariableHandler;
 
 import java.io.*;
@@ -47,8 +48,36 @@ public class XLEoperator extends SyntaxOperator {
 
     public VariableHandler vh;
 
-    public String xlebashcommand = "/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/liger_resources/xlebash.sh";
+    //for Mac
+  //  public String xlebashcommand = "/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/liger_resources/xlebash.sh";
+
+    //For Windows
+    public String xlebashcommand = "/mnt/c/Users/Celeste/IdeaProjects/LiGER/liger_resources/xlebash_win.sh";
     private final static Logger LOGGER = Logger.getLogger(XLEoperator.class.getName());
+
+
+    public static void main(String[] args) // throws VariableBindingException
+    {
+
+        List<String> testSentences = new ArrayList<String>(Arrays.asList(args));
+
+        XLEoperator xleops = new XLEoperator(new VariableHandler());
+
+        if (testSentences.isEmpty()) {
+            Scanner s = new Scanner(System.in);
+            String input;
+            while (true) {
+                System.out.println("Enter sentence to be analyzed or enter 'quit'.");
+                input = s.nextLine();
+                if (input.equals("quit"))
+                    break;
+                LinguisticStructure out = xleops.parseSingle(input);
+                System.out.println(out.constraints);
+
+            }
+        }
+
+    }
 
 
     public XLEoperator(VariableHandler vh)
@@ -61,9 +90,16 @@ public class XLEoperator extends SyntaxOperator {
         File f = new File(testFile);
         try
         {
-            ProcessBuilder proc = new ProcessBuilder(xlebashcommand);
+          // ProcessBuilder proc = new ProcessBuilder(xlebashcommand);
 
-            proc.start().waitFor();
+            //For Windows
+
+//            proc.start().waitFor();
+
+        ProcessBuilder proc = new ProcessBuilder("wsl" + xlebashcommand);
+
+        proc.start().waitFor();
+
 
             f.delete();
 
@@ -111,7 +147,7 @@ public class XLEoperator extends SyntaxOperator {
         }
         try
         {
-            ProcessBuilder proc = new ProcessBuilder(xlebashcommand);
+            ProcessBuilder proc = new ProcessBuilder("wsl",xlebashcommand);
 
             proc.start().waitFor();
 
@@ -129,7 +165,9 @@ public class XLEoperator extends SyntaxOperator {
         singletonList.add(sentence);
         parseSentences(singletonList);
 
-        File fsFile = new File("/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/parser_output");
+      //File fsFile = new File("/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/parser_output");
+
+        File fsFile = new File("C:\\Users\\Celeste\\IdeaProjects\\LiGER\\parser_output");
 
         if (fsFile.isDirectory()) {
             File[] files = fsFile.listFiles((d, name) -> name.endsWith(".pl"));

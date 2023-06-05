@@ -26,6 +26,33 @@ NN, NNS, NNP, NNPS, PRP
 #verb
 VB, VBD, VBG, VBN, VBP, VBZ, JJR, JJS
 
+>visargue-modals
+***
+#certain
+certainly,
+
+***
+#probable
+probably, presumably, estimated, likely, expected, possible, potential, viable, realisable, realizable, possibly, feasibly,
+doable, perhaps, could, potentially
+
+***
+#impossible
+impossible, never
+
+***
+#permission
+may, might
+
+***
+#volition
+want, intend, intention, shall
+
+***
+#obligation
+should, ought, must, oblige, coerce, constrain, force 
+
+
 >xcomp-veridicality
 ***
 #veridical

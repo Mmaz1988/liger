@@ -26,8 +26,6 @@
 ==> #a T-REF 'non-past' & #c CHECK '+' & #c EVAL #a.
 
 
-//CF conditional rule
-
 //Relative tense rules
 #a T-REF 'undefined' &
 #a ^(TEMP-REF>SEM>XCOMP) #b & #b !(SEM>TEMP-REF) #c ==> #a EVAL #c.

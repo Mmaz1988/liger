@@ -54,8 +54,8 @@ public class QueryParserTest {
 
     public LinkedHashMap<String, LinguisticStructure> loadFs(int i)
     {
-        PathVariables.workingDirectory = "/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/liger_resources";
         PathVariables.initializePathVariables();
+
         testFolderPath = PathVariables.testPath;
         VariableHandler vh = new VariableHandler();
         XLEoperator xle = new XLEoperator(vh);
@@ -301,6 +301,8 @@ public class QueryParserTest {
             QueryParser qp = new QueryParser("#g ^(COMP*>%) #h",fs.get(key));
 
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            String fstr =  ((Fstructure) fs.get(key)).writeToProlog(false);
 
             assertEquals(3,qpr.result.keySet().size());
         }

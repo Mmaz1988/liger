@@ -19,13 +19,14 @@
  * "
  */
 
-package de.ukon.liger.syntax.xle.FstructureElements;
+package de.ukon.liger.syntax.xle.avp_elements;
 
 
 public class Adjunct extends AttributeValuePair {
-    public Adjunct(String value)
+    public Adjunct(String value, String projection)
     {
         this.attribute = "'ADJUNCT'";
         this.value = value;
+        this.projection = projection;
     }
 }

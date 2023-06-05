@@ -19,9 +19,8 @@
  * "
  */
 
-package de.ukon.liger.syntax.xle.Prolog2Java;
+package de.ukon.liger.syntax.xle.prolog2java;
 
-import de.ukon.liger.main.DbaMain;
 import de.ukon.liger.packing.ChoiceSpace;
 import de.ukon.liger.utilities.VariableHandler;
 
@@ -35,7 +34,8 @@ import java.util.stream.Collectors;
 public class ReadFsProlog implements Serializable {
 
     public String sentence;
-    public List<String> prolog;
+    public List<String> fstr;
+    public List<String> cstr;
     public String sentenceID;
    public VariableHandler vh;
    public ChoiceSpace cp;
@@ -45,7 +45,7 @@ public class ReadFsProlog implements Serializable {
     {
         this.sentenceID = sentenceID;
         this.sentence = sentence;
-        this.prolog = fsConstraints;
+        this.fstr = fsConstraints;
         this.vh = vh;
 
     }
@@ -54,7 +54,18 @@ public class ReadFsProlog implements Serializable {
     {
         this.sentenceID = sentenceID;
         this.sentence = sentence;
-        this.prolog = fsConstraints;
+        this.fstr = fsConstraints;
+        this.cp = cp;
+        this.vh = vh;
+
+    }
+
+    public ReadFsProlog(String sentenceID, String sentence, List<String> fsConstraints, List<String> cConstraints, ChoiceSpace cp, VariableHandler vh)
+    {
+        this.sentenceID = sentenceID;
+        this.sentence = sentence;
+        this.fstr = fsConstraints;
+        this.cstr = cConstraints;
         this.cp = cp;
         this.vh = vh;
 
@@ -90,6 +101,7 @@ public class ReadFsProlog implements Serializable {
         // This list will contain our f-structure constraints
         String inSentence = "";
         List<String> fsConstraints = new ArrayList<String>();
+        List<String> cstrFacts = new ArrayList<>();
         List<String> choiceSpace = new ArrayList<>();
         ChoiceSpace cp = null;
 
@@ -99,26 +111,35 @@ public class ReadFsProlog implements Serializable {
 
             String strLine;
       //      int  counter = 0;
-            // matches all constraints of the syntactic input
+            // matches all constraints of the syntactic
+            Pattern fstr = Pattern.compile("% Constraints:\\n\\t\\[(.+)\\n\\t\\],",Pattern.DOTALL);
+
             Pattern constraints = Pattern.compile("(cf\\(.*\\))");
+            Pattern cStr = Pattern.compile("% C-Structure:\\n\\t\\[(.+)\\n\\t\\]\\)",Pattern.DOTALL);
             // Mark up free sentence
             Pattern sentence = Pattern.compile( "'markup_free_sentence'\\((.*?)\\)");
 
             Pattern choice = Pattern.compile("choice\\((.+)\\),?");
 
-            // matches c-structure constraints (this is very ugly but maybe enough)
-       //     Pattern cstructure = Pattern.compile("((surfaceform|semform_data)\\(.+\\))");
+            String fstrString = br.lines().collect(Collectors.joining("\n"));
 
-            while ((strLine = br.readLine()) != null) {
+            Matcher constraintListMatcher = fstr.matcher(fstrString);
+            Matcher cStrMatcher = cStr.matcher(fstrString);
 
-                Matcher sentenceMatcher = sentence.matcher(strLine);
-                Matcher constraintMatcher = constraints.matcher(strLine);
-                Matcher choiceMatcher = choice.matcher(strLine);
-                //             Matcher cstructureMatcher = cstructure.matcher(strLine);
+            BufferedReader fStrReader = null;
 
-                if (sentenceMatcher.find()) {
-                    inSentence = sentenceMatcher.group(1);
-                }
+            if (constraintListMatcher.find()) {
+                fStrReader = new BufferedReader(new StringReader(constraintListMatcher.group(1)));
+            } else
+            {
+                fStrReader = br;
+            }
+                String fline;
+
+            //Read in f-structure information
+            while ((fline = fStrReader.readLine()) != null)
+            {
+                Matcher constraintMatcher = constraints.matcher(fline);
 
                 if (constraintMatcher.find()) {
                     // Material that we want to translate into java objects is stored in arrayList
@@ -130,6 +151,50 @@ public class ReadFsProlog implements Serializable {
 //                    fsConstraints.add(cstructureMatcher.group(1));
 //                }
                 }
+            }
+
+            //Read in c-structure information
+            String cstr = null;
+            BufferedReader cStrReader = null;
+
+            if (cStrMatcher.find())
+            {
+                cstr = cStrMatcher.group(1);
+                cStrReader = new BufferedReader(new StringReader(cStrMatcher.group(1)));
+            } else
+            { cStrReader = br;
+            }
+
+
+            String cline;
+            while ((cline = cStrReader.readLine()) != null)
+            {
+                Matcher constraintMatcher = constraints.matcher(cline);
+
+                if (constraintMatcher.find())
+                {
+                    cstrFacts.add(constraintMatcher.group(1));
+                }
+
+            }
+
+
+
+            // matches c-structure constraints (this is very ugly but maybe enough)
+       //     Pattern cstructure = Pattern.compile("((surfaceform|semform_data)\\(.+\\))");
+
+            //TODO do not iterate through all lines again but only the necessary ones
+            while ((strLine = br.readLine()) != null) {
+
+                Matcher sentenceMatcher = sentence.matcher(strLine);
+                Matcher choiceMatcher = choice.matcher(strLine);
+                //             Matcher cstructureMatcher = cstructure.matcher(strLine);
+
+                if (sentenceMatcher.find()) {
+                    inSentence = sentenceMatcher.group(1);
+                }
+
+
                 if (choiceMatcher.find())
                 {
                     choiceSpace.add(choiceMatcher.group(1));
@@ -153,7 +218,7 @@ public class ReadFsProlog implements Serializable {
       //  fsConstraints = contractFstructure(fsConstraints);
        // fsConstraints = removeEqualities(fsConstraints);
 
-        ReadFsProlog Fstructure = new ReadFsProlog(sentenceID, inSentence, fsConstraints, cp, vh);
+        ReadFsProlog Fstructure = new ReadFsProlog(sentenceID, inSentence, fsConstraints, cstrFacts, cp, vh);
         return Fstructure;
     }
 
