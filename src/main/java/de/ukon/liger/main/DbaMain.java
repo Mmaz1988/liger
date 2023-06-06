@@ -53,6 +53,7 @@ import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.DBASettings;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
+import de.ukon.liger.utilities.XLEStarter;
 import de.ukon.liger.webservice.WebApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,9 +127,16 @@ public class DbaMain {
                 case "-sem":
                     settings.semanticParsing = true;
                     break;
-
                 case "-mc":
                     settings.mcs = true;
+                    break;
+                case "-xle":
+                    settings.xleBinary = args[i + 1];
+                    i++;
+                    break;
+                case "-grammar":
+                    settings.xleGrammar = args[i + 1];
+                    i++;
                     break;
 
             }
@@ -357,7 +365,9 @@ public class DbaMain {
                 break;
             }
             case "lfg": {
-                syn = new XLEoperator(vh);
+                XLEStarter xle = new XLEStarter(settings.xleBinary, settings.xleGrammar, settings.os);
+                xle.generateXLEStarterFile();
+                syn = new XLEoperator(vh,settings.os);
                 LOGGER.info("Created new XLE parser instance ...");
                 break;
             }

@@ -65,9 +65,9 @@ public class XLEoperator extends SyntaxOperator {
 
         PathVariables.initializePathVariables();
 
-        String xlePath = "/Applications/xle";
-        String grammarPath = "/Users/princess_zelda/Grammars/english_pargram/english-2009-11-25/index/main.lfg";
-        XLEStarter.OS os = XLEStarter.OS.MAC;
+        String xlePath = "/bin/xle";
+        String grammarPath = "/mnt/d/Resources/english_pargram/index/main.lfg";
+        XLEStarter.OS os = XLEStarter.OS.WINDOWS;
 
         XLEStarter xleStarter = new XLEStarter(xlePath, grammarPath, os);
 

@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 public class XLEStarter {
 
     public enum OS {
-        WINDOWS, LINUX, MAC, SOLARIS
+        WINDOWS, LINUX, MAC, SOLARIS, UNKNOWN
     }
 
     ;
@@ -77,7 +77,14 @@ public class XLEStarter {
         // xle -noTk -e "create-parser /mnt/d/Resources/english_pargram/index/main.lfg; parse-testfile testfile.lfg -outputPrefix parser_output/sentence; exit"
 
         sb.append("xle -noTk -e \"create-parser ");
-        sb.append(grammarPath);
+
+        String grammarString = grammarPath;
+
+        if (operatingSystem.equals(OS.WINDOWS)){
+            grammarString = HelperMethods.formatWslString(grammarString);
+        }
+
+        sb.append(grammarString);
         sb.append("; parse-testfile ");
 
 
@@ -121,7 +128,16 @@ public class XLEStarter {
         }
 
         try {
-            Runtime.getRuntime().exec("chmod +x "+ file.getAbsolutePath());
+
+            String chmodCommand = "";
+
+            if (operatingSystem.equals(OS.WINDOWS)){
+                chmodCommand = "wsl chmod +x " + HelperMethods.formatWslString(file.getAbsolutePath());
+            } else {
+                chmodCommand = "chmod +x " + file.getAbsolutePath();
+            }
+
+            Runtime.getRuntime().exec(chmodCommand);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
