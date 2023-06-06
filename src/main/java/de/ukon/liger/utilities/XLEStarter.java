@@ -1,6 +1,10 @@
 package de.ukon.liger.utilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 
 public class XLEStarter {
@@ -14,6 +18,8 @@ public class XLEStarter {
     public String xlePath;
     public String grammarPath;
     public final OS operatingSystem;
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(XLEStarter.class);
 
     public XLEStarter(String xlePath, String grammarPath, OS operatingSystem) {
         this.xlePath = xlePath;
@@ -96,13 +102,14 @@ public class XLEStarter {
         sb.append("\n");
 
 
+        File tempDir = new File(Paths.get(PathVariables.workingDirectory, "tmp").toString());
+
+        if (!tempDir.exists()){
+            tempDir.mkdir();
+        }
+
         //open file and write
         File file = new File(Paths.get(PathVariables.workingDirectory, "tmp", "xlebash.sh").toString());
-
-        if (file.exists())
-        {
-            file.delete();
-        }
 
         try {
             java.io.FileWriter fw = new java.io.FileWriter(file);
@@ -112,6 +119,14 @@ public class XLEStarter {
                 Exception e) {
             System.out.println("Failed to write xlebash.sh");
         }
+
+        try {
+            Runtime.getRuntime().exec("chmod +x "+ file.getAbsolutePath());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        LOGGER.info("Generated xlebash.sh at " + file.getAbsolutePath());
     }
     }
 
