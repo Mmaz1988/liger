@@ -44,9 +44,17 @@
 #c HEAD %b & #d HEAD %d
 ==> #c AUX '+' & #d AUX #c & #d MAIN '+' & #d FIN '+' & #d FORM %c & #d HEAD %b %d.
 
-#a aux:pass #b & #a MORPH #c FIN '+' & #b MORPH #d &
-#c HEAD %b & #d HEAD %d
-==> #b AUX '+' & #c AUX #d & #c MAIN '+' & #c HEAD %d %b.
+//#a aux:pass #b & #a MORPH #c FIN '+' & #b MORPH #d &
+//#c HEAD %b & #d HEAD %d
+//==> #b AUX '+' & #c AUX #d & #c MAIN '+' & #c HEAD %d %b.
+
+//#a aux:pass #b & #a MORPH #c FIN '-' & #b MORPH #d &
+//#c HEAD %b & #d HEAD %d
+//==> #b AUX '+' & #c AUX #d & #c MAIN '+' & #c HEAD %d %b.
+
+#a aux:pass #b & #a MORPH #c & #b MORPH #d &
+#c HEAD %b & #d HEAD %d & #d FIN %a
+==> #d AUX '+' & #c AUX #d & #c MAIN '+' & #c FIN %a & #c HEAD %d %b.
 
 //#a aux #b & #b MORPH #c TENSE %c & #a MORPH #d FORM 'ppart' ==> #c AUX '+' & #d AUX #c & #d MAIN '+' & #d ASPECT 'perf' & #b ASPECT 'perf'.
 //#a aux #b & #b MORPH #c TENSE %c & #a MORPH #d FORM 'prpart' ==> #c AUX '+' & #d AUX #c & #d MAIN '+' & #d ASPECT 'prog'.
@@ -58,18 +66,18 @@
 ==> #e AUX #b & #e FORM %f('fut') & #b MAIN '-' & #e FIN '+' & #b FIN '+' & #e MAIN '+' & #e HEAD %b to %e.
 
 //Simple tense
-#b FIN '+' & #b FORM %b & #b HEAD %c & #b AUX '-' ==> #b TAM #d & #d HEAD '%c' & #d TENSE %b.
+#b FIN '+' & #b FORM %b & #b HEAD %c & #b AUX '-' ==> #b TAM #d & #d HEAD '%c' & #d TENSE %b & #d FIN '+'.
 
 //Tense from aux verb
 #b MAIN '+' & #b AUX #c & #c FIN '+' & #b FORM %b &
-#c HEAD %d & #b HEAD %c ==> #c TAM #d & #b TAM #d & #d HEAD '%c' & #d TENSE %b.
+#c HEAD %d & #b HEAD %c ==> #c TAM #d & #b TAM #d & #d HEAD '%c' & #d TENSE %b & #d FIN '+'.
+
+//non-finite
+#a HEAD %a & #a FIN '-' & #a MAIN '+' ==> #a TAM #b & #b HEAD '%a'.
 
 //aspect
-#a HEAD %a & #a MAIN '+' & #a ASPECT %b & #a FIN '-' ==> #a TAM #b & #b HEAD %a & #b ASPECT %b.
+#a HEAD %a & #a MAIN '+' & #a ASPECT %b & #a FIN '-' & #a TAM #b ==> #b ASPECT %b.
 
 //Aspect
 #a TAM #b & #a MAIN '+' & #a ASPECT %a & #a FIN '+' ==> #b ASPECT %a.
 #a TAM #b & #a MAIN '+' & #a ASPECT %a & #a ASP-AUX #c ASPECT %b ==> #b ASPECT '%b,%a'.
-
-
-

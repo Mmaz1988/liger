@@ -24,9 +24,9 @@ package de.ukon.liger.packing;
 import de.ukon.liger.utilities.PathVariables;
 import org.junit.jupiter.api.Test;
 import de.ukon.liger.syntax.LinguisticStructure;
-import de.ukon.liger.syntax.xle.FstructureElements.AttributeValuePair;
-import de.ukon.liger.syntax.xle.Prolog2Java.FsProlog2Java;
-import de.ukon.liger.syntax.xle.Prolog2Java.ReadFsProlog;
+import de.ukon.liger.syntax.xle.avp_elements.AttributeValuePair;
+import de.ukon.liger.syntax.xle.prolog2java.FsProlog2Java;
+import de.ukon.liger.syntax.xle.prolog2java.ReadFsProlog;
 import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.VariableHandler;
 

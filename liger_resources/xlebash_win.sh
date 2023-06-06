@@ -1,13 +1,18 @@
 #!/bin/bash
 #xle
-export XLEPATH=/Applications/xle
+export XLEPATH=/bin/xle
 export PATH=${XLEPATH}/bin:$PATH
 export DYLD_LIBRARY_PATH=$XLEPATH/lib:$XLEPATH/bin/sp-3.12.7
 export LD_LIBRARY_PATH=${XLEPATH}/lib
 export LD_LIBRARY_PATH=${XLEPATH}/lib:$LD_LIBRARY_PATH
 export DYLD_LIBRARY_PATH=${XLEPATH}/lib:$DYLD_LIBRARY_PATH
 
-xle -noTk -e "create-parser /Users/princess_zelda/Grammars/english_pargram/english-2009-11-25/index/main.lfg; parse-testfile testfile.lfg -outputPrefix parser_output/sentence; exit"
+export TCL_LIBRARY=${XLEPATH}/tcl/scripts/tcl
+export TCLLIBPATH=${XLEPATH}/tcl/scripts/tcl
+export TKLIBPATH=${XLEPATH}/tcl/scripts/tk
+export TK_LIBRARY=${XLEPATH}/tcl/scripts/tk
+
+xle -noTk -e "create-parser /mnt/d/Resources/english_pargram/index/main.lfg; parse-testfile testfile.lfg -outputPrefix parser_output/sentence; exit"
 
 #xle -noTk -e "create-parser /Users/red_queen/Desktop/german_grammar/german.lfg; parse-testfile testfile.lfg -outputPrefix parser_output/sentence; exit"
 

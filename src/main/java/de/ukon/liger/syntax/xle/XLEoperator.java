@@ -25,9 +25,10 @@ import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
-import de.ukon.liger.syntax.xle.FstructureElements.AttributeValuePair;
-import de.ukon.liger.syntax.xle.Prolog2Java.FsProlog2Java;
-import de.ukon.liger.syntax.xle.Prolog2Java.ReadFsProlog;
+import de.ukon.liger.syntax.ud.UDoperator;
+import de.ukon.liger.syntax.xle.avp_elements.AttributeValuePair;
+import de.ukon.liger.syntax.xle.prolog2java.FsProlog2Java;
+import de.ukon.liger.syntax.xle.prolog2java.ReadFsProlog;
 import de.ukon.liger.utilities.VariableHandler;
 
 import java.io.*;
@@ -47,8 +48,36 @@ public class XLEoperator extends SyntaxOperator {
 
     public VariableHandler vh;
 
-    public String xlebashcommand = "/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/liger_resources/xlebash.sh";
+    //for Mac
+    public String xlebashcommand = "/Users/princess_zelda/IdeaProjects/liger/liger_resources/xlebash.sh";
+
+    //For Windows
+    //public String xlebashcommand = "/mnt/c/Users/Celeste/IdeaProjects/LiGER/liger_resources/xlebash_win.sh";
     private final static Logger LOGGER = Logger.getLogger(XLEoperator.class.getName());
+
+
+    public static void main(String[] args) // throws VariableBindingException
+    {
+
+        List<String> testSentences = new ArrayList<String>(Arrays.asList(args));
+
+        XLEoperator xleops = new XLEoperator(new VariableHandler());
+
+        if (testSentences.isEmpty()) {
+            Scanner s = new Scanner(System.in);
+            String input;
+            while (true) {
+                System.out.println("Enter sentence to be analyzed or enter 'quit'.");
+                input = s.nextLine();
+                if (input.equals("quit"))
+                    break;
+                LinguisticStructure out = xleops.parseSingle(input);
+                System.out.println(out.constraints);
+
+            }
+        }
+
+    }
 
 
     public XLEoperator(VariableHandler vh)
@@ -61,9 +90,16 @@ public class XLEoperator extends SyntaxOperator {
         File f = new File(testFile);
         try
         {
-            ProcessBuilder proc = new ProcessBuilder(xlebashcommand);
+            // ProcessBuilder proc = new ProcessBuilder(xlebashcommand);
+
+            //For Windows
+
+//            proc.start().waitFor();
+
+            ProcessBuilder proc = new ProcessBuilder("wsl" + xlebashcommand);
 
             proc.start().waitFor();
+
 
             f.delete();
 
@@ -82,18 +118,18 @@ public class XLEoperator extends SyntaxOperator {
         if (testdir.exists() && testdir.isDirectory())
         {
             try {
-           Files.walk(testdir.toPath())
-                   .sorted(Comparator.reverseOrder())
-                   .map(Path::toFile)
-                   .forEach(File::delete);
+                Files.walk(testdir.toPath())
+                        .sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
             }catch(Exception e)
             {
                 LOGGER.warning("Failed to delete output directory");
             }
         }
-            new File("parser_output").mkdirs();
+        new File("parser_output").mkdirs();
 
-       // new File("output").mkdirs();
+        // new File("output").mkdirs();
 
         File f = new File("testfile.lfg");
         try (
@@ -111,6 +147,9 @@ public class XLEoperator extends SyntaxOperator {
         }
         try
         {
+            // For windows
+            //ProcessBuilder proc = new ProcessBuilder("wsl",xlebashcommand);
+            //For mac
             ProcessBuilder proc = new ProcessBuilder(xlebashcommand);
 
             proc.start().waitFor();
@@ -129,7 +168,9 @@ public class XLEoperator extends SyntaxOperator {
         singletonList.add(sentence);
         parseSentences(singletonList);
 
-        File fsFile = new File("/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/parser_output");
+        //File fsFile = new File("/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/parser_output");
+
+        File fsFile = new File("/Users/princess_zelda/IdeaProjects/liger/parser_output");
 
         if (fsFile.isDirectory()) {
             File[] files = fsFile.listFiles((d, name) -> name.endsWith(".pl"));
@@ -139,7 +180,7 @@ public class XLEoperator extends SyntaxOperator {
                 return fsRef.get(fsRef.keySet().iterator().next()) ;
             }
         }
-            return null;
+        return null;
     }
 
     public LinkedHashMap loadPrologFstructures()
@@ -153,7 +194,7 @@ public class XLEoperator extends SyntaxOperator {
             e.printStackTrace();
         }
 
-         Collections.sort(listOfPrologFiles, new Comparator<Path>() {
+        Collections.sort(listOfPrologFiles, new Comparator<Path>() {
             public int compare(Path f1, Path f2) {
                 Pattern treeBankFile = Pattern.compile(".*S(\\d+)");
                 Matcher f1Matcher = treeBankFile.matcher(f1.toString());
@@ -178,14 +219,14 @@ public class XLEoperator extends SyntaxOperator {
 
         for (int i = 0; i < listOfPrologFiles.size(); i++) {
 
-                String prologFilePath = listOfPrologFiles.get(i).toString();
-                LinkedHashMap<String, LinguisticStructure> prologJavaObject = fs2Java(prologFilePath);
+            String prologFilePath = listOfPrologFiles.get(i).toString();
+            LinkedHashMap<String, LinguisticStructure> prologJavaObject = fs2Java(prologFilePath);
 
-                for (String key : prologJavaObject.keySet())
-                {
-                    prologsJavaObjects.put(key,prologJavaObject.get(key));
-                }
+            for (String key : prologJavaObject.keySet())
+            {
+                prologsJavaObjects.put(key,prologJavaObject.get(key));
             }
+        }
 
         return prologsJavaObjects;
     }

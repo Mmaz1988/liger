@@ -19,7 +19,7 @@
  * "
  */
 
-package de.ukon.liger.syntax.xle.FstructureElements;
+package de.ukon.liger.syntax.xle.avp_elements;
 
 
 import java.io.Serializable;
@@ -28,13 +28,14 @@ public class AttributeValuePair implements Serializable {
 
     public String attribute;
     public String value;
-
+    public String projection;
 
     public AttributeValuePair()
     {
         super();
         this.attribute = "'null'";
         this.value = null;
+        this.projection =null;
     }
 
 
