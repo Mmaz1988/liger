@@ -243,6 +243,12 @@ public class DbaMain {
                 if (settings.semanticParsing) {
                     semanticsInteractiveWrapper(fs, result);
                 }
+
+                if (settings.mcs)
+                {
+                    semanticsMeaningConstructorWrapper(fs,result);
+                }
+
             } else {
                 LinkedHashMap<String, LinguisticStructure> fs = fromFileWrapper(result);
                 if (settings.semanticParsing) {

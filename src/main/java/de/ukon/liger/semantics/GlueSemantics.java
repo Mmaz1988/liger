@@ -21,18 +21,17 @@
 
 package de.ukon.liger.semantics;
 
+import de.ukon.liger.packing.ChoiceVar;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.syntax.LinguisticStructure;
 import glueSemantics.linearLogic.Premise;
 import glueSemantics.linearLogic.Sequent;
 import glueSemantics.parser.GlueParser;
 import glueSemantics.semantics.LexicalEntry;
 import main.Settings;
-import de.ukon.liger.packing.ChoiceVar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import prover.LLProver;
-import prover.LLProver1;
-import de.ukon.liger.syntax.GraphConstraint;
-import de.ukon.liger.syntax.LinguisticStructure;
 import prover.LLProver2;
 import utilities.MyFormatter;
 
@@ -56,16 +55,11 @@ public class GlueSemantics {
     public String returnMeaningConstructors(LinguisticStructure fs){
 
         HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
-        if(fs.cp.choices.size() > 1) {
+
             for (Set<ChoiceVar> choice : fs.cp.choices) {
-                if (!choice.equals(fs.cp.rootChoice)) {
-                    unpackedSem.put(choice, new ArrayList<>());
-                }
+
+                unpackedSem.put(choice, new ArrayList<>());
             }
-        }else
-        {
-            unpackedSem.put(fs.cp.rootChoice,new ArrayList<>());
-        }
 
         StringBuilder sb = new StringBuilder();
 
@@ -73,25 +67,38 @@ public class GlueSemantics {
             if (c.getRelationLabel().equals("GLUE")) {
                 if (unpackedSem.containsKey(c.getReading())) {
                     unpackedSem.get(c.getReading()).add(c.getFsValue().toString());
-                } else {
-                    for (Set<ChoiceVar> key : unpackedSem.keySet()) {
-                        unpackedSem.get(key).add(c.getFsValue().toString());
-                    }
                 }
             }
         }
 
+        boolean relevantChoice = false;
+
+        for (Set<ChoiceVar> choice : unpackedSem.keySet())
+            {
+                if (!choice.equals(fs.cp.rootChoice) && !unpackedSem.get(choice).isEmpty())
+                {
+                    relevantChoice = true;
+                    unpackedSem.get(choice).addAll(unpackedSem.get(fs.cp.rootChoice));
+                }
+            }
+
+        if (relevantChoice)
+        {
+            unpackedSem.remove(fs.cp.rootChoice);
+        }
+
         for (Set<ChoiceVar> key : unpackedSem.keySet())
         {
-            sb.append("{");
-            sb.append(System.lineSeparator());
-            for (String s : unpackedSem.get(key))
-            {
-                sb.append(s);
+            if (!unpackedSem.get(key).isEmpty()) {
+                sb.append("{");
+                sb.append(System.lineSeparator());
+                for (String s : unpackedSem.get(key)) {
+                    sb.append(s);
+                    sb.append(System.lineSeparator());
+                }
+                sb.append("}");
                 sb.append(System.lineSeparator());
             }
-            sb.append("}");
-            sb.append(System.lineSeparator());
         }
 
         return sb.toString();
@@ -111,7 +118,7 @@ public class GlueSemantics {
             unpackedSem.put(fs.cp.rootChoice,new ArrayList<>());
         }
 
-        List<String> meaningConstructorStrings = new ArrayList<>();
+
         for (GraphConstraint c : fs.annotation) {
             if (c.getRelationLabel().equals("GLUE")) {
                 if (unpackedSem.containsKey(c.getReading())) {
@@ -140,16 +147,14 @@ public class GlueSemantics {
 
             List<LexicalEntry> lexicalEntries = new ArrayList<>();
 
+            /*
             for (String mc : unpackedSem.get(key))
             {
                 System.out.println(mc);
             }
-
+             */
 
             for (String mc : unpackedSem.get(key)) {
-                //       System.out.println(mc);
-
-                System.out.println(mc);
                 try {
                     LexicalEntry le = glueParser.parseMeaningConstructor(mc);
                     lexicalEntries.add(le);
