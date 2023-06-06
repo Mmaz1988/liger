@@ -60,6 +60,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class DbaMain {
@@ -275,6 +278,24 @@ public class DbaMain {
         //    System.out.println("LiGER annotation complete.");
 
             LOGGER.info("LiGER annotation complete\n");
+           LOGGER.info("Deleting temporary files ... ");
+
+            //Delete tmp folder and contents
+            File tmpdir = new File( Paths.get(PathVariables.workingDirectory,"tmp").toString());
+
+            if (tmpdir.exists() && tmpdir.isDirectory())
+            {
+                try {
+                    Files.walk(tmpdir.toPath())
+                            .sorted(Comparator.reverseOrder())
+                            .map(Path::toFile)
+                            .forEach(File::delete);
+                }catch(Exception e)
+                {
+                    LOGGER.warn("Failed to delete tmp directory");
+                }
+            }
+
             System.exit(0);
 
         }
