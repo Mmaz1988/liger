@@ -10,3 +10,7 @@
 #a word_annotation #c & #a advmod #b & #a POS %a & #b LEMMA %b ==> #c lex(%a,ud-cats)-advmod %b.
 
 #a word_annotation #c & #a LEMMA %a & #a POS MD ==> #c MODAL %a.
+
+#a word_annotation #c & #a LEMMA %a & #a POS PRP ==> #c lex(%a,pronoun) %a.
+
+#a word_annotation #c & #a LEMMA %a & #a POS PRP$ ==> #c lex(%a,pronoun) %a.
