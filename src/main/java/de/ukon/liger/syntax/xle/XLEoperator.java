@@ -25,11 +25,13 @@ import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
-import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.syntax.xle.avp_elements.AttributeValuePair;
 import de.ukon.liger.syntax.xle.prolog2java.FsProlog2Java;
 import de.ukon.liger.syntax.xle.prolog2java.ReadFsProlog;
+import de.ukon.liger.utilities.HelperMethods;
+import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
+import de.ukon.liger.utilities.XLEStarter;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -48,8 +50,10 @@ public class XLEoperator extends SyntaxOperator {
 
     public VariableHandler vh;
 
+    public XLEStarter.OS os;
+
     //for Mac
-    public String xlebashcommand = "/Users/princess_zelda/IdeaProjects/liger/liger_resources/xlebash.sh";
+    public String xlebashcommand = Paths.get(PathVariables.workingDirectory,  "tmp" , "xlebash.sh").toString();
 
     //For Windows
     //public String xlebashcommand = "/mnt/c/Users/Celeste/IdeaProjects/LiGER/liger_resources/xlebash_win.sh";
@@ -59,9 +63,19 @@ public class XLEoperator extends SyntaxOperator {
     public static void main(String[] args) // throws VariableBindingException
     {
 
+        PathVariables.initializePathVariables();
+
+        String xlePath = "/bin/xle";
+        String grammarPath = "/mnt/d/Resources/english_pargram/index/main.lfg";
+        XLEStarter.OS os = XLEStarter.OS.WINDOWS;
+
+        XLEStarter xleStarter = new XLEStarter(xlePath, grammarPath, os);
+
+        xleStarter.generateXLEStarterFile();
+
         List<String> testSentences = new ArrayList<String>(Arrays.asList(args));
 
-        XLEoperator xleops = new XLEoperator(new VariableHandler());
+        XLEoperator xleops = new XLEoperator(new VariableHandler(),os);
 
         if (testSentences.isEmpty()) {
             Scanner s = new Scanner(System.in);
@@ -77,12 +91,35 @@ public class XLEoperator extends SyntaxOperator {
             }
         }
 
+        //Delete tmp folder and contents
+        File tmpdir = new File( Paths.get(PathVariables.workingDirectory,"tmp").toString());
+
+        if (tmpdir.exists() && tmpdir.isDirectory())
+        {
+            try {
+                Files.walk(tmpdir.toPath())
+                        .sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+            }catch(Exception e)
+            {
+                LOGGER.warning("Failed to delete tmp directory");
+            }
+        }
+
+
     }
 
 
     public XLEoperator(VariableHandler vh)
     {
         this.vh = vh;
+    }
+
+    public XLEoperator(VariableHandler vh, XLEStarter.OS os)
+    {
+        this.vh = vh;
+        this.os = os;
     }
 
     public void parseSentences(String testFile)
@@ -96,7 +133,13 @@ public class XLEoperator extends SyntaxOperator {
 
 //            proc.start().waitFor();
 
-            ProcessBuilder proc = new ProcessBuilder("wsl" + xlebashcommand);
+            String processString = xlebashcommand;
+
+            if (this.os.equals(XLEStarter.OS.WINDOWS)) {
+                processString = "wsl $(wslpath " + processString + ")";
+            }
+
+            ProcessBuilder proc = new ProcessBuilder(processString);
 
             proc.start().waitFor();
 
@@ -113,7 +156,7 @@ public class XLEoperator extends SyntaxOperator {
     public void parseSentences(List<String> sentences){
 
 
-        File testdir = new File("parser_output");
+        File testdir = new File( Paths.get(PathVariables.workingDirectory,"tmp","parser_output").toString());
 
         if (testdir.exists() && testdir.isDirectory())
         {
@@ -127,11 +170,23 @@ public class XLEoperator extends SyntaxOperator {
                 LOGGER.warning("Failed to delete output directory");
             }
         }
-        new File("parser_output").mkdirs();
+        new File( Paths.get(PathVariables.workingDirectory,"tmp","parser_output").toString()).mkdirs();
 
         // new File("output").mkdirs();
 
-        File f = new File("testfile.lfg");
+        File f = new File(Paths.get(PathVariables.workingDirectory,"tmp","testfile.lfg").toString());
+
+        if (f.exists())
+        {
+            f.delete();
+        }
+
+        try {
+            f.createNewFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         try (
                 FileWriter fw = new FileWriter(f, true);
                 BufferedWriter bw = new BufferedWriter(fw);
@@ -150,11 +205,32 @@ public class XLEoperator extends SyntaxOperator {
             // For windows
             //ProcessBuilder proc = new ProcessBuilder("wsl",xlebashcommand);
             //For mac
-            ProcessBuilder proc = new ProcessBuilder(xlebashcommand);
+            String processString = xlebashcommand;
+
+            if (this.os.equals(XLEStarter.OS.WINDOWS)) {
+
+                //Translate windows path to unix path
+                // trans late [A-Z]: to /mnt/[a-z]
+
+                processString = HelperMethods.formatWslString(processString);
+
+             //   processString = "wsl" + processString;
+            }
+
+            ProcessBuilder proc = null;
+
+            if (this.os.equals(XLEStarter.OS.WINDOWS)) {
+            proc = new ProcessBuilder("wsl", processString);
+            } else
+            {
+                proc = new ProcessBuilder(processString);
+            }
 
             proc.start().waitFor();
 
-            f.delete();
+          //  f.delete();
+
+
 
 
         } catch (Exception e)
@@ -170,13 +246,16 @@ public class XLEoperator extends SyntaxOperator {
 
         //File fsFile = new File("/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/parser_output");
 
-        File fsFile = new File("/Users/princess_zelda/IdeaProjects/liger/parser_output");
+        File fsFile = new File(Paths.get(PathVariables.workingDirectory,"tmp","parser_output").toString());
 
         if (fsFile.isDirectory()) {
             File[] files = fsFile.listFiles((d, name) -> name.endsWith(".pl"));
 
             for (int i = 0; i < files.length; i++) {
                 LinkedHashMap<String, LinguisticStructure> fsRef = fs2Java(files[i].getPath());
+                //close fsFile
+
+
                 return fsRef.get(fsRef.keySet().iterator().next()) ;
             }
         }

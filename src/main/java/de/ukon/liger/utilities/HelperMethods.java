@@ -187,7 +187,25 @@ public class HelperMethods {
         }
     }
 
+    public static String formatWslString(String winpath)
+    {
 
+        String wslPath = "";
+
+        Pattern pattern = Pattern.compile("([A-Z]):");
+        Matcher matcher = pattern.matcher(winpath);
+        StringBuffer sb1 = new StringBuffer();
+        while (matcher.find()) {
+            matcher.appendReplacement(sb1, "/mnt/" + matcher.group(1).toLowerCase());
+        }
+        matcher.appendTail(sb1);
+        wslPath = sb1.toString();
+
+        //replace all backslashes with forward slashes
+        wslPath = wslPath.replaceAll("\\\\", "/");
+
+        return wslPath;
+    }
 
 }
 
