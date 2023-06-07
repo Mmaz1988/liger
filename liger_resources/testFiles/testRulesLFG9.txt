@@ -93,7 +93,8 @@
 //Semantic interpretation
 
 //Semantic interpretation
-#g NTYPE #h & #g PRED %g
+//attributes without values can be used for existential constraints
+#g NTYPE & #g PRED %g
 ==> #g SEM #i & #i GLUE strip(%g) : #i.
 
 //NP Quantifier -- Sem structure
@@ -244,7 +245,7 @@
 ==> #b COND #k & #k GLUE [/P_t.[/Q_t.(P -> Q)]]  : (#h -o (#b -o #k)).
 
 //modification
-#g SEM #j SIT #l & #j FPS #o CHECK '+' &
+#g SEM #j SIT #l & #j FPS #o CHECK '+' & #o EVENT #p &
 #g ADJUNCT #e in_set #h OBJ #m SEM #a  & #h SEM #b SIT #c
 ==> #h GLUE [/P_<v,t>.[/Q_<s,<v,t>>.[/s_s.[/e_v.(P(e) \& Q(s)(e))]]]] : ((#p -o #b) -o ((#l -o (#p -o #o)) -o (#l -o (#p -o #o)))) &
  #e GLUE [/y_e.[/e_v.with(e,y)]] : (#a -o (#p -o #b)).

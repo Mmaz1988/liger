@@ -53,12 +53,16 @@ import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.DBASettings;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
+import de.ukon.liger.utilities.XLEStarter;
 import de.ukon.liger.webservice.WebApplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class DbaMain {
@@ -126,9 +130,16 @@ public class DbaMain {
                 case "-sem":
                     settings.semanticParsing = true;
                     break;
-
                 case "-mc":
                     settings.mcs = true;
+                    break;
+                case "-xle":
+                    settings.xleBinary = args[i + 1];
+                    i++;
+                    break;
+                case "-grammar":
+                    settings.xleGrammar = args[i + 1];
+                    i++;
                     break;
 
             }
@@ -232,6 +243,12 @@ public class DbaMain {
                 if (settings.semanticParsing) {
                     semanticsInteractiveWrapper(fs, result);
                 }
+
+                if (settings.mcs)
+                {
+                    semanticsMeaningConstructorWrapper(fs,result);
+                }
+
             } else {
                 LinkedHashMap<String, LinguisticStructure> fs = fromFileWrapper(result);
                 if (settings.semanticParsing) {
@@ -267,6 +284,24 @@ public class DbaMain {
         //    System.out.println("LiGER annotation complete.");
 
             LOGGER.info("LiGER annotation complete\n");
+           LOGGER.info("Deleting temporary files ... ");
+
+            //Delete tmp folder and contents
+            File tmpdir = new File( Paths.get(PathVariables.workingDirectory,"tmp").toString());
+
+            if (tmpdir.exists() && tmpdir.isDirectory())
+            {
+                try {
+                    Files.walk(tmpdir.toPath())
+                            .sorted(Comparator.reverseOrder())
+                            .map(Path::toFile)
+                            .forEach(File::delete);
+                }catch(Exception e)
+                {
+                    LOGGER.warn("Failed to delete tmp directory");
+                }
+            }
+
             System.exit(0);
 
         }
@@ -357,7 +392,9 @@ public class DbaMain {
                 break;
             }
             case "lfg": {
-                syn = new XLEoperator(vh);
+                XLEStarter xle = new XLEStarter(settings.xleBinary, settings.xleGrammar, settings.os);
+                xle.generateXLEStarterFile();
+                syn = new XLEoperator(vh,settings.os);
                 LOGGER.info("Created new XLE parser instance ...");
                 break;
             }

@@ -49,14 +49,34 @@ public class DBASettings {
     //For meaning constructor output
     public Boolean mcs;
 
+    public String xleBinary;
+
+    public String xleGrammar;
+
+    public XLEStarter.OS os;
+
     public DBASettings()
     {
         this.interactiveMode = true;
         this.semanticParsing = false;
         this.web = false;
         this.mcs = false;
+        this.os = determineOs();
     }
 
+
+    public XLEStarter.OS determineOs() {
+
+        if (System.getProperty("os.name").equals("Linux")) {
+            return XLEStarter.OS.LINUX;
+        } else if (System.getProperty("os.name").equals("Mac OS X")) {
+            return XLEStarter.OS.MAC;
+        } else if (System.getProperty("os.name").equals("Windows 10")) {
+            return XLEStarter.OS.WINDOWS;
+        } else {
+            return XLEStarter.OS.UNKNOWN;
+        }
+    }
     public void setOutputWriter(File file)
     {
         try {

@@ -214,6 +214,14 @@ public class ReadFsProlog implements Serializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        //close infile
+        try {
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
        fsConstraints = simplifyFs(fsConstraints);
       //  fsConstraints = contractFstructure(fsConstraints);
        // fsConstraints = removeEqualities(fsConstraints);
