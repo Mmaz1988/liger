@@ -25,6 +25,7 @@ import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.annotators.SegmenterMain;
+import de.ukon.liger.utilities.XLEStarter;
 import de.ukon.liger.webservice.rest.dtos.*;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.CoreSentence;
@@ -271,6 +272,34 @@ public class LigerController {
         String semantics = sem.calculateSemantics(fs);
 
         LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation,semantics);
+
+        return new LigerRuleAnnotation(lg,rp.getAppliedRules(),sem.returnMeaningConstructors(fs));
+    }
+
+    //TODO for test purposes only
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/apply_rule_xle_test", produces = "application/json", consumes = "application/json")
+    public LigerRuleAnnotation applyRuleRequestXLE2(@RequestBody LigerRequest request) {
+
+        //    System.out.println(request.sentence);
+        //   System.out.println(request.ruleString);
+        XLEStarter starter = new XLEStarter("/bin/xle", "D:\\Resources\\english_pargram\\index\\main.lfg", XLEStarter.OS.WINDOWS);
+        starter.generateXLEStarterFile();
+        XLEoperator parser = new XLEoperator(new VariableHandler(), XLEStarter.OS.WINDOWS);
+
+        LinguisticStructure fs = parser.parseSingle(request.sentence);
+        LOGGER.fine(fs.constraints.toString());
+        // System.out.println(fs.constraints);
+        List<LinguisticStructure> fsList = new ArrayList<>();
+        fsList.add(fs);
+
+        RuleParser rp = new RuleParser(fsList, request.ruleString);
+        rp.addAnnotation2(fs);
+
+        GlueSemantics sem = new GlueSemantics();
+
+        LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation);
 
         return new LigerRuleAnnotation(lg,rp.getAppliedRules(),sem.returnMeaningConstructors(fs));
     }
