@@ -286,7 +286,7 @@ public class LigerController {
         //   System.out.println(request.ruleString);
         XLEStarter starter = new XLEStarter();
         starter.generateXLEStarterFile();
-        XLEoperator parser = new XLEoperator(new VariableHandler(), XLEStarter.OS.WINDOWS);
+        XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
 
         LinguisticStructure fs = parser.parseSingle(request.sentence);
         LOGGER.fine(fs.constraints.toString());
