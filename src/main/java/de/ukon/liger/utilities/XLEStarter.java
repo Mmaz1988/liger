@@ -68,6 +68,7 @@ public class XLEStarter {
                 }
                 i++;
             }
+            br.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
