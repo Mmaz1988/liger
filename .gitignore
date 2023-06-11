@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### PATH FILE ###
+/liger_resources/xle_paths.txt
+
+#this is a test
