@@ -284,7 +284,7 @@ public class LigerController {
 
         //    System.out.println(request.sentence);
         //   System.out.println(request.ruleString);
-        XLEStarter starter = new XLEStarter("/bin/xle", "D:\\Resources\\english_pargram\\index\\main.lfg", XLEStarter.OS.WINDOWS);
+        XLEStarter starter = new XLEStarter();
         starter.generateXLEStarterFile();
         XLEoperator parser = new XLEoperator(new VariableHandler(), XLEStarter.OS.WINDOWS);
 

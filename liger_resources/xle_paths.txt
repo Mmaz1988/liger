@@ -1,0 +1,3 @@
+XLE="/bin/xle"
+grammar="D:\\Resources\\english_pargram\\index\\main.lfg"
+OS="Windows"

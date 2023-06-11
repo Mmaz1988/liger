@@ -3,7 +3,9 @@ package de.ukon.liger.utilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 
@@ -17,7 +19,7 @@ public class XLEStarter {
 
     public String xlePath;
     public String grammarPath;
-    public final OS operatingSystem;
+    public OS operatingSystem;
 
     private final static Logger LOGGER = LoggerFactory.getLogger(XLEStarter.class);
 
@@ -26,6 +28,54 @@ public class XLEStarter {
         this.grammarPath = grammarPath;
         this.operatingSystem = operatingSystem;
     }
+
+    public XLEStarter()
+    {
+    initiateFromFile();
+    }
+
+    public void initiateFromFile()
+    {
+        //Open file and read in the paths
+        File f = new File(Paths.get(  PathVariables.workingDirectory, "xle_paths.txt").toString());
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(f));
+            String line;
+            int i = 0;
+            while ((line = br.readLine()) != null) {
+                if (i == 0) {
+                String[] lineOne = line.split("=");
+                xlePath = lineOne[1].replace("\"","");
+                }
+                if (i == 1){
+                    String[] lineTwo = line.split("=");
+                    grammarPath = lineTwo[1].replace("\"","");
+                }
+                if (i == 2){
+                    String[] lineThree = line.split("=");
+                    String osString = lineThree[1].replace("\"","");
+                    if (osString.equalsIgnoreCase("windows")){
+                        operatingSystem = OS.WINDOWS;
+                    } else if (osString.equalsIgnoreCase("mac"))
+                    {
+                        operatingSystem = OS.MAC;
+                    } else
+                    {
+                        operatingSystem = OS.LINUX;
+                    }
+
+                }
+                i++;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        LOGGER.info("Initialized paths...");
+
+    }
+
 
 
     public void generateXLEStarterFile() {
