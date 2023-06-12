@@ -207,8 +207,7 @@ public class RuleParser {
                                                         newChoice.add(choice);
                                                         c.setReading(newChoice);
                                                     }
-                                                }
-                                                //Readings experiment end
+                                                }//Readings experiment end
 
                                                 qpr.result.get(solutionKey).get(nodeMatcher.group(1)).get(key2).put(key, c);
                                                 newConstraints.put(key, c);
@@ -754,14 +753,30 @@ public class RuleParser {
 
         for (String key : result.keySet()) {
             for (String key2 : result.get(key).keySet()) {
+
+
+                 List<ChoiceVar> embeddedChoices = new ArrayList<>();
+
                 for (Integer key3 : result.get(key).get(key2).keySet()) {
 
-                    if (!result.get(key).get(key2).get(key3).getReading().stream().findAny().get().toString().equals("1") &&
+
+                    if (result.get(key).get(key2).get(key3).getReading().stream().findAny().get().toString().equals("1")) {
+                        out.add(new ChoiceVar("1"));
+                        return out;
+                    } else
+                    {
+                        embeddedChoices.addAll(result.get(key).get(key2).get(key3).getReading());
+                    }
+
+/*
+                    if (result.get(key).get(key2).get(key3).getReading().stream().noneMatch(s -> s.toString().equals("1")) &&
                             !newConstraints.keySet().contains(key3)) {
                         out.addAll(result.get(key).get(key2).get(key3).getReading());
                     }
-
+ */
                 }
+                //TODO search for highest available context when there is no top context
+                out.addAll(embeddedChoices);
             }
         }
         if (!out.isEmpty()) {
