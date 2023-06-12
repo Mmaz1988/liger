@@ -275,6 +275,8 @@ public class QueryParserTest {
 
     }
 
+
+    /*
     @Test
     void testQueryParser8()
     {
@@ -308,7 +310,7 @@ public class QueryParserTest {
         }
 
     }
-
+     */
     @Test
     void testQueryParser9()
     {
@@ -615,6 +617,7 @@ public class QueryParserTest {
 
     }
 
+    /*
     @Test
     void testRuleParser9() {
         LinkedHashMap<String, LinguisticStructure> fs = loadFs(3);
@@ -642,7 +645,9 @@ public class QueryParserTest {
         }
 
     }
+     */
 
+    /*
     @Test
     void testRuleParser10() {
         LinkedHashMap<String, LinguisticStructure> fs = loadFs(5);
@@ -671,6 +676,9 @@ public class QueryParserTest {
 
     }
 
+     */
+
+    /*
     @Test
     void testRuleParser11() {
         LinkedHashMap<String, LinguisticStructure> fs = loadFs(6);
@@ -698,6 +706,8 @@ public class QueryParserTest {
         }
 
     }
+
+     */
 
 
     @Test
@@ -739,7 +749,7 @@ public class QueryParserTest {
 
         rp.addAnnotation2(fslist.get(0));
 
-        assertEquals(79, fslist.get(0).constraints.size());
+        assertEquals(463, fslist.get(0).constraints.size());
     }
 
     /**

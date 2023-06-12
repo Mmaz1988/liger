@@ -127,9 +127,6 @@ public class DbaMain {
                 case "-lfg":
                     settings.mode = "lfg";
                     break;
-                case "-sem":
-                    settings.semanticParsing = true;
-                    break;
                 case "-mc":
                     settings.mcs = true;
                     break;
@@ -196,11 +193,7 @@ public class DbaMain {
 
             if (settings.ruleFile == null) {
                 if (settings.mode == "dep") {
-                    if (settings.semanticParsing) {
-                        ruleFile = PathVariables.testPath + "testRulesUD1.txt";
-                    } else {
                         ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
-                    }
                 }
 
                 if (settings.mode == "lfg")
@@ -213,11 +206,9 @@ public class DbaMain {
 
             if (settings.mode == null) {
                 settings.mode = "dep";
-                if (settings.semanticParsing) {
-                    ruleFile = PathVariables.testPath + "testRulesUD1.txt";
-                } else {
-                    ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
-                }
+
+                ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
+
             }
 
             LOGGER.info("Set rule file: " + ruleFile);
@@ -240,10 +231,6 @@ public class DbaMain {
 
                 LinkedHashMap<String, LinguisticStructure> fs = parserInteractiveWrapper(settings.mode, input, ruleFile, result);
 
-                if (settings.semanticParsing) {
-                    semanticsInteractiveWrapper(fs, result);
-                }
-
                 if (settings.mcs)
                 {
                     semanticsMeaningConstructorWrapper(fs,result);
@@ -251,10 +238,6 @@ public class DbaMain {
 
             } else {
                 LinkedHashMap<String, LinguisticStructure> fs = fromFileWrapper(result);
-                if (settings.semanticParsing) {
-                    semanticsInteractiveWrapper(fs, result);
-                }
-
                 if (settings.mcs)
                 {
                     semanticsMeaningConstructorWrapper(fs,result);
@@ -265,10 +248,6 @@ public class DbaMain {
                 if (!settings.mcs) {
                     for (String key : result.keySet()) {
                         settings.outputWriter.append(result.get(key).get(0));
-                        if (settings.semanticParsing) {
-                            settings.outputWriter.append(result.get(key).get(1));
-                        }
-                        settings.outputWriter.close();
                     }
                 } else
                 {
@@ -276,8 +255,8 @@ public class DbaMain {
                     {
                         settings.outputWriter.append(result.get(key).get(1));
                     }
-                    settings.outputWriter.close();
                 }
+                settings.outputWriter.close();
                 }
 
         //    System.out.println();
@@ -307,6 +286,7 @@ public class DbaMain {
         }
     }
 
+    /*
     public static void
     semanticsInteractiveWrapper(LinkedHashMap<String, LinguisticStructure> in, LinkedHashMap<String, HashMap<Integer, String>> result) {
 
@@ -346,6 +326,7 @@ public class DbaMain {
 
         LOGGER.info("Done");
     }
+     */
 
     public static void
     semanticsMeaningConstructorWrapper(LinkedHashMap<String, LinguisticStructure> in, LinkedHashMap<String, HashMap<Integer, String>> result) {
@@ -439,9 +420,12 @@ public class DbaMain {
         syntaxResult.put(0, resultBuilder.toString());
         result.put(sid, syntaxResult);
 
+        /*
         if (!settings.semanticParsing) {
             LOGGER.info(resultBuilder.toString());
         }
+
+         */
         return out;
 
     }
@@ -518,11 +502,11 @@ public class DbaMain {
             result.put(key, syntaxResult);
 
         }
-        if (!settings.semanticParsing) {
+
             for (String key : result.keySet()) {
                 LOGGER.info("The rewrite system produced the following output:\n" + result.get(key).get(0));
             }
-        }
+
 
         return indexedFs;
     }

@@ -142,6 +142,7 @@ public class LigerController {
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
     }
 
+    /*
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/semantics", produces = "application/json")
@@ -149,12 +150,6 @@ public class LigerController {
             @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) throws IOException {
 
         UDoperator parser = new UDoperator();
-
-        /*
-        char[] c = input.toCharArray();
-        c[0] = Character.toLowerCase(c[0]);
-        input = new String(c);
-         */
 
         LinguisticStructure fs = parser.parseSingle(input);
         LOGGER.fine(fs.constraints.toString());
@@ -183,6 +178,11 @@ public class LigerController {
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
     }
 
+*/
+
+
+
+    /*
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/semantics_xle", produces = "application/json")
@@ -190,12 +190,6 @@ public class LigerController {
             @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) throws IOException {
 
         XLEoperator parser = new XLEoperator(new VariableHandler());
-
-        /*
-        char[] c = input.toCharArray();
-        c[0] = Character.toLowerCase(c[0]);
-        input = new String(c);
-         */
 
         LinguisticStructure fs = parser.parseSingle(input);
         LOGGER.fine(fs.constraints.toString());
@@ -211,18 +205,15 @@ public class LigerController {
         } catch (Exception e) {
             LOGGER.warning("Sorting annotation failed.");
         }
-
         GlueSemantics sem = new GlueSemantics();
         String semantics = sem.calculateSemantics(fs);
 
-
         //  return new TestGraph(nodeList,semantics);
-
-
 
         return new LigerWebGraph(fs.constraints,fs.annotation,semantics);
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
     }
+    */
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
@@ -243,12 +234,13 @@ public class LigerController {
         rp.addAnnotation2(fs);
 
         GlueSemantics sem = new GlueSemantics();
-        String semantics = sem.calculateSemantics(fs);
+        String semantics = sem.returnMeaningConstructors(fs);
 
         LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation,semantics);
 
     return new LigerRuleAnnotation(lg,rp.getAppliedRules(),sem.returnMeaningConstructors(fs));
     }
+
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
@@ -269,7 +261,7 @@ public class LigerController {
         rp.addAnnotation2(fs);
 
         GlueSemantics sem = new GlueSemantics();
-        String semantics = sem.calculateSemantics(fs);
+        String semantics = sem.returnMeaningConstructors(fs);
 
         LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation,semantics);
 
@@ -324,7 +316,7 @@ public class LigerController {
         rp.addAnnotation2(fs);
 
         GlueSemantics sem = new GlueSemantics();
-        String semantics = sem.calculateSemantics(fs);
+        String semantics = sem.returnMeaningConstructors(fs);
 
 
         return new LigerWebGraph(fs.constraints,fs.annotation,semantics);
