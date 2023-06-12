@@ -754,15 +754,13 @@ public class RuleParser {
         for (String key : result.keySet()) {
             for (String key2 : result.get(key).keySet()) {
 
-
                  List<ChoiceVar> embeddedChoices = new ArrayList<>();
-
+                 boolean containsTop = false;
                 for (Integer key3 : result.get(key).get(key2).keySet()) {
 
 
                     if (result.get(key).get(key2).get(key3).getReading().stream().findAny().get().toString().equals("1")) {
-                        out.add(new ChoiceVar("1"));
-                        return out;
+                    containsTop = true;
                     } else
                     {
                         embeddedChoices.addAll(result.get(key).get(key2).get(key3).getReading());
@@ -776,7 +774,10 @@ public class RuleParser {
  */
                 }
                 //TODO search for highest available context when there is no top context
-                out.addAll(embeddedChoices);
+                if (!containsTop)
+                {
+                    out.addAll(embeddedChoices);
+                }
             }
         }
         if (!out.isEmpty()) {
