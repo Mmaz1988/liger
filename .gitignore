@@ -33,5 +33,5 @@ build/
 .vscode/
 
 ### PATH FILE ###
-/liger_resources/xle_paths.txt
+./liger_resources/xle_paths.txt
 
