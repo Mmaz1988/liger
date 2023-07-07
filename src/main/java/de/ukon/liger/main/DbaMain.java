@@ -344,8 +344,7 @@ public class DbaMain {
             result.get(key).put(1, semantics);
         }
 
-//            System.out.println("Meaning constructors:");
-//            System.out.println(sem.returnMeaningConstructors(fs));
+        LOGGER.info(result.toString());
 
 
 
