@@ -24,22 +24,14 @@ package de.ukon.liger.semantics;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
-import glueSemantics.linearLogic.Premise;
-import glueSemantics.linearLogic.Sequent;
-import glueSemantics.parser.GlueParser;
-import glueSemantics.semantics.LexicalEntry;
-import main.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import prover.LLProver;
-import prover.LLProver2;
-import utilities.MyFormatter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.ConsoleHandler;
+
 
 public class GlueSemantics {
 

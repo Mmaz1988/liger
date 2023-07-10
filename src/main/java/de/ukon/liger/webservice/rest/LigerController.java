@@ -23,6 +23,7 @@ package de.ukon.liger.webservice.rest;
 
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
+import de.ukon.liger.analysis.RuleParser.Rule;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.annotators.SegmenterMain;
 import de.ukon.liger.utilities.XLEStarter;
@@ -63,28 +64,6 @@ public class LigerController {
         pipeline = new StanfordCoreNLP(props);
 
     };
-
-
-
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @RequestMapping(value = "/graph-test", produces = "application/json")
-    public LigerWebGraph produceGraph(
-            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String in) {
-
-        LigerWebNode node1 = new LigerWebNode("1", "input");
-        LigerWebNode node2 = new LigerWebNode("2", "annotation");
-        LigerWebEdge edge1 = new LigerWebEdge("12", "1", "2", "projection", "proj");
-
-        List<LigerGraphComponent> nodeList = new ArrayList<>();
-        nodeList.add(node1);
-        nodeList.add(node2);
-        nodeList.add(edge1);
-
-
-        return new LigerWebGraph(nodeList);
-        //new Greeting(counter.incrementAndGet(),String.format(template,in));
-    }
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
@@ -217,7 +196,7 @@ public class LigerController {
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
-    @PostMapping(value = "/apply_rule", produces = "application/json", consumes = "application/json")
+    @PostMapping(value = "/apply_rules", produces = "application/json", consumes = "application/json")
     public LigerRuleAnnotation applyRuleRequest(@RequestBody LigerRequest request) {
 
     //    System.out.println(request.sentence);
@@ -238,10 +217,17 @@ public class LigerController {
 
         LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation,semantics);
 
-    return new LigerRuleAnnotation(lg,rp.getAppliedRules(),sem.returnMeaningConstructors(fs));
+        List<LigerRule> appliedLigerRules = new ArrayList<>();
+        for (Rule r : rp.getAppliedRules())
+        {
+            appliedLigerRules.add(new LigerRule(r.toString(),r.getRuleIndex(),r.getLineNumber()));
+        }
+
+
+        return new LigerRuleAnnotation(lg,appliedLigerRules,sem.returnMeaningConstructors(fs));
     }
 
-
+/*
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rule_xle", produces = "application/json", consumes = "application/json")
@@ -268,10 +254,12 @@ public class LigerController {
         return new LigerRuleAnnotation(lg,rp.getAppliedRules(),sem.returnMeaningConstructors(fs));
     }
 
+ */
+
     //TODO for test purposes only
     @CrossOrigin
     //(origins = "http://localhost:63342")
-    @PostMapping(value = "/apply_rule_xle_test", produces = "application/json", consumes = "application/json")
+    @PostMapping(value = "/apply_rules_xle", produces = "application/json", consumes = "application/json")
     public LigerRuleAnnotation applyRuleRequestXLE2(@RequestBody LigerRequest request) {
 
         //    System.out.println(request.sentence);
@@ -293,10 +281,16 @@ public class LigerController {
 
         LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation);
 
-        return new LigerRuleAnnotation(lg,rp.getAppliedRules(),sem.returnMeaningConstructors(fs));
+        List<LigerRule> appliedLigerRules = new ArrayList<>();
+        for (Rule r : rp.getAppliedRules())
+        {
+            appliedLigerRules.add(new LigerRule(r.toString(),r.getRuleIndex(),r.getLineNumber()));
+        }
+
+        return new LigerRuleAnnotation(lg,appliedLigerRules,sem.returnMeaningConstructors(fs));
     }
 
-
+/*
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/annotate_xle", produces = "application/json", consumes = "application/json")
@@ -327,7 +321,7 @@ public class LigerController {
         }
         return null;
     }
-
+ */
 
     /**
      * This method returns a json object that stores a boolean in a map<String,String> if the syntactic analysis of a sentence
@@ -439,16 +433,6 @@ public class LigerController {
       LinkedHashMap o = ligerService.accessGKR(gkrData);
 
         return o;
-    }
-
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @PostMapping(value = "/raise_feature", produces = "application/json", consumes = "application/json")
-    public Map<String,Object> raiseFeature(@RequestBody LinkedHashMap request) throws IOException {
-
-
-
-        return null;
     }
 
 }

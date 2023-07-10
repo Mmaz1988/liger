@@ -49,7 +49,7 @@ public class RuleParser {
 
 
 
-    private List<String> appliedRules = new ArrayList<>();
+    private List<Rule> appliedRules = new ArrayList<>();
     private static Pattern graphPattern = Pattern.compile("(#.+?)\\s+(\\S+)\\s+(.+)");
     private Boolean replace;
     private Set<String> usedKeys = new HashSet<>();
@@ -145,6 +145,7 @@ public class RuleParser {
 
         for (int k = 0; k < rules.size(); k++) {
             Rule r = rules.get(k);
+            r.setRuleIndex(k);
 
             LOGGER.debug("Currently processing rule with index " + k + ":\n" +
                     "\t" + r.toString());
@@ -293,7 +294,7 @@ public class RuleParser {
                                                     c.setRelationLabel(newLabel);
                                                     replaceValue = true;
 
-                                                    appliedRules.add(r.toString());
+                                                    appliedRules.add(r);
                                                 }
                                             }
                                             }
@@ -483,7 +484,7 @@ public class RuleParser {
                 LOGGER.debug("\n" + added);
 
                 LOGGER.debug("\t" + "Rule has been applied!");
-                this.appliedRules.add(r.toString());
+                this.appliedRules.add(r);
 
             }
         }
@@ -595,21 +596,9 @@ public class RuleParser {
 
     //Parse rule file
     public List<Rule> parseRuleFile(String fileString) {
-        int lineCounter = 0;
+        int lineCounter = 1;
 
         List<Rule> out = new ArrayList<>();
-
-        /*
-        String fileString = null;
-        try {
-            fileString = new String(Files.readAllBytes(Paths.get(file)));
-        }catch(Exception e)
-        {
-            System.out.println("Failed to load rule file");
-            e.printStackTrace();
-        }
-        */
-
 
         if (fileString != null && fileString.length() > 0) {
 
@@ -619,6 +608,10 @@ public class RuleParser {
 
                 char c = fileString.charAt(i);
 
+                if (c == '\n') {
+                    lineCounter++;
+                    continue;
+                }
 
                 if (c == '-' && fileString.charAt(i+1) == '-') {
                     c = fileString.charAt(i + 2);
@@ -653,17 +646,18 @@ public class RuleParser {
                             }
                             i++;
                         }
-
+                        System.out.println(fileString.charAt(i));
+                     continue;
                     }
 
 
                     while (String.valueOf(fileString.charAt(i)).matches(".")) {
                         i++;
                     }
-                    if (!String.valueOf(fileString.charAt(i)).matches(".")) {
-                        i++;
+                    if (c == '\n') {
                         lineCounter++;
                     }
+                    continue;
                 }
 
                 if (c == '/' && fileString.charAt(i+1) == '/')
@@ -696,6 +690,11 @@ public class RuleParser {
                     i = i + 3;
                     c = fileString.charAt(i);
                     while (!(c == '.' && !String.valueOf(fileString.charAt(i + 1)).matches("."))) {
+
+                        if (c == '\n') {
+                            lineCounter++;
+                        }
+
                         right.append(c);
                         i++;
                         c = fileString.charAt(i);
@@ -705,19 +704,17 @@ public class RuleParser {
                     }
 
                     Rule r = new Rule(left.toString().trim(),right.toString().trim(), rewrite,branch);
+                    r.setLineNumber(lineCounter);
                     out.add(r);
 
                     left = new StringBuilder();
                     right = new StringBuilder();
-                    i = i + 2;
+                    continue;
                 }
 
 
                 if (i < fileString.length() - 1) {
                     c = fileString.charAt(i);
-                    if (!String.valueOf(c).matches(".")) {
-                        lineCounter++;
-                    }
                     left.append(c);
                 }
 
@@ -788,11 +785,11 @@ public class RuleParser {
         }
     }
 
-    public List<String> getAppliedRules() {
+    public List<Rule> getAppliedRules() {
         return appliedRules;
     }
 
-    public void setAppliedRules(List<String> appliedRules) {
+    public void setAppliedRules(List<Rule> appliedRules) {
         this.appliedRules = appliedRules;
     }
 }
