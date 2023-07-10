@@ -147,6 +147,11 @@ public class RuleParser {
             Rule r = rules.get(k);
             r.setRuleIndex(k);
 
+            if (k == 22)
+            {
+                System.out.println("Stop");
+            }
+
             LOGGER.debug("Currently processing rule with index " + k + ":\n" +
                     "\t" + r.toString());
 
@@ -294,7 +299,7 @@ public class RuleParser {
                                                     c.setRelationLabel(newLabel);
                                                     replaceValue = true;
 
-                                                    appliedRules.add(r);
+                                          //          this.appliedRules.add(r);
                                                 }
                                             }
                                             }
@@ -609,6 +614,7 @@ public class RuleParser {
                 char c = fileString.charAt(i);
 
                 if (c == '\n') {
+                    left.append(c);
                     lineCounter++;
                     continue;
                 }
@@ -646,7 +652,7 @@ public class RuleParser {
                             }
                             i++;
                         }
-                        System.out.println(fileString.charAt(i));
+                   //     System.out.println(fileString.charAt(i));
                      continue;
                     }
 
@@ -711,6 +717,7 @@ public class RuleParser {
                     right = new StringBuilder();
                     continue;
                 }
+
 
 
                 if (i < fileString.length() - 1) {
