@@ -352,12 +352,13 @@ public class GraphParser {
             {
 
                 //Instantiate previous, current and next element if possible
-                QueryExpression current = parseStructure.get(i);
                 QueryExpression previous = null;
                 if (i > 0){
                     previous = parseStructure.get(i-1);
                 }
                 QueryExpression next = null;
+
+                QueryExpression current = parseStructure.get(i);
 
                 if (i < parseStructure.size() - 1)
                 {
@@ -378,18 +379,18 @@ public class GraphParser {
 
                 if (current instanceof Attribute)
                 {
-                    i++;
-                    if (parseStructure.get(i) instanceof Node)
-                    {
 
-                    }
                 } else if (current instanceof Node)
                 {
-                    i++;
-                    if (parseStructure.get(i) instanceof Attribute)
+                    if (previous instanceof Conjunction || previous == null)
                     {
+                        continue;
+                    }
+
+                    if (previous instanceof Attribute) {
 
                     }
+
                 }
 
 
