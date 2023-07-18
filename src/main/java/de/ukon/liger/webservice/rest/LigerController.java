@@ -26,13 +26,6 @@ import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.Rule;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.annotators.SegmenterMain;
-import de.ukon.liger.utilities.XLEStarter;
-import de.ukon.liger.webservice.rest.dtos.*;
-import edu.stanford.nlp.pipeline.CoreDocument;
-import edu.stanford.nlp.pipeline.CoreSentence;
-import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
@@ -40,6 +33,13 @@ import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
+import de.ukon.liger.utilities.XLEStarter;
+import de.ukon.liger.webservice.rest.dtos.*;
+import edu.stanford.nlp.pipeline.CoreDocument;
+import edu.stanford.nlp.pipeline.CoreSentence;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -289,6 +289,113 @@ public class LigerController {
 
         return new LigerRuleAnnotation(lg,appliedLigerRules,sem.returnMeaningConstructors(fs));
     }
+
+
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/apply_rules_to_batch", produces = "application/json", consumes = "application/json")
+    public LigerBatchParsingAnalysis applyRulesToTestsuite(@RequestBody LigerMultipleRequest request) {
+
+        //    System.out.println(request.sentence);
+        //   System.out.println(request.ruleString);
+        XLEStarter starter = new XLEStarter();
+        starter.generateXLEStarterFile();
+        XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
+
+        RuleParser rp = new RuleParser(request.ruleString);
+
+        HashMap<Integer,LigerRuleAnnotation> output = new HashMap<>();
+        List<List<LigerRule>> allAppliedRules = new ArrayList<>();
+
+        for (int i = 0; i < request.sentences.size(); i++) {
+
+            String sentence = request.sentences.get(i);
+
+            LinguisticStructure fs = parser.parseSingle(sentence);
+            LOGGER.fine(fs.constraints.toString());
+            // System.out.println(fs.constraints);
+            List<LinguisticStructure> fsList = new ArrayList<>();
+            fsList.add(fs);
+
+            rp.addAnnotation2(fs);
+
+            GlueSemantics sem = new GlueSemantics();
+
+            LigerWebGraph lg = new LigerWebGraph(fs.constraints, fs.annotation);
+
+            List<LigerRule> appliedLigerRules = new ArrayList<>();
+            for (Rule r : rp.getAppliedRules()) {
+                appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
+            }
+
+
+            output.put(i,new LigerRuleAnnotation(lg, appliedLigerRules, sem.returnMeaningConstructors(fs)));
+            allAppliedRules.add(appliedLigerRules);
+        }
+
+        List<HashMap<String,Object>> appliedRulesGraph = new ArrayList<>();
+
+        HashMap<String,HashMap<String,Object>> nodes = new HashMap<>();
+        HashMap<String,HashMap<String,Object>> edges = new HashMap<>();
+
+        for (List<LigerRule> appliedRules : allAppliedRules)
+        {
+            for (int i = 0; i < appliedRules.size()-1; i = i + 2)
+            {
+                if (!nodes.containsKey(String.valueOf(appliedRules.get(i).index)))
+                {
+                    HashMap<String,Object> node = new HashMap<>();
+                    node.put("rule",appliedRules.get(i).rule);
+                    node.put("id", appliedRules.get(i).index);
+                    node.put("line", appliedRules.get(i).lineNumber);
+                    nodes.put(String.valueOf(appliedRules.get(i).index),node);
+                }
+
+                if (!nodes.containsKey(String.valueOf(appliedRules.get(i+1).index)))
+                {
+                    HashMap<String,Object> node = new HashMap<>();
+                    node.put("rule",appliedRules.get(i+1).rule);
+                    node.put("id", appliedRules.get(i+1).index);
+                    node.put("line", appliedRules.get(i+1).lineNumber);
+                    nodes.put(String.valueOf(appliedRules.get(i+1).index),node);
+                }
+
+                if (!edges.containsKey(appliedRules.get(i).index + "+" +
+                     appliedRules.get(i+1).index))
+                {
+                    HashMap<String,Object> edge = new HashMap<>();
+                    edge.put("source",appliedRules.get(i).index);
+                    edge.put("target", appliedRules.get(i+1).index);
+                    edge.put("timesUsed",1);
+
+
+                    edges.put(appliedRules.get(i).index + "+" +
+                            appliedRules.get(i+1).index, edge);
+                } else
+                {
+                    String edgeID = appliedRules.get(i).index + "+" +
+                            appliedRules.get(i+1).index;
+
+                    Object timesUsed = edges.get(edgeID).get("timesUsed");
+
+                    edges.get(edgeID).put("timesUsed", (Integer) timesUsed + 1);
+
+                }
+
+
+
+
+            }
+
+            appliedRulesGraph.addAll(nodes.values());
+            appliedRulesGraph.addAll(edges.values());
+        }
+
+
+
+
+        return new LigerBatchParsingAnalysis(output,appliedRulesGraph);
+        }
 
 /*
     @CrossOrigin

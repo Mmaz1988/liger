@@ -194,11 +194,12 @@ public class XLEoperator extends SyntaxOperator {
         {
             for (String sentence : sentences) {
                 out.println(sentence);
+                out.println(System.lineSeparator());
             }
         }
         catch(Exception e)
         {
-            LOGGER.warning("Something went wrong.\n" + e.getMessage());
+            LOGGER.warning("Something went wrong while setting temporary files for parsing.\n" + e.getMessage());
         }
         try
         {
@@ -238,6 +239,35 @@ public class XLEoperator extends SyntaxOperator {
             e.printStackTrace();
         }
     }
+
+    //TODO parse multiple
+    /*
+    public HashMap<Integer,LinguisticStructure> parseMultiple(LinkedHashMap<Integer,String> sentences)
+    {
+        List<String> sentenceList = new ArrayList<>();
+        sentenceList.addAll(sentences.values());
+
+        parseSentences(sentenceList);
+
+
+
+        File fsFile = new File(Paths.get(PathVariables.workingDirectory,"tmp","parser_output").toString());
+
+        if (fsFile.isDirectory()) {
+            File[] files = fsFile.listFiles((d, name) -> name.endsWith(".pl"));
+
+            for (int i = 0; i < files.length; i++) {
+                LinkedHashMap<String, LinguisticStructure> fsRef = fs2Java(files[i].getPath());
+                //close fsFile
+
+            }
+
+        }
+            return null;
+    }
+
+     */
+
     @Override
     public LinguisticStructure parseSingle(String sentence) {
         List<String> singletonList = new ArrayList<>();
