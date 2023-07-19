@@ -49,7 +49,7 @@ public class RuleParser {
 
 
 
-    private List<Rule> appliedRules = new ArrayList<>();
+    private LinkedHashSet<Rule> appliedRules = new LinkedHashSet<>();
     private static Pattern graphPattern = Pattern.compile("(#.+?)\\s+(\\S+)\\s+(.+)");
     private Boolean replace;
     private Set<String> usedKeys = new HashSet<>();
@@ -146,11 +146,6 @@ public class RuleParser {
         for (int k = 0; k < rules.size(); k++) {
             Rule r = rules.get(k);
             r.setRuleIndex(k);
-
-            if (k == 22)
-            {
-                System.out.println("Stop");
-            }
 
             LOGGER.debug("Currently processing rule with index " + k + ":\n" +
                     "\t" + r.toString());
@@ -299,7 +294,7 @@ public class RuleParser {
                                                     c.setRelationLabel(newLabel);
                                                     replaceValue = true;
 
-                                          //          this.appliedRules.add(r);
+                                                    this.appliedRules.add(r);
                                                 }
                                             }
                                             }
@@ -748,7 +743,7 @@ public class RuleParser {
     public void resetRuleParser() {
         usedKeys = new HashSet<>();
         usedReadings = new HashSet<>();
-        appliedRules = new ArrayList<>();
+        appliedRules = new LinkedHashSet<>();
     }
 
 
@@ -793,11 +788,11 @@ public class RuleParser {
         }
     }
 
-    public List<Rule> getAppliedRules() {
-        return appliedRules;
+    public LinkedHashSet<Rule> getAppliedRules() {
+        return this.appliedRules;
     }
 
-    public void setAppliedRules(List<Rule> appliedRules) {
+    public void setAppliedRules(LinkedHashSet<Rule> appliedRules) {
         this.appliedRules = appliedRules;
     }
 }

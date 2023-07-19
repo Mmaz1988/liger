@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @CrossOrigin
 @RestController
@@ -304,8 +305,34 @@ public class LigerController {
 
         RuleParser rp = new RuleParser(request.ruleString);
 
+        List<LigerGraphComponent> appliedRulesGraph = new ArrayList<>();
+
+
+
+        for  (int i = 0; i < rp.getRules().size(); i++)
+        {
+            Rule r = rp.getRules().get(i);
+            HashMap<String,Object> node = new HashMap<>();
+            node.put("rule",r.toString());
+            node.put("id", i);
+            node.put("line", r.getLineNumber());
+            node.put("node_type","rule");
+
+            LigerGraphComponent lgc = new LigerGraphComponent(node);
+            appliedRulesGraph.add(lgc);
+        }
+
+
         HashMap<Integer,LigerRuleAnnotation> output = new HashMap<>();
         List<List<LigerRule>> allAppliedRules = new ArrayList<>();
+
+        StringBuilder reportBuilder = new StringBuilder();
+
+
+
+        reportBuilder.append(System.lineSeparator());
+        reportBuilder.append("ID:     Applied rules:     Added facts:     No of meaning constructors:\n");
+
 
         for (int i = 0; i < request.sentences.size(); i++) {
 
@@ -328,20 +355,28 @@ public class LigerController {
                 appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
             }
 
+            List<String> meaningConstructors = List.of(sem.returnMeaningConstructors(fs).split("\n"));
+            //remove lines which equal }\n or {\n
+            meaningConstructors = meaningConstructors.stream().filter(s -> !s.equals("}\n") && !s.equals("{\n")).collect(Collectors.toList());
+
+
+            reportBuilder.append(String.format("%s\t\t%s\t\t%s\t\t%s", i, appliedLigerRules.size(), fs.annotation.size(),meaningConstructors.size()));
+            reportBuilder.append(System.lineSeparator());
 
             output.put(i,new LigerRuleAnnotation(lg, appliedLigerRules, sem.returnMeaningConstructors(fs)));
             allAppliedRules.add(appliedLigerRules);
         }
 
-        List<LigerGraphComponent> appliedRulesGraph = new ArrayList<>();
 
-        HashMap<String, LigerGraphComponent> nodes = new HashMap<>();
+
+       // HashMap<String, LigerGraphComponent> nodes = new HashMap<>();
         HashMap<String, LigerGraphComponent> edges = new HashMap<>();
 
         for (List<LigerRule> appliedRules : allAppliedRules)
         {
             for (int i = 0; i < appliedRules.size()-1; i = i + 1)
             {
+                /*
                 if (!nodes.containsKey(String.valueOf(appliedRules.get(i).index)))
                 {
                     HashMap<String,Object> node = new HashMap<>();
@@ -368,16 +403,13 @@ public class LigerController {
                     nodes.put(String.valueOf(appliedRules.get(i+1).index),lgc);
                 }
 
+                 */
+
                 if (!edges.containsKey(appliedRules.get(i).index + "+" +
                      appliedRules.get(i+1).index))
                 {
                     HashMap<String,Object> edge = new HashMap<>();
                     edge.put("source",appliedRules.get(i).index);
-
-                    if (edge.get("source").equals(70))
-                    {
-                        System.out.println("Stop");
-                    }
 
                     edge.put("target", appliedRules.get(i+1).index);
                     edge.put("timesUsed",1);
@@ -406,14 +438,14 @@ public class LigerController {
 
             }
 
-            appliedRulesGraph.addAll(nodes.values());
+           // appliedRulesGraph.addAll(nodes.values());
             appliedRulesGraph.addAll(edges.values());
         }
 
 
 
 
-        return new LigerBatchParsingAnalysis(output,appliedRulesGraph);
+        return new LigerBatchParsingAnalysis(output,appliedRulesGraph,reportBuilder.toString());
         }
 
 /*
