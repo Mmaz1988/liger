@@ -7,4 +7,9 @@ public class LigerGraphComponent {
     public HashMap<String, Object> data;
 
     public LigerGraphComponent(){}
+
+    public LigerGraphComponent(HashMap<String,Object> data)
+    {
+        this.data = data;
+    }
 }

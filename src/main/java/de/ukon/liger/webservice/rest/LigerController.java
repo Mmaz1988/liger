@@ -333,14 +333,14 @@ public class LigerController {
             allAppliedRules.add(appliedLigerRules);
         }
 
-        List<HashMap<String,Object>> appliedRulesGraph = new ArrayList<>();
+        List<LigerGraphComponent> appliedRulesGraph = new ArrayList<>();
 
-        HashMap<String,HashMap<String,Object>> nodes = new HashMap<>();
-        HashMap<String,HashMap<String,Object>> edges = new HashMap<>();
+        HashMap<String, LigerGraphComponent> nodes = new HashMap<>();
+        HashMap<String, LigerGraphComponent> edges = new HashMap<>();
 
         for (List<LigerRule> appliedRules : allAppliedRules)
         {
-            for (int i = 0; i < appliedRules.size()-1; i = i + 2)
+            for (int i = 0; i < appliedRules.size()-1; i = i + 1)
             {
                 if (!nodes.containsKey(String.valueOf(appliedRules.get(i).index)))
                 {
@@ -348,7 +348,11 @@ public class LigerController {
                     node.put("rule",appliedRules.get(i).rule);
                     node.put("id", appliedRules.get(i).index);
                     node.put("line", appliedRules.get(i).lineNumber);
-                    nodes.put(String.valueOf(appliedRules.get(i).index),node);
+                    node.put("node_type","rule");
+
+                    LigerGraphComponent lgc = new LigerGraphComponent(node);
+
+                    nodes.put(String.valueOf(appliedRules.get(i).index),lgc);
                 }
 
                 if (!nodes.containsKey(String.valueOf(appliedRules.get(i+1).index)))
@@ -357,7 +361,11 @@ public class LigerController {
                     node.put("rule",appliedRules.get(i+1).rule);
                     node.put("id", appliedRules.get(i+1).index);
                     node.put("line", appliedRules.get(i+1).lineNumber);
-                    nodes.put(String.valueOf(appliedRules.get(i+1).index),node);
+                    node.put("node_type","rule");
+
+                    LigerGraphComponent lgc = new LigerGraphComponent(node);
+
+                    nodes.put(String.valueOf(appliedRules.get(i+1).index),lgc);
                 }
 
                 if (!edges.containsKey(appliedRules.get(i).index + "+" +
@@ -365,20 +373,31 @@ public class LigerController {
                 {
                     HashMap<String,Object> edge = new HashMap<>();
                     edge.put("source",appliedRules.get(i).index);
+
+                    if (edge.get("source").equals(70))
+                    {
+                        System.out.println("Stop");
+                    }
+
                     edge.put("target", appliedRules.get(i+1).index);
                     edge.put("timesUsed",1);
+                    edge.put("edge_type","edge");
 
+                    edge.put("id",appliedRules.get(i).index + "+" +
+                            appliedRules.get(i+1).index);
+
+                    LigerGraphComponent lgc = new LigerGraphComponent(edge);
 
                     edges.put(appliedRules.get(i).index + "+" +
-                            appliedRules.get(i+1).index, edge);
+                            appliedRules.get(i+1).index, lgc);
                 } else
                 {
                     String edgeID = appliedRules.get(i).index + "+" +
                             appliedRules.get(i+1).index;
 
-                    Object timesUsed = edges.get(edgeID).get("timesUsed");
+                    Object timesUsed = edges.get(edgeID).data.get("timesUsed");
 
-                    edges.get(edgeID).put("timesUsed", (Integer) timesUsed + 1);
+                    edges.get(edgeID).data.put("timesUsed", (Integer) timesUsed + 1);
 
                 }
 

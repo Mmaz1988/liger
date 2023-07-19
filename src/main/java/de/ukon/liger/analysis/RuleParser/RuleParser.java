@@ -748,6 +748,7 @@ public class RuleParser {
     public void resetRuleParser() {
         usedKeys = new HashSet<>();
         usedReadings = new HashSet<>();
+        appliedRules = new ArrayList<>();
     }
 
 

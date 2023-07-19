@@ -1,3 +1,0 @@
-XLE="/Applications/xle"
-grammar="/Users/princess_zelda/Grammars/english_pargram/english-2009-11-25/index/main.lfg"
-OS="Mac"

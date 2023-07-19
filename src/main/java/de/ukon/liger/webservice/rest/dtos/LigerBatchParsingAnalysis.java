@@ -5,9 +5,9 @@ import java.util.List;
 
 public class LigerBatchParsingAnalysis {
     public HashMap<Integer,LigerRuleAnnotation> annotations;
-    public List<HashMap<String,Object>> ruleApplicationGraph;
+    public List<LigerGraphComponent> ruleApplicationGraph;
 
-    public LigerBatchParsingAnalysis(HashMap<Integer,LigerRuleAnnotation> annotations, List<HashMap<String,Object>> ruleApplicationGraph) {
+    public LigerBatchParsingAnalysis(HashMap<Integer,LigerRuleAnnotation> annotations, List<LigerGraphComponent> ruleApplicationGraph) {
         this.annotations = annotations;
         this.ruleApplicationGraph = ruleApplicationGraph;
     }
