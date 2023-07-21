@@ -26,6 +26,7 @@ import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.xle.avp_elements.*;
 import de.ukon.liger.utilities.HelperMethods;
+import org.jgrapht.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.integration.IntegrationGraphEndpoint;
@@ -320,7 +321,7 @@ public class FsProlog2Java {
                     LinkedHashMap<Integer, List<AttributeValuePair>> fsConstraints = new LinkedHashMap<>();
                     fsHash.put(choiceVar, fsConstraints);
                     fsConstraints.put(Integer.parseInt(mother), new ArrayList<>());
-                    fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("phi", daughter,"c::"));
+                    fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("phi", daughter,"c"));
 
 
                 } else {
@@ -329,7 +330,7 @@ public class FsProlog2Java {
                         fsHash.get(choiceVar).put(Integer.parseInt(mother), avps);
                     }
 
-                    fsHash.get(choiceVar).get(Integer.parseInt(mother)).add(new NonTerminalAVP("phi", daughter,"c::"));
+                    fsHash.get(choiceVar).get(Integer.parseInt(mother)).add(new NonTerminalAVP("phi", daughter,"c"));
 
 
                 }
@@ -416,8 +417,8 @@ public class FsProlog2Java {
                     fsHash.put(choiceVar, fsConstraints);
                     fsConstraints.put(Integer.parseInt(mother), new ArrayList<>());
                     fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("token",surfaceString,"c"));
-                    fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("start", "int(" +start + ")","c"));
-                    fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("end", "int(" + end +")","c"));
+                    fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("start", "int(" +start + ")","f"));
+                    fsConstraints.get(Integer.parseInt(mother)).add(new NonTerminalAVP("end", "int(" + end +")","f"));
 
 
                 } else {
@@ -503,7 +504,14 @@ public class FsProlog2Java {
                         }
                     }
 
-                    out.add(new GraphConstraint(ambKey,key,attribute,value,projection));
+                    GraphConstraint gc = new GraphConstraint(ambKey,key,attribute,value,projection);
+
+                    if (avp.projection != null)
+                    {
+                        gc.setProj(avp.projection);
+                    }
+
+                    out.add(gc);
                 }
 
 

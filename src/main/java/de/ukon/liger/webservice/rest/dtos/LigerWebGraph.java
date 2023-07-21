@@ -147,6 +147,8 @@ public class LigerWebGraph {
         LinkedHashMap<Integer, HashMap<String,String>> nodes = new LinkedHashMap<>();
         List<LigerGraphComponent> edges = new ArrayList<>();
 
+        List<GraphConstraint> cstr = input.stream().filter(x -> x.getProj() != null && x.getProj().equals("c")).collect(Collectors.toList());
+
         for (int i = 0; i < input.size(); i++)
         {
             int rel = 0;
@@ -156,6 +158,16 @@ public class LigerWebGraph {
             if (!nodes.containsKey(fsNode))
             {
                 nodes.put(fsNode,new HashMap<>());
+
+                if (g.getProj() != null && g.getProj().equals("c"))
+                {
+                    nodes.get(fsNode).put("projection",g.getProj());
+                }
+            } else {
+                if (g.getProj() != null && g.getProj().equals("c") && !nodes.get(fsNode).containsKey("projection"))
+                {
+                    nodes.get(fsNode).put("projection",g.getProj());
+                }
             }
 
             if (HelperMethods.isInteger(g.getFsValue())
@@ -178,15 +190,39 @@ public class LigerWebGraph {
 
         List<LigerGraphComponent> testNodes = new ArrayList<>();
 
+        int counter = 0;
+
         for (Integer key : nodes.keySet())
         {
+            LigerWebNode lwn = null;
+
             if (!nodes.get(key).keySet().isEmpty()) {
-                testNodes.add(new LigerWebNode(key.toString(), type, nodes.get(key)));
+                lwn = new LigerWebNode(key.toString(), type, nodes.get(key));
             } else
             {
-                testNodes.add(new LigerWebNode(key.toString(),type));
+                lwn = new LigerWebNode(key.toString(),type);
+            }
+
+
+            if (lwn.data.containsKey("avp")) {
+            if (!((HashMap<String, String>) lwn.data.get("avp")).keySet().isEmpty()) {
+                if (((HashMap<String, String>) lwn.data.get("avp")).containsKey("projection")) {
+                    if (((HashMap<String, String>) lwn.data.get("avp")).get("projection").equals("c")) {
+                        lwn.data.put("node_type", "cnode");
+                        ((HashMap<String, String>) lwn.data.get("avp")).remove("projection");
+                        counter++;
+                    }
+                }
             }
         }
+
+
+
+            testNodes.add(lwn);
+
+        }
+
+        System.out.println("Modified " + counter + " nodes");
 
         HashMap<String,List<LigerGraphComponent>> output = new HashMap<>();
         output.put("nodes",testNodes);

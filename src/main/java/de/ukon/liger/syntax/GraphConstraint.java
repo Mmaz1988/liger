@@ -42,6 +42,8 @@ public class GraphConstraint implements Serializable {
     private String fsValue;
     private Boolean projection;
 
+    private String proj;
+
 
     public GraphConstraint()
     {this.projection = false;}
@@ -240,6 +242,14 @@ public class GraphConstraint implements Serializable {
 
     public void setReading(Set<ChoiceVar> reading) {
         this.reading = reading;
+    }
+
+    public String getProj() {
+        return proj;
+    }
+
+    public void setProj(String proj) {
+        this.proj = proj;
     }
 
 }
