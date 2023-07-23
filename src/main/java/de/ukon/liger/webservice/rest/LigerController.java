@@ -31,6 +31,8 @@ import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.syntax.xle.XLEoperator;
+import de.ukon.liger.syntax.xle.prolog2java.FsProlog2Java;
+import de.ukon.liger.syntax.xle.prolog2java.ReadFsProlog;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
 import de.ukon.liger.utilities.XLEStarter;
@@ -256,6 +258,35 @@ public class LigerController {
     }
 
  */
+
+    //TODO for test purposes only
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/parse_xle", produces = "application/json", consumes = "application/json")
+    public LigerRuleAnnotation parseXLE(@RequestBody LigerRequest request) {
+
+        //    System.out.println(request.sentence);
+        //   System.out.println(request.ruleString);
+        XLEStarter starter = new XLEStarter();
+        starter.generateXLEStarterFile();
+        XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
+
+
+        String fsProlog = parser.parse2Prolog(request.sentence);
+
+        LinkedHashMap<String,LinguisticStructure> fsRef = parser.fsString2Java(fsProlog,"S1");
+
+        LinguisticStructure fs = fsRef.get(fsRef.keySet().iterator().next());
+
+        LOGGER.fine(fs.constraints.toString());
+
+        LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation);
+
+        GlueSemantics sem = new GlueSemantics();
+
+
+        return new LigerRuleAnnotation(lg,null,sem.extractMCsFromFs(fsProlog));
+    }
 
     //TODO for test purposes only
     @CrossOrigin

@@ -292,6 +292,32 @@ public class XLEoperator extends SyntaxOperator {
         return null;
     }
 
+    public String parse2Prolog(String sentence) {
+        List<String> singletonList = new ArrayList<>();
+        singletonList.add(sentence);
+        parseSentences(singletonList);
+
+        //File fsFile = new File("/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/parser_output");
+
+        File fsFile = new File(Paths.get(PathVariables.workingDirectory,"tmp","parser_output").toString());
+
+        if (fsFile.isDirectory()) {
+            File[] files = fsFile.listFiles((d, name) -> name.endsWith(".pl"));
+
+            for (int i = 0; i < files.length; i++) {
+                //read in files.get(i)
+
+                try {
+                    return Files.readString(Paths.get(files[i].getPath()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+            }
+        }
+        return null;
+    }
+
     public LinkedHashMap loadPrologFstructures()
     {
         VariableHandler vh = new VariableHandler();
@@ -397,6 +423,25 @@ public class XLEoperator extends SyntaxOperator {
 
         return out;
     }
+
+
+    public LinkedHashMap<String, LinguisticStructure> fsString2Java(String prologString,String id)
+    {
+            LinkedHashMap<String,LinguisticStructure> out = new LinkedHashMap<>();
+
+            ReadFsProlog fs2pl = ReadFsProlog.readPrologString(prologString,id,vh);
+
+            LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
+            List<GraphConstraint> fsList = FsProlog2Java.fsHash2List(fsHash);
+
+            Fstructure fs = new Fstructure(fs2pl.sentenceID,fs2pl.sentence,fsList,fs2pl.cp);
+
+            out.put(fs2pl.sentenceID,fs);
+
+        return out;
+    }
+
+
 
     //Load single xle structure as a syntactic structure:
     public LinguisticStructure xle2Java(String inputPath) throws IOException {

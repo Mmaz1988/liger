@@ -26,7 +26,6 @@ import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.xle.avp_elements.*;
 import de.ukon.liger.utilities.HelperMethods;
-import org.jgrapht.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.integration.IntegrationGraphEndpoint;
