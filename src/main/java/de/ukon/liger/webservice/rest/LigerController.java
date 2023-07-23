@@ -259,7 +259,61 @@ public class LigerController {
 
  */
 
-    //TODO for test purposes only
+@CrossOrigin
+    //(origins = "http://localhost:63342")
+@PostMapping(value = "hybrid_analysis", produces = "application/json", consumes = "application/json")
+public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) {
+
+    XLEStarter starter = new XLEStarter();
+    starter.generateXLEStarterFile();
+    XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
+
+    String fsProlog = parser.parse2Prolog(request.sentence);
+
+    LinkedHashMap<String,LinguisticStructure> fsRef = parser.fsString2Java(fsProlog,"S1");
+
+    LinguisticStructure fs = fsRef.get(fsRef.keySet().iterator().next());
+
+    List<LinguisticStructure> fsList = new ArrayList<>();
+    fsList.add(fs);
+
+    RuleParser rp = new RuleParser(fsList, request.ruleString);
+
+    rp.addAnnotation2(fs);
+
+    List<LigerRule> appliedLigerRules = new ArrayList<>();
+    for (Rule r : rp.getAppliedRules())
+    {
+        appliedLigerRules.add(new LigerRule(r.toString(),r.getRuleIndex(),r.getLineNumber()));
+    }
+
+    LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation);
+
+    GlueSemantics sem = new GlueSemantics();
+
+    String extractedMCs = sem.extractMCsFromFs(fsProlog);
+    String ligerMCs = sem.returnMeaningConstructors(fs);
+
+    //Remove last line from extractedMCs
+    int eindex = extractedMCs.lastIndexOf("\n");
+    if (eindex > -1) {
+        extractedMCs = extractedMCs.substring(0, eindex);
+    }
+    //Remove first line from ligerMCs1
+
+    int lindex = ligerMCs.indexOf("\n");
+    if (lindex > -1) {
+        ligerMCs = ligerMCs.substring(lindex + 1);
+    }
+
+    String outputMCs = extractedMCs + "\n" + ligerMCs;
+
+
+    return new LigerRuleAnnotation(lg,appliedLigerRules,outputMCs);
+
+}
+
+
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/parse_xle", produces = "application/json", consumes = "application/json")
@@ -288,7 +342,6 @@ public class LigerController {
         return new LigerRuleAnnotation(lg,null,sem.extractMCsFromFs(fsProlog));
     }
 
-    //TODO for test purposes only
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rules_xle", produces = "application/json", consumes = "application/json")
