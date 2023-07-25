@@ -464,12 +464,14 @@ debug k8 cluster state:
   stage: deploy
   image:
     name: $HELM_IMAGE
-    entrypoint: ["sh", "-c", "apk add bash && /bin/bash"]
+    entrypoint: ["sh", "-c", "apk add bash curl && /bin/bash"]
   variables:
     GIT_STRATEGY: none
     RUN_ON_FB: "no"
     RUN_ON_MASTER: "no"
     RUN_ON_TAG: "no"
+    REG_SHA256: ade837fc5224acd8c34732bf54a94f579b47851cc6a7fd5899a98386b782e228
+    REG_VERSION: 0.16.1
   script:
     # set default namespace
     - export HELM_NAMESPACE=${K8_NAMESPACE}
@@ -485,8 +487,14 @@ debug k8 cluster state:
     - RELEASE_NAME=$(echo "${RELEASE_NAME_RAW}" | tr / - | tr . - | tr _ - | tr '[:upper:]' '[:lower:]' | cut -c -${RELEASE_NAME_MAX_LENGTH} | sed -E 's#-+$##')
     # DEBUG
     - echo $RELEASE_NAME
-    - helm delete --dry-run --debug ${RELEASE_NAME}
-    - helm delete ${RELEASE_NAME}
+    - helm status ${RELEASE_NAME} && helm delete --dry-run --debug ${RELEASE_NAME} || true
+    - helm status ${RELEASE_NAME} && helm delete ${RELEASE_NAME} || true
+    # download and install reg
+    - curl --fail --show-error --location "https://github.com/genuinetools/reg/releases/download/v$REG_VERSION/reg-linux-amd64" --output ./reg
+    - echo "$REG_SHA256  ./reg" | sha256sum -c -
+    - chmod a+x ./reg
+    # delete image from registry
+    - ./reg rm -d --auth-url $CI_REGISTRY -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
   dependencies: []
   allow_failure: true
   tags:
