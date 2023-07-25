@@ -27,6 +27,7 @@ import de.ukon.liger.syntax.LinguisticStructure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -79,18 +80,26 @@ public class GlueSemantics {
             unpackedSem.remove(fs.cp.rootChoice);
         }
 
-        for (Set<ChoiceVar> key : unpackedSem.keySet()) {
-            if (!unpackedSem.get(key).isEmpty()) {
-                sb.append("{");
-                sb.append(System.lineSeparator());
-                for (String s : unpackedSem.get(key)) {
-                    sb.append(s);
-                    sb.append(System.lineSeparator());
-                }
-                sb.append("}");
-                sb.append(System.lineSeparator());
-            }
-        }
+        List<Set<ChoiceVar>> keyList = new ArrayList<>(unpackedSem.keySet());
+         for (int i = 0; i < keyList.size(); i++)
+         {
+             Set<ChoiceVar> key = keyList.get(i);
+
+             if (!unpackedSem.get(key).isEmpty()) {
+                 sb.append("{");
+                 sb.append(System.lineSeparator());
+                 for (String s : unpackedSem.get(key)) {
+                     sb.append(s);
+                     sb.append(System.lineSeparator());
+                 }
+                 sb.append("}");
+
+                 if (i < keyList.size() -1){
+                     sb.append(System.lineSeparator());
+                 }
+             }
+
+         }
 
         return sb.toString();
     }

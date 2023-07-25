@@ -33,6 +33,7 @@ import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.syntax.xle.prolog2java.FsProlog2Java;
 import de.ukon.liger.syntax.xle.prolog2java.ReadFsProlog;
+import de.ukon.liger.utilities.HelperMethods;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
 import de.ukon.liger.utilities.XLEStarter;
@@ -295,18 +296,10 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) {
     String ligerMCs = sem.returnMeaningConstructors(fs);
 
     //Remove last line from extractedMCs
-    int eindex = extractedMCs.lastIndexOf("\n");
-    if (eindex > -1) {
-        extractedMCs = extractedMCs.substring(0, eindex);
-    }
-    //Remove first line from ligerMCs1
+    extractedMCs = HelperMethods.unwrapMCs(extractedMCs);
+    ligerMCs = HelperMethods.unwrapMCs(ligerMCs);
 
-    int lindex = ligerMCs.indexOf("\n");
-    if (lindex > -1) {
-        ligerMCs = ligerMCs.substring(lindex + 1);
-    }
-
-    String outputMCs = extractedMCs + "\n" + ligerMCs;
+    String outputMCs = "{\n//grammar\n" + extractedMCs + "\n//liger\n" + ligerMCs + "\n}";
 
 
     return new LigerRuleAnnotation(lg,appliedLigerRules,outputMCs);
@@ -407,7 +400,7 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) {
         }
 
 
-        HashMap<Integer,LigerRuleAnnotation> output = new HashMap<>();
+        HashMap<String,LigerRuleAnnotation> output = new HashMap<>();
         List<List<LigerRule>> allAppliedRules = new ArrayList<>();
 
         StringBuilder reportBuilder = new StringBuilder();
@@ -417,12 +410,30 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) {
         reportBuilder.append(System.lineSeparator());
         reportBuilder.append("ID:     Applied rules:     Added facts:     No of meaning constructors:\n");
 
+        List<String> keys = new ArrayList<>(request.sentences.keySet());
 
-        for (int i = 0; i < request.sentences.size(); i++) {
+        //sort keys by string final number
 
-            String sentence = request.sentences.get(i);
+        keys.sort(new Comparator<String>() {
+            @Override
+            public int compare(String s1, String s2) {
+                // Extract the numbers from the end of the strings
+                int num1 = Integer.parseInt(s1.replaceAll("\\D", ""));
+                int num2 = Integer.parseInt(s2.replaceAll("\\D", ""));
+
+                // Compare the numbers
+                return Integer.compare(num1, num2);
+            }
+        });
+
+
+        for (int i = 0; i < keys.size(); i++) {
+
+            String id = keys.get(i);
+            String sentence = request.sentences.get(id);
 
             LinguisticStructure fs = parser.parseSingle(sentence);
+            fs.local_id = id;
             LOGGER.fine(fs.constraints.toString());
             // System.out.println(fs.constraints);
             List<LinguisticStructure> fsList = new ArrayList<>();
@@ -444,10 +455,10 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) {
             meaningConstructors = meaningConstructors.stream().filter(s -> !s.equals("}\n") && !s.equals("{\n")).collect(Collectors.toList());
 
 
-            reportBuilder.append(String.format("%s\t\t%s\t\t%s\t\t%s", i, appliedLigerRules.size(), fs.annotation.size(),meaningConstructors.size()));
+            reportBuilder.append(String.format("%s\t\t%s\t\t%s\t\t%s", id, appliedLigerRules.size(), fs.annotation.size(),meaningConstructors.size()));
             reportBuilder.append(System.lineSeparator());
 
-            output.put(i,new LigerRuleAnnotation(lg, appliedLigerRules, sem.returnMeaningConstructors(fs)));
+            output.put(id,new LigerRuleAnnotation(lg, appliedLigerRules, sem.returnMeaningConstructors(fs)));
             allAppliedRules.add(appliedLigerRules);
         }
 
