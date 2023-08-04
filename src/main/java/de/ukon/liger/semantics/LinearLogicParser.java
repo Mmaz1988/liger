@@ -4,9 +4,8 @@ package de.ukon.liger.semantics;
 import de.ukon.liger.semantics.linearLogicElements.LLImplication;
 import de.ukon.liger.semantics.linearLogicElements.LLResource;
 import de.ukon.liger.semantics.linearLogicElements.LinearLogicElement;
-import de.ukon.liger.semantics.linearLogicElements.SubExpression;
 import de.ukon.liger.utilities.VariableHandler;
-import glueSemantics.linearLogic.LLFormula;
+
 
 import java.util.HashMap;
 import java.util.Iterator;
