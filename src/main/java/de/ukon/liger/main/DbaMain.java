@@ -360,7 +360,7 @@ public class DbaMain {
     }
 
     public static LinkedHashMap<String, LinguisticStructure>
-    parserInteractiveWrapper(String parserType, String input, String path, LinkedHashMap<String, HashMap<Integer, String>> result) {
+    parserInteractiveWrapper(String parserType, String input, String path, LinkedHashMap<String, HashMap<Integer, String>> result) throws IOException {
         VariableHandler vh = new VariableHandler();
         LinguisticStructure fs = null;
         SyntaxOperator syn = null;

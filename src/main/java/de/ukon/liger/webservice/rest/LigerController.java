@@ -263,7 +263,7 @@ public class LigerController {
 @CrossOrigin
     //(origins = "http://localhost:63342")
 @PostMapping(value = "hybrid_analysis", produces = "application/json", consumes = "application/json")
-public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) {
+public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) throws IOException {
 
     XLEStarter starter = new XLEStarter();
     starter.generateXLEStarterFile();
@@ -310,7 +310,7 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/parse_xle", produces = "application/json", consumes = "application/json")
-    public LigerRuleAnnotation parseXLE(@RequestBody LigerRequest request) {
+    public LigerRuleAnnotation parseXLE(@RequestBody LigerRequest request) throws IOException {
 
         //    System.out.println(request.sentence);
         //   System.out.println(request.ruleString);
@@ -338,7 +338,7 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rules_xle", produces = "application/json", consumes = "application/json")
-    public LigerRuleAnnotation applyRuleRequestXLE2(@RequestBody LigerRequest request) {
+    public LigerRuleAnnotation applyRuleRequestXLE2(@RequestBody LigerRequest request) throws IOException {
 
         //    System.out.println(request.sentence);
         //   System.out.println(request.ruleString);
@@ -372,7 +372,7 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rules_to_batch", produces = "application/json", consumes = "application/json")
-    public LigerBatchParsingAnalysis applyRulesToTestsuite(@RequestBody LigerMultipleRequest request) {
+    public LigerBatchParsingAnalysis applyRulesToTestsuite(@RequestBody LigerMultipleRequest request) throws IOException {
 
         //    System.out.println(request.sentence);
         //   System.out.println(request.ruleString);

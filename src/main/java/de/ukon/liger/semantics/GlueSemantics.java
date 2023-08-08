@@ -104,6 +104,12 @@ public class GlueSemantics {
         return sb.toString();
     }
 
+    public List<String> translateMeaningConstructors(LinguisticStructure ls) {
+
+
+
+        return null;
+    }
 
     public String extractMCsFromFs(String fs) {
         List<String> drtSolutions = new ArrayList<>();

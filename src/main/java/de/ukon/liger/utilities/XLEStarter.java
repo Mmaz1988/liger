@@ -1,5 +1,6 @@
 package de.ukon.liger.utilities;
 
+import de.ukon.liger.semantics.GlueSemanticsParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,15 +30,13 @@ public class XLEStarter {
         this.operatingSystem = operatingSystem;
     }
 
-    public XLEStarter()
-    {
-    initiateFromFile();
+    public XLEStarter() {
+        initiateFromFile();
     }
 
-    public void initiateFromFile()
-    {
+    public void initiateFromFile() {
         //Open file and read in the paths
-        File f = new File(Paths.get(  PathVariables.workingDirectory, "xle_paths.txt").toString());
+        File f = new File(Paths.get(PathVariables.workingDirectory, "xle_paths.txt").toString());
 
         try {
             BufferedReader br = new BufferedReader(new FileReader(f));
@@ -45,23 +44,21 @@ public class XLEStarter {
             int i = 0;
             while ((line = br.readLine()) != null) {
                 if (i == 0) {
-                String[] lineOne = line.split("=");
-                xlePath = lineOne[1].replace("\"","");
+                    String[] lineOne = line.split("=");
+                    xlePath = lineOne[1].replace("\"", "");
                 }
-                if (i == 1){
+                if (i == 1) {
                     String[] lineTwo = line.split("=");
-                    grammarPath = lineTwo[1].replace("\"","");
+                    grammarPath = lineTwo[1].replace("\"", "");
                 }
-                if (i == 2){
+                if (i == 2) {
                     String[] lineThree = line.split("=");
-                    String osString = lineThree[1].replace("\"","");
-                    if (osString.equalsIgnoreCase("windows")){
+                    String osString = lineThree[1].replace("\"", "");
+                    if (osString.equalsIgnoreCase("windows")) {
                         operatingSystem = OS.WINDOWS;
-                    } else if (osString.equalsIgnoreCase("mac"))
-                    {
+                    } else if (osString.equalsIgnoreCase("mac")) {
                         operatingSystem = OS.MAC;
-                    } else
-                    {
+                    } else {
                         operatingSystem = OS.LINUX;
                     }
 
@@ -78,8 +75,10 @@ public class XLEStarter {
     }
 
 
+    public void generateXLEStarterFile() throws IOException {
 
-    public void generateXLEStarterFile() {
+        useGlueGrammar();
+
         StringBuilder sb = new StringBuilder();
         sb.append("#!/bin/bash\n");
 
@@ -131,7 +130,7 @@ public class XLEStarter {
 
         String grammarString = grammarPath;
 
-        if (operatingSystem.equals(OS.WINDOWS)){
+        if (operatingSystem.equals(OS.WINDOWS)) {
             grammarString = HelperMethods.formatWslString(grammarString);
         }
 
@@ -139,17 +138,17 @@ public class XLEStarter {
         sb.append("; parse-testfile ");
 
 
-        String testFileString = Paths.get(PathVariables.workingDirectory, "tmp","testfile.lfg").toString();
+        String testFileString = Paths.get(PathVariables.workingDirectory, "tmp", "testfile.lfg").toString();
 
-        if (operatingSystem.equals(OS.WINDOWS)){
+        if (operatingSystem.equals(OS.WINDOWS)) {
             testFileString = HelperMethods.formatWslString(testFileString);
         }
 
         sb.append(testFileString);
 
-        String outputPrefix = Paths.get(PathVariables.workingDirectory, "tmp","parser_output/sentence").toString();
+        String outputPrefix = Paths.get(PathVariables.workingDirectory, "tmp", "parser_output/sentence").toString();
 
-        if (operatingSystem.equals(OS.WINDOWS)){
+        if (operatingSystem.equals(OS.WINDOWS)) {
             outputPrefix = HelperMethods.formatWslString(outputPrefix);
         }
 
@@ -162,7 +161,7 @@ public class XLEStarter {
 
         File tempDir = new File(Paths.get(PathVariables.workingDirectory, "tmp").toString());
 
-        if (!tempDir.exists()){
+        if (!tempDir.exists()) {
             tempDir.mkdir();
         }
 
@@ -182,10 +181,10 @@ public class XLEStarter {
 
             String chmodCommand = "";
 
-            if (operatingSystem.equals(OS.WINDOWS)){
-                chmodCommand = "wsl chmod +x " + HelperMethods.formatWslString(file.getAbsolutePath());
+            if (operatingSystem.equals(OS.WINDOWS)) {
+                chmodCommand = "wsl chmod +x " + HelperMethods.formatWslString(file.getCanonicalPath());
             } else {
-                chmodCommand = "chmod +x " + file.getAbsolutePath();
+                chmodCommand = "chmod +x " + file.getCanonicalPath();
             }
 
             Runtime.getRuntime().exec(chmodCommand);
@@ -193,9 +192,20 @@ public class XLEStarter {
             throw new RuntimeException(e);
         }
 
-        LOGGER.info("Generated xlebash.sh at " + file.getAbsolutePath());
-    }
+        LOGGER.info("Generated xlebash.sh at " + file.getCanonicalFile());
     }
 
+
+    public void useGlueGrammar() throws IOException {
+        if (this.grammarPath.endsWith(".glue")) {
+            GlueSemanticsParser gp = new GlueSemanticsParser(new VariableHandler());
+
+            gp.createLFGfile(this.grammarPath);
+            // use this.grammarPath without .glue ending
+            this.grammarPath = this.grammarPath.substring(0, this.grammarPath.length() - 5);
+
+        }
+    }
+}
 
 

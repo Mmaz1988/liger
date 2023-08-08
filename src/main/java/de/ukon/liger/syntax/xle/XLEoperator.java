@@ -60,7 +60,7 @@ public class XLEoperator extends SyntaxOperator {
     private final static Logger LOGGER = Logger.getLogger(XLEoperator.class.getName());
 
 
-    public static void main(String[] args) // throws VariableBindingException
+    public static void main(String[] args) throws IOException // throws VariableBindingException
     {
 
         PathVariables.initializePathVariables();
