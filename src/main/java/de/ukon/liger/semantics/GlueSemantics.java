@@ -164,8 +164,8 @@ public class GlueSemantics {
                     "-t",
                     "main.",
                     "--",
-                    prologFS.getAbsolutePath(),
-                    xleTransferOutput.getAbsolutePath()
+                    prologFS.getCanonicalPath(),
+                    xleTransferOutput.getCanonicalPath()
             };
 
             ProcessBuilder processBuilder = new ProcessBuilder(command);
@@ -213,7 +213,7 @@ public class GlueSemantics {
                 //concatenate all lines in the file to one String
                 xleTransferOutputString = reader.lines().collect(Collectors.joining(System.lineSeparator()));
             } else {
-                LOGGER.error("File " + xleTransferOutput.getAbsolutePath() + " does not exist!");
+                LOGGER.error("File " + xleTransferOutput.getCanonicalPath() + " does not exist!");
 
             }
 
