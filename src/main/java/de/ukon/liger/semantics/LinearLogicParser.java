@@ -56,7 +56,7 @@ public class LinearLogicParser {
 
 
         StringBuilder sb = new StringBuilder();
-        sb.append("@(LLCLOSURE " + ll.localName + " *)");
+        sb.append("@(LLCLOSURE " + ll.localName + ")");
         sb.append(System.lineSeparator());
         sb.append(ll.toPrologString());
 

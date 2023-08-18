@@ -24,15 +24,14 @@ package de.ukon.liger.semantics;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
+import de.ukon.liger.utilities.HelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
@@ -59,14 +58,20 @@ public class GlueSemantics {
 
         StringBuilder sb = new StringBuilder();
 
+
+        //extract from LiGER
         for (GraphConstraint c : fs.annotation) {
             if (c.getRelationLabel().equals("GLUE")) {
+                if (!HelperMethods.isInteger(c.getFsValue()))
+                {
                 if (unpackedSem.containsKey(c.getReading())) {
                     unpackedSem.get(c.getReading()).add(c.getFsValue().toString());
                 }
             }
+            }
         }
-
+        //extract from Grammar
+        HashMap<Set<ChoiceVar>,List<String>> grammarSem = translateMeaningConstructors(fs.returnFullGraph());
         boolean relevantChoice = false;
 
         for (Set<ChoiceVar> choice : unpackedSem.keySet()) {
@@ -85,13 +90,39 @@ public class GlueSemantics {
          {
              Set<ChoiceVar> key = keyList.get(i);
 
-             if (!unpackedSem.get(key).isEmpty()) {
+             if (!unpackedSem.get(key).isEmpty() || !grammarSem.get(key).isEmpty()) {
+
+                 boolean semGrammar= false;
+                 if (!grammarSem.keySet().isEmpty()) {
+                     if (!grammarSem.get(key).isEmpty()) {
+                         semGrammar = true;
+                     }
+                 }
                  sb.append("{");
                  sb.append(System.lineSeparator());
-                 for (String s : unpackedSem.get(key)) {
+
+                     if (!unpackedSem.get(key).isEmpty()) {
+                         sb.append("//Liger");
+                         sb.append(System.lineSeparator());
+
+
+                         for (String s : unpackedSem.get(key)) {
+                             sb.append(s);
+                             sb.append(System.lineSeparator());
+                         }
+                     }
+
+                 if (semGrammar)
+                 {
+                     sb.append("//Grammar");
+                     sb.append(System.lineSeparator());
+
+                 for (String s : grammarSem.get(key)) {
                      sb.append(s);
                      sb.append(System.lineSeparator());
                  }
+}
+
                  sb.append("}");
 
                  if (i < keyList.size() -1){
@@ -104,13 +135,108 @@ public class GlueSemantics {
         return sb.toString();
     }
 
-    public List<String> translateMeaningConstructors(LinguisticStructure ls) {
+    public HashMap<Set<ChoiceVar>, List<String>> translateMeaningConstructors(List<GraphConstraint> ls) {
 
+           HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
 
+        HashMap<Integer,Set<ChoiceVar>> glueIndices = new HashMap<>();
 
-        return null;
+        for (GraphConstraint c : ls) {
+            if (c.getRelationLabel().equals("GLUE")){
+                if (HelperMethods.isInteger(c.getFsValue()))
+                {
+                    Set<GraphConstraint> glueSetElements = ls.stream().filter(c2 -> Integer.parseInt(c2.getFsNode()) ==
+                            Integer.parseInt((String) c.getFsValue())).collect(Collectors.toSet());
+
+                    for (GraphConstraint c3 : glueSetElements){
+                        if (c3.getRelationLabel().equals("in_set"))
+                        {
+                            glueIndices.put(Integer.parseInt((String) c3.getFsValue()), c3.getReading());
+                        }
+                        if (!unpackedSem.containsKey(c3.getReading())){
+                            unpackedSem.put(c.getReading(), new ArrayList<>());
+                        }
+                    }
+                }
+            }
+        }
+        for (Integer i : glueIndices.keySet()){
+            unpackedSem.get(glueIndices.get(i)).add(parseMCfromProlog(i,ls));
+        }
+        return unpackedSem;
     }
 
+    public String parseMCfromProlog(Integer glueNode, List<GraphConstraint> ls)
+    {
+        String meaning = "";
+
+        List<GraphConstraint> glueConstraints = ls.stream().filter(c -> Integer.parseInt(c.getFsNode()) == glueNode).collect(Collectors.toList());
+        //Find graph constraint in glueConstraints with label GLUE
+
+        List<GraphConstraint> meaningConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("MEANING")).collect(Collectors.toList());
+
+        if (!meaningConstraint.isEmpty()){
+            meaning = (String) meaningConstraint.stream().findAny().get().getFsValue();
+            //Strip single quotes of meaning
+            meaning = meaning.substring(1,meaning.length()-1);
+        }
+
+        List<GraphConstraint> resourceConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("RESOURCE")).collect(Collectors.toList());
+
+        if (!resourceConstraint.isEmpty())
+        {
+            //Resource is atomic
+            String resource = "";
+            String type = "" ;
+            List<GraphConstraint> typeConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("TYPE")).collect(Collectors.toList());
+            if (!typeConstraint.isEmpty())
+            {
+                type = (String) typeConstraint.stream().findAny().get().getFsValue();
+                type = type.substring(1,type.length()-1);
+            }
+            resource = (String) resourceConstraint.stream().findAny().get().getFsValue();
+
+
+            if (meaning.equals(""))
+            {
+                return resource + "_" + type;
+            } else {
+                return meaning + " : " + resource + "_" + type;
+            }
+        } else {
+            //resource is non-atomic
+            String antString = "";
+            String consString = "";
+
+            List<GraphConstraint> antecedent = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("ANT")).collect(Collectors.toList());
+            List<GraphConstraint> consequent = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("CONS")).collect(Collectors.toList());
+
+            if (!antecedent.isEmpty())
+            {
+                GraphConstraint ant = antecedent.stream().findAny().get();
+                antString = parseMCfromProlog( Integer.parseInt((String) ant.getFsValue()),ls);
+            }
+
+            if (!consequent.isEmpty())
+            {
+                GraphConstraint cons = consequent.stream().findAny().get();
+                consString = parseMCfromProlog(Integer.parseInt((String) cons.getFsValue()),ls);
+            }
+
+            if (meaning.equals(""))
+            {
+                return  "(" + antString + " -o " + consString + ")";
+            } else
+            {
+                return meaning + " : " + "(" + antString + " -o " + consString + ")";
+
+            }
+
+        }
+    }
+
+
+    //For XLE+Glue version 1
     public String extractMCsFromFs(String fs) {
         List<String> drtSolutions = new ArrayList<>();
         //create a file that includes all Strings in solutions line  by line

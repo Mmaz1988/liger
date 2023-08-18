@@ -94,10 +94,13 @@ public class LinguisticStructure {
         this.cp = cp;
     }
 
+    //TODO fix for cyclic structures
     public List<List<GraphConstraint>> getSubstructures(String name)
     {
+        List<GraphConstraint> allConstraints = this.returnFullGraph();
+
         List<String> topNodes = new ArrayList<>();
-        for (GraphConstraint g : annotation)
+        for (GraphConstraint g : allConstraints)
         {
             if (g.getRelationLabel().equals(name))
             {
@@ -112,7 +115,7 @@ public class LinguisticStructure {
             List<GraphConstraint> matrix = new ArrayList<>();
             Set<String> daugtherNodes = new HashSet<>();
 
-            for (GraphConstraint g: annotation)
+            for (GraphConstraint g: allConstraints)
             {
                 if (g.getFsNode().equals(node))
                 {
@@ -126,7 +129,7 @@ public class LinguisticStructure {
                 while (!daugtherNodes.isEmpty())
                 {
                     Set<String> helperList = new HashSet<>();
-                    for (GraphConstraint g1 : annotation)
+                    for (GraphConstraint g1 : allConstraints)
                     {
                         if (daugtherNodes.contains(g1.getFsNode()))
                         {
@@ -148,6 +151,13 @@ public class LinguisticStructure {
 
         return out;
 
+    }
+
+    public List<GraphConstraint> returnFullGraph(){
+        List<GraphConstraint> allConstraints = new ArrayList<>();
+        allConstraints.addAll(this.constraints);
+        allConstraints.addAll(this.annotation);
+        return allConstraints;
     }
 
 

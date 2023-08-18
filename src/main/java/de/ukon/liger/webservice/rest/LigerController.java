@@ -26,6 +26,7 @@ import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.Rule;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.annotators.SegmenterMain;
+import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
@@ -325,12 +326,15 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
 
         LinguisticStructure fs = fsRef.get(fsRef.keySet().iterator().next());
 
+       // System.out.println(fs.getSubstructures("GLUE"));
+
         LOGGER.fine(fs.constraints.toString());
 
         LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation);
 
         GlueSemantics sem = new GlueSemantics();
 
+        HashMap<Set<ChoiceVar>, List<String>> test = sem.translateMeaningConstructors(fs.returnFullGraph());
 
         return new LigerRuleAnnotation(lg,null,sem.extractMCsFromFs(fsProlog));
     }
