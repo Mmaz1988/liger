@@ -28,10 +28,11 @@ import de.ukon.liger.utilities.HelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
@@ -90,43 +91,43 @@ public class GlueSemantics {
          {
              Set<ChoiceVar> key = keyList.get(i);
 
-             if (!unpackedSem.get(key).isEmpty() || !grammarSem.get(key).isEmpty()) {
-
-                 boolean semGrammar= false;
-                 if (!grammarSem.keySet().isEmpty()) {
-                     if (!grammarSem.get(key).isEmpty()) {
-                         semGrammar = true;
-                     }
+             boolean semGrammar= false;
+             if (!grammarSem.keySet().isEmpty()) {
+                 if (!grammarSem.get(key).isEmpty()) {
+                     semGrammar = true;
                  }
+             }
+
+             if (unpackedSem.containsKey(key) && !unpackedSem.get(key).isEmpty()) {
                  sb.append("{");
-                 sb.append(System.lineSeparator());
+                 sb.append("\n");
 
                      if (!unpackedSem.get(key).isEmpty()) {
                          sb.append("//Liger");
-                         sb.append(System.lineSeparator());
+                         sb.append("\n");
 
 
                          for (String s : unpackedSem.get(key)) {
                              sb.append(s);
-                             sb.append(System.lineSeparator());
+                             sb.append("\n");
                          }
                      }
 
                  if (semGrammar)
                  {
                      sb.append("//Grammar");
-                     sb.append(System.lineSeparator());
+                     sb.append("\n");
 
                  for (String s : grammarSem.get(key)) {
                      sb.append(s);
-                     sb.append(System.lineSeparator());
+                     sb.append("\n");
                  }
 }
 
                  sb.append("}");
 
                  if (i < keyList.size() -1){
-                     sb.append(System.lineSeparator());
+                     sb.append("\n");
                  }
              }
 
@@ -337,7 +338,7 @@ public class GlueSemantics {
                 BufferedReader reader = new BufferedReader(new FileReader(xleTransferOutput));
 
                 //concatenate all lines in the file to one String
-                xleTransferOutputString = reader.lines().collect(Collectors.joining(System.lineSeparator()));
+                xleTransferOutputString = reader.lines().collect(Collectors.joining("\n"));
             } else {
                 LOGGER.error("File " + xleTransferOutput.getCanonicalPath() + " does not exist!");
 
