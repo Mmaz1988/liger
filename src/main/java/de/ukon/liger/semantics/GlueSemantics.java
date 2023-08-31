@@ -98,20 +98,22 @@ public class GlueSemantics {
                  }
              }
 
+             sb.append("{");
+             sb.append("\n");
+
              if (unpackedSem.containsKey(key) && !unpackedSem.get(key).isEmpty()) {
-                 sb.append("{");
-                 sb.append("\n");
 
-                     if (!unpackedSem.get(key).isEmpty()) {
-                         sb.append("//Liger");
+                 if (!unpackedSem.get(key).isEmpty()) {
+                     sb.append("//Liger");
+                     sb.append("\n");
+
+
+                     for (String s : unpackedSem.get(key)) {
+                         sb.append(s);
                          sb.append("\n");
-
-
-                         for (String s : unpackedSem.get(key)) {
-                             sb.append(s);
-                             sb.append("\n");
-                         }
                      }
+                 }
+             }
 
                  if (semGrammar)
                  {
@@ -130,9 +132,6 @@ public class GlueSemantics {
                      sb.append("\n");
                  }
              }
-
-         }
-
         return sb.toString();
     }
 

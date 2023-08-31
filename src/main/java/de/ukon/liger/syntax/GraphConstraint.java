@@ -43,6 +43,7 @@ public class GraphConstraint implements Serializable {
     private Boolean projection;
 
     private String proj;
+    private boolean root;
 
 
     public GraphConstraint()
@@ -65,6 +66,27 @@ public class GraphConstraint implements Serializable {
         this.relationLabel = relationLabel;
         this.fsValue = fsValue;
         this.projection = projection;
+        //    this.pathNodes = new HashSet<>();
+    }
+
+    public GraphConstraint(Set<ChoiceVar> reading, Integer fsNode, String relationLabel, String fsValue, String projection)
+    {
+        this.reading = reading;
+        this.nodeIdentifier = fsNode.toString();
+        this.relationLabel = relationLabel;
+        this.fsValue = fsValue;
+        this.proj = projection;
+        //    this.pathNodes = new HashSet<>();
+    }
+
+    public GraphConstraint(Set<ChoiceVar> reading, Integer fsNode, String relationLabel, String fsValue, String projection, boolean root)
+    {
+        this.reading = reading;
+        this.nodeIdentifier = fsNode.toString();
+        this.relationLabel = relationLabel;
+        this.fsValue = fsValue;
+        this.proj = projection;
+        this.root = root;
         //    this.pathNodes = new HashSet<>();
     }
 
@@ -250,6 +272,15 @@ public class GraphConstraint implements Serializable {
 
     public void setProj(String proj) {
         this.proj = proj;
+    }
+
+
+    public boolean isRoot() {
+        return root;
+    }
+
+    public void setRoot(boolean root) {
+        this.root = root;
     }
 
 }

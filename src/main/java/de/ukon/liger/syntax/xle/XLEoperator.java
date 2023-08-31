@@ -412,8 +412,8 @@ public class XLEoperator extends SyntaxOperator {
 
             ReadFsProlog fs2pl = ReadFsProlog.readPrologFile(sentence,vh);
 
-            LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
-            List<GraphConstraint> fsList = FsProlog2Java.fsHash2List(fsHash);
+           // LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
+            List<GraphConstraint> fsList = FsProlog2Java.fs2List(fs2pl);
 
             Fstructure fs = new Fstructure(fs2pl.sentenceID,fs2pl.sentence,fsList,fs2pl.cp);
 
@@ -431,8 +431,8 @@ public class XLEoperator extends SyntaxOperator {
 
             ReadFsProlog fs2pl = ReadFsProlog.readPrologString(prologString,id,vh);
 
-            LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
-            List<GraphConstraint> fsList = FsProlog2Java.fsHash2List(fsHash);
+          //  LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
+            List<GraphConstraint> fsList = FsProlog2Java.fs2List(fs2pl);
 
             Fstructure fs = new Fstructure(fs2pl.sentenceID,fs2pl.sentence,fsList,fs2pl.cp);
 
@@ -467,8 +467,8 @@ public class XLEoperator extends SyntaxOperator {
 
             ReadFsProlog fs2pl = ReadFsProlog.readPrologFile(sentence,vh);
 
-            LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
-            List<GraphConstraint> fsList = FsProlog2Java.fsHash2List(fsHash);
+           // LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
+            List<GraphConstraint> fsList = FsProlog2Java.fs2List(fs2pl);
 
             return new Fstructure(fs2pl.sentenceID,fs2pl.sentence,fsList,fs2pl.cp);
 

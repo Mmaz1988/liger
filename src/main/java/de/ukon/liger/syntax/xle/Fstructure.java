@@ -33,6 +33,9 @@ public class Fstructure extends LinguisticStructure {
 
     public boolean packed;
 
+    public List<GraphConstraint> fstructureFacts;
+    public List<GraphConstraint> cStructureFacts;
+
 
     //TODO
     //public Integer global_id
@@ -45,6 +48,9 @@ public class Fstructure extends LinguisticStructure {
         }else{
             this.packed = false;
         }
+
+        this.fstructureFacts = fsFacts.stream().filter(x -> x.getProj().equals("f")).collect(Collectors.toList());
+        this.cStructureFacts = fsFacts.stream().filter(x -> x.getProj().equals("c")).collect(Collectors.toList());
     }
 
     public String writeToProlog(Boolean annotated){
