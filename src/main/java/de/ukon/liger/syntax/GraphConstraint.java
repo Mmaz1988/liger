@@ -79,10 +79,10 @@ public class GraphConstraint implements Serializable {
         //    this.pathNodes = new HashSet<>();
     }
 
-    public GraphConstraint(Set<ChoiceVar> reading, Integer fsNode, String relationLabel, String fsValue, String projection, boolean root)
+    public GraphConstraint(Set<ChoiceVar> reading, String fsNode, String relationLabel, String fsValue, String projection, boolean root)
     {
         this.reading = reading;
-        this.nodeIdentifier = fsNode.toString();
+        this.nodeIdentifier = fsNode;
         this.relationLabel = relationLabel;
         this.fsValue = fsValue;
         this.proj = projection;
@@ -188,7 +188,7 @@ public class GraphConstraint implements Serializable {
         {
             return String.format("cf(%1$s,%2$s(%3$s,var(%4$s)))",choice,getRelationLabel(),value,nodeIdentifier);
         }
-        else if (this.projection)
+        else if (this.projection != null && this.projection)
         {
             return String.format("cf(%1$s,eq(proj(var(%2$s),'%3$s'),%4$s))",choice,nodeIdentifier,getRelationLabel(),value);
         }

@@ -334,7 +334,7 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
 
         GlueSemantics sem = new GlueSemantics();
 
-        HashMap<Set<ChoiceVar>, List<String>> test = sem.translateMeaningConstructors(fs.returnFullGraph());
+        HashMap<Set<ChoiceVar>, List<String>> test = sem.translateMeaningConstructors(fs);
 
         return new LigerRuleAnnotation(lg,null,sem.extractMCsFromFs(fsProlog));
     }

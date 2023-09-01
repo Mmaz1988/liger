@@ -520,31 +520,31 @@ public class FsProlog2Java {
             //Processes preds
             if (predsMatcher.find()) {
 
-                graphConstraints.add(new GraphConstraint(context, Integer.parseInt(predsMatcher.group(1)), predsMatcher.group(2), predsMatcher.group(3), "f",root));
+                graphConstraints.add(new GraphConstraint(context, predsMatcher.group(1), predsMatcher.group(2), predsMatcher.group(3), "f",root));
                 continue;
             }
 
             //Processes adjuncts
             if (adjunctMatcher.find()) {
 
-            graphConstraints.add(new GraphConstraint(context, Integer.parseInt(adjunctMatcher.group(1)), adjunctMatcher.group(2), adjunctMatcher.group(3), "f",root));
+            graphConstraints.add(new GraphConstraint(context, adjunctMatcher.group(1), "ADJUNCT", adjunctMatcher.group(2), "f",root));
                 continue;
             }
 
             //Processes non-terminal nodes
             if (nonTerminalMatcher.find()) {
-                graphConstraints.add(new GraphConstraint(context, Integer.parseInt(nonTerminalMatcher.group(1)), nonTerminalMatcher.group(2), nonTerminalMatcher.group(3), "f",root));
+                graphConstraints.add(new GraphConstraint(context, nonTerminalMatcher.group(1), nonTerminalMatcher.group(2), nonTerminalMatcher.group(3), "f",root));
                 continue;
             }
 
             if (projectionMatcher.find()) {
-                graphConstraints.add(new GraphConstraint(context, Integer.parseInt(projectionMatcher.group(1)), projectionMatcher.group(2), projectionMatcher.group(3), "f",root));
+                graphConstraints.add(new GraphConstraint(context, projectionMatcher.group(1), projectionMatcher.group(2), projectionMatcher.group(3), "f",root));
                 continue;
             }
 
 
             if (setMatcher.find()) {
-                Integer key = Integer.parseInt(setMatcher.group(2));
+                String key = setMatcher.group(2);
                 Matcher varMatcher = keys.matcher(setMatcher.group(1));
                 String var;
 
@@ -562,7 +562,7 @@ public class FsProlog2Java {
             }
 
             if (subsumeMatcher.find()) {
-                Integer key = Integer.parseInt(subsumeMatcher.group(2));
+                String key = subsumeMatcher.group(2);
                 Matcher varMatcher = keys.matcher(subsumeMatcher.group(1));
 
                 String var;
@@ -584,7 +584,7 @@ public class FsProlog2Java {
             // Processes terminal nodes in the f-structure
             if (terminalsMatcher.find()) {
 
-                graphConstraints.add(new GraphConstraint(context, Integer.parseInt(terminalsMatcher.group(1)), terminalsMatcher.group(2), terminalsMatcher.group(3), "f",root));
+                graphConstraints.add(new GraphConstraint(context, terminalsMatcher.group(1), terminalsMatcher.group(2), terminalsMatcher.group(3), "f",root));
                 continue;
             }
 
@@ -631,9 +631,9 @@ public class FsProlog2Java {
                 choiceVar = ChoiceSpace.parseChoice(context);
                 plFs.cp.choices.add(choiceVar);
 
-                graphConstraints.add(new GraphConstraint(choiceVar, Integer.parseInt(mother), "left", left, "c",root));
-                graphConstraints.add(new GraphConstraint(choiceVar, Integer.parseInt(mother), "right", right, "c",root));
-                graphConstraints.add(new GraphConstraint(choiceVar, Integer.parseInt(mother), "CAT", category, "c",root));
+                graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "left", "0" + left, "c",root));
+                graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "right", "0" + right, "c",root));
+                graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "CAT", category, "c",root));
 
             }
 
@@ -649,8 +649,8 @@ public class FsProlog2Java {
                 choiceVar = ChoiceSpace.parseChoice(context);
                 plFs.cp.choices.add(choiceVar);
 
-                graphConstraints.add(new GraphConstraint(choiceVar, Integer.parseInt(mother), "CAT", category, "c",root));
-                graphConstraints.add(new GraphConstraint(choiceVar, Integer.parseInt(mother), "terminal", terminal, "c",root));
+                graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "CAT", category, "c",root));
+               graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "terminal", "0" + terminal, "c",root));
 
             }
 
@@ -664,7 +664,7 @@ public class FsProlog2Java {
                 choiceVar = ChoiceSpace.parseChoice(context);
                 plFs.cp.choices.add(choiceVar);
 
-                graphConstraints.add(new GraphConstraint(choiceVar, Integer.parseInt(mother), "phi", daughter, "c",root));
+                graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "phi", daughter, "c",root));
             }
 
             /*
@@ -701,8 +701,8 @@ public class FsProlog2Java {
                 choiceVar = ChoiceSpace.parseChoice(context);
                 plFs.cp.choices.add(choiceVar);
 
-                graphConstraints.add(new GraphConstraint(choiceVar, Integer.parseInt(mother), "start", "int(" + start + ")", "f",root));
-                graphConstraints.add(new GraphConstraint(choiceVar, Integer.parseInt(mother), "end", "int(" + end + ")", "f",root));
+                graphConstraints.add(new GraphConstraint(choiceVar, mother, "start", "int(" + start + ")", "f",root));
+                graphConstraints.add(new GraphConstraint(choiceVar, mother, "end", "int(" + end + ")", "f",root));
 
             }
 
@@ -726,7 +726,7 @@ public class FsProlog2Java {
                 choiceVar = ChoiceSpace.parseChoice(context);
                 plFs.cp.choices.add(choiceVar);
 
-                graphConstraints.add(new GraphConstraint(choiceVar, Integer.parseInt(mother), "cproj", daughter, "c",root));
+                graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "cproj", daughter, "c",root));
             }
 
             if (surfaceFormMatcher.find()) {
@@ -743,9 +743,9 @@ public class FsProlog2Java {
                 choiceVar = ChoiceSpace.parseChoice(context);
                 plFs.cp.choices.add(choiceVar);
 
-                graphConstraints.add(new GraphConstraint(choiceVar, Integer.parseInt(mother), "token", surfaceString, "c",root));
-                graphConstraints.add(new GraphConstraint(choiceVar, Integer.parseInt(mother), "start", "int(" + start + ")", "c",root));
-                graphConstraints.add(new GraphConstraint(choiceVar, Integer.parseInt(mother), "end", "int(" + end + ")", "c",root));
+                graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "token", surfaceString, "c",root));
+                graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "start", "int(" + start + ")", "c",root));
+                graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "end", "int(" + end + ")", "c",root));
 
             }
 

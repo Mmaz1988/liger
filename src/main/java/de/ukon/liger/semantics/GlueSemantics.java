@@ -24,6 +24,7 @@ package de.ukon.liger.semantics;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
+import de.ukon.liger.syntax.xle.Fstructure;
 import de.ukon.liger.utilities.HelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +73,7 @@ public class GlueSemantics {
             }
         }
         //extract from Grammar
-        HashMap<Set<ChoiceVar>,List<String>> grammarSem = translateMeaningConstructors(fs.returnFullGraph());
+        HashMap<Set<ChoiceVar>,List<String>> grammarSem = translateMeaningConstructors(fs);
         boolean relevantChoice = false;
 
         for (Set<ChoiceVar> choice : unpackedSem.keySet()) {
@@ -135,11 +136,27 @@ public class GlueSemantics {
         return sb.toString();
     }
 
-    public HashMap<Set<ChoiceVar>, List<String>> translateMeaningConstructors(List<GraphConstraint> ls) {
+    public HashMap<Set<ChoiceVar>, List<String>> translateMeaningConstructors(LinguisticStructure fs) {
 
-           HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
+        List<GraphConstraint> ls = new ArrayList<>(fs.returnFullGraph());
+
+        HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
 
         HashMap<Integer,Set<ChoiceVar>> glueIndices = new HashMap<>();
+
+        GraphConstraint rootNode = null;
+
+                try {
+                    rootNode = ((Fstructure) fs).cStructureFacts.stream().filter(c -> c.isRoot()).findFirst().get();
+                } catch (Exception e) {
+                    LOGGER.error("No root node found for c-stucture");
+                }
+
+        if (rootNode != null)
+        {
+
+
+        }
 
         for (GraphConstraint c : ls) {
             if (c.getRelationLabel().equals("GLUE")){

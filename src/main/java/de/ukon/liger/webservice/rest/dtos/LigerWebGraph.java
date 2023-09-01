@@ -144,7 +144,7 @@ public class LigerWebGraph {
 
     public HashMap<String,List<LigerGraphComponent>> extractGraph2(List<GraphConstraint> input, String type)
     {
-        LinkedHashMap<Integer, HashMap<String,String>> nodes = new LinkedHashMap<>();
+        LinkedHashMap<String, HashMap<String,String>> nodes = new LinkedHashMap<>();
         List<LigerGraphComponent> edges = new ArrayList<>();
 
         List<GraphConstraint> cstr = input.stream().filter(x -> x.getProj() != null && x.getProj().equals("c")).collect(Collectors.toList());
@@ -153,7 +153,7 @@ public class LigerWebGraph {
         {
             int rel = 0;
             GraphConstraint g = input.get(i);
-            Integer fsNode = Integer.parseInt(g.getFsNode());
+            String fsNode = g.getFsNode();
 
             if (!nodes.containsKey(fsNode))
             {
@@ -172,9 +172,9 @@ public class LigerWebGraph {
 
             if (HelperMethods.isInteger(g.getFsValue())
             ) {
-                if (!nodes.containsKey(Integer.parseInt(g.getFsValue().toString())))
+                if (!nodes.containsKey(g.getFsValue().toString()))
                 {
-                    nodes.put(Integer.parseInt(g.getFsValue().toString()),new HashMap<>());
+                    nodes.put(g.getFsValue().toString(),new HashMap<>());
                 }
                 //TestNode(String id, String source, String target, String label, String type)
                 edges.add(new LigerWebEdge("rid" + g.getFsNode() + rel + g.getFsValue().toString(),
@@ -192,15 +192,15 @@ public class LigerWebGraph {
 
         int counter = 0;
 
-        for (Integer key : nodes.keySet())
+        for (String key : nodes.keySet())
         {
             LigerWebNode lwn = null;
 
             if (!nodes.get(key).keySet().isEmpty()) {
-                lwn = new LigerWebNode(key.toString(), type, nodes.get(key));
+                lwn = new LigerWebNode(key, type, nodes.get(key));
             } else
             {
-                lwn = new LigerWebNode(key.toString(),type);
+                lwn = new LigerWebNode(key,type);
             }
 
 
