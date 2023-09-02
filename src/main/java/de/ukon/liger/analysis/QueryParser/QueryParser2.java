@@ -42,7 +42,7 @@ public class QueryParser2 {
         char c = query.charAt(pos);
 
 
-        if (c == '#')
+        if (c == '#' || c == '*')
         {
             pos++;
 
@@ -54,7 +54,12 @@ public class QueryParser2 {
             }
             String varName = sb.toString();
 
-            Node n = new Node(varName,fsIndices);
+            boolean constant = false;
+            if (c == '*') {
+                constant = true;
+            }
+
+            Node newNode = new Node(varName, constant, fsIndices);
 
 
 

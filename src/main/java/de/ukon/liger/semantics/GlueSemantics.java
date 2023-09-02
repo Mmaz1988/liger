@@ -21,6 +21,8 @@
 
 package de.ukon.liger.semantics;
 
+import de.ukon.liger.analysis.QueryParser.QueryParser;
+import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
@@ -30,10 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
@@ -142,7 +141,7 @@ public class GlueSemantics {
 
         HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
 
-        HashMap<Integer,Set<ChoiceVar>> glueIndices = new HashMap<>();
+        HashMap<String,Set<ChoiceVar>> glueIndices = new HashMap<>();
 
         GraphConstraint rootNode = null;
 
@@ -154,7 +153,9 @@ public class GlueSemantics {
 
         if (rootNode != null)
         {
+            String rootId = rootNode.getFsNode();
 
+            HashMap<String,Object> proofTree = buildProofTree((Fstructure) fs,rootId);
 
         }
 
@@ -168,7 +169,7 @@ public class GlueSemantics {
                     for (GraphConstraint c3 : glueSetElements){
                         if (c3.getRelationLabel().equals("in_set"))
                         {
-                            glueIndices.put(Integer.parseInt((String) c3.getFsValue()), c3.getReading());
+                            glueIndices.put((String) c3.getFsValue(), c3.getReading());
                         }
                         if (!unpackedSem.containsKey(c3.getReading())){
                             unpackedSem.put(c.getReading(), new ArrayList<>());
@@ -177,17 +178,57 @@ public class GlueSemantics {
                 }
             }
         }
-        for (Integer i : glueIndices.keySet()){
+        for (String i : glueIndices.keySet()){
             unpackedSem.get(glueIndices.get(i)).add(parseMCfromProlog(i,ls));
         }
         return unpackedSem;
     }
 
-    public String parseMCfromProlog(Integer glueNode, List<GraphConstraint> ls)
+
+    public HashMap<String, Object> buildProofTree(Fstructure fs, String rootNode)
+    {
+      List<GraphConstraint> rootConstraints = fs.cStructureFacts.stream().
+              filter(c -> c.getFsNode().equals(rootNode)).collect(Collectors.toList());
+
+      //find constraint with label phi in rootConstraints
+        GraphConstraint phiConstraint = rootConstraints.stream().filter(c -> c.getRelationLabel().equals("phi")).findFirst().get();
+        String phiNode = (String) phiConstraint.getFsValue();
+
+        GraphConstraint proofConstraint = fs.returnFullGraph().stream().filter(c ->
+                c.getFsNode().equals(phiNode) && c.getRelationLabel().equals("t::")).findFirst().get();
+
+
+
+
+
+        return null;
+    }
+
+
+    public String findMC(String cstrNode, Fstructure fs)
+        {
+            QueryParser qp = new QueryParser(fs);
+            qp.generateQuery("*" + cstrNode + "!(cproj>g::>GLUE>in_set) #s");
+
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            if (qpr.isSuccess)
+            {
+                System.out.println("Found mc");
+
+            }
+
+
+            return null;
+        }
+
+
+
+    public String parseMCfromProlog(String glueNode, List<GraphConstraint> ls)
     {
         String meaning = "";
 
-        List<GraphConstraint> glueConstraints = ls.stream().filter(c -> Integer.parseInt(c.getFsNode()) == glueNode).collect(Collectors.toList());
+        List<GraphConstraint> glueConstraints = ls.stream().filter(c -> c.getFsNode() == glueNode).collect(Collectors.toList());
         //Find graph constraint in glueConstraints with label GLUE
 
         List<GraphConstraint> meaningConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("MEANING")).collect(Collectors.toList());
@@ -231,13 +272,13 @@ public class GlueSemantics {
             if (!antecedent.isEmpty())
             {
                 GraphConstraint ant = antecedent.stream().findAny().get();
-                antString = parseMCfromProlog( Integer.parseInt((String) ant.getFsValue()),ls);
+                antString = parseMCfromProlog( (String) ant.getFsValue(),ls);
             }
 
             if (!consequent.isEmpty())
             {
                 GraphConstraint cons = consequent.stream().findAny().get();
-                consString = parseMCfromProlog(Integer.parseInt((String) cons.getFsValue()),ls);
+                consString = parseMCfromProlog((String) cons.getFsValue(),ls);
             }
 
             if (meaning.equals(""))

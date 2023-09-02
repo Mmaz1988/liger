@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 public class HelperMethods {
 
 
-    public static Pattern fsNodePattern = Pattern.compile("#([a-z])");
+    public static Pattern fsNodePattern = Pattern.compile("[#*](\\w+)");
     public static Pattern valueVarPattern = Pattern.compile("(%[a-z])");
     //semform('say',3,[var(11),var(2)],[]))
     public static Pattern predPattern = Pattern.compile("semform\\('(.+)',.+\\)");
