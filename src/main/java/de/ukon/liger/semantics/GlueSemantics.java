@@ -187,15 +187,13 @@ public class GlueSemantics {
 
     public HashMap<String, Object> buildProofTree(Fstructure fs, String rootNode)
     {
-      List<GraphConstraint> rootConstraints = fs.cStructureFacts.stream().
-              filter(c -> c.getFsNode().equals(rootNode)).collect(Collectors.toList());
+        QueryParser qp = new QueryParser(fs);
+        qp.generateQuery("*" + rootNode + " !(phi>t::) #t");
+        QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
-      //find constraint with label phi in rootConstraints
-        GraphConstraint phiConstraint = rootConstraints.stream().filter(c -> c.getRelationLabel().equals("phi")).findFirst().get();
-        String phiNode = (String) phiConstraint.getFsValue();
+        if (qpr.isSuccess) {
 
-        GraphConstraint proofConstraint = fs.returnFullGraph().stream().filter(c ->
-                c.getFsNode().equals(phiNode) && c.getRelationLabel().equals("t::")).findFirst().get();
+        }
 
 
 
@@ -208,7 +206,7 @@ public class GlueSemantics {
     public String findMC(String cstrNode, Fstructure fs)
         {
             QueryParser qp = new QueryParser(fs);
-            qp.generateQuery("*" + cstrNode + "!(cproj>g::>GLUE>in_set) #s");
+            qp.generateQuery("*" + cstrNode + " !(cproj>g::>GLUE>in_set) #s");
 
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
@@ -228,7 +226,7 @@ public class GlueSemantics {
     {
         String meaning = "";
 
-        List<GraphConstraint> glueConstraints = ls.stream().filter(c -> c.getFsNode() == glueNode).collect(Collectors.toList());
+        List<GraphConstraint> glueConstraints = ls.stream().filter(c -> c.getFsNode().equals(glueNode)).collect(Collectors.toList());
         //Find graph constraint in glueConstraints with label GLUE
 
         List<GraphConstraint> meaningConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("MEANING")).collect(Collectors.toList());
