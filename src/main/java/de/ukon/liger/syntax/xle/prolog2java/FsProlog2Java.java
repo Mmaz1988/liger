@@ -631,8 +631,13 @@ public class FsProlog2Java {
                 choiceVar = ChoiceSpace.parseChoice(context);
                 plFs.cp.choices.add(choiceVar);
 
-                graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "left", "0" + left, "c",root));
-                graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "right", "0" + right, "c",root));
+                if (left.equals("-"))
+                {
+                    graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "left", "0" + right, "c",root));
+                }else {
+                    graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "left", "0" + left, "c",root));
+                    graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "right", "0" + right, "c", root));
+                }
                 graphConstraints.add(new GraphConstraint(choiceVar, "0" + mother, "CAT", category, "c",root));
 
             }

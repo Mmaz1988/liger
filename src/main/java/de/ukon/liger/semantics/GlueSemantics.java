@@ -28,6 +28,7 @@ import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.xle.Fstructure;
 import de.ukon.liger.utilities.HelperMethods;
+import org.jgrapht.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,11 +38,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
 public class GlueSemantics {
 
+
+    private static Pattern daughterPattern = Pattern.compile("DAUGHTER(\\d+)");
     private final static Logger LOGGER = LoggerFactory.getLogger(GlueSemantics.class);
 
     public GlueSemantics() {
@@ -192,7 +196,24 @@ public class GlueSemantics {
         QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
         if (qpr.isSuccess) {
+            if (qpr.result.size() == 1) {
+                String tNode = qpr.result.keySet().stream().findAny().get().stream().filter(c -> c.variable.equals("t")).map(c -> c.reference).findFirst().get();
 
+                List<GraphConstraint> proofConstraints = fs.returnFullGraph().stream().filter(c -> c.getFsNode().equals(tNode)).collect(Collectors.toList());
+
+                String elementConstraint = null;
+                HashMap<Integer,Set<String>> daughters = new HashMap<>();
+                for (GraphConstraint c : proofConstraints)
+                {
+
+                }
+
+
+            } else
+            {
+                LOGGER.warn("Mapping from c-structure to t-structure failed. Mapping is incoherent...");
+                return null;
+            }
         }
 
 

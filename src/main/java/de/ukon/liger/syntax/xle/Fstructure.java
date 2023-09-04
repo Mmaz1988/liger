@@ -24,8 +24,11 @@ package de.ukon.liger.syntax.xle;
 import de.ukon.liger.packing.ChoiceSpace;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.GraphConstraint;
+import org.jgrapht.Graph;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -97,6 +100,40 @@ public class Fstructure extends LinguisticStructure {
 
 
         return prologStringBuilder.toString();
+    }
+
+    // String root = this.cStructureFacts.stream().filter(GraphConstraint::isRoot).map(GraphConstraint::getFsNode).findFirst().get();
+    public LinkedHashMap<String, LinkedHashMap> builtCstructureTree(String root) {
+        LinkedHashMap<String, LinkedHashMap> cStructureTree = new LinkedHashMap<>();
+
+        List<GraphConstraint> currentConstraints = this.cStructureFacts.stream().filter(x -> x.getFsNode().equals(root)).collect(Collectors.toList());
+
+        String left = currentConstraints.stream().filter(c1 -> c1.getFsNode().equals(root) && c1.getRelationLabel().equals("LEFT")).map(GraphConstraint::getFsValue).toString();
+        String right = currentConstraints.stream().filter(c1 -> c1.getFsNode().equals(root) && c1.getRelationLabel().equals("RIGHT")).map(GraphConstraint::getFsValue).toString();
+
+        if (left != null) {
+            LinkedHashMap<String, LinkedHashMap> leftTree = builtCstructureTree(left);
+            if (leftTree != null)
+            {
+                cStructureTree.put(root,leftTree);
+            }
+        }
+        if (right != null) {
+            LinkedHashMap<String, LinkedHashMap> rightTree = builtCstructureTree(right);
+            if (rightTree != null)
+            {
+                cStructureTree.get(root).putAll(rightTree);
+            }
+        }
+
+        if (left == null && right == null)
+        {
+            return null;
+        } else
+        {
+            return cStructureTree;
+        }
+
     }
 
 
