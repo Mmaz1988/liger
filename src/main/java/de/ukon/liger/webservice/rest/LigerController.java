@@ -307,7 +307,7 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
 
 }
 
-
+//Extract mcs from grammar. No call to LiGER.
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/parse_xle", produces = "application/json", consumes = "application/json")
@@ -336,7 +336,7 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
 
         HashMap<Set<ChoiceVar>, List<String>> test = sem.translateMeaningConstructors(fs);
 
-        return new LigerRuleAnnotation(lg,null,sem.extractMCsFromFs(fsProlog));
+        return new LigerRuleAnnotation(lg,null,sem.returnMultiStageMeaningConstructors(fs));
     }
 
     @CrossOrigin

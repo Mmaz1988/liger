@@ -1,0 +1,238 @@
+package de.ukon.liger.semantics;
+
+import de.ukon.liger.analysis.QueryParser.QueryParser;
+import de.ukon.liger.analysis.QueryParser.QueryParserResult;
+import de.ukon.liger.packing.ChoiceVar;
+import de.ukon.liger.semantics.linearLogicElements.McContainer;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.syntax.xle.Fstructure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.endpoint.web.Link;
+
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+public class CStructureTraverser {
+
+
+    public String rootId;
+
+    public Fstructure fs;
+    public Set<String> visitedProofNodes = new HashSet<>();
+    public Set<String> visitedGlueNodes = new HashSet<>();
+
+    public HashMap<String, Set<String>> associatedMCs = new HashMap<>();
+    public HashMap<String, Set<String>> glueTree = new HashMap<>();
+    private static Pattern daughterPattern = Pattern.compile("DAUGHTER(\\d+)");
+    private final static Logger LOGGER = LoggerFactory.getLogger(CStructureTraverser.class);
+
+    public CStructureTraverser(String rootId, Fstructure fs) {
+        this.rootId = rootId;
+        this.fs = fs;
+    }
+
+
+    public void traverseCStructure(Object cstructure, ProofConstraint proofConstraint, String rootId, String currentParent) {
+
+        //Check if there is a proof object associated with the current rootNode
+        if (proofConstraint == null) {
+            proofConstraint = buildProofTree(fs, rootId);
+            visitedProofNodes.add(proofConstraint.node);
+            LOGGER.info("Current parent node: " + currentParent);
+            LOGGER.info("Current proof tree: " + proofConstraint.node + " " + proofConstraint.elements + " " + proofConstraint.daughters);
+        } else {
+            ProofConstraint potentialPC = buildProofTree(fs, rootId);
+            if (potentialPC != null && !visitedProofNodes.contains(potentialPC.node)) {
+                potentialPC.node = currentParent;
+                proofConstraint = potentialPC;
+                LOGGER.info("Current parent node: " + currentParent);
+                LOGGER.info("Current proof tree: " + proofConstraint.node + " " + proofConstraint.elements + " " + proofConstraint.daughters);
+            }
+        }
+
+
+        //Determine where mcs are anchored (currentParent)
+
+        String currentCproj = getCProj(rootId);
+
+        if (currentCproj != null) {
+
+            if (proofConstraint != null) {
+                if (proofConstraint.elements.contains(currentCproj)) {
+                    currentParent = proofConstraint.node;
+                } else {
+                    for (String key : proofConstraint.daughters.keySet()) {
+                        if (proofConstraint.daughters.get(key).contains(currentCproj)) {
+                            currentParent = key;
+                        }
+                    }
+                }
+            }
+
+            //Create glue tree encoding scope of mcs
+            if (currentParent != null) {
+                if (!glueTree.containsKey(currentParent)) {
+                    glueTree.put(currentParent, new HashSet<>());
+                }
+
+                for (String daughter : proofConstraint.daughters.keySet()) {
+                    if (!daughter.equals(currentParent)) {
+                        glueTree.get(currentParent).add(daughter);
+                    }
+                }
+            }
+
+            // glueTree.get(currentParent).addAll(proofConstraint.daughters.keySet());
+
+            if (!visitedGlueNodes.contains(currentCproj)) {
+                //Find MCs and associate with currentParent if available
+                McContainer mcs = findMCNodes(currentCproj, fs);
+                if (mcs != null) {
+
+                    if (currentParent == null) {
+                        if (!associatedMCs.containsKey("null")) {
+                            associatedMCs.put("null", new HashSet<>());
+                        }
+                        associatedMCs.get(null).addAll(mcs.mcNodes);
+                    } else {
+                        if (!associatedMCs.containsKey(currentParent)) {
+                            associatedMCs.put(currentParent, new HashSet<>());
+                        }
+                        associatedMCs.get(currentParent).addAll(mcs.mcNodes);
+                    }
+                    visitedGlueNodes.add(currentParent);
+                }
+            }
+        }
+
+
+        if (((LinkedHashMap) cstructure).get(rootId) != null) {
+            //if available, recurse down right node first
+            if (((LinkedHashMap) cstructure).get(rootId) instanceof Object[]) {
+                Object[] keySet = (Object[]) ((LinkedHashMap) cstructure).get(rootId);
+                if (keySet[1] != null) {
+                    Object key = ((LinkedHashMap) keySet[1]).keySet().stream().findAny().get();
+                    traverseCStructure(keySet[1], proofConstraint, (String) key, currentParent);
+                }
+                Object key2 = ((LinkedHashMap) keySet[0]).keySet().stream().findAny().get();
+                traverseCStructure(keySet[0], proofConstraint, (String) key2, currentParent);
+            }
+        }
+    }
+
+    public String getCProj(String node) {
+        Set<GraphConstraint> projSet = fs.cStructureFacts.stream().
+                filter(x -> x.getFsNode().equals(node) && x.getRelationLabel().equals("cproj")).
+                collect(Collectors.toSet());
+        if (!projSet.isEmpty()) {
+            return projSet.stream().findAny().map(GraphConstraint::getFsValue).get().toString();
+        }
+        return null;
+    }
+
+
+    public ProofConstraint buildProofTree(Fstructure fs, String rootNode) {
+        QueryParser qp = new QueryParser(fs);
+        qp.generateQuery("*" + rootNode + " !(phi>t::) #t");
+        QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+        if (qpr.isSuccess) {
+            if (qpr.result.size() == 1) {
+                String tNode = qpr.result.keySet().stream().findAny().get().stream().filter(c -> c.variable.equals("t")).map(c -> c.reference).findFirst().get();
+                String daughterNode = null;
+                List<GraphConstraint> proofConstraints = fs.returnFullGraph().stream().filter(c -> c.getFsNode().equals(tNode)).collect(Collectors.toList());
+
+                Set<String> elementConstraints = null;
+                HashMap<String, Set<String>> daughters = new HashMap<>();
+
+                for (GraphConstraint c : proofConstraints) {
+                    if (c.getRelationLabel().equals("ELEMENTS")) {
+                        Set<String> elementSetConstraints = fs.returnFullGraph().stream().filter(x ->
+                                        x.getFsNode().equals(c.getFsValue()) && x.getRelationLabel().equals("in_set")).
+                                map(GraphConstraint::getFsValue).map(Object::toString).collect(Collectors.toSet());
+
+                        if (!elementSetConstraints.isEmpty()) {
+                            elementConstraints = elementSetConstraints;
+                        }
+                    }
+                    Matcher m = daughterPattern.matcher(c.getRelationLabel());
+                    if (m.matches()) {
+
+
+                        daughterNode = fs.returnFullGraph().stream().filter(gc ->
+                                        gc.getFsNode().equals(c.getFsValue()) && gc.getRelationLabel().equals("ELEMENTS")).
+                                findFirst().map(gc -> gc.getFsValue().toString()).orElse("");
+
+                        if (!daughters.containsKey(c.getRelationLabel())) {
+                            daughters.put(daughterNode, new HashSet<>());
+                        }
+
+                        if (!daughterNode.isEmpty()) {
+                            String finalDaughterNode = daughterNode;
+                            Set<String> elementSetConstraints = fs.returnFullGraph().stream().filter(x ->
+                                            finalDaughterNode.equals(x.getFsNode()) && x.getRelationLabel().equals("in_set")).
+                                    map(GraphConstraint::getFsValue).map(Object::toString).collect(Collectors.toSet());
+
+                            if (!elementSetConstraints.isEmpty()) {
+                                daughters.get(daughterNode).addAll(elementSetConstraints);
+                            }
+                        }
+                    }
+                }
+                return new ProofConstraint(tNode, elementConstraints, daughters);
+            } else {
+                LOGGER.warn("Mapping from c-structure to t-structure failed. Mapping is incoherent...");
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+
+    public McContainer findMCNodes(String cstrNode, Fstructure fs) {
+        QueryParser qp = new QueryParser(fs);
+        qp.generateQuery("*" + cstrNode + " g:: #g !(GLUE>in_set) #s");
+
+        QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+        if (qpr.isSuccess) {
+            String gNode = qpr.result.keySet().stream().findAny().get().stream().filter(c -> c.variable.equals("g")).map(c -> c.reference).findFirst().get();
+
+            Set<String> mcNodes = qpr.result.keySet().stream().findAny().get().stream().
+                    filter(c -> c.variable.equals("s")).map(c -> c.reference).collect(Collectors.toSet());
+
+            return new McContainer(gNode, mcNodes);
+
+        }
+        return null;
+    }
+
+    public String findGlueTreeRoot() {
+        //Find key in glueTree that is not value of any other key
+        Set<String> glueTreeRoots = glueTree.keySet().stream().
+                filter(x -> glueTree.values().stream().
+                        noneMatch(y -> y.contains(x))).collect(Collectors.toSet());
+
+        if (glueTreeRoots.size() == 1) {
+            return glueTreeRoots.stream().findAny().get();
+        }
+        LOGGER.warn("Failed to find glue tree root. Glue tree is incoherent...");
+        return null;
+    }
+
+
+    public void translateGlueTreeToList(String rootNode, List<Object> treeString) {
+        treeString.add("{");
+        treeString.addAll(associatedMCs.get(rootNode));
+        if (glueTree.containsKey(rootNode)) {
+            for (String node : glueTree.get(rootNode)) {
+                translateGlueTreeToList(node, treeString);
+            }
+        }
+        treeString.add("}");
+    }
+}

@@ -38,6 +38,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -45,7 +46,6 @@ import java.util.stream.Collectors;
 public class GlueSemantics {
 
 
-    private static Pattern daughterPattern = Pattern.compile("DAUGHTER(\\d+)");
     private final static Logger LOGGER = LoggerFactory.getLogger(GlueSemantics.class);
 
     public GlueSemantics() {
@@ -139,6 +139,81 @@ public class GlueSemantics {
         return sb.toString();
     }
 
+
+    /**
+     * method for testing multiStageProving without packing
+      * @param fs
+     * @return
+     */
+    public String returnMultiStageMeaningConstructors(LinguisticStructure fs)
+    {
+        try {
+
+            GraphConstraint rootNode = null;
+
+            try {
+                rootNode = ((Fstructure) fs).cStructureFacts.stream().filter(c -> c.isRoot()).findFirst().get();
+            } catch (Exception e) {
+                LOGGER.error("No root node found for c-stucture");
+            }
+
+            if (rootNode != null) {
+                String rootId = rootNode.getFsNode();
+                LinkedHashMap<String, Object> cstr = ((Fstructure) fs).builtCstructureTree(rootId);
+
+                // CStructureTraverser ctr = new CStructureTraverser();
+
+                CStructureTraverser ctr = new CStructureTraverser(rootId, (Fstructure) fs);
+
+                //Start time for next step
+                long startTime = System.currentTimeMillis();
+                ctr.traverseCStructure(cstr, null, rootId, null);
+                long endTime = System.currentTimeMillis();
+                long duration = (endTime - startTime);
+                LOGGER.info("Traversed C-Structure in " + duration + " ms");
+
+                String glueRoot = ctr.findGlueTreeRoot();
+
+                StringBuilder sb = new StringBuilder();
+
+                sb.append("{\n");
+
+                Integer addedMCs = 0;
+
+                if (ctr.associatedMCs.containsKey("null"))
+                {
+                    for (String glueNode : ctr.associatedMCs.get("null"))
+                    {
+                        sb.append(parseMCfromProlog(glueNode,fs.returnFullGraph()));
+                        addedMCs++;
+                    }
+                }
+
+                List<Object> flattenedGlueTree = new ArrayList<>();
+
+                ctr.translateGlueTreeToList(glueRoot,flattenedGlueTree);
+
+                flattenedGlueTree.remove(0);
+
+                for (Object string : flattenedGlueTree)
+                {
+                    if (HelperMethods.isInteger(string))
+                    {
+                        sb.append(parseMCfromProlog((String) string, fs.returnFullGraph()) + "\n");
+                    } else {
+                        sb.append(string + "\n");
+                    }
+                }
+                return sb.toString().trim();
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to extract MCs from Cstructure");
+            LOGGER.warn(e.getMessage());
+            LOGGER.warn(e.getStackTrace().toString());
+        }
+        return null;
+    }
+
     public HashMap<Set<ChoiceVar>, List<String>> translateMeaningConstructors(LinguisticStructure fs) {
 
         List<GraphConstraint> ls = new ArrayList<>(fs.returnFullGraph());
@@ -147,102 +222,30 @@ public class GlueSemantics {
 
         HashMap<String,Set<ChoiceVar>> glueIndices = new HashMap<>();
 
-        GraphConstraint rootNode = null;
+            for (GraphConstraint c : ls) {
+                if (c.getRelationLabel().equals("GLUE")) {
+                    if (HelperMethods.isInteger(c.getFsValue())) {
+                        Set<GraphConstraint> glueSetElements = ls.stream().filter(c2 -> Integer.parseInt(c2.getFsNode()) ==
+                                Integer.parseInt((String) c.getFsValue())).collect(Collectors.toSet());
 
-                try {
-                    rootNode = ((Fstructure) fs).cStructureFacts.stream().filter(c -> c.isRoot()).findFirst().get();
-                } catch (Exception e) {
-                    LOGGER.error("No root node found for c-stucture");
-                }
-
-        if (rootNode != null)
-        {
-            String rootId = rootNode.getFsNode();
-
-            HashMap<String,Object> proofTree = buildProofTree((Fstructure) fs,rootId);
-
-        }
-
-        for (GraphConstraint c : ls) {
-            if (c.getRelationLabel().equals("GLUE")){
-                if (HelperMethods.isInteger(c.getFsValue()))
-                {
-                    Set<GraphConstraint> glueSetElements = ls.stream().filter(c2 -> Integer.parseInt(c2.getFsNode()) ==
-                            Integer.parseInt((String) c.getFsValue())).collect(Collectors.toSet());
-
-                    for (GraphConstraint c3 : glueSetElements){
-                        if (c3.getRelationLabel().equals("in_set"))
-                        {
-                            glueIndices.put((String) c3.getFsValue(), c3.getReading());
-                        }
-                        if (!unpackedSem.containsKey(c3.getReading())){
-                            unpackedSem.put(c.getReading(), new ArrayList<>());
+                        for (GraphConstraint c3 : glueSetElements) {
+                            if (c3.getRelationLabel().equals("in_set")) {
+                                glueIndices.put((String) c3.getFsValue(), c3.getReading());
+                            }
+                            if (!unpackedSem.containsKey(c3.getReading())) {
+                                unpackedSem.put(c.getReading(), new ArrayList<>());
+                            }
                         }
                     }
                 }
             }
-        }
-        for (String i : glueIndices.keySet()){
-            unpackedSem.get(glueIndices.get(i)).add(parseMCfromProlog(i,ls));
-        }
-        return unpackedSem;
+            for (String i : glueIndices.keySet()) {
+                unpackedSem.get(glueIndices.get(i)).add(parseMCfromProlog(i, ls));
+            }
+            return unpackedSem;
     }
 
-
-    public HashMap<String, Object> buildProofTree(Fstructure fs, String rootNode)
-    {
-        QueryParser qp = new QueryParser(fs);
-        qp.generateQuery("*" + rootNode + " !(phi>t::) #t");
-        QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
-
-        if (qpr.isSuccess) {
-            if (qpr.result.size() == 1) {
-                String tNode = qpr.result.keySet().stream().findAny().get().stream().filter(c -> c.variable.equals("t")).map(c -> c.reference).findFirst().get();
-
-                List<GraphConstraint> proofConstraints = fs.returnFullGraph().stream().filter(c -> c.getFsNode().equals(tNode)).collect(Collectors.toList());
-
-                String elementConstraint = null;
-                HashMap<Integer,Set<String>> daughters = new HashMap<>();
-                for (GraphConstraint c : proofConstraints)
-                {
-
-                }
-
-
-            } else
-            {
-                LOGGER.warn("Mapping from c-structure to t-structure failed. Mapping is incoherent...");
-                return null;
-            }
-        }
-
-
-
-
-
-        return null;
-    }
-
-
-    public String findMC(String cstrNode, Fstructure fs)
-        {
-            QueryParser qp = new QueryParser(fs);
-            qp.generateQuery("*" + cstrNode + " !(cproj>g::>GLUE>in_set) #s");
-
-            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
-
-            if (qpr.isSuccess)
-            {
-                System.out.println("Found mc");
-
-            }
-
-
-            return null;
-        }
-
-
-
+    //Extracts a XLE+Glue version 2 mc from Prolog
     public String parseMCfromProlog(String glueNode, List<GraphConstraint> ls)
     {
         String meaning = "";
@@ -313,7 +316,7 @@ public class GlueSemantics {
     }
 
 
-    //For XLE+Glue version 1
+    //For XLE+Glue version 1. Uses Prolog to extract MCs
     public String extractMCsFromFs(String fs) {
         List<String> drtSolutions = new ArrayList<>();
         //create a file that includes all Strings in solutions line  by line
@@ -434,6 +437,7 @@ public class GlueSemantics {
         }
         return null;
     }
+
 
 
 }
