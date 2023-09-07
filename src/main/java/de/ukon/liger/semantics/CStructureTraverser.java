@@ -2,6 +2,7 @@ package de.ukon.liger.semantics;
 
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
+import de.ukon.liger.analysis.QueryParser.SolutionKey;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.semantics.linearLogicElements.McContainer;
 import de.ukon.liger.syntax.GraphConstraint;
@@ -139,6 +140,12 @@ public class CStructureTraverser {
         qp.generateQuery("*" + rootNode + " !(phi>t::) #t");
         QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
+        if (!qpr.isSuccess)
+        {
+            qp.generateQuery("*" + rootNode + " !(cproj>t::) #t");
+           qpr = qp.parseQuery(qp.getQueryList());
+        }
+
         if (qpr.isSuccess) {
             if (qpr.result.size() == 1) {
                 String tNode = qpr.result.keySet().stream().findAny().get().stream().filter(c -> c.variable.equals("t")).map(c -> c.reference).findFirst().get();
@@ -149,6 +156,11 @@ public class CStructureTraverser {
                 HashMap<String, Set<String>> daughters = new HashMap<>();
 
                 for (GraphConstraint c : proofConstraints) {
+                    if (c.getRelationLabel().equals("DOMINATES-RIGHT"))
+                    {
+                     return new ProofConstraint(tNode,null,null);
+                    }
+
                     if (c.getRelationLabel().equals("ELEMENTS")) {
                         Set<String> elementSetConstraints = fs.returnFullGraph().stream().filter(x ->
                                         x.getFsNode().equals(c.getFsValue()) && x.getRelationLabel().equals("in_set")).
@@ -202,8 +214,11 @@ public class CStructureTraverser {
         if (qpr.isSuccess) {
             String gNode = qpr.result.keySet().stream().findAny().get().stream().filter(c -> c.variable.equals("g")).map(c -> c.reference).findFirst().get();
 
-            Set<String> mcNodes = qpr.result.keySet().stream().findAny().get().stream().
-                    filter(c -> c.variable.equals("s")).map(c -> c.reference).collect(Collectors.toSet());
+            Set<String> mcNodes = new HashSet<>();
+
+            for (Set<SolutionKey> key : qpr.result.keySet())
+
+            mcNodes.addAll(key.stream().filter(c -> c.variable.equals("s")).map(c -> c.reference).collect(Collectors.toSet()));
 
             return new McContainer(gNode, mcNodes);
 

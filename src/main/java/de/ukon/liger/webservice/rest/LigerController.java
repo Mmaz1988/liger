@@ -547,6 +547,92 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
         return new LigerBatchParsingAnalysis(output,appliedRulesGraph,reportBuilder.toString());
         }
 
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/multistage_to_batch", produces = "application/json", consumes = "application/json")
+    public LigerBatchParsingAnalysis applyMultiStageToTestsuite(@RequestBody LigerMultipleRequest request) throws IOException {
+
+        //    System.out.println(request.sentence);
+        //   System.out.println(request.ruleString);
+        XLEStarter starter = new XLEStarter();
+        starter.generateXLEStarterFile();
+        XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
+
+
+
+
+
+        StringBuilder reportBuilder = new StringBuilder();
+
+        HashMap<String,LigerRuleAnnotation> output = new HashMap<>();
+
+        reportBuilder.append(System.lineSeparator());
+        reportBuilder.append("ID:     No of meaning constructors:\n");
+
+        List<String> keys = new ArrayList<>(request.sentences.keySet());
+
+        //sort keys by string final number
+        keys.sort(new Comparator<String>() {
+            @Override
+            public int compare(String s1, String s2) {
+                // Extract the numbers from the end of the strings
+                int num1 = Integer.parseInt(s1.replaceAll("\\D", ""));
+                int num2 = Integer.parseInt(s2.replaceAll("\\D", ""));
+
+                // Compare the numbers
+                return Integer.compare(num1, num2);
+            }
+        });
+
+
+        for (int i = 0; i < keys.size(); i++) {
+
+            String id = keys.get(i);
+            String sentence = request.sentences.get(id);
+
+            LinguisticStructure fs = parser.parseSingle(sentence);
+            fs.local_id = id;
+            LOGGER.fine(fs.constraints.toString());
+            // System.out.println(fs.constraints);
+            List<LinguisticStructure> fsList = new ArrayList<>();
+            fsList.add(fs);
+
+
+
+            GlueSemantics sem = new GlueSemantics();
+
+            LigerWebGraph lg = new LigerWebGraph(fs.constraints, fs.annotation);
+
+            Integer numberOfMcs = 0;
+
+            String mcs = sem.returnMultiStageMeaningConstructors(fs);
+
+            if (mcs != null) {
+                List<String> meaningConstructors = List.of(mcs.split("\n"));
+                //remove lines which equal }\n or {\n
+                numberOfMcs = meaningConstructors.stream().filter(s -> !s.equals("}\n") && !s.equals("{\n")).collect(Collectors.toList()).size();
+            } else {
+                mcs = "";
+            }
+            reportBuilder.append(String.format("%s\t\t%s", id, numberOfMcs));
+            reportBuilder.append(System.lineSeparator());
+
+            output.put(id,new LigerRuleAnnotation(null, null, mcs));
+
+        }
+
+
+
+
+
+
+
+
+        return new LigerBatchParsingAnalysis(output,null,reportBuilder.toString());
+    }
+
+
+
 /*
     @CrossOrigin
     //(origins = "http://localhost:63342")
