@@ -610,7 +610,7 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
             if (mcs != null) {
                 List<String> meaningConstructors = List.of(mcs.split("\n"));
                 //remove lines which equal }\n or {\n
-                numberOfMcs = meaningConstructors.stream().filter(s -> !s.equals("}\n") && !s.equals("{\n")).collect(Collectors.toList()).size();
+                numberOfMcs = meaningConstructors.stream().filter(s -> !s.equals("}") && !s.equals("{")).collect(Collectors.toList()).size();
             } else {
                 mcs = "";
             }
