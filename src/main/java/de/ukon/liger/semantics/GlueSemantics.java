@@ -21,25 +21,19 @@
 
 package de.ukon.liger.semantics;
 
-import de.ukon.liger.analysis.QueryParser.QueryParser;
-import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.xle.Fstructure;
 import de.ukon.liger.utilities.HelperMethods;
-import org.jgrapht.Graph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 

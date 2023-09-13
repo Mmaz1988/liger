@@ -24,7 +24,6 @@ package de.ukon.liger.syntax.xle;
 import de.ukon.liger.packing.ChoiceSpace;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.GraphConstraint;
-import org.jgrapht.Graph;
 
 import java.util.*;
 import java.util.stream.Collectors;

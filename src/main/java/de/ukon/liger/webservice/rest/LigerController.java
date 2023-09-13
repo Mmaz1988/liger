@@ -21,32 +21,23 @@
 
 package de.ukon.liger.webservice.rest;
 
-import de.ukon.liger.analysis.QueryParser.QueryParser;
-import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.Rule;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
-import de.ukon.liger.annotators.SegmenterMain;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.semantics.GlueSemantics;
-import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
-import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.syntax.xle.XLEoperator;
-import de.ukon.liger.syntax.xle.prolog2java.FsProlog2Java;
-import de.ukon.liger.syntax.xle.prolog2java.ReadFsProlog;
 import de.ukon.liger.utilities.HelperMethods;
-import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
 import de.ukon.liger.utilities.XLEStarter;
 import de.ukon.liger.webservice.rest.dtos.*;
-import edu.stanford.nlp.pipeline.CoreDocument;
-import edu.stanford.nlp.pipeline.CoreSentence;
-import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -56,75 +47,16 @@ import java.util.stream.Collectors;
 public class LigerController {
     private final static Logger LOGGER = Logger.getLogger(LigerController.class.getName());
 
-    private UDoperator parser = new UDoperator();
-
     @Autowired
     private LigerService ligerService;
-    private StanfordCoreNLP pipeline;
 
     public LigerController(){
 
-        Properties props = new Properties();
-        props.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,parse,sentiment,udfeats");
-        pipeline = new StanfordCoreNLP(props);
-
     };
-
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @PostMapping(value = "/parse", produces = "application/json")
-    public LigerWebGraph parseRequest(
-            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) {
-
-        UDoperator parser = new UDoperator();
-
-        LinguisticStructure fs = parser.parseSingle(input);
-       // System.out.println(fs.constraints);
-        LOGGER.fine(fs.constraints.toString());
-
-        return new LigerWebGraph(fs);
-
-    }
-
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @PostMapping(value = "/annotate", produces = "application/json")
-    public LigerWebGraph annotationRequest2(
-            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) throws IOException {
-
-        UDoperator parser = new UDoperator();
-
-        LinguisticStructure fs = parser.parseSingle(input);
-        LOGGER.fine(fs.constraints.toString());
-        List<LinguisticStructure> fsList = new ArrayList<>();
-        fsList.add(fs);
-
-        RuleParser rp = new RuleParser(fsList, Paths.get(PathVariables.testPath + "testRulesUD4b.txt"));
-        rp.addAnnotation2(fs);
-
-        try {
-            fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
-        } catch (Exception e) {
-            LOGGER.warning("Sorting annotation failed.");
-        }
-
-        StringBuilder resultBuilder = new StringBuilder();
-        for (GraphConstraint g : fs.annotation) {
-              resultBuilder.append(g.toString());
-        }
-
-        LOGGER.info("Annotation output:\n" + resultBuilder.toString());
-
-
-
-
-       LOGGER.info("Done");
-
-        return new LigerWebGraph(fs.constraints,fs.annotation);
 
         //return new TestGraph(nodeList);
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
-    }
+
 
     /*
     @CrossOrigin
@@ -198,39 +130,6 @@ public class LigerController {
         //new Greeting(counter.incrementAndGet(),String.format(template,in));
     }
     */
-
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @PostMapping(value = "/apply_rules", produces = "application/json", consumes = "application/json")
-    public LigerRuleAnnotation applyRuleRequest(@RequestBody LigerRequest request) {
-
-    //    System.out.println(request.sentence);
-     //   System.out.println(request.ruleString);
-        UDoperator parser = new UDoperator();
-
-        LinguisticStructure fs = parser.parseSingle(request.sentence);
-        LOGGER.fine(fs.constraints.toString());
-       // System.out.println(fs.constraints);
-        List<LinguisticStructure> fsList = new ArrayList<>();
-        fsList.add(fs);
-
-        RuleParser rp = new RuleParser(fsList, request.ruleString);
-        rp.addAnnotation2(fs);
-
-        GlueSemantics sem = new GlueSemantics();
-        String semantics = sem.returnMeaningConstructors(fs);
-
-        LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation,semantics);
-
-        List<LigerRule> appliedLigerRules = new ArrayList<>();
-        for (Rule r : rp.getAppliedRules())
-        {
-            appliedLigerRules.add(new LigerRule(r.toString(),r.getRuleIndex(),r.getLineNumber()));
-        }
-
-
-        return new LigerRuleAnnotation(lg,appliedLigerRules,sem.returnMeaningConstructors(fs));
-    }
 
 /*
     @CrossOrigin
@@ -620,14 +519,6 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
             output.put(id,new LigerRuleAnnotation(null, null, mcs));
 
         }
-
-
-
-
-
-
-
-
         return new LigerBatchParsingAnalysis(output,null,reportBuilder.toString());
     }
 
@@ -665,117 +556,4 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
         return null;
     }
  */
-
-    /**
-     * This method returns a json object that stores a boolean in a map<String,String> if the syntactic analysis of a sentence
-     * satisfies a LiGER query.
-     * takes an AnnotationRequest as input (a map<String,String> with two keys: "sentence" and "ruleString"
-     *              "ruleString" here corresponds to the query!
-     * @return a singleton map (key: "success") indicating whether a search was successful or failed
-     * @throws IOException
-     */
-
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @PostMapping(value = "/query", produces = "application/json", consumes = "application/json")
-    public Map<String,String> checkQuery(@RequestBody LigerRequest request) throws IOException {
-
-        LinguisticStructure fs = parser.parseSingle(request.sentence);
-        LOGGER.fine(fs.constraints.toString());
-        //  System.out.println(fs.constraints);
-
-        QueryParser qp = new QueryParser(fs);
-        qp.generateQuery(request.ruleString);
-
-        QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
-
-        Map<String,String> success = new HashMap();
-        success.put("success",qpr.isSuccess.toString());
-
-        return success;
-    }
-
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @PostMapping(value = "/query_args", produces = "application/json", consumes = "application/json")
-    public Set<String> checkArgsForQuery(@RequestBody LigerArgumentListQuery request) throws IOException {
-
-        Set<String> matchingArgs = new HashSet<>();
-
-        for (String id : request.mpg_arguments.keySet()) {
-
-            LigerArgument  arg = request.mpg_arguments.get(id);
-
-            CoreDocument doc = new CoreDocument(arg.premise);
-
-
-            this.pipeline.annotate(doc);
-
-            for (CoreSentence sent : doc.sentences()) {
-
-                LinguisticStructure fs = parser.parseSingle(sent.text());
-                //LOGGER.fine(fs.constraints.toString());
-                //  System.out.println(fs.constraints);
-
-                QueryParser qp = new QueryParser(fs);
-                qp.generateQuery(request.query);
-
-                QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
-
-                if (qpr.isSuccess) {
-                    matchingArgs.add(id);
-                }
-                break;
-            }
-        }
-        return matchingArgs;
-    }
-
-
-
-    /**
-     * Segments and annotates an incoming argument using Stanford CoreNLP.
-     * @param request
-     * @return
-     * @throws IOException
-     */
-
-
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @PostMapping(value = "/annotate_argument", produces = "application/json", consumes = "application/json")
-    public Map<String,Object> annotateArgument(@RequestBody LigerArgument request) throws IOException {
-
-        /*
-        GkrDTO gkrDTOpremise = new GkrDTO(request.premise,"");
-        GkrDTO gkrDTOconclusion = new GkrDTO(request.conclusion,"");
-
-        LinkedHashMap premiseGKR = ligerService.accessGKR(gkrDTOpremise);
-        LinkedHashMap conclusionGKR = ligerService.accessGKR(gkrDTOconclusion);
-
-        List<LinkedHashMap> argumentGKRs = new ArrayList<>();
-
-        argumentGKRs.add(0,premiseGKR);
-        argumentGKRs.add(1,conclusionGKR);
-*/
-
-        Map<String,Object> output = SegmenterMain.coreAnnotationArgument(request, this.pipeline, parser);
-        return output;
-    }
-
-
-
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @PostMapping(value = "/annotate_gkr", produces = "application/json", consumes = "application/json")
-    public Map<String,Object> annotateArgument(@RequestBody LigerRequest request) throws IOException {
-
-
-        GkrDTO gkrData = new GkrDTO(request.sentence, request.ruleString);
-
-      LinkedHashMap o = ligerService.accessGKR(gkrData);
-
-        return o;
-    }
-
 }

@@ -47,7 +47,6 @@ import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
-import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.syntax.xle.Fstructure;
 import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.DBASettings;
@@ -120,12 +119,6 @@ public class DbaMain {
                 case "-rf":
                     settings.ruleFile = args[i + 1];
                     i++;
-                    break;
-                case "-dep":
-                    settings.mode = "dep";
-                    break;
-                case "-lfg":
-                    settings.mode = "lfg";
                     break;
                 case "-mc":
                     settings.mcs = true;
@@ -365,20 +358,11 @@ public class DbaMain {
         LinguisticStructure fs = null;
         SyntaxOperator syn = null;
 
-        switch (parserType) {
-            case "dep": {
-                syn = new UDoperator();
-                LOGGER.info("Created new dependency parser instance...");
-                break;
-            }
-            case "lfg": {
                 XLEStarter xle = new XLEStarter(settings.xleBinary, settings.xleGrammar, settings.os);
                 xle.generateXLEStarterFile();
                 syn = new XLEoperator(vh,settings.os);
                 LOGGER.info("Created new XLE parser instance ...");
-                break;
-            }
-        }
+
 
         assert syn != null;
         fs = syn.parseSingle(input);

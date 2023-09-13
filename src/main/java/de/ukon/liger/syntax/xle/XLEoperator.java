@@ -43,9 +43,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static de.ukon.liger.syntax.ud.UDoperator.extractModals;
-
-
 public class XLEoperator extends SyntaxOperator {
 
     public VariableHandler vh;
@@ -365,19 +362,6 @@ public class XLEoperator extends SyntaxOperator {
 
         return prologsJavaObjects;
     }
-
-    public List<List<String>> extractModalsFromXLE(LinkedHashMap<String, LinguisticStructure> sentences)
-    {
-        List<List<String>> output = new ArrayList<>();
-
-        for (String key : sentences.keySet())
-        {
-            output.add(extractModals(sentences.get(key)));
-        }
-        return output;
-    }
-
-
 
 
     public LinkedHashMap<String, LinguisticStructure> fs2Java(String inputPath)
