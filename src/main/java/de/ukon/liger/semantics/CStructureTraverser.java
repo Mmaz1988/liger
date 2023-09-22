@@ -37,48 +37,69 @@ public class CStructureTraverser {
          * For new nodes then check what the current parent is.
          */
 
-    public void traverseCStructure(Object cstructure, ProofConstraint proofConstraint, String rootId, String currentParent) {
+    public void traverseCStructure(Object cstructure, List<ProofConstraint> proofTree, String rootId, String currentParent) {
 
         //Check if there is a proof object associated with the current rootNode
-        if (proofConstraint == null) {
-            proofConstraint = buildProofTree(fs, rootId);
-            visitedProofNodes.add(proofConstraint.node);
-            LOGGER.info("Current parent node: " + currentParent);
-            LOGGER.info("Current proof tree: " + proofConstraint.node + " " + proofConstraint.elements + " " + proofConstraint.daughters);
-        } else {
-            ProofConstraint potentialPC = buildProofTree(fs, rootId);
-            if (potentialPC != null && !visitedProofNodes.contains(potentialPC.node)) {
-                potentialPC.node = currentParent;
-                proofConstraint = potentialPC;
+        if (proofTree == null || proofTree.isEmpty()) {
+            proofTree = new ArrayList<>();
+            ProofConstraint proofConstraint = buildProofTree(fs, rootId);
+            if (proofConstraint != null) {
+                proofTree.add(proofConstraint);
                 LOGGER.info("Current parent node: " + currentParent);
                 LOGGER.info("Current proof tree: " + proofConstraint.node + " " + proofConstraint.elements + " " + proofConstraint.daughters);
+            }
+        } else {
+            ProofConstraint potentialPC = buildProofTree(fs, rootId);
+            if (potentialPC != null) {
+                //potentialPC.node = currentParent;
+                if (!glueTree.containsKey(currentParent))
+                {
+                 glueTree.put(currentParent,new HashSet<>());
+                }
+                glueTree.get(currentParent).add(potentialPC.node);
+
+                proofTree.add(potentialPC);
+                LOGGER.info("Current parent node: " + currentParent);
+                LOGGER.info("Current proof tree: " + potentialPC.node + " " + potentialPC.elements + " " + potentialPC.daughters);
             }
         }
         //Determine where mcs are anchored (currentParent)
 
         String currentCproj = getCProj(rootId);
 
+        ProofConstraint currentPC = null;
+
         if (currentCproj != null) {
 
-            if (proofConstraint != null) {
+            if (!proofTree.isEmpty()){
+            for (int i = proofTree.size() - 1; i >= 0; i--)
+            {
+                ProofConstraint proofConstraint = proofTree.get(i);
+
                 if (proofConstraint.elements.contains(currentCproj)) {
+                    currentPC = proofConstraint;
                     currentParent = proofConstraint.node;
+                    break;
                 } else {
                     for (String key : proofConstraint.daughters.keySet()) {
                         if (proofConstraint.daughters.get(key).contains(currentCproj)) {
+                            currentPC = proofConstraint;
                             currentParent = key;
+                            break;
                         }
                     }
                 }
             }
+            }
+
 
             //Create glue tree encoding scope of mcs
-            if (currentParent != null) {
+            if (currentParent != null && currentPC != null) {
                 if (!glueTree.containsKey(currentParent)) {
                     glueTree.put(currentParent, new HashSet<>());
                 }
 
-                for (String daughter : proofConstraint.daughters.keySet()) {
+                for (String daughter : currentPC.daughters.keySet()) {
                     if (!daughter.equals(currentParent)) {
                         glueTree.get(currentParent).add(daughter);
                     }
@@ -115,10 +136,10 @@ public class CStructureTraverser {
                 Object[] keySet = (Object[]) ((LinkedHashMap) cstructure).get(rootId);
                 if (keySet[1] != null) {
                     Object key = ((LinkedHashMap) keySet[1]).keySet().stream().findAny().get();
-                    traverseCStructure(keySet[1], proofConstraint, (String) key, currentParent);
+                    traverseCStructure(keySet[1], proofTree, (String) key, currentParent);
                 }
                 Object key2 = ((LinkedHashMap) keySet[0]).keySet().stream().findAny().get();
-                traverseCStructure(keySet[0], proofConstraint, (String) key2, currentParent);
+                traverseCStructure(keySet[0], proofTree, (String) key2, currentParent);
             }
         }
     }
@@ -157,6 +178,13 @@ public class CStructureTraverser {
         if (qpr.isSuccess) {
             if (qpr.result.size() == 1) {
                 String tNode = qpr.result.keySet().stream().findAny().get().stream().filter(c -> c.variable.equals("t")).map(c -> c.reference).findFirst().get();
+
+                if (visitedProofNodes.contains(tNode))
+                {
+                    return null;
+                }
+
+                visitedProofNodes.add(tNode);
                 String daughterNode = null;
                 List<GraphConstraint> proofConstraints = fs.returnFullGraph().stream().filter(c -> c.getFsNode().equals(tNode)).collect(Collectors.toList());
 
