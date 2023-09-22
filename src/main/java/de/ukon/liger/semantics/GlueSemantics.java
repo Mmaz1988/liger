@@ -148,6 +148,7 @@ public class GlueSemantics {
             try {
                 rootNode = ((Fstructure) fs).cStructureFacts.stream().filter(c -> c.isRoot()).findFirst().get();
             } catch (Exception e) {
+                rootNode = ((Fstructure) fs).cStructureFacts.get(0);
                 LOGGER.error("No root node found for c-stucture");
             }
 
@@ -178,7 +179,7 @@ public class GlueSemantics {
                 {
                     for (String glueNode : ctr.associatedMCs.get("null"))
                     {
-                        sb.append(parseMCfromProlog(glueNode,fs.returnFullGraph()));
+                        sb.append(parseMCfromProlog(glueNode,fs.returnFullGraph()) + "\n");
                         addedMCs++;
                     }
                 }
@@ -203,7 +204,7 @@ public class GlueSemantics {
         } catch (Exception e) {
             LOGGER.warn("Failed to extract MCs from Cstructure");
             LOGGER.warn(e.getMessage());
-            LOGGER.warn(e.getStackTrace().toString());
+            e.printStackTrace();
         }
         return null;
     }
@@ -339,8 +340,7 @@ public class GlueSemantics {
                 LOGGER.error("File already exists!");
             }
         } catch (IOException e) {
-            LOGGER.error("An error occurred while creating the file: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.error("An error occurred while creating the file: " + e.getMessage() + "\n");
         }
 
         File xleTransferOutput = new File("liger_resources/tmp/xle_prolog_mcs.txt");

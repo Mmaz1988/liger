@@ -355,7 +355,7 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
 
             List<String> meaningConstructors = List.of(sem.returnMeaningConstructors(fs).split("\n"));
             //remove lines which equal }\n or {\n
-            meaningConstructors = meaningConstructors.stream().filter(s -> !s.equals("}\n") && !s.equals("{\n")).collect(Collectors.toList());
+            meaningConstructors = meaningConstructors.stream().filter(s -> !s.equals("}") && !s.equals("{") && !s.startsWith("//")).collect(Collectors.toList());
 
 
             reportBuilder.append(String.format("%s\t\t%s\t\t%s\t\t%s", id, appliedLigerRules.size(), fs.annotation.size(),meaningConstructors.size()));
@@ -509,7 +509,7 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
             if (mcs != null) {
                 List<String> meaningConstructors = List.of(mcs.split("\n"));
                 //remove lines which equal }\n or {\n
-                numberOfMcs = meaningConstructors.stream().filter(s -> !s.equals("}") && !s.equals("{")).collect(Collectors.toList()).size();
+                numberOfMcs = meaningConstructors.stream().filter(s -> !s.equals("}") && !s.equals("{") && !s.startsWith("//")).collect(Collectors.toList()).size();
             } else {
                 mcs = "";
             }

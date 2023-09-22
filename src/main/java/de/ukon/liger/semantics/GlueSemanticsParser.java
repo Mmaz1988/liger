@@ -2,7 +2,6 @@ package de.ukon.liger.semantics;
 
 import de.ukon.liger.utilities.VariableHandler;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,7 +25,7 @@ public class GlueSemanticsParser {
     public static void main(String[] args) throws IOException {
 
 
-         String testFile = "/Users/princess_zelda/Projects/multistage_proving/multistage_xle.lfg.glue";
+         String testFile = "/Users/princess_zelda/Projects/multistage_proving/multistage_xle_adj.lfg.glue";
 
         GlueSemanticsParser gs = new GlueSemanticsParser(new VariableHandler());
 

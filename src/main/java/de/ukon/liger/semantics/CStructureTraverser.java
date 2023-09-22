@@ -3,13 +3,11 @@ package de.ukon.liger.semantics;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.QueryParser.SolutionKey;
-import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.semantics.linearLogicElements.McContainer;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.xle.Fstructure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.actuate.endpoint.web.Link;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -35,6 +33,9 @@ public class CStructureTraverser {
         this.fs = fs;
     }
 
+        /** TODO Change proofConstraint to prooftree .. i.e., built up prooftree when new nodes are encountered.
+         * For new nodes then check what the current parent is.
+         */
 
     public void traverseCStructure(Object cstructure, ProofConstraint proofConstraint, String rootId, String currentParent) {
 
@@ -53,8 +54,6 @@ public class CStructureTraverser {
                 LOGGER.info("Current proof tree: " + proofConstraint.node + " " + proofConstraint.elements + " " + proofConstraint.daughters);
             }
         }
-
-
         //Determine where mcs are anchored (currentParent)
 
         String currentCproj = getCProj(rootId);
@@ -97,7 +96,7 @@ public class CStructureTraverser {
                         if (!associatedMCs.containsKey("null")) {
                             associatedMCs.put("null", new HashSet<>());
                         }
-                        associatedMCs.get(null).addAll(mcs.mcNodes);
+                        associatedMCs.get("null").addAll(mcs.mcNodes);
                     } else {
                         if (!associatedMCs.containsKey(currentParent)) {
                             associatedMCs.put(currentParent, new HashSet<>());
@@ -134,15 +133,24 @@ public class CStructureTraverser {
         return null;
     }
 
+    public String getPhi(String node) {
+        Set<GraphConstraint> projSet = fs.cStructureFacts.stream().
+                filter(x -> x.getFsNode().equals(node) && x.getRelationLabel().equals("phi")).
+                collect(Collectors.toSet());
+        if (!projSet.isEmpty()) {
+            return projSet.stream().findAny().map(GraphConstraint::getFsValue).get().toString();
+        }
+        return null;
+    }
 
     public ProofConstraint buildProofTree(Fstructure fs, String rootNode) {
         QueryParser qp = new QueryParser(fs);
-        qp.generateQuery("*" + rootNode + " !(phi>t::) #t");
+        qp.generateQuery("*" + rootNode + " !(cproj>t::) #t");
         QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
         if (!qpr.isSuccess)
         {
-            qp.generateQuery("*" + rootNode + " !(cproj>t::) #t");
+            qp.generateQuery("*" + rootNode + " !(phi>t::) #t");
            qpr = qp.parseQuery(qp.getQueryList());
         }
 
@@ -152,14 +160,10 @@ public class CStructureTraverser {
                 String daughterNode = null;
                 List<GraphConstraint> proofConstraints = fs.returnFullGraph().stream().filter(c -> c.getFsNode().equals(tNode)).collect(Collectors.toList());
 
-                Set<String> elementConstraints = null;
+                Set<String> elementConstraints = new HashSet<>();
                 HashMap<String, Set<String>> daughters = new HashMap<>();
 
                 for (GraphConstraint c : proofConstraints) {
-                    if (c.getRelationLabel().equals("DOMINATES-RIGHT"))
-                    {
-                     return new ProofConstraint(tNode,null,null);
-                    }
 
                     if (c.getRelationLabel().equals("ELEMENTS")) {
                         Set<String> elementSetConstraints = fs.returnFullGraph().stream().filter(x ->
@@ -172,7 +176,6 @@ public class CStructureTraverser {
                     }
                     Matcher m = daughterPattern.matcher(c.getRelationLabel());
                     if (m.matches()) {
-
 
                         daughterNode = fs.returnFullGraph().stream().filter(gc ->
                                         gc.getFsNode().equals(c.getFsValue()) && gc.getRelationLabel().equals("ELEMENTS")).
@@ -241,13 +244,17 @@ public class CStructureTraverser {
 
 
     public void translateGlueTreeToList(String rootNode, List<Object> treeString) {
-        treeString.add("{");
-        treeString.addAll(associatedMCs.get(rootNode));
+        if (associatedMCs.containsKey(rootNode)) {
+            treeString.add("{");
+            treeString.addAll(associatedMCs.get(rootNode));
+        }
         if (glueTree.containsKey(rootNode)) {
             for (String node : glueTree.get(rootNode)) {
                 translateGlueTreeToList(node, treeString);
             }
         }
-        treeString.add("}");
+        if (associatedMCs.containsKey(rootNode)) {
+            treeString.add("}");
+        }
     }
 }
