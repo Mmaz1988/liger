@@ -171,6 +171,8 @@ public class GlueSemantics {
 
                 StringBuilder sb = new StringBuilder();
 
+                sb.append("//" + ctr.printGlueTree() + "\n");
+
                 sb.append("{\n");
 
                 Integer addedMCs = 0;

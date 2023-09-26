@@ -277,6 +277,7 @@ public class CStructureTraverser {
             treeString.addAll(associatedMCs.get(rootNode));
         }
         if (glueTree.containsKey(rootNode)) {
+            treeString.add("//" + rootNode + ": " + "{" + associatedMCs.get(rootNode) + "}");
             for (String node : glueTree.get(rootNode)) {
                 translateGlueTreeToList(node, treeString);
             }
@@ -284,5 +285,10 @@ public class CStructureTraverser {
         if (associatedMCs.containsKey(rootNode)) {
             treeString.add("}");
         }
+    }
+
+    public String printGlueTree()
+    {
+        return glueTree.toString();
     }
 }
