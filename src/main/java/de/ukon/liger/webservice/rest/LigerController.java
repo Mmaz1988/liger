@@ -401,6 +401,7 @@ public class LigerController {
         argumentGKRs.add(1,conclusionGKR);
 */
 
+        ((UDoperator) parser).getVh().resetVars();
         Map<String,Object> output = SegmenterMain.coreAnnotationArgument(request, this.pipeline, parser);
         return output;
     }
