@@ -58,15 +58,16 @@ public class GlueSemantics {
         StringBuilder sb = new StringBuilder();
 
 
-        //extract from LiGER
-        for (GraphConstraint c : fs.annotation) {
-            if (c.getRelationLabel().equals("GLUE")) {
-                if (!HelperMethods.isInteger(c.getFsValue()))
-                {
-                if (unpackedSem.containsKey(c.getReading())) {
-                    unpackedSem.get(c.getReading()).add(c.getFsValue().toString());
+        if (!fs.annotation.isEmpty()) {
+            //extract from LiGER
+            for (GraphConstraint c : fs.annotation) {
+                if (c.getRelationLabel().equals("GLUE")) {
+                    if (!HelperMethods.isInteger(c.getFsValue())) {
+                        if (unpackedSem.containsKey(c.getReading())) {
+                            unpackedSem.get(c.getReading()).add(c.getFsValue().toString());
+                        }
+                    }
                 }
-            }
             }
         }
         //extract from Grammar

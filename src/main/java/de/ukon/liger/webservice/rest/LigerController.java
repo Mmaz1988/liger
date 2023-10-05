@@ -23,7 +23,6 @@ package de.ukon.liger.webservice.rest;
 
 import de.ukon.liger.analysis.RuleParser.Rule;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
-import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.xle.XLEoperator;
@@ -232,8 +231,6 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
         LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation);
 
         GlueSemantics sem = new GlueSemantics();
-
-        HashMap<Set<ChoiceVar>, List<String>> test = sem.translateMeaningConstructors(fs);
 
         return new LigerRuleAnnotation(lg,null,sem.returnMultiStageMeaningConstructors(fs));
     }

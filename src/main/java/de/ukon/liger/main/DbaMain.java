@@ -44,6 +44,7 @@ package de.ukon.liger.main;
 
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.semantics.GlueSemantics;
+import de.ukon.liger.semantics.GlueSemanticsParser;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
@@ -123,13 +124,49 @@ public class DbaMain {
                 case "-mc":
                     settings.mcs = true;
                     break;
-                case "-xle":
-                    settings.xleBinary = args[i + 1];
-                    i++;
+
+                case "-glue2lfg":
+                    File glueFile = new File(args[i + 1]);
+                    GlueSemanticsParser gps = new GlueSemanticsParser(new VariableHandler());
+                    gps.createLFGfile(glueFile.toString());
+                    System.exit(0);
                     break;
-                case "-grammar":
-                    settings.xleGrammar = args[i + 1];
-                    i++;
+
+                case "-multi":
+                    settings.multi = true;
+                    break;
+
+                case "-fs2mcs":
+
+                    PathVariables.initializePathVariables();
+
+                    File fsFile = new File(args[i + 1]);
+                    File outFile = new File(args[i + 2]);
+
+                    XLEoperator xle = new XLEoperator(new VariableHandler());
+                    LinkedHashMap<String, LinguisticStructure> fsRef = xle.fs2Java(fsFile.getCanonicalPath());
+                    LinguisticStructure fs = fsRef.get(fsRef.keySet().stream().findAny().get());
+
+                    GlueSemantics sem = new GlueSemantics();
+
+                    String mcSets = "";
+
+                    if (settings.multi)
+                    {
+                        mcSets = sem.returnMultiStageMeaningConstructors(fs);
+                    } else {
+                        mcSets = sem.returnMeaningConstructors(fs);
+                    }
+
+                    //if outfile exists delete outfile
+                    if (outFile.exists()) {
+                        outFile.delete();
+                    }
+                    //write mcSets to outfile
+                    outFile.createNewFile();
+                    Files.writeString(outFile.toPath(), mcSets);
+
+                    System.exit(0);
                     break;
 
             }
@@ -358,9 +395,9 @@ public class DbaMain {
         LinguisticStructure fs = null;
         SyntaxOperator syn = null;
 
-                XLEStarter xle = new XLEStarter(settings.xleBinary, settings.xleGrammar, settings.os);
+                XLEStarter xle = new XLEStarter();
                 xle.generateXLEStarterFile();
-                syn = new XLEoperator(vh,settings.os);
+                syn = new XLEoperator(vh,xle.operatingSystem);
                 LOGGER.info("Created new XLE parser instance ...");
 
 

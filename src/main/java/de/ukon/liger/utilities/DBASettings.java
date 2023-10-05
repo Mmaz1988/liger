@@ -49,9 +49,8 @@ public class DBASettings {
     //For meaning constructor output
     public Boolean mcs;
 
-    public String xleBinary;
-
-    public String xleGrammar;
+    //for multistage proving
+    public Boolean multi;
 
     public XLEStarter.OS os;
 
@@ -61,7 +60,9 @@ public class DBASettings {
         this.semanticParsing = false;
         this.web = false;
         this.mcs = false;
+        this.multi = false;
         this.os = determineOs();
+        this.multi = false;
     }
 
 
