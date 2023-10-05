@@ -257,6 +257,17 @@ public class GlueSemantics {
             meaning = (String) meaningConstraint.stream().findAny().get().getFsValue();
             //Strip single quotes of meaning
             meaning = meaning.substring(1,meaning.length()-1);
+            //TODO ? possibly remove constraints that have already been covered?
+        }
+
+        // For parameters like noscope
+        List<String> params = new ArrayList<>();
+
+        List<GraphConstraint> noscopeConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("NOSCOPE")).collect(Collectors.toList());
+
+        if (!noscopeConstraint.isEmpty())
+        {
+            params.add("noscope");
         }
 
         List<GraphConstraint> resourceConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("RESOURCE")).collect(Collectors.toList());
@@ -301,13 +312,18 @@ public class GlueSemantics {
                 consString = parseMCfromProlog((String) cons.getFsValue(),ls);
             }
 
+            String paramString = "";
+
+            if (!params.isEmpty())
+            {
+                paramString = " || " + params.stream().collect(Collectors.joining(", "));
+            }
             if (meaning.equals(""))
             {
                 return  "(" + antString + " -o " + consString + ")";
             } else
             {
-                return meaning + " : " + "(" + antString + " -o " + consString + ")";
-
+                return meaning + " : " + "(" + antString + " -o " + consString + ")" + paramString;
             }
 
         }

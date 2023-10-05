@@ -5,6 +5,7 @@ import de.ukon.liger.utilities.VariableHandler;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -65,13 +66,45 @@ public class GlueSemanticsParser {
         String[] parts = mc.split(" : ");
 
         try {
-            String[] ll = llp.linearLogic2AVM(parts[1].trim());
+
+            String[] llandparams = parts[1].split("\\|\\|");
+
+            String params = null;
+
+            if (llandparams.length == 2)
+            {
+                params = llandparams[1];
+            }
+
+            String[] ll = llp.linearLogic2AVM(llandparams[0].trim());
             String prologLL = ll[1];
+
+            //encode meaning
             String meaning = Quoter.backquoteSpaceRegion(parts[0]);
-
             String meaningVar = this.vh.returnNewVar(VariableHandler.variableType.LOCAL_NAME,null);
-
             String concat = "@(CONCAT" + meaning + " " + meaningVar + ")";
+
+
+            List<String> paramStrings = new ArrayList<>();
+            //encode parameters
+            if (params != null)
+            {
+                String[] paramList = params.trim().split(",");
+                for (String param : paramList) {
+                    param = param.trim();
+                    switch (param) {
+                        case "noscope":
+
+                            String noscope = "@(NOSCOPE " + ll[0] + ")";
+                          paramStrings.add(noscope);
+                            break;
+                        case ("widescope"):
+                            //TODO
+                            break;
+                    }
+                }
+
+            }
 
             StringBuilder sb = new StringBuilder();
             sb.append(prologLL);
@@ -79,6 +112,11 @@ public class GlueSemanticsParser {
             sb.append(concat);
             sb.append(System.lineSeparator());
             sb.append("@(GLUE-MEANING " + ll[0] + " " + meaningVar +  ")");
+
+            for (String paramString : paramStrings) {
+                sb.append(System.lineSeparator());
+                sb.append(paramString);
+            }
 
             return sb.toString();
 
