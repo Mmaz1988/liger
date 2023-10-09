@@ -257,6 +257,9 @@ public class GlueSemantics {
             meaning = (String) meaningConstraint.stream().findAny().get().getFsValue();
             //Strip single quotes of meaning
             meaning = meaning.substring(1,meaning.length()-1);
+            //replace \' with '
+            meaning = meaning.replace("\\'","'");
+
             //TODO ? possibly remove constraints that have already been covered?
         }
 

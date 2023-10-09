@@ -6,11 +6,7 @@ import de.ukon.liger.semantics.linearLogicElements.LLResource;
 import de.ukon.liger.semantics.linearLogicElements.LinearLogicElement;
 import de.ukon.liger.utilities.VariableHandler;
 
-
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Stack;
-import java.util.LinkedList;
 public class LinearLogicParser {
 
     public HashMap<Integer,Boolean> isFormula;
@@ -30,7 +26,7 @@ public class LinearLogicParser {
         String input2 = "((s::((SPEC ^) VAR)_e -o s::((SPEC ^) RESTR)_t) -o ((s::(SPEC ^)_e -o s::((SPEC ^) GF)_t) -o s::((SPEC ^) GF)_t))";
         String input3 = "((s::(SPEC ^)_e -o s::((SPEC ^) GF)_t) -o s::((SPEC ^) GF)_t))";
         String input4 = "(s::(^SUBJ)_e -o (s::(^OBJ)_e -o (s::(^SUBJ)_e -o s::^_t)))";
-        String input5 = "s::^";
+        String input5 = "((s::%arg1_e -o (s::%arg2_e -o ((s::^ EV)_v -o (s::^ EV)_t))) -o (s::%arg1_e -o (s::%arg2_e -o s::^_t)))";
        LinearLogicParser llp = new LinearLogicParser(new VariableHandler());
        //LinearLogicElement sb = llp.parseExpression(input);
        System.out.println(llp.linearLogic2AVM(input5)[1]);

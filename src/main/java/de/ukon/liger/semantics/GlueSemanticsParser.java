@@ -26,11 +26,21 @@ public class GlueSemanticsParser {
     public static void main(String[] args) throws IOException {
 
 
+        /*
          String testFile = "/Users/princess_zelda/Projects/multistage_proving/multistage_xle_adj.lfg.glue";
 
         GlueSemanticsParser gs = new GlueSemanticsParser(new VariableHandler());
 
         gs.createLFGfile(testFile);
+
+         */
+
+        GlueSemanticsParser glueSemanticsParser = new GlueSemanticsParser(new VariableHandler());
+
+        String mc =  glueSemanticsParser.parseMeaningConstructor("((s::%arg1_e -o (s::%arg2_e -o ((s::^ EV)_v -o (s::^ EV)_t))) -o (s::%arg1_e -o (s::%arg2_e -o s::^_t))) : lam(V,lam(X,lam(Y,merge(drs([E,S,X,Y],[app(app(app(V,X),Y),E)]),drs([],[rel(partOf,E,S)])))))");
+
+        System.out.println(mc);
+
     }
 
     public void createLFGfile(String lfgGlueFile) throws IOException {
