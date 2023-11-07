@@ -44,8 +44,8 @@ app:
       path: {{ .Values.app.health }}
       port: {{ .Values.app.port }}
     initialDelaySeconds: 120
-    timeoutSeconds: 5
-    periodSeconds: 5
+    timeoutSeconds: 300
+    periodSeconds: 300
     failureThreshold: 3
     successThreshold: 1
 
@@ -54,8 +54,8 @@ app:
       path: {{ .Values.app.health }}
       port: {{ .Values.app.port }}
     initialDelaySeconds: 120
-    timeoutSeconds: 5
-    periodSeconds: 5
+    timeoutSeconds: 300
+    periodSeconds: 300
     failureThreshold: 4
     successThreshold: 1
 
