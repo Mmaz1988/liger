@@ -273,7 +273,7 @@ dockerize-backend:
   stage: build:image
   image: openjdk:13-jdk-slim
   variables:
-    MAVEN_OPTS: "-Dmaven.repo.local=.m2 -Dmaven.test.skip=true"
+    MAVEN_OPTS: "-Dmaven.repo.local=.m2 -Dmaven.test.skip=true -Xmx4096m"
   script:
     # needed for VERSION
     - set -a
