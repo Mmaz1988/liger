@@ -516,9 +516,21 @@ public class RuleParser {
         //Replace fsNode variables
         while (matcher.find()) {
 
-            if (qpr.result.get(solutionKey).containsKey(matcher.group(1))) {
-                String key = qpr.result.get(solutionKey).get(matcher.group(1)).keySet().stream().findAny().get();
-                matcher.appendReplacement(sb, key);
+            String replaceString = matcher.group(1);
+            String type = "";
+            boolean typed = false;
+
+            if (replaceString.split("_").length == 2)
+            {
+                 replaceString = matcher.group(1).split("_")[0];
+                 type = "_" + matcher.group(1).split("_")[1];
+            }
+
+            if (qpr.result.get(solutionKey).containsKey(replaceString)) {
+                String key = qpr.result.get(solutionKey).get(replaceString).keySet().stream().findAny().get();
+
+
+                matcher.appendReplacement(sb, key+type);
             } else {
                 matcher.appendReplacement(sb, returnUnusedVar());
             }
@@ -546,6 +558,7 @@ public class RuleParser {
         replacedFsVars = sb2.toString();
 
 
+        //search dictionary
         Matcher matcher3 = lexPattern.matcher(replacedFsVars);
         StringBuffer sb3 = new StringBuffer();
 
