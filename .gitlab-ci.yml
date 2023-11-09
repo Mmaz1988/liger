@@ -89,7 +89,7 @@ variables:
   REPLICA_COUNT_STAGING: 1
   #
   #
-  REPLICA_COUNT_FB: 1
+  REPLICA_COUNT_FB: 2
 
   MVN_CACHE_KEY: cuepaq-liger
   SPRING_PROFILES: dev
