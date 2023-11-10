@@ -5,7 +5,6 @@ import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.annotation.*;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
-import de.ukon.liger.syntax.SyntaxOperator;
 import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.webservice.rest.LigerService;
@@ -24,9 +23,6 @@ import java.util.stream.Collectors;
  * Takes a text as input and returns a segmented annotation structure
  */
 public class SegmenterMain {
-
-    private SyntaxOperator udOperator = new UDoperator();
-
 
     public static void main(String[] args){
 
@@ -271,7 +267,7 @@ public class SegmenterMain {
 
                 try {
 
-                    UDoperator udParser = new UDoperator();
+                    UDoperator udParser = udOps;
 
                     parse = udParser.parseSingle(sent.text());
 
@@ -365,6 +361,8 @@ public class SegmenterMain {
         ArgumentAnnotation argument = new ArgumentAnnotation("arg1",(LigerAnnotation) docs[0][1],(LigerAnnotation) docs[1][1]);
         argument.argumentRelation = ligerArgument.relation;
         argument.text = ligerArgument.premise + " " + ligerArgument.conclusion;
+
+        udOps.getVh().resetVars();
 
         return argument.returnLigerAnnotation();
     }
