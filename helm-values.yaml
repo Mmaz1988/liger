@@ -26,7 +26,7 @@ app:
 
   limits:
     cpu: 2000m
-    memory: 6Gi
+    memory: 9Gi
     ephemeralStorage: 2Gi
 
 #  pvc:
