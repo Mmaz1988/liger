@@ -25,7 +25,7 @@ app:
     ephemeralStorage: 1Gi
 
   limits:
-    cpu: 2000m
+    cpu: 4000m
     memory: 8Gi
     ephemeralStorage: 2Gi
 
