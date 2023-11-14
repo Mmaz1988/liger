@@ -271,7 +271,7 @@ export-environment:
 
 dockerize-backend:
   stage: build:image
-  image: openjdk:13-jdk-slim
+  image: amazoncorretto:17.0.9
   variables:
     MAVEN_OPTS: "-Dmaven.repo.local=.m2 -Dmaven.test.skip=true -Xmx4096m -XX:MinHeapFreeRatio=5"
   script:
