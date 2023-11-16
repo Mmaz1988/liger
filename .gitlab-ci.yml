@@ -269,35 +269,31 @@ export-environment:
 # DOCKERIZE
 ###########################################
 
-dockerize-backend:
+build:image:
   stage: build:image
-  image: amazoncorretto:17.0.9
-  variables:
-    MAVEN_OPTS: "-Dmaven.repo.local=.m2 -Dmaven.test.skip=true -Xmx4096m -Xms4096m"
+  image:
+    name: gcr.io/kaniko-project/executor:v1.18.0-debug
+    entrypoint: [""]
   script:
-    # needed for VERSION
-    - set -a
-    - source var.env
-    - IMG="${CI_REGISTRY_IMAGE}:${VERSION}"
-    - ./mvnw --batch-mode compile jib:build -Dimage=$IMG | grep -vE "^\[INFO\] Download(ing|ed) from"
-    - |
-      if [ "${ENV_TYPE}" == "staging" ]
-      then
-        ./mvnw --batch-mode compile jib:build -Dimage="${CI_REGISTRY_IMAGE}:master" | grep -vE "^\[INFO\] Download(ing|ed) from"
-      fi
-  dependencies:
-    - export-environment
-  cache:
-    # cache for this project and the build stage
-    key: ${MVN_CACHE_KEY}-${CI_JOB_STAGE}
-    paths:
-      - .m2/
-      # this is where jib stores its layers
-      - target/jib-cache/
-  interruptible: true
+    - source ./var.env
+    # Login
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    # define the image (version is either a git-tag or a short git-commit-sha
+    - IMG="${CI_REGISTRY_IMAGE}/${CI_COMMIT_BRANCH}:${VERSION}"
+    # build and push :)
+    - >
+      /kaniko/executor 
+      --registry-mirror registry-mirror.dbvis.de 
+      --context $DOCKER_CONTEXT 
+      --dockerfile $DOCKERFILE_LOC 
+      --destination $IMG 
+      --cache=true
+      --force
   tags:
-    - docker
+    - no-cache
   retry: 1
+
 
 ###########################################
 # DEPLOY
