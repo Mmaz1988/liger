@@ -309,6 +309,8 @@ build:image:
     - export HELM_NAMESPACE=${K8_NAMESPACE}
     # Login helm into docker registry
     - echo ${CI_REGISTRY_PASSWORD} | helm registry login -u ${CI_REGISTRY_USER} --password-stdin ${CI_REGISTRY}
+    # set img name
+    - IMG="${CI_REGISTRY_IMAGE}/${CI_COMMIT_BRANCH}"
     # dry run to install chart
     - >
       helm upgrade 
@@ -322,7 +324,7 @@ build:image:
       --set app.image.tag="${VERSION}" 
       --set app.ingress.url=${URL_FULL} 
       --set app.replicaCount=${REPLICA_COUNT} 
-      --set app.image.repository=${CI_REGISTRY_IMAGE}
+      --set app.image.repository=${IMG}
     # actually install chart
     - >
       helm upgrade 
@@ -336,7 +338,7 @@ build:image:
       --set app.image.tag="${VERSION}" 
       --set app.ingress.url=${URL_FULL} 
       --set app.replicaCount=${REPLICA_COUNT} 
-      --set app.image.repository=${CI_REGISTRY_IMAGE}
+      --set app.image.repository=${IMG}
   dependencies:
     - export-environment
   interruptible: false
