@@ -84,9 +84,21 @@ public class UDoperator extends SyntaxOperator {
         this.vh = new VariableHandler();
     }
 
+    public UDoperator(DependencyParser dep)
+    {
+        dp = dep;
+        this.vh = new VariableHandler();
+    }
+
     public UDoperator(VariableHandler variable_handler)
     {
         dp = new DependencyParser();
+        this.vh = variable_handler;
+    }
+
+    public UDoperator(VariableHandler variable_handler, DependencyParser depparse)
+    {
+        dp = depparse;
         this.vh = variable_handler;
     }
 
