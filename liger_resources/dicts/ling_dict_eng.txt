@@ -26,6 +26,10 @@ NN, NNS, NNP, NNPS, PRP
 #verb
 VB, VBD, VBG, VBN, VBP, VBZ, JJR, JJS
 
+***
+#adjective
+JJR, JJS, JJ
+
 >visargue-modals
 ***
 #certain

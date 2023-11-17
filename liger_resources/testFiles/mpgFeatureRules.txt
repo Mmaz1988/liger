@@ -11,8 +11,8 @@
 
 #a word_annotation #c & #a advmod #b & #a POS %a & #b LEMMA %b ==> #c lex(%a,ud-cats)-advmod %b.
 
-#a word_annotation #c & #a advmod #b & #a POS %a & #b LEMMA not ==> #c lex(%a,ud-cats)-negation %b.
+#a word_annotation #c & #a advmod #b & #a POS %a & #b LEMMA not ==> #c lex(%a,ud-cats)-negation true.
 
-#a word_annotation #c & #a det #b & #a POS %a & #b LEMMA no ==> #c lex(%a,ud-cats)-negation %b.
+#a word_annotation #c & #a det #b & #a POS %a & #b LEMMA no ==> #c lex(%a,ud-cats)-negation true.
 
 #a word_annotation #c & #a LEMMA %a & #a POS MD ==> #c MODAL %a.
