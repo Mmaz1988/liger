@@ -293,7 +293,7 @@ public class SegmenterMain {
                     s.annotations.put("no-of-atts", propAtts.size());
 
                     List<GraphConstraint> attitudeHolders = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("attitude-holder")).collect(Collectors.toList());
-                    s.annotations.put("attitude-holder", String.join(",", propAtts.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+                    s.annotations.put("attitude-holders", String.join(",", propAtts.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
                     
                     List<GraphConstraint> embeddingVerbs = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("embedding-verb")).collect(Collectors.toList());
                     s.annotations.put("embedding-verbs", String.join(",", embeddingVerbs.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
