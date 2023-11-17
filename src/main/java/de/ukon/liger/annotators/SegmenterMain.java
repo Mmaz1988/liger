@@ -289,6 +289,11 @@ public class SegmenterMain {
 
                     List<GraphConstraint> propAtts = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("prop-attitude")).collect(Collectors.toList());
                     s.annotations.put("prop-atts", String.join(",", propAtts.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+
+                    s.annotations.put("no-of-atts", propAtts.size());
+
+                    List<GraphConstraint> attitudeHolders = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("attitude-holder")).collect(Collectors.toList());
+                    s.annotations.put("attitude-holder", String.join(",", propAtts.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
                     
                     List<GraphConstraint> embeddingVerbs = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("embedding-verb")).collect(Collectors.toList());
                     s.annotations.put("embedding-verbs", String.join(",", embeddingVerbs.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
@@ -300,6 +305,12 @@ public class SegmenterMain {
                     s.annotations.put("verb-mods", String.join(",", verbMods.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
 
                     List<GraphConstraint> tamConstraint = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("TAM")).collect(Collectors.toList());
+
+                    List<GraphConstraint> nounNeg = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("noun-negation")).collect(Collectors.toList());
+                    s.annotations.put("number-of-noun-negation", nounNeg.size());
+
+                    List<GraphConstraint> verbNeg = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("verb-negation")).collect(Collectors.toList());
+                    s.annotations.put("number-of-verb-negation", verbNeg.size());
 
                     Set<Object> tamNodes = tamConstraint.stream().map(GraphConstraint::getFsValue).collect(Collectors.toSet());
 
