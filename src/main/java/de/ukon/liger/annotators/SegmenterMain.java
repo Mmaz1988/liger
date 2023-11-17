@@ -285,6 +285,11 @@ public class SegmenterMain {
 
                     List<GraphConstraint> propAtts = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("prop-attitude")).collect(Collectors.toList());
                     s.annotations.put("prop-atts", String.join(",", propAtts.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+
+                    s.annotations.put("no-of-atts", propAtts.size());
+
+                    List<GraphConstraint> attitudeHolders = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("attitude-holder")).collect(Collectors.toList());
+                    s.annotations.put("attitude-holders", String.join(",", attitudeHolders.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
                     
                     List<GraphConstraint> embeddingVerbs = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("embedding-verb")).collect(Collectors.toList());
                     s.annotations.put("embedding-verbs", String.join(",", embeddingVerbs.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
@@ -294,6 +299,9 @@ public class SegmenterMain {
 
                     List<GraphConstraint> verbMods = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("verb-advmod")).collect(Collectors.toList());
                     s.annotations.put("verb-mods", String.join(",", verbMods.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+
+                    List<GraphConstraint> adjMods = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("adjective-advmod")).collect(Collectors.toList());
+                    s.annotations.put("adj-mods", String.join(",", adjMods.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
 
                     List<GraphConstraint> tamConstraint = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("TAM")).collect(Collectors.toList());
 
@@ -310,6 +318,15 @@ public class SegmenterMain {
                         aspectAnnos.addAll(parse.annotation.stream().filter(x -> x.getFsNode().equals(node.toString()) && x.getRelationLabel().equals("ASPECT")).collect(Collectors.toList()));
                     }
                     s.annotations.put("aspect-markers", String.join(",", aspectAnnos.stream().map(x -> x.getFsValue().toString()).collect(Collectors.toSet())));
+
+                    List<GraphConstraint> nounNeg = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("noun-negation")).collect(Collectors.toList());
+                    s.annotations.put("number-of-noun-negation", nounNeg.size());
+
+                    List<GraphConstraint> verbNeg = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("verb-negation")).collect(Collectors.toList());
+                    s.annotations.put("number-of-verb-negation", verbNeg.size());
+
+                    List<GraphConstraint> adjNeg = parse.annotation.stream().filter(x -> x.getRelationLabel().equals("adjective-negation")).collect(Collectors.toList());
+                    s.annotations.put("number-of-adj-negation", adjNeg.size());
 
                             /*
                     s.annotations.put("named_entities", sent.entityMentions().stream().
