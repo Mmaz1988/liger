@@ -16,8 +16,11 @@ RUN apt-get update && apt-get install --yes --no-install-recommends libjemalloc2
 # set jemalloc as default malloc in env variable
 ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
 
-# Copy form build stage to keep image size small
+# Copy from build stage to keep image size small
 COPY --from=build /home/liger/src/target/syntax-annotator-glue-0.0.1-SNAPSHOT.jar app.jar
+
+# copy necessary resource files
+COPY liger_resources liger_resources
 
 ## ENTRYPOINT ["java", "-jar", "/app.jar"]
 ENTRYPOINT exec java -jar /app.jar -web
