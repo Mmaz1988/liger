@@ -260,6 +260,18 @@ public class SegmenterMain {
 
                 }catch(Exception e)
                 {
+                    if (!s.annotations.keySet().contains("veridical_ratio"))
+                    {
+                        s.annotations.put("veridical_ratio", 0);
+                    }
+                    if (!s.annotations.keySet().contains("averidical_ratio"))
+                    {
+                        s.annotations.put("averidical_ratio", 0);
+                    }
+                    if (!s.annotations.keySet().contains("antiveridical_ratio"))
+                    {
+                        s.annotations.put("antiveridical_ratio", 0);
+                }
                     System.out.println("Semantic annotation failed.");
                 }
 
