@@ -24,26 +24,24 @@ package de.ukon.liger.syntax.ud;
 // Base class for creating glue semantic representations with a meaning side and a glue side
 
 import de.ukon.liger.analysis.RuleParser.RuleParser;
-import de.ukon.liger.utilities.HelperMethods;
-import edu.stanford.nlp.ling.IndexedWord;
-import edu.stanford.nlp.process.Morphology;
-import edu.stanford.nlp.trees.GrammaticalStructure;
-import edu.stanford.nlp.trees.TypedDependency;
 import de.ukon.liger.packing.ChoiceSpace;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
 import de.ukon.liger.test.QueryParserTest;
+import de.ukon.liger.utilities.HelperMethods;
 import de.ukon.liger.utilities.VariableHandler;
-import org.springframework.boot.actuate.endpoint.web.Link;
+import edu.stanford.nlp.ling.IndexedWord;
+import edu.stanford.nlp.process.Morphology;
+import edu.stanford.nlp.trees.GrammaticalStructure;
+import edu.stanford.nlp.trees.TypedDependency;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 //import edu.stanford.nlp.pipeline;
@@ -74,19 +72,34 @@ public class UDoperator extends SyntaxOperator {
     }
 
     private final DependencyParser dp;
-    private static VariableHandler vh;
+
+
+
+    private VariableHandler vh;
 
 
     public UDoperator()
     {
         dp = new DependencyParser();
-        vh = new VariableHandler();
+        this.vh = new VariableHandler();
+    }
+
+    public UDoperator(DependencyParser dep)
+    {
+        dp = dep;
+        this.vh = new VariableHandler();
     }
 
     public UDoperator(VariableHandler variable_handler)
     {
         dp = new DependencyParser();
-        vh = variable_handler;
+        this.vh = variable_handler;
+    }
+
+    public UDoperator(VariableHandler variable_handler, DependencyParser depparse)
+    {
+        dp = depparse;
+        this.vh = variable_handler;
     }
 
     @Override
@@ -422,6 +435,8 @@ public class UDoperator extends SyntaxOperator {
             }
         }
     }
-
+    public VariableHandler getVh() {
+        return vh;
+    }
 
 }

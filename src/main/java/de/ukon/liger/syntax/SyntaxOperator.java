@@ -48,4 +48,6 @@ public abstract class SyntaxOperator {
     {}
 
     public abstract LinguisticStructure parseSingle(String sentence);
+
+
 }

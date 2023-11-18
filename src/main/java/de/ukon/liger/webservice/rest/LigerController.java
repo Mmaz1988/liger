@@ -25,6 +25,7 @@ import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.annotators.SegmenterMain;
+import de.ukon.liger.syntax.ud.DependencyParser;
 import de.ukon.liger.webservice.rest.dtos.*;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.CoreSentence;
@@ -49,7 +50,7 @@ import java.util.logging.Logger;
 public class LigerController {
     private final static Logger LOGGER = Logger.getLogger(LigerController.class.getName());
 
-    private UDoperator parser = new UDoperator();
+    private UDoperator parser = new UDoperator(new DependencyParser());
 
     @Autowired
     private LigerService ligerService;
@@ -401,6 +402,7 @@ public class LigerController {
         argumentGKRs.add(1,conclusionGKR);
 */
 
+        ((UDoperator) parser).getVh().resetVars();
         Map<String,Object> output = SegmenterMain.coreAnnotationArgument(request, this.pipeline, parser);
         return output;
     }
