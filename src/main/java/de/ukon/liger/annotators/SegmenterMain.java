@@ -211,10 +211,11 @@ public class SegmenterMain {
                     int averidicalHeads = edges.stream().filter(x -> x.get("label").equals("averidical")).collect(Collectors.toList()).size();
                     int antiveridicalHeads = edges.stream().filter(x -> x.get("label").equals("antiveridical")).collect(Collectors.toList()).size();
 
+                    int allHeads = veridicalHeads + averidicalHeads + antiveridicalHeads;
 
-                    s.annotations.put("veridical_ratio", (float) veridicalHeads/edges.size());
-                    s.annotations.put("averidical_ratio", (float) averidicalHeads / edges.size());
-                    s.annotations.put("antiveridical_ratio", (float) antiveridicalHeads / edges.size());
+                    s.annotations.put("veridical_ratio", (float) veridicalHeads/allHeads);
+                    s.annotations.put("averidical_ratio", (float) averidicalHeads / allHeads);
+                    s.annotations.put("antiveridical_ratio", (float) antiveridicalHeads / allHeads);
 
 
 
