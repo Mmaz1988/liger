@@ -106,7 +106,7 @@ public class XLEStarter {
         sb.append("\n");
         sb.append("\n");
 
-        if (this.operatingSystem.equals(OS.WINDOWS)) {
+     //   if (this.operatingSystem.equals(OS.WINDOWS)) {
             /*
             export TCL_LIBRARY=${XLEPATH}/tcl/scripts/tcl
             export TCLLIBPATH=${XLEPATH}/tcl/scripts/tcl
@@ -122,7 +122,9 @@ public class XLEStarter {
             sb.append("export TK_LIBRARY=${XLEPATH}/tcl/scripts/tk");
             sb.append("\n");
             sb.append("\n");
-        }
+
+       // }
+
 
         // xle -noTk -e "create-parser /mnt/d/Resources/english_pargram/index/main.lfg; parse-testfile testfile.lfg -outputPrefix parser_output/sentence; exit"
 
