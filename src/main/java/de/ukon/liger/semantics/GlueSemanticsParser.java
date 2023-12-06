@@ -50,7 +50,7 @@ public class GlueSemanticsParser {
         String content = Files.readString(Path.of(lfgGlueFile));
 
 
-        Pattern p = Pattern.compile("(?s)(?m):\\$(.+?)(\\.\\s|,\\s)");
+        Pattern p = Pattern.compile("(?s)(?m):\\$(.+?)(\\.\\r?\\n|,\\r?\\n)");
 
         Pattern lb = Pattern.compile(",\\r?\\n");
 
@@ -60,8 +60,8 @@ public class GlueSemanticsParser {
             String mcLine = m.group(0);
             String mc = m.group(1);
             String parsed = parseMeaningConstructor(mc);
-
-            Matcher m2 = lb.matcher(m.group(2));
+            String end = m.group(2);
+            Matcher m2 = lb.matcher(end);
 
             if (!m2.matches()) {
                 parsed = parsed + ".\n";
