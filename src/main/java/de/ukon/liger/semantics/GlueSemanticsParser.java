@@ -52,13 +52,18 @@ public class GlueSemanticsParser {
 
         Pattern p = Pattern.compile("(?s)(?m):\\$(.+?)(\\.\\s|,\\s)");
 
+        Pattern lb = Pattern.compile(",\\r?\\n");
+
         Matcher m = p.matcher(content);
 
         while (m.find()) { // using find instead of matches
             String mcLine = m.group(0);
             String mc = m.group(1);
             String parsed = parseMeaningConstructor(mc);
-            if (!m.group(2).equals(",\n")) {
+
+            Matcher m2 = lb.matcher(m.group(2));
+
+            if (!m2.matches()) {
                 parsed = parsed + ".\n";
             }
             content = content.replace(mcLine, parsed);
