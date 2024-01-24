@@ -136,6 +136,7 @@ public class DbaMain {
                     settings.multi = true;
                     break;
 
+                 //
                 case "-fs2mcs":
 
                     PathVariables.initializePathVariables();
@@ -155,7 +156,7 @@ public class DbaMain {
                     {
                         mcSets = sem.returnMultiStageMeaningConstructors(fs);
                     } else {
-                        mcSets = sem.returnMeaningConstructors(fs);
+                        mcSets = sem.returnMeaningConstructors(fs,true,false);
                     }
 
                     //if outfile exists delete outfile
@@ -366,7 +367,7 @@ public class DbaMain {
             StringBuilder resultBuilder = new StringBuilder();
             LinguisticStructure fs = in.get(key);
             GlueSemantics sem = new GlueSemantics();
-            String semantics = sem.returnMeaningConstructors(fs);
+            String semantics = sem.returnMeaningConstructors(fs,false,false);
 
 
             resultBuilder.append("LiGER generated the following meaning constructors:");

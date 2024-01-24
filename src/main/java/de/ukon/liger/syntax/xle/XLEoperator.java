@@ -21,11 +21,9 @@
 
 package de.ukon.liger.syntax.xle;
 
-import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
-import de.ukon.liger.syntax.xle.avp_elements.AttributeValuePair;
 import de.ukon.liger.syntax.xle.prolog2java.FsProlog2Java;
 import de.ukon.liger.syntax.xle.prolog2java.ReadFsProlog;
 import de.ukon.liger.utilities.HelperMethods;
@@ -400,6 +398,8 @@ public class XLEoperator extends SyntaxOperator {
             List<GraphConstraint> fsList = FsProlog2Java.fs2List(fs2pl);
 
             Fstructure fs = new Fstructure(fs2pl.sentenceID,fs2pl.sentence,fsList,fs2pl.cp);
+
+            fs.prologString = fs2pl.prologString;
 
             out.put(fs2pl.sentenceID,fs);
 

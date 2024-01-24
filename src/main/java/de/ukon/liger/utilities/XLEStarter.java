@@ -22,6 +22,8 @@ public class XLEStarter {
     public String grammarPath;
     public OS operatingSystem;
 
+    public boolean isGlue;
+
     private final static Logger LOGGER = LoggerFactory.getLogger(XLEStarter.class);
 
     public XLEStarter(String xlePath, String grammarPath, OS operatingSystem) {
@@ -205,7 +207,9 @@ public class XLEStarter {
             gp.createLFGfile(this.grammarPath);
             // use this.grammarPath without .glue ending
             this.grammarPath = this.grammarPath.substring(0, this.grammarPath.length() - 5);
-
+            this.isGlue = true;
+        } else {
+            this.isGlue = false;
         }
     }
 }

@@ -46,8 +46,15 @@ public class GlueSemantics {
     }
 
 
-    public String returnMeaningConstructors(LinguisticStructure fs) {
+    /**
+     * @Param xlePlusGlueVersion: 1 = xleplusglue prolog version, 2 = xleplus java version Only 2 is compatible
+     * with LiGER. Thus, only then attempt hybrid
+    TODO modify this so that it can deal with those modalities: XLE+Glue Prlog version, XLE+Glue Liger version, and
+    multistage proving. XLE+Glue options should be mutually exlusive
+     */
+    public String returnMeaningConstructors(LinguisticStructure fs, boolean prolog, boolean multistage) {
 
+        //Unpacked Semantics corresponds to the information that comes from LiGER
         HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
 
         for (Set<ChoiceVar> choice : fs.cp.choices) {
@@ -58,22 +65,43 @@ public class GlueSemantics {
         StringBuilder sb = new StringBuilder();
 
 
-        if (!fs.annotation.isEmpty()) {
-            //extract from LiGER
-            for (GraphConstraint c : fs.annotation) {
-                if (c.getRelationLabel().equals("GLUE")) {
-                    if (!HelperMethods.isInteger(c.getFsValue())) {
-                        if (unpackedSem.containsKey(c.getReading())) {
-                            unpackedSem.get(c.getReading()).add(c.getFsValue().toString());
+
+            if (!fs.annotation.isEmpty()) {
+                //extract from LiGER
+                for (GraphConstraint c : fs.annotation) {
+                    if (c.getRelationLabel().equals("GLUE")) {
+                        if (!HelperMethods.isInteger(c.getFsValue())) {
+                            if (unpackedSem.containsKey(c.getReading())) {
+                                unpackedSem.get(c.getReading()).add(c.getFsValue().toString());
+                            }
                         }
                     }
                 }
             }
-        }
-        //extract from Grammar
-        HashMap<Set<ChoiceVar>,List<String>> grammarSem = translateMeaningConstructors(fs);
-        boolean relevantChoice = false;
 
+        //Remove elements with empty values from unpackedSem
+        unpackedSem.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+
+        HashMap<Set<ChoiceVar>, List<String>> grammarSem = new HashMap<>();
+
+        //Check if any constraint in fs.constraints has the relation label "GLUE"
+        boolean hasGlue = false;
+        for (GraphConstraint c : fs.constraints) {
+            if (c.getRelationLabel().equals("GLUE")) {
+                hasGlue = true;
+            }
+        }
+
+        String prologMCs = "";
+        //extract from Grammar
+        if (!prolog) {
+            grammarSem = translateMeaningConstructors(fs);
+        } else if (hasGlue)
+        {
+          prologMCs =  extractMCsFromFs(((Fstructure) fs).prologString);
+        }
+
+        boolean relevantChoice = false;
         for (Set<ChoiceVar> choice : unpackedSem.keySet()) {
             if (!choice.equals(fs.cp.rootChoice) && !unpackedSem.get(choice).isEmpty()) {
                 relevantChoice = true;
@@ -131,6 +159,10 @@ public class GlueSemantics {
                      sb.append("\n");
                  }
              }
+         if (prolog && unpackedSem.isEmpty())
+         {
+             return prologMCs;
+         }
         return sb.toString();
     }
 
@@ -341,7 +373,7 @@ public class GlueSemantics {
 
         LOGGER.info("Creating temporary files...");
         //create temporary directory gswb_resources/tmp
-        File tmpDir = new File("liger_resources/tmp");
+        File tmpDir = new File("liger_resources/tmp/prolog");
 
         if (tmpDir.exists()) {
             File[] files = tmpDir.listFiles();
@@ -353,7 +385,7 @@ public class GlueSemantics {
 
         tmpDir.mkdir();
 
-        File prologFS = new File("liger_resources/tmp/prolog.pl");
+        File prologFS = new File("liger_resources/tmp/prolog/prolog.pl");
 
         try {
             if (prologFS.createNewFile()) {
@@ -365,7 +397,7 @@ public class GlueSemantics {
             LOGGER.error("An error occurred while creating the file: " + e.getMessage() + "\n");
         }
 
-        File xleTransferOutput = new File("liger_resources/tmp/xle_prolog_mcs.txt");
+        File xleTransferOutput = new File("liger_resources/tmp/prolog/xle_prolog_mcs.txt");
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(prologFS));
             writer.write(fs);
@@ -414,11 +446,13 @@ public class GlueSemantics {
                 int exitCode = task.get(5, TimeUnit.SECONDS);
                 if (exitCode != 0) {
                     LOGGER.error("\nFailed to read output from lambdaDRT.pl!\n");
+                    return null;
                 }
             } catch (Exception e) {
                 // If the process takes more than 5 seconds, destroy it
                 process.destroyForcibly();
                 LOGGER.error("\nProcess timed out and was forcibly terminated.\n");
+                return null;
             }
 
             executor.shutdown();

@@ -39,6 +39,7 @@ public class ReadFsProlog implements Serializable {
     public String sentenceID;
    public VariableHandler vh;
    public ChoiceSpace cp;
+   public String prologString;
     private final static Logger LOGGER = Logger.getLogger(ReadFsProlog.class.getName());
 
     public ReadFsProlog(String sentenceID, String sentence, List<String> fsConstraints, VariableHandler vh)
@@ -216,18 +217,30 @@ public class ReadFsProlog implements Serializable {
         }
 
         //close infile
+
+
+       fsConstraints = simplifyFs(fsConstraints);
+      //  fsConstraints = contractFstructure(fsConstraints);
+       // fsConstraints = removeEqualities(fsConstraints);
+
+        ReadFsProlog fstructure = new ReadFsProlog(sentenceID, inSentence, fsConstraints, cstrFacts, cp, vh);
+
+        try {
+            br = new BufferedReader(new FileReader(inFile));
+            String prologString = br.lines().collect(Collectors.joining("\n"));
+
+            fstructure.prologString = prologString;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
         try {
             br.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-       fsConstraints = simplifyFs(fsConstraints);
-      //  fsConstraints = contractFstructure(fsConstraints);
-       // fsConstraints = removeEqualities(fsConstraints);
-
-        ReadFsProlog Fstructure = new ReadFsProlog(sentenceID, inSentence, fsConstraints, cstrFacts, cp, vh);
-        return Fstructure;
+        return fstructure;
     }
 
     public static ReadFsProlog readPrologString(String inputString, String id, VariableHandler vh)

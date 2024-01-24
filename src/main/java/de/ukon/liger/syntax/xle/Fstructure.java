@@ -36,6 +36,8 @@ public class Fstructure extends LinguisticStructure {
     public List<GraphConstraint> cStructureFacts;
 
 
+    public String prologString;
+
     //TODO
     //public Integer global_id
 
