@@ -113,7 +113,14 @@ public class GlueSemantics {
             unpackedSem.remove(fs.cp.rootChoice);
         }
 
-        List<Set<ChoiceVar>> keyList = new ArrayList<>(unpackedSem.keySet());
+        List<Set<ChoiceVar>> keyList;
+
+        if (!unpackedSem.keySet().isEmpty())
+        {
+         keyList = new ArrayList<>(unpackedSem.keySet());}
+        else {
+            keyList = new ArrayList<>(grammarSem.keySet());
+        }
          for (int i = 0; i < keyList.size(); i++)
          {
              Set<ChoiceVar> key = keyList.get(i);
