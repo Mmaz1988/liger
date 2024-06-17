@@ -546,6 +546,30 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
 
 
 
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/list_grammars", produces = "application/json", consumes = "application/json")
+    public GrammarList listGrammars() throws IOException {
+
+       XLEStarter starter = new XLEStarter();
+
+       List<String> grammarPaths = starter.listGrammars();
+
+       return new GrammarList(grammarPaths);
+    }
+
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/change_grammar", produces = "application/json", consumes = "application/json")
+    public void listGrammars(GrammarString gs) throws IOException {
+
+        XLEStarter starter = new XLEStarter();
+        starter.updateGrammarPath(gs.grammar);
+        starter.generateXLEStarterFile();
+    }
+
+
+
 /*
     @CrossOrigin
     //(origins = "http://localhost:63342")

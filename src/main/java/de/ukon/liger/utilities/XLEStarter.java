@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 public class XLEStarter {
 
@@ -210,6 +212,63 @@ public class XLEStarter {
             this.isGlue = true;
         } else {
             this.isGlue = false;
+        }
+    }
+
+
+    public List<String> listGrammars() {
+        List<String> grammarPaths = new ArrayList<>();
+        //check ./grammars
+        File f = new File(Paths.get(PathVariables.workingDirectory, "grammars").toString());
+        try {
+            //add all paths ending with .lfg or .glue relative to working directory (.)
+            for (File file : f.listFiles()) {
+                if (file.getName().endsWith(".lfg") || file.getName().endsWith(".glue")) {
+                    grammarPaths.add(file.getName());
+                }
+                //also check subdirectories
+                if (file.isDirectory()) {
+                    for (File subFile : file.listFiles()) {
+                        if (subFile.getName().endsWith(".lfg") || subFile.getName().endsWith(".glue")) {
+                            grammarPaths.add(file.getName() + "/" + subFile.getName());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to list grammars");
+        }
+
+        return grammarPaths;
+    }
+
+    //update grammarpath in xle_paths.txt
+    public void updateGrammarPath(String grammarPath) {
+        File f = new File(Paths.get(PathVariables.workingDirectory,"liger_resources", "xle_paths.txt").toString());
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(f));
+            String line;
+            int i = 0;
+            StringBuilder sb = new StringBuilder();
+            while ((line = br.readLine()) != null) {
+            //if line matches grammar="path/to/grammar.lfg" and is the second line replace with new path
+                if (line.contains("grammar=") && i == 1) {
+                    sb.append("grammar=\"");
+                    sb.append(grammarPath);
+                    sb.append("\"");
+                    sb.append("\n");
+                } else {
+                    sb.append(line);
+                    sb.append("\n");
+                }
+                i++;
+            }
+            br.close();
+            java.io.FileWriter fw = new java.io.FileWriter(f);
+            fw.write(sb.toString());
+            fw.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }
