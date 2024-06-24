@@ -219,18 +219,20 @@ public class XLEStarter {
     public List<String> listGrammars() {
         List<String> grammarPaths = new ArrayList<>();
         //check ./grammars
-        File f = new File(Paths.get(PathVariables.workingDirectory, "grammars").toString());
+        File f = new File(Paths.get(PathVariables.workingDirectory, "../grammars").toString());
+        LOGGER.info("Current working directory: " + Paths.get(PathVariables.workingDirectory, "../").toString());
+        LOGGER.info("Listing grammars in " + Paths.get(PathVariables.workingDirectory, "../grammars").toString());
         try {
             //add all paths ending with .lfg or .glue relative to working directory (.)
             for (File file : f.listFiles()) {
                 if (file.getName().endsWith(".lfg") || file.getName().endsWith(".glue")) {
-                    grammarPaths.add(file.getName());
+                    grammarPaths.add(file.getCanonicalPath());
                 }
                 //also check subdirectories
                 if (file.isDirectory()) {
                     for (File subFile : file.listFiles()) {
                         if (subFile.getName().endsWith(".lfg") || subFile.getName().endsWith(".glue")) {
-                            grammarPaths.add(file.getName() + "/" + subFile.getName());
+                            grammarPaths.add(subFile.getCanonicalPath());
                         }
                     }
                 }
@@ -244,7 +246,7 @@ public class XLEStarter {
 
     //update grammarpath in xle_paths.txt
     public void updateGrammarPath(String grammarPath) {
-        File f = new File(Paths.get(PathVariables.workingDirectory,"liger_resources", "xle_paths.txt").toString());
+        File f = new File(Paths.get(PathVariables.workingDirectory, "xle_paths.txt").toString());
         try {
             BufferedReader br = new BufferedReader(new FileReader(f));
             String line;

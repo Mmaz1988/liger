@@ -71,9 +71,26 @@ public class QueryParserTest {
         fsList.add(xle.fs2Java(testFolderPath + "testdirS8.pl"));
         fsList.add(xle.fs2Java(testFolderPath + "testdirS11.pl"));
         fsList.add(xle.fs2Java(testFolderPath + "testdirS15.pl"));
+        fsList.add(xle.fs2Java(testFolderPath + "hybrid_glue_test.pl"));
         return fsList.get(i);
     }
 
+
+    @Test
+    void testQueryParserHybrid()
+    {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(10);
+
+        for (String key : fs.keySet())
+        {
+            QueryParser qp = new QueryParser("#a TNS-ASP #b & #a s:: #c SIT #d & #c TEMP-REF #e",fs.get(key));
+
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(2,qpr.result.keySet().size());
+        }
+
+    }
 
     @Test
     void testPrologPrint() throws IOException {

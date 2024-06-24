@@ -8,4 +8,8 @@ public class GrammarString {
     {
         this.grammar = grammar;
     }
+
+    public GrammarString()
+    {
+    }
 }

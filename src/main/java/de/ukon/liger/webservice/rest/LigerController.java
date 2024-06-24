@@ -31,10 +31,7 @@ import de.ukon.liger.utilities.VariableHandler;
 import de.ukon.liger.utilities.XLEStarter;
 import de.ukon.liger.webservice.rest.dtos.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -548,12 +545,14 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
-    @PostMapping(value = "/list_grammars", produces = "application/json", consumes = "application/json")
+    @GetMapping(value = "/list_grammars", produces = "application/json")
     public GrammarList listGrammars() throws IOException {
 
        XLEStarter starter = new XLEStarter();
 
        List<String> grammarPaths = starter.listGrammars();
+
+        LOGGER.info("Listed grammars in ./grammars." + grammarPaths.size() + " grammars found.");
 
        return new GrammarList(grammarPaths);
     }
@@ -561,11 +560,18 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/change_grammar", produces = "application/json", consumes = "application/json")
-    public void listGrammars(GrammarString gs) throws IOException {
+    public GrammarString listGrammars(@RequestBody GrammarString gs) throws IOException {
+
+        LOGGER.info("Changing grammar to " + gs.grammar + ".");
 
         XLEStarter starter = new XLEStarter();
         starter.updateGrammarPath(gs.grammar);
         starter.generateXLEStarterFile();
+
+        LOGGER.info("Changed grammar to " + gs.grammar + ".");
+
+        return new GrammarString("success");
+
     }
 
 

@@ -125,12 +125,19 @@ public class GlueSemantics {
          {
              Set<ChoiceVar> key = keyList.get(i);
 
+
              boolean semGrammar= false;
-             if (!grammarSem.keySet().isEmpty()) {
-                 if (!grammarSem.get(key).isEmpty()) {
+
+                 if (grammarSem.containsKey(fs.cp.rootChoice) && !grammarSem.get(fs.cp.rootChoice).isEmpty())
+                 {
                      semGrammar = true;
+
+                     if (!grammarSem.containsKey(key) && key != fs.cp.rootChoice)
+                     {
+                    grammarSem.put(key, new ArrayList<>(grammarSem.get(fs.cp.rootChoice)));
                  }
              }
+
 
              sb.append("{");
              sb.append("\n");
@@ -206,6 +213,7 @@ public class GlueSemantics {
                 long endTime = System.currentTimeMillis();
                 long duration = (endTime - startTime);
                 LOGGER.info("Traversed C-Structure in " + duration + " ms");
+                LOGGER.info("Full mapping from proof tree to cstr:\n" + ctr.prooftreeToCStructure);
 
                 String glueRoot = ctr.findGlueTreeRoot();
 
