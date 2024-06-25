@@ -140,9 +140,27 @@ public class DbaMain {
                 case "-fs2mcs":
 
                     PathVariables.initializePathVariables();
+                    LOGGER.info("Current dir " + PathVariables.workingDirectory);
 
-                    File fsFile = new File(args[i + 1]);
-                    File outFile = new File(args[i + 2]);
+                    int inputPos = 1;
+                    int outputPos = 2;
+                    boolean prolog = true;
+
+                    if (args[i + 1].equals(""))
+                    {
+                        inputPos++;
+                        outputPos++;
+                    } else if (args[i + 1].equals("1"))
+                    {
+                        prolog = false;
+                        inputPos++;
+                        outputPos++;
+                    }
+
+
+
+                    File fsFile = new File(args[i + inputPos]);
+                    File outFile = new File(args[i + outputPos]);
 
                     XLEoperator xle = new XLEoperator(new VariableHandler());
                     LinkedHashMap<String, LinguisticStructure> fsRef = xle.fs2Java(fsFile.getCanonicalPath());
