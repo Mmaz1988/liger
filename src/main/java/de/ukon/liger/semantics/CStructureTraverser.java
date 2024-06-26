@@ -146,12 +146,14 @@ public class CStructureTraverser {
             //If no new anchor is found, the previous anchor remains
 
             //Check if c-structure node is associated with any mcs
-            McContainer mcs = findMCNodes(currentCproj, fs);
-            if (mcs != null) {
-                if (!associatedMCs2.containsKey(anchor)) {
-                    associatedMCs2.put(anchor, new HashSet<>());
+            if (currentCproj != null) {
+                McContainer mcs = findMCNodes(currentCproj, fs);
+                if (mcs != null) {
+                    if (!associatedMCs2.containsKey(anchor)) {
+                        associatedMCs2.put(anchor, new HashSet<>());
+                    }
+                    associatedMCs2.get(anchor).addAll(mcs.mcNodes);
                 }
-                associatedMCs2.get(anchor).addAll(mcs.mcNodes);
             }
 
 
