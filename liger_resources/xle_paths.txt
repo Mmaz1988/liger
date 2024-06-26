@@ -1,5 +1,5 @@
 XLE="/Applications/xle"
-grammar="/Users/princess_zelda/IdeaProjects/liger/grammars/hybrid-drt-tense.lfg.glue"
+grammar="/Users/princess_zelda/IdeaProjects/liger/grammars/multistage_xle_adj.lfg.glue"
 OS="MAC"
 
 //grammar="/Users/princess_zelda/Projects/xleplusglue/xle-glueworkbench-interface/grammars_concept/glue-basic-drt.lfg"

@@ -24,7 +24,15 @@ public class CStructureTraverser {
     public Set<String> visitedGlueNodes = new HashSet<>();
 
     public HashMap<String, Set<String>> associatedMCs = new HashMap<>();
-    public HashMap<String, Set<String>> glueTree = new HashMap<>();
+    public HashMap<String, Set<String>> associatedMCs2 = new HashMap<>();
+
+    public HashMap<String,Set<String>> glueTree = new HashMap<>();
+    public HashMap<String, HashSet<String>> glueTree2;
+    // Instance initializer block to initialize the HashMap
+    {
+        glueTree2 = new HashMap<>();
+        glueTree2.put("root", new HashSet<>());
+    }
     private static Pattern daughterPattern = Pattern.compile("DAUGHTER(\\d+)");
     private final static Logger LOGGER = LoggerFactory.getLogger(CStructureTraverser.class);
 
@@ -36,28 +44,132 @@ public class CStructureTraverser {
         this.fs = fs;
     }
 
-        /**
-         * STEPS for traversing C-Structure:
-         * Find out if Cproj node is associated with a proof tree description
-         * Link proof tree descriptions
-         * Find out if Cproj is node is directly mentioned in a proof tree node (either as element, as element of a daugther node)
-         * Find out if Cproj node is associated with a glue meaning constructor
-         *
-         *
-         */
-    public void traverseCstructure2(Object cstructure){
+    /**
+     * STEPS for traversing C-Structure:
+     * Find out if Cproj node is associated with a proof tree description
+     * Link proof tree descriptions
+     * Find out if Cproj is node is directly mentioned in a proof tree node (either as element, as element of a daugther node)
+     * Find out if Cproj node is associated with a glue meaning constructor
+     *
+     *
+     */
+    private LinkedList<ProofConstraint> proofTree = new LinkedList<>();
+    private HashMap<String,Set<String>> equalities = new HashMap<>();
 
-
-
+    public void traverseCstructure2(Object cstructure, String anchor){
 
         String currentRoot = (String) ((LinkedHashMap) cstructure).keySet().stream().findAny().get();
+        String currentCproj = getCProj(currentRoot);
+        boolean subOrdinateAnchor = false;
 
-        if (currentRoot != null)
+        if (anchor == null)
         {
-
+            anchor = "root";
+            equalities.put(anchor, new HashSet<>());
         }
 
+        if (currentRoot != null) {
+            //Check if currentRoot is associated with a proof consstraint
+            ProofConstraint potentialPC = null;
+            potentialPC = buildProofTree(fs, currentRoot);
 
+            if (potentialPC != null) {
+                proofTree.addFirst(potentialPC);
+                LOGGER.info("Current proof constraint: " + potentialPC.node + " " + potentialPC.elements + " " + potentialPC.daughters);
+
+                //Root initial proof constraint to make sure all proof constraints are ultimately linked to one tree
+                if (anchor.equals("root") && proofTree.size() == 1)
+                {
+                    equalities.get("root").add(potentialPC.node);
+                }
+            }
+
+
+            String previousAnchor = anchor;
+
+            //Check if the current c-projection is covered by any proof constraint
+            for (ProofConstraint pc : proofTree) {
+                if (!pc.elements.isEmpty() && currentCproj != null) {
+                    if (pc.elements.contains(currentCproj)) {
+
+
+                        boolean subordinateAnchor = false;
+                            if (pc.daughters.keySet().contains(previousAnchor))
+                            {
+                                subordinateAnchor = true;
+                            }
+
+                        if (!subordinateAnchor) {
+                            anchor = previousAnchor;
+                            if (!equalities.containsKey(previousAnchor))
+                            {
+                                equalities.put(previousAnchor,new HashSet<>());
+                                equalities.get(previousAnchor).add(anchor);
+                            }} else {
+
+                            // String newAnchor = previousAnchor;
+                            for (String key : equalities.keySet())
+                            {
+                                if (equalities.get(key).contains(pc.node))
+                                {
+                                    anchor = key;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!glueTree2.containsKey(anchor)) {
+                            glueTree2.put(anchor, new HashSet<>());
+                        }
+                        break;
+                    } else {
+                        boolean isDaughter = false;
+                        for (String daughter : pc.daughters.keySet()) {
+                            if (pc.daughters.get(daughter).contains(currentCproj)) {
+                                anchor = daughter;
+                                isDaughter = true;
+
+                                //add relation to previous Anchor
+                                if (!glueTree2.containsKey(previousAnchor)) {
+                                    glueTree2.put(previousAnchor, new HashSet<>());
+                                }
+                                glueTree2.get(previousAnchor).add(daughter);
+                                break;
+                            }
+                        }
+                        if (isDaughter) {
+                            break;
+                        }
+                    }
+                }
+            }
+            //If no new anchor is found, the previous anchor remains
+
+            //Check if c-structure node is associated with any mcs
+            McContainer mcs = findMCNodes(currentCproj, fs);
+            if (mcs != null) {
+                if (!associatedMCs2.containsKey(anchor)) {
+                    associatedMCs2.put(anchor, new HashSet<>());
+                }
+                associatedMCs2.get(anchor).addAll(mcs.mcNodes);
+            }
+
+
+            //recursively traverse down the tree
+            if (((LinkedHashMap) cstructure).get(currentRoot) != null) {
+                //if available, recurse down right node first
+                if (((LinkedHashMap) cstructure).get(currentRoot) instanceof Object[]) {
+                    Object[] keySet = (Object[]) ((LinkedHashMap) cstructure).get(currentRoot);
+                    //right nodes first
+                    if (keySet[1] != null) {
+                        // Object key = ((LinkedHashMap) keySet[1]).keySet().stream().findAny().get();
+                        traverseCstructure2(keySet[1], anchor);
+                    }
+                    //  Object key2 = ((LinkedHashMap) keySet[0]).keySet().stream().findAny().get();
+                    traverseCstructure2(keySet[0], anchor);
+                }
+            }
+        }
     }
 
 
@@ -374,23 +486,23 @@ public class CStructureTraverser {
 
 
     public void translateGlueTreeToList(String rootNode, List<Object> treeString) {
-        if (associatedMCs.containsKey(rootNode)) {
+        if (associatedMCs2.containsKey(rootNode)) {
             treeString.add("{");
-            treeString.addAll(associatedMCs.get(rootNode));
+            treeString.addAll(associatedMCs2.get(rootNode));
         }
-        if (glueTree.containsKey(rootNode)) {
-            treeString.add("//" + rootNode + ": " + "{" + associatedMCs.get(rootNode) + "}");
-            for (String node : glueTree.get(rootNode)) {
-                translateGlueTreeToList(node, treeString);
-            }
+        if (glueTree2.containsKey(rootNode)) {
+            treeString.add("//" + rootNode + ": " + "{" + associatedMCs2.get(rootNode) + "}");
+            for (String node : glueTree2.get(rootNode)) {
+                    translateGlueTreeToList(node, treeString);
+                }
         }
-        if (associatedMCs.containsKey(rootNode)) {
+        if (associatedMCs2.containsKey(rootNode)) {
             treeString.add("}");
         }
     }
 
     public String printGlueTree()
     {
-        return glueTree.toString();
+        return glueTree2.toString();
     }
 }

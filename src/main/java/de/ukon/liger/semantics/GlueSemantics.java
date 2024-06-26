@@ -209,13 +209,20 @@ public class GlueSemantics {
 
                 //Start time for next step
                 long startTime = System.currentTimeMillis();
+
+                /*
                 ctr.traverseCStructure(cstr, null, rootId, null);
+                ctr.visitedProofNodes = new HashSet<>();
+                */
+
+                ctr.traverseCstructure2(cstr,null);
+
                 long endTime = System.currentTimeMillis();
                 long duration = (endTime - startTime);
                 LOGGER.info("Traversed C-Structure in " + duration + " ms");
                 LOGGER.info("Full mapping from proof tree to cstr:\n" + ctr.prooftreeToCStructure);
 
-                String glueRoot = ctr.findGlueTreeRoot();
+                //String glueRoot = ctr.findGlueTreeRoot();
 
                 StringBuilder sb = new StringBuilder();
 
@@ -223,8 +230,8 @@ public class GlueSemantics {
 
                 sb.append("{\n");
 
+                /*
                 Integer addedMCs = 0;
-
                 if (ctr.associatedMCs.containsKey("null"))
                 {
                     for (String glueNode : ctr.associatedMCs.get("null"))
@@ -233,10 +240,11 @@ public class GlueSemantics {
                         addedMCs++;
                     }
                 }
+                 */
 
                 List<Object> flattenedGlueTree = new ArrayList<>();
 
-                ctr.translateGlueTreeToList(glueRoot,flattenedGlueTree);
+                ctr.translateGlueTreeToList("root",flattenedGlueTree);
 
                 flattenedGlueTree.remove(0);
 
