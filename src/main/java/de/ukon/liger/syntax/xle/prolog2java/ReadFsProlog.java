@@ -384,11 +384,12 @@ public class ReadFsProlog implements Serializable {
 
     public static List<String> simplifyFs(List<String> fsConstraints)
     {
-        List<String[]> varEqualities = new ArrayList<>();
-        List<String[]> valEqualities = new ArrayList<>();
+        HashMap<String,List<String[]>> varEqualities = new HashMap<>();
+        HashMap<String,List<String[]>> valEqualities = new HashMap<>();
 
-        Pattern eq = Pattern.compile("eq\\((var\\(\\d+\\)),(.*)\\)\\)");
+        Pattern eq = Pattern.compile("cf\\((.*),eq\\((var\\(\\d+\\)),(.*)\\)\\)");
         Pattern var = Pattern.compile("var\\(\\d+\\)");
+         Pattern ambiguities = Pattern.compile("cf\\((.+?),\\w+\\(");
 
         ListIterator<String> iter = fsConstraints.listIterator();
 
@@ -396,41 +397,72 @@ public class ReadFsProlog implements Serializable {
             {
                 String c = iter.next();
                 Matcher eqM = eq.matcher(c);
+
                 if (eqM.find()) {
-                    String[] equal = {eqM.group(1), eqM.group(2)};
-                    Matcher varM = var.matcher(eqM.group(2));
+                    String context = eqM.group(1);
+                    String[] equal = {eqM.group(2), eqM.group(3)};
+                    Matcher varM = var.matcher(eqM.group(3));
                     if (varM.matches()) {
-                        varEqualities.add(equal);
+
+                        if (!varEqualities.containsKey(context)) {
+                            varEqualities.put(context, new ArrayList<>());
+                        }
+                        varEqualities.get(context).add(equal);
                     } else {
-                        valEqualities.add(equal);
+                        if (!valEqualities.containsKey(context)) {
+                            valEqualities.put(context, new ArrayList<>());
+                        }
+                        valEqualities.get(context).add(equal);
                     }
                     iter.remove();
                 }
             }
         }
 
-        for (int i =0; i < fsConstraints.size(); i++)
-        {
+        List<String> additionalConstraints = new ArrayList<>();
 
-            for (String[] equal : varEqualities)
+        for (String context : varEqualities.keySet())
+        {
+            for (int i =0; i < fsConstraints.size(); i++)
             {
-                if (fsConstraints.get(i).contains(equal[0])) {
-                    String replace = fsConstraints.get(i).replace(equal[0],equal[1]);
-                   fsConstraints.set(i,replace);
-                          }
+                for (String[] equal : varEqualities.get(context))
+                {
+                    List<String> currentAdditionalConstraints = new ArrayList<>();
+
+                    if (fsConstraints.get(i).contains(equal[0])) {
+                        if (context.equals("1")) {
+                            String replace = fsConstraints.get(i).replace(equal[0], equal[1]);
+                            fsConstraints.set(i, replace);
+                        } else {
+                            Matcher ambMatcher = ambiguities.matcher(fsConstraints.get(i));
+                            //replace only the first instance of ambMatcher group 1 with context and add to currentAdditionalConstraints
+                            if (ambMatcher.find()) {
+                                String replace = fsConstraints.get(i).replaceFirst(ambMatcher.group(1), context);
+                                currentAdditionalConstraints.add(replace);
+                            }
+                        }
+                    }
+                    additionalConstraints.addAll(currentAdditionalConstraints);
+                }
+
+
+
             }
+
         }
 
-        for (int i = 0; i < fsConstraints.size(); i++) {
-            for (String[] equal : valEqualities) {
-                if (fsConstraints.get(i).contains(equal[0])) {
-                    String replace = fsConstraints.get(i).replace(equal[0],equal[1]);
-                    fsConstraints.set(i,replace);
+        for (String context : valEqualities.keySet()) {
+            for (int i = 0; i < fsConstraints.size(); i++) {
+                for (String[] equal : valEqualities.get(context)) {
+                    if (fsConstraints.get(i).contains(equal[0])) {
+                        String replace = fsConstraints.get(i).replace(equal[0], equal[1]);
+                        fsConstraints.set(i, replace);
+                    }
                 }
             }
         }
-
-     List<String> newfsConstraints = fsConstraints.stream().distinct().collect(Collectors.toList());
+        List<String> newfsConstraints = fsConstraints.stream().distinct().collect(Collectors.toList());
+        newfsConstraints.addAll(additionalConstraints);
         return newfsConstraints;
     }
 

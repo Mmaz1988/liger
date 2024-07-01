@@ -387,6 +387,153 @@ public class GlueSemantics {
         }
     }
 
+    private HashMap<Set<ChoiceVar>,String> unpackedMCs = new HashMap<>();
+    public HashMap<Set<ChoiceVar>,String> parseMCfromPackedProlog(String glueNode, List<GraphConstraint> ls)
+    {
+        HashMap<Set<ChoiceVar>,String> unpackedMeaningConstructors = new HashMap<>();
+        //String meaning = "";
+        HashMap<Set<ChoiceVar>,String> unpackedMeanings = new HashMap<>();
+
+        List<GraphConstraint> glueConstraints = ls.stream().filter(c -> c.getFsNode().equals(glueNode)).collect(Collectors.toList());
+        //Find graph constraint in glueConstraints with label GLUE
+
+        Set<Set<ChoiceVar>> relevantChoices = glueConstraints.stream().map(GraphConstraint::getReading).collect(Collectors.toSet());
+        for (Set<ChoiceVar> choice : relevantChoices)
+        {
+            if (!unpackedMCs.containsKey(choice))
+            {
+                unpackedMCs.put(choice,"");
+            }
+        }
+
+        List<GraphConstraint> meaningConstraints = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("MEANING")).collect(Collectors.toList());
+
+        if (!meaningConstraints.isEmpty()){
+            for (GraphConstraint meaningConstraint : meaningConstraints)
+            {
+                String currentMeaning =  (String) meaningConstraint.getFsValue();
+
+                //Strip single quotes of meaning
+                currentMeaning = currentMeaning.substring(1,currentMeaning.length()-1);
+                //replace \' with '
+                currentMeaning = currentMeaning.replace("\\'","'");
+                unpackedMeanings.put( meaningConstraint.getReading(), currentMeaning);
+            }
+            //TODO ? possibly remove constraints that have already been covered?
+        }
+
+        // For parameters like noscope
+        List<String> params = new ArrayList<>();
+
+        List<GraphConstraint> noscopeConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("NOSCOPE")).collect(Collectors.toList());
+
+        if (!noscopeConstraint.isEmpty())
+        {
+            params.add("noscope");
+        }
+
+        List<GraphConstraint> resourceConstraints = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("RESOURCE")).collect(Collectors.toList());
+
+        if (!resourceConstraints.isEmpty())
+        {
+            HashMap<Set<ChoiceVar>,String> currentResourceStrings = new HashMap<>();
+            HashMap<Set<ChoiceVar>,String> currentTypeStrings = new HashMap<>();
+
+            for (GraphConstraint resourceConstraint : resourceConstraints) {
+
+                //Resource is atomic
+                String resource = "";
+                resource = (String) resourceConstraint.getFsValue();
+                currentResourceStrings.put(resourceConstraint.getReading(),resource);
+            }
+                List<GraphConstraint> typeConstraints = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("TYPE")).collect(Collectors.toList());
+                if (!typeConstraints.isEmpty()) {
+                    for (GraphConstraint typeConstraint : typeConstraints) {
+                        String type = "";
+                        type = (String) typeConstraint.getFsValue();
+                        type = type.substring(1, type.length() - 1);
+                        currentTypeStrings.put(typeConstraint.getReading(), type);
+                    }
+                }
+
+                for (Set<ChoiceVar> choice : relevantChoices)
+                {
+                    String resource = currentResourceStrings.get(choice);
+                    String type = currentTypeStrings.get(choice);
+
+                    String meaning = null;
+
+                    if (unpackedMeanings.containsKey(choice)) {
+                        meaning = unpackedMeanings.get(choice);
+                    } else {
+                        meaning =  unpackedMeanings.get(Collections.singleton(new ChoiceVar("1")));
+                    }
+                    if (meaning.equals("")) {
+                        unpackedMeaningConstructors.put(choice, resource + "_" + type);
+
+                    } else {
+                        unpackedMeaningConstructors.put(choice, meaning + " : " + resource + "_" + type);
+                    }
+                }
+
+                return unpackedMeaningConstructors;
+
+        } else {
+            //resource is non-atomic
+            HashMap<Set<ChoiceVar>,String> possibleAntecedentStrings = new HashMap<>();
+            HashMap<Set<ChoiceVar>,String> possibleConsequentStrings = new HashMap<>();
+
+            List<GraphConstraint> antecedent = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("ANT")).collect(Collectors.toList());
+            List<GraphConstraint> consequent = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("CONS")).collect(Collectors.toList());
+
+            if (!antecedent.isEmpty())
+            {
+                GraphConstraint ant = antecedent.stream().findAny().get();
+            //    antString = parseMCfromProlog( (String) ant.getFsValue(),ls);
+                possibleAntecedentStrings = parseMCfromPackedProlog((String) ant.getFsValue(),ls);
+            }
+
+            if (!consequent.isEmpty())
+            {
+                GraphConstraint cons = consequent.stream().findAny().get();
+                //consString = parseMCfromProlog((String) cons.getFsValue(),ls);
+                possibleConsequentStrings = parseMCfromPackedProlog((String) cons.getFsValue(),ls);
+            }
+
+            for (Set<ChoiceVar> key : possibleAntecedentStrings.keySet()) {
+
+                String paramString = "";
+
+                if (!params.isEmpty()) {
+                    paramString = " || " + params.stream().collect(Collectors.joining(", "));
+                }
+
+                StringBuilder newMC = new StringBuilder();
+
+
+                if (!unpackedMeanings.isEmpty()) {
+                    if (unpackedMeanings.containsKey(key)) {
+                        newMC.append(unpackedMeanings.get(key));
+                    } else {
+                     newMC.append(unpackedMeanings.get(Collections.singleton(new ChoiceVar())));
+                    }
+                    newMC.append(" : ");
+                }
+
+                newMC.append("(");
+
+
+
+          // "(" + antString + " -o " + consString + ")" + paramString;
+
+
+
+                }
+            }
+        return null;
+    }
+
+
 
     //For XLE+Glue version 1. Uses Prolog to extract MCs
     public String extractMCsFromFs(String fs) {

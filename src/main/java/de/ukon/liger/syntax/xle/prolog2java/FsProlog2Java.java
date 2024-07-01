@@ -478,8 +478,12 @@ public class FsProlog2Java {
     }
 
 
+    /**
+     * This method converts an f-structure prolog input to a list of GraphConstraints
+     * @param plFs
+     * @return
+     */
     public static List<GraphConstraint> fs2List(ReadFsProlog plFs) {
-        // This method creates a hashmap from prolog input
 
         List<String> constraints = plFs.fstr;
         List<GraphConstraint> graphConstraints = new ArrayList<>();

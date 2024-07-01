@@ -44,6 +44,15 @@ public class ChoiceVar {
     }
 
 
+    //Default ChoiceVar
+    public ChoiceVar()
+    {
+        this.choiceID = "1";
+        this.propValue = true;
+    }
+
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

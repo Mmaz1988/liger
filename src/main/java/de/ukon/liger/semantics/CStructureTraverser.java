@@ -473,18 +473,18 @@ public class CStructureTraverser {
         return null;
     }
 
-    public String findGlueTreeRoot() {
-        //Find key in glueTree that is not value of any other key
-        Set<String> glueTreeRoots = glueTree.keySet().stream().
-                filter(x -> glueTree.values().stream().
-                        noneMatch(y -> y.contains(x))).collect(Collectors.toSet());
-
-        if (glueTreeRoots.size() == 1) {
-            return glueTreeRoots.stream().findAny().get();
-        }
-        LOGGER.warn("Failed to find glue tree root. Glue tree is incoherent...");
-        return null;
-    }
+//    public String findGlueTreeRoot() {
+//        //Find key in glueTree that is not value of any other key
+//        Set<String> glueTreeRoots = glueTree.keySet().stream().
+//                filter(x -> glueTree.values().stream().
+//                        noneMatch(y -> y.contains(x))).collect(Collectors.toSet());
+//
+//        if (glueTreeRoots.size() == 1) {
+//            return glueTreeRoots.stream().findAny().get();
+//        }
+//        LOGGER.warn("Failed to find glue tree root. Glue tree is incoherent...");
+//        return null;
+//    }
 
 
     public void translateGlueTreeToList(String rootNode, List<Object> treeString) {
