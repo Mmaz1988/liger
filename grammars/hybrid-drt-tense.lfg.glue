@@ -39,6 +39,7 @@ DEMO   ENGLISH   RULES (1.0)
    S --> NP: (^ SUBJ)=!
 	     (! CASE)=nom;
  	 VP: (^ TNS-ASP TENSE) "require that sentences have tense"
+ 	     (^ FIN) = +
 	     (s::^ TEMP-REF EVAL) = %eval. "Tense needs to be evaluated against sth."
 
 	 
@@ -63,7 +64,8 @@ DEMO   ENGLISH   RULES (1.0)
  	  ({ CP: (^ COMP) = !
  	  	|
  		VPinf: (^XCOMP) = !
-		 (^ VFORM) = inf
+ 		 (! FIN) = -
+		 (! VFORM) = inf
  		 (s::^ TEMP-REF) = (s::(^XCOMP) EVAL)}
  		 )
  (ADVP: ! $ (^ ADJUNCT)).
@@ -235,7 +237,7 @@ DEMO   ENGLISH   TEMPLATES (1.0)
    "lambda DRT"
    INTRANS-EV(P) = (^ PRED) = 'P<(^SUBJ)>'
 	  @(EVENT P)
-	  @(ARG1 %arg1).
+	  @(ARG1 (^ SUBJ)).
 
    INTRANS-OBL(P) = (^ PRED) = 'P<(^SUBJ)(^OBL)>'.
 
@@ -267,37 +269,37 @@ DEMO   ENGLISH   TEMPLATES (1.0)
 	      :$ lam(Q,merge(drs([X],[]),app(Q,X))) : ((s::%empty_e -o s::^_t) -o s::^_t) || noscope,
 	    }
 	    ARG2 = (^ SUBJ)
-	  }. 
+	  }.
 
-   DITRANS-PASSIVE-ARGS(ARG1 ARG2 ARG3) = { 
-	    (^ PASSIVE) =c - 
+   DITRANS-PASSIVE-ARGS(ARG1 ARG2 ARG3) = {
+	    (^ PASSIVE) =c -
 	    ARG1 = (^ SUBJ)
-	    { 
+	    {
 	      (^ DATIVE-SHIFT) =c -
 	      ARG2 = (^ OBJ)
 	      ARG3 = (^ OBL-TO)
 	     |
 	      (^ DATIVE-SHIFT) =c +
 	      ARG3 = (^ OBJ)
-	      ARG2 = (^ OBJ2) 
-	    } 
+	      ARG2 = (^ OBJ2)
+	    }
 	   |
 	    (^ PASSIVE) =c +
-	    { 
+	    {
 	      (^OBL-AG) = ARG1 |
 	      ~[(^OBL-AG)]
 	      ARG1 = %empty
 	      :$ lam(Q,merge(drs([X],[]),app(Q,X))) : ((s::%empty_e -o s::^_t) -o s::^_t) || noscope,
 	    }
-	    { 
+	    {
 	      (^ DATIVE-SHIFT) =c -
 	      ARG2 = (^ SUBJ)
-	      ARG3 = (^ OBL-TO) 
+	      ARG3 = (^ OBL-TO)
 	     |
 	      (^ DATIVE-SHIFT) =c +
 	      ARG2 = (^ OBJ2)
 	      ARG3 = (^ SUBJ)
-	    } 
+	    }
 	  }.
   
    """Functional feature templates"""
@@ -367,20 +369,25 @@ DEMO ENGLISH LEXICON (1.0)
 say 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^COMP)>'
            @ATTITUDE
            %s = (s::(^ COMP) TEMP-REF EVAL)
-	      :$ lam(P,lam(X,lam(S,merge(drs([],[pred(say,S),rel(arg1,S,X)]),drs([],[say(app(P,S))]))))) : ((%s_s -o %s_t) -o (s::(^ SUBJ)_e -o ((s::^ SIT)_s -o (s::^ SIT)_t))).
+	      :$ lam(P,lam(X,lam(S,merge(drs([],[pred(say,S),rel(arg1,S,X)]),drs([],[say(app(P,S))]))))) :
+	      ((%s_s -o %s_t) -o (s::(^ SUBJ)_e -o ((s::^ SIT)_s -o (s::^ SIT)_t))).
 
 think 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^COMP)>'
-	      :$ lam(P,lam(X,lam(S,merge(drs([],[pred(think,S),rel(arg1,S,X)]),drs([],[think(app(P,S))]))))) : (((s::(^ COMP) TEMP-REF EVAL)_s -o s::(^ COMP)_t) -o (s::(^ SUBJ)_e -o ((s::^ SIT)_s -o s::^_t))).
+	      :$ lam(P,lam(X,lam(S,merge(drs([],[pred(think,S),rel(arg1,S,X)]),drs([],[think(app(P,S))]))))) :
+	      (((s::(^ COMP) TEMP-REF EVAL)_s -o s::(^ COMP)_t) -o (s::(^ SUBJ)_e -o ((s::^ SIT)_s -o s::^_t))).
 
 ensure 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^COMP)>'
-	      :$ lam(P,lam(X,lam(S,merge(drs([],[pred(ensure,S),rel(arg1,S,X)]),drs([],[ensure(app(P,S))]))))) : (((s::(^ COMP) TEMP-REF EVAL)_s -o s::(^ COMP)_t) -o (s::(^ SUBJ)_e -o ((s::^ SIT)_s -o s::^_t))).
+	      :$ lam(P,lam(X,lam(S,merge(drs([],[pred(ensure,S),rel(arg1,S,X)]),drs([],[ensure(app(P,S))]))))) :
+	      (((s::(^ COMP) TEMP-REF EVAL)_s -o s::(^ COMP)_t) -o (s::(^ SUBJ)_e -o ((s::^ SIT)_s -o s::^_t))).
 
 convince  V-S XLE (^PRED) = '%stem<(^SUBJ)(^OBJ)(^XCOMP)>'
 		  (^ XCOMP SUBJ) = (^OBJ). 
  
 try 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^XCOMP)>'
+		  @ATTITUDE
 		  (^ XCOMP SUBJ) = (^SUBJ)
-		  :$ lam(X,lam(P,drs([],[try(app(P,X))]))) : (s::(^XCOMP SUBJ)_e -o ((s::(^ XCOMP SUBJ)_e -o s::(^ XCOMP)_t)  -o s::^_t)).
+		  :$ lam(X,lam(P,lam(S,drs([],[pred(try,S),rel(arg1,S,X),try(app(app(P,X),S))])))) :
+		  (s::(^XCOMP SUBJ)_e -o ((s::(^ XCOMP SUBJ)_e -o ((s::(^ XCOMP) SIT) _s -o (s::(^ XCOMP) SIT)_t)) -o ((s::^ SIT)_s -o (s::^ SIT)_t))).
 
 seem 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^XCOMP)>'
 		  (^ XCOMP SUBJ) = (^SUBJ)
@@ -436,9 +443,7 @@ give 	  V-S XLE @(DITRANS-EV give).
 
 "Nouns"
 
-cat 	  N * (^PRED) = 'cat'
-	      (^ NTYPE) = count
-	      :$ [/x_e.%stem(x)] : ((s::^ VAR)_e -o (s::^ RESTR)_t).
+
 
 "adjectives --- should really be done via the morphology, like the nouns"
 
@@ -449,22 +454,28 @@ smart 	  A * @(PRED smart).
 grey 	  A * @(PRED grey).
 
 big 	  A * @(PRED big)
-	      :$ lam(Q,lam(X,merge(drs([],[pred(%stem,X)]),app(Q,X)))) : ((s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t) -o (s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t)) || noscope.
+	      :$ lam(Q,lam(X,merge(drs([],[pred(%stem,X)]),app(Q,X)))) :
+	      ((s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t) -o (s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t)) || noscope.
 
 black 	  A * @(PRED black)
-	      :$ lam(Q,lam(X,merge(drs([],[pred(%stem,X)]),app(Q,X)))) : ((s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t) -o (s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t)) || noscope.
+	      :$ lam(Q,lam(X,merge(drs([],[pred(%stem,X)]),app(Q,X)))) :
+	      ((s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t) -o (s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t)) || noscope.
 
 scottish  A * @(PRED scottish)
-	      :$ lam(Q,lam(X,merge(drs([],[pred(%stem,X)]),app(Q,X)))) : ((s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t) -o (s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t)) || noscope.
+	      :$ lam(Q,lam(X,merge(drs([],[pred(%stem,X)]),app(Q,X)))) :
+	      ((s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t) -o (s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t)) || noscope.
 
 trustworthy A * @(PRED trustworthy)
-		:$ lam(Q,lam(X,merge(drs([],[pred(%stem,X)]),app(Q,X)))) : ((s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t) -o (s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t)) || noscope.
+		:$ lam(Q,lam(X,merge(drs([],[pred(%stem,X)]),app(Q,X)))) :
+		((s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t) -o (s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t)) || noscope.
 
 alleged   A * @(PRED alleged)
-	      :$ lam(Q,lam(X,merge(drs([],[pred(%stem,X)]),app(Q,X)))) : ((s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t) -o (s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t)) || noscope.
+	      :$ lam(Q,lam(X,merge(drs([],[pred(%stem,X)]),app(Q,X)))) :
+	      ((s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t) -o (s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t)) || noscope.
 
 former 	  A * @(PRED former)
-	      :$ lam(Q,lam(X,merge(drs([],[pred(%stem,X)]),app(Q,X)))) : ((s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t) -o (s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t)) || noscope.
+	      :$ lam(Q,lam(X,merge(drs([],[pred(%stem,X)]),app(Q,X)))) :
+	      ((s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t) -o (s::(ADJUNCT $ ^)_e -o s::(ADJUNCT $ ^)_t)) || noscope.
 
 
 
@@ -480,7 +491,7 @@ very 	  ADV * @(PRED very).
 by 	  P * @(PREP by). 
 
 to 	  P * @(PREP to); 
-	  PARTinf * (^ VFORM) =c inf. 
+	  PARTinf * (^ VFORM) =c inf.
 
 on 	  P * @(PREP on). 
 
@@ -560,49 +571,57 @@ him 	  PRON * @(PRON he 3 sg pers)
 
 the 	  D * (^DEF) = +
 	      @(QUANT-SCOPE ^ %q) 
-	      :$ lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) : ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)) || noscope.
+	      :$ lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) :
+	      ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)) || noscope.
 
 The 	  D * (^DEF) = +
 	      @(QUANT-SCOPE ^ %q) 
-	      :$ lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) : ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)) || noscope.
+	      :$ lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) :
+	      ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)) || noscope.
 
 
 a 	  D * @(SPEC-DET-PRED a)
 	      (^ DEF) = - "this indefinite only marks singulars" 
 	      (^ NUM) = sg
 	      @(QUANT-SCOPE ^ %q) 
-	      :$ lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) : ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)).
+	      :$ lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) :
+	      ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)).
 
 
 an 	  D * @(SPEC-DET-PRED a)
 	      (^ DEF) = - "this indefinite only marks singulars" 
 	      (^ NUM) = sg
 	      @(QUANT-SCOPE ^ %q) 
-	      :$ lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) : ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)).
+	      :$ lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) :
+	      ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)).
 	
 A 	  D * @(SPEC-DET-PRED a)
 	      (^ DEF) = - "this indefinite only marks singulars" 
 	      (^ NUM) = sg
 	      @(QUANT-SCOPE ^ %q) 
-	      :$ lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) : ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)).
+	      :$ lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) :
+	      ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)).
 
 An 	  D * @(SPEC-DET-PRED a)
 	      (^ DEF) = - "this indefinite only marks singulars" 
 	      (^ NUM) = sg
 	      @(QUANT-SCOPE ^ %q) 
-	      :$ lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) : ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)).
+	      :$ lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) :
+	      ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)).
 
 every 	  D * @(SPEC-DET-PRED every)
 	      (^ DEF) = - "this indefinite only marks singulars" 
 	      (^ NUM) = sg
 	      @(QUANT-SCOPE ^ %q) 
-	      :$ lam(P,lam(Q,drs([],[imp(merge(drs([X],[]),app(P,X)),app(Q,X))]))) : ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)).
+	      :$ lam(P,lam(Q,drs([],[imp(merge(drs([X],[]),app(P,X)),app(Q,X))]))) :
+	      ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)).
 
 Every 	   D * @(SPEC-DET-PRED every)
 	      (^ DEF) = - "this indefinite only marks singulars" 
 	      (^ NUM) = sg
 	      @(QUANT-SCOPE ^ %q) 
-	      :$ lam(P,lam(Q,drs([],[imp(merge(drs([X],[]),app(P,X)),app(Q,X))]))) : ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)).
+	      :$ lam(P,lam(Q,drs([],[imp(merge(drs([X],[]),app(P,X)),app(Q,X))]))) :
+	      ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)).
 
 
 "complementizers"
@@ -668,9 +687,10 @@ MORPH   ENGLISH   LEXICON (1.0)
 		    :$ lam(X,drs([],[pred(%stem,X)])) : (s::^_e -o s::^_t),
 		  |
 		  (^ NTYPE) = name
-		  @(QUANT-SCOPE ^ %q)
+		  @(NAME-SCOPE ^ %q)
 		  :$ lam(X,drs([],[eq(X,'%stem')])) : (s::^_e -o s::^_t),
-	      	  :$ lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) : ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)) || noscope,
+	      :$ lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) :
+	      ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t)) || noscope,
 		  }.  
 
 
@@ -680,7 +700,9 @@ MORPH   ENGLISH   LEXICON (1.0)
 
 +Verb 	  V-POS XLE .
 
-+Pres 	  TNS XLE @VPRES.
++Pres 	  TNS XLE @VPRES
+		   @(PROG -_)
+		   @(PERF -_).
 
 +3sg 	  PERS XLE @S-AGR
 		   @(PROG -_)
@@ -743,6 +765,13 @@ GLUE   BASIC   TEMPLATES (1.0)
 
   NOSCOPE(G) = (G NOSCOPE) = +.  
 
+
+   NAME-SCOPE(UP NAME) =
+   %name = ({SUBJ | OBJ | OBJ2 | XCOMP | OBL-TO | OBL-AG | OBL | ADJUNCT}+ ^)
+   (%name FIN) =c +
+   NAME  = (s::%name SIT)
+   (s::^ QUANT-SCOPE) = NAME.
+
    QUANT-SCOPE(UP NAME) =
 	  NAME = (s::({SUBJ | OBJ | OBJ2 | XCOMP | OBL-TO | OBL-AG | OBL | ADJUNCT}+ ^) SIT)
 	  (s::^ QUANT-SCOPE) = NAME.
@@ -770,11 +799,13 @@ GLUE   BASIC   TEMPLATES (1.0)
              {
 	     %scope = (s::(ADJUNCT ^) EV)
 	     (%scope TYPE) =c event
-	    :$ lam(U,lam(V,lam(E,merge(drs([],[]),merge(app(U,E),app(V,E)))))) : ((%scope_v -o s::^_t) -o ((%scope_v -o %scope_t) -o (%scope_v -o %scope_t))),
+	    :$ lam(U,lam(V,lam(E,merge(drs([],[]),merge(app(U,E),app(V,E)))))) :
+	    ((%scope_v -o s::^_t) -o ((%scope_v -o %scope_t) -o (%scope_v -o %scope_t))),
 	    :$ lam(Y,lam(X,drs([],[rel(P,X,Y)]))) : (s::(^OBJ)_e -o (%scope_v -o s::^_t)),
 	    |
 	    %scope = (s::(ADJUNCT ^) QUANT-SCOPE)
-	    :$ lam(U,lam(V,lam(E,merge(drs([],[]),merge(app(U,E),app(V,E)))))) : ((s::(ADJUNCT ^)_e -o s::^_t) -o ((s::(ADJUNCT ^)_e -o %scope_t) -o (s::(ADJUNCT ^)_e -o %scope_t))) || noscope,
+	    :$ lam(U,lam(V,lam(E,merge(drs([],[]),merge(app(U,E),app(V,E)))))) :
+	    ((s::(ADJUNCT ^)_e -o s::^_t) -o ((s::(ADJUNCT ^)_e -o %scope_t) -o (s::(ADJUNCT ^)_e -o %scope_t))) || noscope,
 	    :$ lam(Y,lam(X,drs([],[rel(P,X,Y)]))) : (s::(^OBJ)_e -o (s::(ADJUNCT ^)_e -o s::^_t)),
 	     }.
            
@@ -783,13 +814,16 @@ GLUE   BASIC   TEMPLATES (1.0)
 
    "Templates for argument structure. Need to be separate to avoid trouble with local names"
    ARG1(ARG) =
-       :$ lam(V,lam(X,lam(E,merge(app(V,E),drs([],[rel(arg1,E,X)]))))) : (((s::^ EV)_v -o (s::^ EV)_t) -o (s::ARG_e -o ((s::^ EV)_v -o (s::^ EV)_t))) || noscope.
+       :$ lam(V,lam(X,lam(E,merge(app(V,E),drs([],[rel(arg1,E,X)]))))) :
+       (((s::^ EV)_v -o (s::^ EV)_t) -o (s::ARG_e -o ((s::^ EV)_v -o (s::^ EV)_t))) || noscope.
 
    ARG2(ARG) =
-       :$ lam(V,lam(X,lam(E,merge(app(V,E),drs([],[rel(arg2,E,X)]))))) : (((s::^ EV)_v -o (s::^ EV)_t) -o (s::ARG_e -o ((s::^ EV)_v -o (s::^ EV)_t))) || noscope.
+       :$ lam(V,lam(X,lam(E,merge(app(V,E),drs([],[rel(arg2,E,X)]))))) :
+       (((s::^ EV)_v -o (s::^ EV)_t) -o (s::ARG_e -o ((s::^ EV)_v -o (s::^ EV)_t))) || noscope.
 
    ARG3(ARG) =
-       :$ lam(V,lam(X,lam(E,merge(app(V,E),drs([],[rel(arg3,E,X)]))))) : (((s::^ EV)_v -o (s::^ EV)_t) -o (s::ARG_e -o ((s::^ EV)_v -o (s::^ EV)_t))) || noscope.
+       :$ lam(V,lam(X,lam(E,merge(app(V,E),drs([],[rel(arg3,E,X)]))))) :
+       (((s::^ EV)_v -o (s::^ EV)_t) -o (s::ARG_e -o ((s::^ EV)_v -o (s::^ EV)_t))) || noscope.
 
 
 

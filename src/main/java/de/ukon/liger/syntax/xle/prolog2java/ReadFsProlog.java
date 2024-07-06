@@ -438,6 +438,7 @@ public class ReadFsProlog implements Serializable {
                             //replace only the first instance of ambMatcher group 1 with context and add to currentAdditionalConstraints
                             if (ambMatcher.find()) {
                                 String replace = fsConstraints.get(i).replaceFirst(ambMatcher.group(1), context);
+                                replace = replace.replace(equal[0], equal[1]);
                                 currentAdditionalConstraints.add(replace);
                             }
                         }

@@ -64,8 +64,6 @@ public class GlueSemantics {
 
         StringBuilder sb = new StringBuilder();
 
-
-
             if (!fs.annotation.isEmpty()) {
                 //extract from LiGER
                 for (GraphConstraint c : fs.annotation) {
@@ -82,7 +80,7 @@ public class GlueSemantics {
         //Remove elements with empty values from unpackedSem
         unpackedSem.entrySet().removeIf(entry -> entry.getValue().isEmpty());
 
-        HashMap<Set<ChoiceVar>, List<String>> grammarSem = new HashMap<>();
+        HashMap<Set<ChoiceVar>, Set<String>> grammarSem = new HashMap<>();
 
         //Check if any constraint in fs.constraints has the relation label "GLUE"
         boolean hasGlue = false;
@@ -101,78 +99,128 @@ public class GlueSemantics {
           prologMCs =  extractMCsFromFs(((Fstructure) fs).prologString);
         }
 
+
+        //Unpack Liger
         boolean relevantChoice = false;
+
         for (Set<ChoiceVar> choice : unpackedSem.keySet()) {
             if (!choice.equals(fs.cp.rootChoice) && !unpackedSem.get(choice).isEmpty()) {
                 relevantChoice = true;
                 unpackedSem.get(choice).addAll(unpackedSem.get(fs.cp.rootChoice));
             }
         }
-
         if (relevantChoice) {
             unpackedSem.remove(fs.cp.rootChoice);
         }
 
-        List<Set<ChoiceVar>> keyList;
+        //Unpack grammar
+        boolean relevantChoiceGrammar = false;
+
+        for (Set<ChoiceVar> choice : grammarSem.keySet()) {
+            if (!choice.equals(fs.cp.rootChoice) && !grammarSem.get(choice).isEmpty()) {
+                relevantChoiceGrammar = true;
+                grammarSem.get(choice).addAll(grammarSem.get(fs.cp.rootChoice));
+            }
+        }
+        if (relevantChoiceGrammar) {
+            grammarSem.remove(fs.cp.rootChoice);
+        }
+
+
+        List<Set<ChoiceVar>> keyListLiger = new ArrayList<>();
+        List<Set<ChoiceVar>> keyListGrammar = new ArrayList<>();
 
         if (!unpackedSem.keySet().isEmpty())
         {
-         keyList = new ArrayList<>(unpackedSem.keySet());}
-        else {
-            keyList = new ArrayList<>(grammarSem.keySet());
+         keyListLiger = new ArrayList<>(unpackedSem.keySet());
         }
-         for (int i = 0; i < keyList.size(); i++)
-         {
-             Set<ChoiceVar> key = keyList.get(i);
 
+        if (!grammarSem.keySet().isEmpty()) {
+            keyListGrammar = new ArrayList<>(grammarSem.keySet());
+        }
 
-             boolean semGrammar= false;
+         for (int i = 0; i < keyListLiger.size(); i++) {
+             Set<ChoiceVar> keyLiger = keyListLiger.get(i);
+            // for (int j = 0; i < keyListGrammar.size(); i++) {
 
-                 if (grammarSem.containsKey(fs.cp.rootChoice) && !grammarSem.get(fs.cp.rootChoice).isEmpty())
-                 {
-                     semGrammar = true;
+              if (keyListGrammar.contains(keyLiger))
+              {
+                 Set<ChoiceVar> keyGrammar = keyLiger;
 
-                     if (!grammarSem.containsKey(key) && key != fs.cp.rootChoice)
-                     {
-                    grammarSem.put(key, new ArrayList<>(grammarSem.get(fs.cp.rootChoice)));
-                 }
-             }
+                 if (keyLiger.equals(keyGrammar)) {
 
-
-             sb.append("{");
-             sb.append("\n");
-
-             if (unpackedSem.containsKey(key) && !unpackedSem.get(key).isEmpty()) {
-
-                 if (!unpackedSem.get(key).isEmpty()) {
-                     sb.append("//Liger");
+                     sb.append("{");
                      sb.append("\n");
 
+                     if (!unpackedSem.get(keyLiger).isEmpty()) {
+                         sb.append("//Liger");
+                         sb.append("\n");
 
-                     for (String s : unpackedSem.get(key)) {
-                         sb.append(s);
+
+                         for (String s : unpackedSem.get(keyLiger)) {
+                             sb.append(s);
+                             sb.append("\n");
+                         }
+                     }
+
+
+                     if (!grammarSem.get(keyGrammar).isEmpty()) {
+                         sb.append("//Grammar");
+                         sb.append("\n");
+
+                         for (String s : grammarSem.get(keyGrammar)) {
+                             sb.append(s);
+                             sb.append("\n");
+                         }
+                     }
+
+                     sb.append("}");
+
+                     if (i < keyListLiger.size() - 1 || keyListLiger.size() -1 < keyListGrammar.size() - 1) {
                          sb.append("\n");
                      }
                  }
+
+                 }
+
+              else {
+                  for (int j = 0; j < keyListGrammar.size(); j++) {
+                      Set<ChoiceVar> keyGrammar = keyListGrammar.get(j);
+
+                      sb.append("{");
+                      sb.append("\n");
+
+                      if (!unpackedSem.get(keyLiger).isEmpty()) {
+                          sb.append("//Liger");
+                          sb.append("\n");
+
+
+                          for (String s : unpackedSem.get(keyLiger)) {
+                              sb.append(s);
+                              sb.append("\n");
+                          }
+                      }
+
+                      if (!grammarSem.get(keyGrammar).isEmpty()) {
+                          sb.append("//Grammar");
+                          sb.append("\n");
+
+                          for (String s : grammarSem.get(keyGrammar)) {
+                              sb.append(s);
+                              sb.append("\n");
+                          }
+                      }
+
+                      sb.append("}");
+
+                      if (i < keyListGrammar.size() - 1 || keyListGrammar.size() -1 < keyListLiger.size() - 1) {
+                          sb.append("\n");
+                      }
+                  }
+              }
              }
 
-                 if (semGrammar)
-                 {
-                     sb.append("//Grammar");
-                     sb.append("\n");
 
-                 for (String s : grammarSem.get(key)) {
-                     sb.append(s);
-                     sb.append("\n");
-                 }
-}
-
-                 sb.append("}");
-
-                 if (i < keyList.size() -1){
-                     sb.append("\n");
-                 }
-             }
          if (prolog && unpackedSem.isEmpty())
          {
              return prologMCs;
@@ -267,12 +315,11 @@ public class GlueSemantics {
         return null;
     }
 
-    public HashMap<Set<ChoiceVar>, List<String>> translateMeaningConstructors(LinguisticStructure fs) {
+    public HashMap<Set<ChoiceVar>, Set<String>> translateMeaningConstructors(LinguisticStructure fs) {
 
+        HashMap<String,HashMap<Set<ChoiceVar>, List<String>>> disjunctiveSem = new HashMap<>();
         List<GraphConstraint> ls = new ArrayList<>(fs.returnFullGraph());
-
         HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
-
         HashMap<String,Set<ChoiceVar>> glueIndices = new HashMap<>();
 
             for (GraphConstraint c : ls) {
@@ -293,12 +340,80 @@ public class GlueSemantics {
                 }
             }
             for (String i : glueIndices.keySet()) {
-                unpackedSem.get(glueIndices.get(i)).add(parseMCfromProlog(i, ls));
+                HashMap<Set<ChoiceVar>,String> testMap = parseMCfromPackedProlog(i, ls);
+
+                if (!disjunctiveSem.containsKey(i))
+                {
+                    disjunctiveSem.put(i,new HashMap<>());
+                }
+                    for (Set<ChoiceVar> key : testMap.keySet()) {
+                        if (!disjunctiveSem.get(i).containsKey(key)) {
+                            disjunctiveSem.get(i).put(key, new ArrayList<>());
+                        }
+                        disjunctiveSem.get(i).get(key).add(testMap.get(key));
+                    }
+                String mc = parseMCfromProlog(i, ls);
+                unpackedSem.get(glueIndices.get(i)).add(mc);
             }
-            return unpackedSem;
+
+            HashMap<Set<ChoiceVar>, Set<String>> unpackedSem2 = new HashMap<>();
+            Set<ChoiceVar> defaultReading = Collections.singleton(new ChoiceVar());
+            unpackedSem2.put(defaultReading, new HashSet<>());
+
+
+        // Use streams to partition the map entries
+
+
+        // Extract the singleton and multi-element maps from the partitioned map
+        Map<String, HashMap<Set<ChoiceVar>, List<String>>> singletonMap = new HashMap<>();
+        Map<String, HashMap<Set<ChoiceVar>, List<String>>> multiElementMap = new HashMap<>();
+
+        for (String key : disjunctiveSem.keySet()){
+            if (disjunctiveSem.get(key).keySet().size() == 1)
+            {
+                singletonMap.put(key,disjunctiveSem.get(key));
+            } else
+            {
+                multiElementMap.put(key,disjunctiveSem.get(key));
+            }
+        }
+
+            for (String i : singletonMap.keySet())
+            {
+                unpackedSem2.get(defaultReading).addAll(singletonMap.get(i).get(defaultReading));
+            }
+
+            //raise packed mcs to conjunctive normal form
+            for (String i : multiElementMap.keySet())
+            {
+                 for (Set<ChoiceVar> choice : multiElementMap.get(i).keySet())
+                 {
+                     if (!choice.equals(defaultReading)) {
+                         if (!unpackedSem2.containsKey(choice)) {
+                             unpackedSem2.put(choice, new HashSet<>());
+                         }
+                         unpackedSem2.get(choice).addAll(multiElementMap.get(i).get(choice));
+
+
+                         for (String j : multiElementMap.keySet()) {
+                             if (!j.equals(i)) {
+                                 if (multiElementMap.get(j).containsKey(choice)) {
+                                     unpackedSem2.get(choice).addAll(multiElementMap.get(j).get(choice));
+                                 } else {
+                                     unpackedSem2.get(choice).addAll(multiElementMap.get(j).get(defaultReading));
+                                 }
+                             }
+                         }
+                     }
+                 }
+            }
+            return unpackedSem2;
     }
 
+
+
     //Extracts a XLE+Glue version 2 mc from Prolog
+    //Ignores any choice that is not the default choice (choice 1)
     public String parseMCfromProlog(String glueNode, List<GraphConstraint> ls)
     {
         String meaning = "";
@@ -309,6 +424,9 @@ public class GlueSemantics {
         List<GraphConstraint> meaningConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("MEANING")).collect(Collectors.toList());
 
         if (!meaningConstraint.isEmpty()){
+
+            meaningConstraint = meaningConstraint.stream().filter(c -> c.getReading().equals(Collections.singleton(new ChoiceVar()))).collect(Collectors.toList());
+
             meaning = (String) meaningConstraint.stream().findAny().get().getFsValue();
             //Strip single quotes of meaning
             meaning = meaning.substring(1,meaning.length()-1);
@@ -322,6 +440,7 @@ public class GlueSemantics {
         List<String> params = new ArrayList<>();
 
         List<GraphConstraint> noscopeConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("NOSCOPE")).collect(Collectors.toList());
+        noscopeConstraint = noscopeConstraint.stream().filter(c -> c.getReading().equals(Collections.singleton(new ChoiceVar()))).collect(Collectors.toList());
 
         if (!noscopeConstraint.isEmpty())
         {
@@ -329,6 +448,7 @@ public class GlueSemantics {
         }
 
         List<GraphConstraint> resourceConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("RESOURCE")).collect(Collectors.toList());
+        resourceConstraint = resourceConstraint.stream().filter(c -> c.getReading().equals(Collections.singleton(new ChoiceVar()))).collect(Collectors.toList());
 
         if (!resourceConstraint.isEmpty())
         {
@@ -336,6 +456,8 @@ public class GlueSemantics {
             String resource = "";
             String type = "" ;
             List<GraphConstraint> typeConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("TYPE")).collect(Collectors.toList());
+            typeConstraint = typeConstraint.stream().filter(c -> c.getReading().equals(Collections.singleton(new ChoiceVar()))).collect(Collectors.toList());
+
             if (!typeConstraint.isEmpty())
             {
                 type = (String) typeConstraint.stream().findAny().get().getFsValue();
@@ -360,12 +482,14 @@ public class GlueSemantics {
 
             if (!antecedent.isEmpty())
             {
+                antecedent = antecedent.stream().filter(c -> c.getReading().equals(Collections.singleton(new ChoiceVar()))).collect(Collectors.toList());
                 GraphConstraint ant = antecedent.stream().findAny().get();
                 antString = parseMCfromProlog( (String) ant.getFsValue(),ls);
             }
 
             if (!consequent.isEmpty())
             {
+                consequent = consequent.stream().filter(c -> c.getReading().equals(Collections.singleton(new ChoiceVar()))).collect(Collectors.toList());
                 GraphConstraint cons = consequent.stream().findAny().get();
                 consString = parseMCfromProlog((String) cons.getFsValue(),ls);
             }
@@ -387,12 +511,15 @@ public class GlueSemantics {
         }
     }
 
-    private HashMap<Set<ChoiceVar>,String> unpackedMCs = new HashMap<>();
+   // private HashMap<Set<ChoiceVar>,String> unpackedMCs = new HashMap<>();
     public HashMap<Set<ChoiceVar>,String> parseMCfromPackedProlog(String glueNode, List<GraphConstraint> ls)
     {
         HashMap<Set<ChoiceVar>,String> unpackedMeaningConstructors = new HashMap<>();
         //String meaning = "";
         HashMap<Set<ChoiceVar>,String> unpackedMeanings = new HashMap<>();
+
+        Set<ChoiceVar> defaultContext = Collections.singleton(new ChoiceVar());
+
 
         List<GraphConstraint> glueConstraints = ls.stream().filter(c -> c.getFsNode().equals(glueNode)).collect(Collectors.toList());
         //Find graph constraint in glueConstraints with label GLUE
@@ -400,9 +527,9 @@ public class GlueSemantics {
         Set<Set<ChoiceVar>> relevantChoices = glueConstraints.stream().map(GraphConstraint::getReading).collect(Collectors.toSet());
         for (Set<ChoiceVar> choice : relevantChoices)
         {
-            if (!unpackedMCs.containsKey(choice))
+            if (!unpackedMeaningConstructors.containsKey(choice))
             {
-                unpackedMCs.put(choice,"");
+                unpackedMeaningConstructors.put(choice,"");
             }
         }
 
@@ -459,8 +586,16 @@ public class GlueSemantics {
                 for (Set<ChoiceVar> choice : relevantChoices)
                 {
                     String resource = currentResourceStrings.get(choice);
-                    String type = currentTypeStrings.get(choice);
 
+                    //Default type t
+                    String type = "t";
+
+                    if (currentTypeStrings.containsKey(choice)) {
+                        type = currentTypeStrings.get(choice);
+                    }
+                    else{
+                        type = currentTypeStrings.get(defaultContext);
+                    }
                     String meaning = null;
 
                     if (unpackedMeanings.containsKey(choice)) {
@@ -468,7 +603,8 @@ public class GlueSemantics {
                     } else {
                         meaning =  unpackedMeanings.get(Collections.singleton(new ChoiceVar("1")));
                     }
-                    if (meaning.equals("")) {
+
+                    if (meaning == null) {
                         unpackedMeaningConstructors.put(choice, resource + "_" + type);
 
                     } else {
@@ -500,6 +636,7 @@ public class GlueSemantics {
                 possibleConsequentStrings = parseMCfromPackedProlog((String) cons.getFsValue(),ls);
             }
 
+
             for (Set<ChoiceVar> key : possibleAntecedentStrings.keySet()) {
 
                 String paramString = "";
@@ -515,22 +652,70 @@ public class GlueSemantics {
                     if (unpackedMeanings.containsKey(key)) {
                         newMC.append(unpackedMeanings.get(key));
                     } else {
-                     newMC.append(unpackedMeanings.get(Collections.singleton(new ChoiceVar())));
+                     newMC.append(unpackedMeanings.get(defaultContext));
                     }
                     newMC.append(" : ");
                 }
 
                 newMC.append("(");
 
+                newMC.append(possibleAntecedentStrings.get(key));
 
+                newMC.append(" -o ");
 
+                if (possibleConsequentStrings.containsKey(key))
+                {
+                    newMC.append(possibleConsequentStrings.get(key));
+                } else
+                {
+                    newMC.append(possibleConsequentStrings.get(defaultContext));
+                }
           // "(" + antString + " -o " + consString + ")" + paramString;
 
+                newMC.append(")");
+                newMC.append(paramString);
 
+                unpackedMeaningConstructors.put(key,newMC.toString());
 
                 }
+
+            for (Set<ChoiceVar> key : possibleConsequentStrings.keySet()) {
+
+                if (!possibleAntecedentStrings.containsKey(key)) {
+
+                    String paramString = "";
+
+                    if (!params.isEmpty()) {
+                        paramString = " || " + params.stream().collect(Collectors.joining(", "));
+                    }
+
+                    StringBuilder newMC = new StringBuilder();
+
+                    if (!unpackedMeanings.isEmpty()) {
+                        if (unpackedMeanings.containsKey(key)) {
+                            newMC.append(unpackedMeanings.get(key));
+                        } else {
+                            newMC.append(unpackedMeanings.get(defaultContext));
+                        }
+                        newMC.append(" : ");
+                    }
+
+                    newMC.append("(");
+
+                    newMC.append(possibleAntecedentStrings.get(defaultContext));
+
+                    newMC.append(" -o ");
+
+                    newMC.append(possibleConsequentStrings.get(key));
+
+                    newMC.append(")");
+                    newMC.append(paramString);
+
+                    unpackedMeaningConstructors.put(key, newMC.toString());
+                }
             }
-        return null;
+            return unpackedMeaningConstructors;
+        }
     }
 
 

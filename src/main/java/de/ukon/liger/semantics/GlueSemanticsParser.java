@@ -37,7 +37,7 @@ public class GlueSemanticsParser {
 
         GlueSemanticsParser glueSemanticsParser = new GlueSemanticsParser(new VariableHandler());
 
-        String mc =  glueSemanticsParser.parseMeaningConstructor("((s::%arg1_e -o (s::%arg2_e -o ((s::^ EV)_v -o (s::^ EV)_t))) -o (s::%arg1_e -o (s::%arg2_e -o s::^_t))) : lam(V,lam(X,lam(Y,merge(drs([E,S,X,Y],[app(app(app(V,X),Y),E)]),drs([],[rel(partOf,E,S)])))))");
+        String mc =  glueSemanticsParser.parseMeaningConstructor("lam(P,lam(Q,merge(drs([X],[]),merge(app(P,X),app(Q,X))))) :\n\n ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t))");
 
         System.out.println(mc);
 
@@ -78,7 +78,7 @@ public class GlueSemanticsParser {
 
     public String parseMeaningConstructor(String mc) {
         //split at :
-        String[] parts = mc.split(" : ");
+        String[] parts = mc.split(" :\\s+");
 
         try {
 
