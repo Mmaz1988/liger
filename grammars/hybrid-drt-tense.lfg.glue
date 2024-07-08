@@ -303,12 +303,8 @@ DEMO   ENGLISH   TEMPLATES (1.0)
 	  }.
   
    """Functional feature templates"""
-	  
-   TENSE(T) = (^ TNS-ASP TENSE) = T.  "the more general case"
 
    CASE(C) = (^ CASE) = C.   
-
-   MOOD(M) = (^ TNS-ASP MOOD) = M.
 
    VPRES = { (^VFORM) ~= inf
 	    @(TENSE pres)
@@ -325,7 +321,7 @@ DEMO   ENGLISH   TEMPLATES (1.0)
 
    PASTP = (^ PARTICIPLE) = past. 
 
-   BARE-AGR = { (^VFORM) ~= inf 
+   BARE-AGR = { (^VFORM) ~= inf
 	    { (^ SUBJ NUM) = pl "either it is plural"
 	    | (^ SUBJ PERS) ~= 3 "or singular and not 3rd person"
 	      (^ SUBJ NUM) = sg
@@ -334,7 +330,7 @@ DEMO   ENGLISH   TEMPLATES (1.0)
 	  | (^VFORM) = inf}.
 
    S-AGR = (^ SUBJ PERS) = 3 "for verbs in -s"
-	  (^ SUBJ NUM) = sg. 
+	  (^ SUBJ NUM) = sg.
 
 "template for ntypes, called NPOS here because of clash with common templates"
 
@@ -442,7 +438,6 @@ see 	  V-S XLE @(TRANS-EV %stem).
 give 	  V-S XLE @(DITRANS-EV give).
 
 "Nouns"
-
 
 
 "adjectives --- should really be done via the morphology, like the nouns"
@@ -683,6 +678,7 @@ MORPH   ENGLISH   LEXICON (1.0)
 -unknown  ADJ-S XLE @(PRED %stem);
 	  ADV-S XLE @(PRED %stem);
 	  N-S XLE @(PRED %stem)
+	      	  (s::^ TYPE) = entity
 		  { (^ NTYPE) = count
 		    :$ lam(X,drs([],[pred(%stem,X)])) : (s::^_e -o s::^_t),
 		  |
@@ -704,9 +700,7 @@ MORPH   ENGLISH   LEXICON (1.0)
 		   @(PROG -_)
 		   @(PERF -_).
 
-+3sg 	  PERS XLE @S-AGR
-		   @(PROG -_)
-		   @(PERF -_).
++3sg 	  PERS XLE @S-AGR.
 
 +PastBoth TNS XLE "past tense or past particle"
 		  { @VPAST | @PASTP }
@@ -776,6 +770,9 @@ GLUE   BASIC   TEMPLATES (1.0)
 	  NAME = (s::({SUBJ | OBJ | OBJ2 | XCOMP | OBL-TO | OBL-AG | OBL | ADJUNCT}+ ^) SIT)
 	  (s::^ QUANT-SCOPE) = NAME.
 
+   PP-SCOPE(UP NAME) =
+   NAME = (s::({SUBJ | OBJ | OBJ2 | XCOMP | OBL-TO | OBL-AG | OBL | ADJUNCT}+ ^) EV).
+
    ATTITUDE = (s::^ SIT) = %s
 	  { 
 	    (^ ROOT)
@@ -785,7 +782,7 @@ GLUE   BASIC   TEMPLATES (1.0)
 	    }.
 	  
    EVENT(REL) =
-	  (s::^ EV TYPE) = event
+	  (s::^ EV TYPE) = eventuality
 	  (s::^ SIT) = %s
 	  :$ lam(V,drs([],[pred(REL,V)])) : ((s::^ EV)_v -o (s::^ EV)_t),
 	  :$ lam(V,lam(S,merge(drs([E],[rel(partOf,E,S)]),app(V,E)))) : (((s::^ EV)_v -o (s::^ EV)_t) -o (%s_s -o %s_t)),
@@ -795,20 +792,21 @@ GLUE   BASIC   TEMPLATES (1.0)
 	   |
 	    ~[(^ ROOT)]}.
 
+
    PREP-SEM(P) =
-             {
-	     %scope = (s::(ADJUNCT ^) EV)
-	     (%scope TYPE) =c event
+	  { %scope = s::(ADJUNCT ^)
+	    (%scope TYPE) =c entity
+	    :$ lam(U,lam(V,lam(E,merge(drs([],[]),merge(app(U,E),app(V,E)))))) :
+	    ((%scope_e -o s::^_t) -o ((%scope_e -o %scope_t) -o (%scope_e -o %scope_t))),
+	    :$ lam(Y,lam(X,drs([],[rel(P,X,Y)]))) : (s::(^OBJ)_e -o (%scope_e -o s::^_t)),
+	    |
+	    %scope = (s::(ADJUNCT ^) EV)
+	    (%scope TYPE) =c eventuality
 	    :$ lam(U,lam(V,lam(E,merge(drs([],[]),merge(app(U,E),app(V,E)))))) :
 	    ((%scope_v -o s::^_t) -o ((%scope_v -o %scope_t) -o (%scope_v -o %scope_t))),
 	    :$ lam(Y,lam(X,drs([],[rel(P,X,Y)]))) : (s::(^OBJ)_e -o (%scope_v -o s::^_t)),
-	    |
-	    %scope = (s::(ADJUNCT ^) QUANT-SCOPE)
-	    :$ lam(U,lam(V,lam(E,merge(drs([],[]),merge(app(U,E),app(V,E)))))) :
-	    ((s::(ADJUNCT ^)_e -o s::^_t) -o ((s::(ADJUNCT ^)_e -o %scope_t) -o (s::(ADJUNCT ^)_e -o %scope_t))) || noscope,
-	    :$ lam(Y,lam(X,drs([],[rel(P,X,Y)]))) : (s::(^OBJ)_e -o (s::(ADJUNCT ^)_e -o s::^_t)),
-	     }.
-           
+	    }.
+
  TENSE-CLOSURE = %tense = (s::^ TEMP-REF EVAL)
  :$ lam(P,merge(drs([T],[eq(T,now)]),app(P,T))) : ((%tense_s -o %tense_t) -o s::^_t).
 

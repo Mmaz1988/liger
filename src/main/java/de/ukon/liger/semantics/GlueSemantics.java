@@ -319,7 +319,7 @@ public class GlueSemantics {
 
         HashMap<String,HashMap<Set<ChoiceVar>, List<String>>> disjunctiveSem = new HashMap<>();
         List<GraphConstraint> ls = new ArrayList<>(fs.returnFullGraph());
-        HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
+     //   HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
         HashMap<String,Set<ChoiceVar>> glueIndices = new HashMap<>();
 
             for (GraphConstraint c : ls) {
@@ -332,9 +332,11 @@ public class GlueSemantics {
                             if (c3.getRelationLabel().equals("in_set")) {
                                 glueIndices.put((String) c3.getFsValue(), c3.getReading());
                             }
+                            /*
                             if (!unpackedSem.containsKey(c3.getReading())) {
                                 unpackedSem.put(c.getReading(), new ArrayList<>());
                             }
+                             */
                         }
                     }
                 }
@@ -352,8 +354,8 @@ public class GlueSemantics {
                         }
                         disjunctiveSem.get(i).get(key).add(testMap.get(key));
                     }
-                String mc = parseMCfromProlog(i, ls);
-                unpackedSem.get(glueIndices.get(i)).add(mc);
+              //  String mc = parseMCfromProlog(i, ls);
+             //   unpackedSem.get(glueIndices.get(i)).add(mc);
             }
 
             HashMap<Set<ChoiceVar>, Set<String>> unpackedSem2 = new HashMap<>();
@@ -380,7 +382,12 @@ public class GlueSemantics {
 
             for (String i : singletonMap.keySet())
             {
-                unpackedSem2.get(defaultReading).addAll(singletonMap.get(i).get(defaultReading));
+                for (Set<ChoiceVar> key : singletonMap.get(i).keySet()) {
+                    if (!unpackedSem2.containsKey(key)) {
+                        unpackedSem2.put(key, new HashSet<>());
+                    }
+                    unpackedSem2.get(key).addAll(singletonMap.get(i).get(key));
+                }
             }
 
             //raise packed mcs to conjunctive normal form
