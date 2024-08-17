@@ -37,8 +37,17 @@ public class GlueSemanticsParser {
 
         GlueSemanticsParser glueSemanticsParser = new GlueSemanticsParser(new VariableHandler());
 
+        /*
         String mc =  glueSemanticsParser.parseMeaningConstructor(":$ lam(U,lam(V,lam(E,merge(drs([],[]),merge(app(U,E),app(V,E)))))) :\n" +
                 "\t    ((%scope_e -o s::^_t) -o ((%scope_v -o %scope_t) -o (%scope_v -o %scope_t))),");
+                */
+
+        String mc =  glueSemanticsParser.parseMeaningConstructor("        :$ test :\n" +
+                "\t    \t((s::^ COORD1)_e -o ((s::^ COORD2)_e -o (s::^ COORD2)))");
+
+        /*
+
+         */
 
         System.out.println(mc);
 
@@ -51,9 +60,10 @@ public class GlueSemanticsParser {
         String content = Files.readString(Path.of(lfgGlueFile));
 
 
-        Pattern p = Pattern.compile("(?s)(?m):\\$(.+?)(\\.\\r?\\n|,\\r?\\n)");
+        Pattern p = Pattern.compile("(?s)(?m):\\$(.+?)(\\.\\r?\\n|;\\r?\\n|,\\r?\\n)");
 
         Pattern lb = Pattern.compile(",\\r?\\n");
+        Pattern cat = Pattern.compile(";\\r?\\n");
 
         Matcher m = p.matcher(content);
 
@@ -63,10 +73,17 @@ public class GlueSemanticsParser {
             String parsed = parseMeaningConstructor(mc);
             String end = m.group(2);
             Matcher m2 = lb.matcher(end);
+            Matcher m3 = cat.matcher(end);
 
-            if (!m2.matches()) {
+            if (m3.matches()) {
+                parsed = parsed + ";\n";
+            }
+
+            if (!m2.matches() && !m3.matches()) {
                 parsed = parsed + ".\n";
             }
+
+
             content = content.replace(mcLine, parsed);
         }
 
