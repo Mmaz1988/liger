@@ -174,7 +174,7 @@ public class DbaMain {
                     {
                         mcSets = sem.returnMultiStageMeaningConstructors(fs);
                     } else {
-                        mcSets = sem.returnMeaningConstructors(fs,true,false);
+                        mcSets = sem.returnMeaningConstructors(fs,prolog,false);
                     }
 
                     //if outfile exists delete outfile
