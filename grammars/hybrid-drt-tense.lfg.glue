@@ -266,7 +266,8 @@ DEMO   ENGLISH   TEMPLATES (1.0)
 	      (^OBL-AG) = ARG1 |
 	      ~[(^OBL-AG)]
 	      ARG1 = %empty
-	      :$ lam(Q,merge(drs([X],[]),app(Q,X))) : ((s::%empty_e -o s::^_t) -o s::^_t) || noscope,
+	      :$ lam(Q,merge(drs([X],[]),app(Q,X))) :
+	      ((s::%empty_e -o s::^_t) -o s::^_t) || noscope,
 	    }
 	    ARG2 = (^ SUBJ)
 	  }.
@@ -301,6 +302,24 @@ DEMO   ENGLISH   TEMPLATES (1.0)
 	      ARG3 = (^ SUBJ)
 	    }
 	  }.
+
+
+	      XCOMP-OBJ-PASSIVE-ARGS(ARG1 ARG2 ARG3) = {
+       	    (^ PASSIVE) =c -
+       	    ARG1 = (^ SUBJ)
+       	    ARG2 = (^ OBJ)
+       	    ARG3 = (^ XCOMP)
+       	   |
+       	    (^ PASSIVE) =c +
+       	    {
+       	      (^OBL-AG) = ARG1 |
+       	      ~[(^OBL-AG)]
+       	      ARG1 = %empty
+       	      :$ lam(Q,merge(drs([X],[]),app(Q,X))) : ((s::%empty_e -o s::^_t) -o s::^_t) || noscope,
+       	    }
+       	    ARG2 = (^ SUBJ)
+       	    ARG3 = (^ XCOMP)
+       	  }.
   
    """Functional feature templates"""
 
@@ -363,31 +382,56 @@ DEMO ENGLISH LEXICON (1.0)
 "verbs with clausal arguments"
 
 say 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^COMP)>'
-           @ATTITUDE
-           %s = (s::(^ COMP) TEMP-REF EVAL)
-	      :$ lam(P,lam(X,lam(S,merge(drs([],[pred(say,S),rel(arg1,S,X)]),drs([],[say(app(P,S))]))))) :
+          @ATTITUDE
+          %s = (s::(^ COMP) TEMP-REF EVAL)
+	      :$ lam(P,lam(X,lam(S,merge(drs([],[pred(say,S),rel(arg1,S,X)]),drs([],[cont(S,app(P,S))]))))) :
 	      ((%s_s -o %s_t) -o (s::(^ SUBJ)_e -o ((s::^ SIT)_s -o (s::^ SIT)_t))).
 
 think 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^COMP)>'
-	      :$ lam(P,lam(X,lam(S,merge(drs([],[pred(think,S),rel(arg1,S,X)]),drs([],[think(app(P,S))]))))) :
-	      (((s::(^ COMP) TEMP-REF EVAL)_s -o s::(^ COMP)_t) -o (s::(^ SUBJ)_e -o ((s::^ SIT)_s -o s::^_t))).
+          @ATTITUDE
+	      %s = (s::(^ COMP) TEMP-REF EVAL)
+	      :$ lam(P,lam(X,lam(S,merge(drs([],[pred(think,S),rel(arg1,S,X)]),drs([],[cont(S,app(P,S))]))))) :
+	      ((%s_s -o %s_t) -o (s::(^ SUBJ)_e -o ((s::^ SIT)_s -o (s::^ SIT)_t))).
 
-ensure 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^COMP)>'
-	      :$ lam(P,lam(X,lam(S,merge(drs([],[pred(ensure,S),rel(arg1,S,X)]),drs([],[ensure(app(P,S))]))))) :
-	      (((s::(^ COMP) TEMP-REF EVAL)_s -o s::(^ COMP)_t) -o (s::(^ SUBJ)_e -o ((s::^ SIT)_s -o s::^_t))).
+ensure    V-S XLE (^PRED) = '%stem<(^SUBJ)(^COMP)>'
+          @ATTITUDE
+          %s = (s::(^ COMP) TEMP-REF EVAL)
+	      :$ lam(P,lam(X,lam(S,merge(drs([],[pred(ensure,S),rel(arg1,S,X)]),drs([],[cont(S,app(P,S))]))))) :
+	      ((%s_s -o %s_t) -o (s::(^ SUBJ)_e -o ((s::^ SIT)_s -o (s::^ SIT)_t))).
+
+
 
 convince  V-S XLE (^PRED) = '%stem<(^SUBJ)(^OBJ)(^XCOMP)>'
-		  (^ XCOMP SUBJ) = (^OBJ). 
- 
+          @ATTITUDE
+		  (^ XCOMP SUBJ) = (^OBJ)
+		  :$ lam(X, lam(Y,lam(P,lam(S,drs([],[pred(convince,S), rel(arg1,X,S), rel(arg2,Y,S), cont(S,app(app(P,Y),S))]))))) :
+		  (s:: (^SUBJ)_e -o (s::(^OBJ)_e -o ((s::(^XCOMP SUBJ)_e -o ((s::(^ XCOMP) SIT) _s -o (s::(^ XCOMP) SIT)_t)) -o ((s::^ SIT)_s -o (s::^ SIT)_t)))).
+
+
 try 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^XCOMP)>'
 		  @ATTITUDE
 		  (^ XCOMP SUBJ) = (^SUBJ)
-		  :$ lam(X,lam(P,lam(S,drs([],[pred(try,S),rel(arg1,S,X),try(app(app(P,X),S))])))) :
-		  (s::(^XCOMP SUBJ)_e -o ((s::(^ XCOMP SUBJ)_e -o ((s::(^ XCOMP) SIT) _s -o (s::(^ XCOMP) SIT)_t)) -o ((s::^ SIT)_s -o (s::^ SIT)_t))).
+		  :$ lam(X,lam(P,lam(S,drs([],[pred(try,S),rel(arg1,S,X),cont(S,app(app(P,X),S))])))) :
+		  (s::(^XCOMP SUBJ)_e -o ((s::(^ XCOMP SUBJ)_e -o ((s::(^ XCOMP) SIT)_s -o (s::(^ XCOMP) SIT)_t)) -o ((s::^ SIT)_s -o (s::^ SIT)_t))).
 
-seem 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^XCOMP)>'
+seem 	  V-S XLE (^PRED) = '%stem<(^SUBJ)>(^XCOMP)'
+          @ATTITUDE
 		  (^ XCOMP SUBJ) = (^SUBJ)
-		  :$ lam(X,lam(P,seem(app(P,X)))) : (s::(^ SUBJ)_e -o ((s::(^ XCOMP SUBJ)_e -o s::(^ XCOMP)_t) -o s::^_t)).
+		  :$ lam(P,lam(S,drs([],[pred(seem,S),cont(S,app(P,S))]))) :
+		  (((s::(^ XCOMP) SIT)_s -o (s::(^ XCOMP) SIT)_t) -o ((s::^ SIT)_s -o (s::^ SIT)_t)).
+
+"John believed Mary to appear SUBJ OBJ XCOMP
+Mary is believed to appear SUBJ XCOMP
+Mary is believed by John to appear SUBJ OBL-AG XCOMP
+Mary believed that John appeared SUBJ COMP
+Mary believed John that Peter appeared SUBJ OBJ COMP"
+
+believe V-S XLE @(PASS (^PRED) = '%stem<(^SUBJ)(^OBJ)(^XCOMP)>')
+          @(XCOMP-OBJ-PASSIVE-ARGS %arg1 %arg2 %arg3)
+		  @ATTITUDE
+		  (^ XCOMP SUBJ) = %arg2
+		  :$ lam(X, lam(Y,lam(P,lam(S,drs([],[pred(believe,S), rel(arg1,X,S), rel(arg2,Y,S), cont(S,app(app(P,Y),S))]))))) :
+          (s::%arg1_e -o (s::%arg2_e -o ((s::(^XCOMP SUBJ)_e -o ((s::(^ XCOMP) SIT) _s -o (s::(^ XCOMP) SIT)_t)) -o ((s::^ SIT)_s -o (s::^ SIT)_t)))).
 
 "Intransitives"
 
@@ -427,7 +471,7 @@ implement V * @(TRANS see)
 	      @VPRES
 	      @BARE-AGR. 
 
-love 	  V-S XLE @(TRANS %stem).
+love 	  V-S XLE @(TRANS-EV %stem).
 
 receive   V-S XLE @(TRANS %stem).
 
@@ -494,12 +538,19 @@ on 	  P * @(PREP on).
 in 	  P * @(PREP in). 
 
 with 	  P * @(PREP with)
-	  @(PREP-SEM with). 
+	  @(PREP-SEM with).
+
+of 	  P * @(PREP of)
+      	  @(PREP-SEM of).
 
 
 "auxiliaries"
 
 was 	  AUX * @(TENSE past)
+            { @(PROG -_)
+              @(PERF -_) |
+             (^ TNS-ASP PROG)
+            }
 		{ (^ SUBJ PERS) = 1
                 | (^ SUBJ PERS) = 3
                 }
@@ -546,9 +597,9 @@ They 	  PRON * @(PRON they 3 pl pers)
 		 @(CASE nom). 
 
 they 	  PRON * @(PRON they 3 pl pers)
-		 @(CASE nom). 
+		 @(CASE nom).
 
-My 	  PRON * @(PRON my 1 sg poss). 
+My 	  PRON * @(PRON my 1 sg poss).
 
 my 	  PRON * @(PRON my 1 sg poss).
 
@@ -762,15 +813,27 @@ GLUE   BASIC   TEMPLATES (1.0)
 
    NAME-SCOPE(UP NAME) =
    %name = ({SUBJ | OBJ | OBJ2 | XCOMP | OBL-TO | OBL-AG | OBL | ADJUNCT}+ ^)
+   "proper names only anchored in finite clauses"
    (%name FIN) =c +
    NAME  = (s::%name SIT)
    (s::^ QUANT-SCOPE) = NAME.
 
      QUANT-SCOPE(UP NAME) =
   	  %name = ({SUBJ | OBJ | OBJ2 | XCOMP | OBL-TO | OBL-AG | OBL | ADJUNCT}+ ^)
-  	  (s::%name EV TYPE) =c eventuality
-  	  NAME = (s::%name SIT)
-  	  (s::^ QUANT-SCOPE) = NAME.
+  	 "quantifiers must be anchored in eventualities
+  	  EX: Mary saw the monkey with the telescope"
+  	  "both eventualities and entities are ultimately properties (i.e., type t)"
+  	  "prepositions have no such type so that quantifier scope does not scope over a preposition predicate,
+  	  e.g., of<OBJ>"
+  	  {
+	  (s::%name TYPE) =c eventuality
+	    NAME = (s::%name SIT)
+	     (s::^ QUANT-SCOPE) = NAME
+	   |
+  	    (s::%name TYPE) =c entity
+	    NAME = s::%name
+	     (s::^ QUANT-SCOPE) = NAME
+	     }.
 
 " Why does the below not work?
    QUANT-SCOPE(UP NAME) =
@@ -780,8 +843,8 @@ GLUE   BASIC   TEMPLATES (1.0)
 	  "
 
    ATTITUDE = (s::^ SIT) = %s
-   	      (s::^ EV TYPE) = eventuality
-	  { 
+   	      (s::^ TYPE) = eventuality
+	  {
 	    (^ ROOT)
 	    @TENSE-CLOSURE
 	   |
@@ -789,7 +852,7 @@ GLUE   BASIC   TEMPLATES (1.0)
 	    }.
 	  
    EVENT(REL) =
-	  (s::^ EV TYPE) = eventuality
+	  (s::^ TYPE) = eventuality
 	  (s::^ SIT) = %s
 	  :$ lam(V,drs([],[pred(REL,V)])) : ((s::^ EV)_v -o (s::^ EV)_t),
 	  :$ lam(V,lam(S,merge(drs([E],[rel(partOf,E,S)]),app(V,E)))) : (((s::^ EV)_v -o (s::^ EV)_t) -o (%s_s -o %s_t)),
@@ -801,8 +864,8 @@ GLUE   BASIC   TEMPLATES (1.0)
 
    PREP-SEM(P) =
              {
-	     %scope = (s::(ADJUNCT ^) EV)
-	     (%scope TYPE) =c eventuality
+	    %scope = (s::(ADJUNCT ^) EV)
+	    (s::(ADJUNCT ^) TYPE) =c eventuality
 	    :$ lam(U,lam(V,lam(E,merge(drs([],[]),merge(app(U,E),app(V,E)))))) :
 	    ((%scope_v -o s::^_t) -o ((%scope_v -o %scope_t) -o (%scope_v -o %scope_t))),
 	    :$ lam(Y,lam(X,drs([],[rel(P,X,Y)]))) : (s::(^OBJ)_e -o (%scope_v -o s::^_t)),
@@ -810,10 +873,10 @@ GLUE   BASIC   TEMPLATES (1.0)
 	    %scope = s::(ADJUNCT ^)
 	    (%scope TYPE) =c entity
 	    :$ lam(U,lam(V,lam(E,merge(drs([],[]),merge(app(U,E),app(V,E)))))) :
-	    ((s::(ADJUNCT ^)_e -o s::^_t) -o ((s::(ADJUNCT ^)_e -o %scope_t) -o (s::(ADJUNCT ^)_e -o %scope_t))) || noscope,
-	    :$ lam(Y,lam(X,drs([],[rel(P,X,Y)]))) : (s::(^OBJ)_e -o (s::(ADJUNCT ^)_e -o s::^_t)),
+	    ((%scope_e -o s::^_t) -o ((%scope_e -o %scope_t) -o (%scope_e -o %scope_t))) || noscope,
+	    :$ lam(Y,lam(X,drs([],[rel(P,X,Y)]))) : (s::(^OBJ)_e -o (%scope_e -o s::^_t)),
 	     }.
-           
+
  TENSE-CLOSURE = %tense = (s::^ TEMP-REF EVAL)
  :$ lam(P,merge(drs([T],[eq(T,now)]),app(P,T))) : ((%tense_s -o %tense_t) -o s::^_t).
 

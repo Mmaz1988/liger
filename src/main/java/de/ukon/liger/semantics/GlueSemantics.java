@@ -28,6 +28,7 @@ import de.ukon.liger.syntax.xle.Fstructure;
 import de.ukon.liger.utilities.HelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -127,9 +128,14 @@ public class GlueSemantics {
         }
 
 
-        List<Set<ChoiceVar>> keyListLiger = new ArrayList<>();
-        List<Set<ChoiceVar>> keyListGrammar = new ArrayList<>();
+       // List<Set<ChoiceVar>> keyListLiger = new ArrayList<>();
+      //  List<Set<ChoiceVar>> keyListGrammar = new ArrayList<>();
 
+        //Create union of unpackedSem and grammarSem keys
+        Set<Set<ChoiceVar>> allKeys = new HashSet<>(unpackedSem.keySet());
+        allKeys.addAll(grammarSem.keySet());
+
+        /*
         if (!unpackedSem.keySet().isEmpty())
         {
          keyListLiger = new ArrayList<>(unpackedSem.keySet());
@@ -139,50 +145,81 @@ public class GlueSemantics {
             keyListGrammar = new ArrayList<>(grammarSem.keySet());
         }
 
-         for (int i = 0; i < keyListLiger.size(); i++) {
-             Set<ChoiceVar> keyLiger = keyListLiger.get(i);
-            // for (int j = 0; i < keyListGrammar.size(); i++) {
+         */
 
-              if (keyListGrammar.contains(keyLiger))
-              {
-                 Set<ChoiceVar> keyGrammar = keyLiger;
+        if (allKeys.size() > 1)
+        {
+            allKeys.remove(fs.cp.rootChoice);
+        }
 
-                 if (keyLiger.equals(keyGrammar)) {
+        List<Set<ChoiceVar>> keyList = new ArrayList<>(allKeys);
 
-                     sb.append("{");
-                     sb.append("\n");
 
-                     if (!unpackedSem.get(keyLiger).isEmpty()) {
+         for (int i = 0; i < keyList.size(); i++) {
+             Set<ChoiceVar> key = keyList.get(i);
+             // for (int j = 0; i < keyListGrammar.size(); i++) {
+             boolean liger = unpackedSem.containsKey(key);
+             boolean grammar = grammarSem.containsKey(key);
+
+             if (liger || grammar) {
+                 sb.append("{");
+                 sb.append("\n");
+
+                 if (liger) {
+                     if (!unpackedSem.get(key).isEmpty()) {
                          sb.append("//Liger");
                          sb.append("\n");
 
 
-                         for (String s : unpackedSem.get(keyLiger)) {
+                         for (String s : unpackedSem.get(key)) {
                              sb.append(s);
                              sb.append("\n");
                          }
                      }
+                 } else {
+                   if (unpackedSem.containsKey(fs.cp.rootChoice) && !unpackedSem.get(fs.cp.rootChoice).isEmpty()) {
+                       sb.append("//Liger");
+                       sb.append("\n");
 
+                       for (String s : unpackedSem.get(fs.cp.rootChoice)) {
+                           sb.append(s);
+                           sb.append("\n");
+                       }
+                   }
+                 }
 
-                     if (!grammarSem.get(keyGrammar).isEmpty()) {
+                 if (grammar) {
+                     if (!grammarSem.get(key).isEmpty()) {
                          sb.append("//Grammar");
                          sb.append("\n");
 
-                         for (String s : grammarSem.get(keyGrammar)) {
+                         for (String s : grammarSem.get(key)) {
                              sb.append(s);
                              sb.append("\n");
                          }
                      }
+                    } else {
+                        if (grammarSem.containsKey(fs.cp.rootChoice) && !grammarSem.get(fs.cp.rootChoice).isEmpty()) {
+                            sb.append("//Grammar");
+                            sb.append("\n");
 
-                     sb.append("}");
+                            for (String s : grammarSem.get(fs.cp.rootChoice)) {
+                                sb.append(s);
+                                sb.append("\n");
+                            }
+                        }
 
-                     if (i < keyListLiger.size() - 1 || keyListLiger.size() -1 < keyListGrammar.size() - 1) {
-                         sb.append("\n");
-                     }
                  }
+             }
+             sb.append("}");
 
-                 }
+             if (i < keyList.size() - 1) {
+                 sb.append("\n");
+             }
+         }
 
+
+/*
               else {
                   for (int j = 0; j < keyListGrammar.size(); j++) {
                       Set<ChoiceVar> keyGrammar = keyListGrammar.get(j);
@@ -218,7 +255,8 @@ public class GlueSemantics {
                       }
                   }
               }
-             }
+
+ */
 
 
          if (prolog && unpackedSem.isEmpty())
@@ -393,8 +431,7 @@ public class GlueSemantics {
             //raise packed mcs to conjunctive normal form
             for (String i : multiElementMap.keySet())
             {
-                 for (Set<ChoiceVar> choice : multiElementMap.get(i).keySet())
-                 {
+                 for (Set<ChoiceVar> choice : multiElementMap.get(i).keySet()) {
                      if (!choice.equals(defaultReading)) {
                          if (!unpackedSem2.containsKey(choice)) {
                              unpackedSem2.put(choice, new HashSet<>());
@@ -412,6 +449,18 @@ public class GlueSemantics {
                              }
                          }
                      }
+
+                     /*
+                         //TODO there is a bug here,  with example EX: every representative of a company saw a sample
+                         // The problem is that there are two possible instantiations of a quantifier but there is also
+                         // a third one that is not working at all. So for readings R1..Rn:  A1 => R1, A2 = R2, and 1 => R3
+                         // but R3 uses a helper variable that is supposed to be replaced either in accordance with R1 or R2
+                     else {
+                         Set<ChoiceVar> newVar = fs.cp.returnNewChoiceVars(1);
+                         unpackedSem2.put(newVar, new HashSet<>());
+                         unpackedSem2.get(newVar).addAll(multiElementMap.get(i).get(choice));
+                     }
+                      */
                  }
             }
             return unpackedSem2;
@@ -519,6 +568,12 @@ public class GlueSemantics {
     }
 
    // private HashMap<Set<ChoiceVar>,String> unpackedMCs = new HashMap<>();
+
+    /*
+    TODO: EX: Every representative of a company saw a sample
+    f-structure not unpacked properly because distinct contexts are A1 and 1 (not, e.g., A1 vs A2).
+    ==> Do not replace mcs
+     */
     public HashMap<Set<ChoiceVar>,String> parseMCfromPackedProlog(String glueNode, List<GraphConstraint> ls)
     {
         HashMap<Set<ChoiceVar>,String> unpackedMeaningConstructors = new HashMap<>();

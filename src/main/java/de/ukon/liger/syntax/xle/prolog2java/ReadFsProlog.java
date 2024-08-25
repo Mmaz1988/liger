@@ -21,7 +21,9 @@
 
 package de.ukon.liger.syntax.xle.prolog2java;
 
+import de.ukon.liger.packing.ChoiceNode;
 import de.ukon.liger.packing.ChoiceSpace;
+import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.utilities.VariableHandler;
 
 import java.io.*;
@@ -135,7 +137,7 @@ public class ReadFsProlog implements Serializable {
             {
                 fStrReader = br;
             }
-                String fline;
+            String fline;
 
             //Read in f-structure information
             while ((fline = fStrReader.readLine()) != null)
@@ -185,10 +187,14 @@ public class ReadFsProlog implements Serializable {
        //     Pattern cstructure = Pattern.compile("((surfaceform|semform_data)\\(.+\\))");
 
             //TODO do not iterate through all lines again but only the necessary ones
-            while ((strLine = br.readLine()) != null) {
 
-                Matcher sentenceMatcher = sentence.matcher(strLine);
-                Matcher choiceMatcher = choice.matcher(strLine);
+            BufferedReader metaReader = new BufferedReader(new FileReader(inFile));
+
+            String metaLine;
+            while ((metaLine = metaReader.readLine()) != null) {
+
+                Matcher sentenceMatcher = sentence.matcher(metaLine);
+                Matcher choiceMatcher = choice.matcher(metaLine);
                 //             Matcher cstructureMatcher = cstructure.matcher(strLine);
 
                 if (sentenceMatcher.find()) {
@@ -219,7 +225,7 @@ public class ReadFsProlog implements Serializable {
         //close infile
 
 
-       fsConstraints = simplifyFs(fsConstraints);
+       fsConstraints = simplifyFs(fsConstraints,cp);
       //  fsConstraints = contractFstructure(fsConstraints);
        // fsConstraints = removeEqualities(fsConstraints);
 
@@ -373,7 +379,7 @@ public class ReadFsProlog implements Serializable {
             e.printStackTrace();
         }
 
-        fsConstraints = simplifyFs(fsConstraints);
+        fsConstraints = simplifyFs(fsConstraints, cp);
         //  fsConstraints = contractFstructure(fsConstraints);
         // fsConstraints = removeEqualities(fsConstraints);
 
@@ -382,7 +388,7 @@ public class ReadFsProlog implements Serializable {
     }
 
 
-    public static List<String> simplifyFs(List<String> fsConstraints)
+    public static List<String> simplifyFs(List<String> fsConstraints, ChoiceSpace cp)
     {
         HashMap<String,List<String[]>> varEqualities = new HashMap<>();
         HashMap<String,List<String[]>> valEqualities = new HashMap<>();
@@ -437,9 +443,22 @@ public class ReadFsProlog implements Serializable {
                             Matcher ambMatcher = ambiguities.matcher(fsConstraints.get(i));
                             //replace only the first instance of ambMatcher group 1 with context and add to currentAdditionalConstraints
                             if (ambMatcher.find()) {
-                                String replace = fsConstraints.get(i).replaceFirst(ambMatcher.group(1), context);
-                                replace = replace.replace(equal[0], equal[1]);
-                                currentAdditionalConstraints.add(replace);
+
+                                boolean competing = false;
+                                for (ChoiceNode choiceNode : cp.choiceNodes)
+                                {
+                                    if (choiceNode.daughterNodes.contains(new ChoiceVar(context)) &&
+                                    choiceNode.daughterNodes.contains(new ChoiceVar(ambMatcher.group(1))))
+                                    {
+                                        competing = true;
+                                        break;
+                                    }
+                                }
+                                if (!competing) {
+                                    String replace = fsConstraints.get(i).replaceFirst(ambMatcher.group(1), context);
+                                    replace = replace.replace(equal[0], equal[1]);
+                                    currentAdditionalConstraints.add(replace);
+                                }
                             }
                         }
                     }
