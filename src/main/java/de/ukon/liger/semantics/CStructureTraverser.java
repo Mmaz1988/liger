@@ -58,10 +58,13 @@ public class CStructureTraverser {
 
     public void traverseCstructure2(Object cstructure, String anchor){
 
+        // cstructure should always be a singleton set due to its tree structure; values are daughters
         String currentRoot = (String) ((LinkedHashMap) cstructure).keySet().stream().findAny().get();
         String currentCproj = getCProj(currentRoot);
         boolean subOrdinateAnchor = false;
 
+
+        //initiate a root node for the proof tree
         if (anchor == null)
         {
             anchor = "root";
@@ -82,6 +85,7 @@ public class CStructureTraverser {
                 {
                     equalities.get("root").add(potentialPC.node);
                 }
+                //break?
             }
 
 
@@ -90,6 +94,7 @@ public class CStructureTraverser {
             //Check if the current c-projection is covered by any proof constraint
             for (ProofConstraint pc : proofTree) {
                 if (!pc.elements.isEmpty() && currentCproj != null) {
+                    //Check if c-projection is associated with current node
                     if (pc.elements.contains(currentCproj)) {
 
 
@@ -104,8 +109,9 @@ public class CStructureTraverser {
                             if (!equalities.containsKey(previousAnchor))
                             {
                                 equalities.put(previousAnchor,new HashSet<>());
-                                equalities.get(previousAnchor).add(anchor);
-                            }} else {
+                            }
+                            equalities.get(previousAnchor).add(anchor);
+                        } else {
 
                             // String newAnchor = previousAnchor;
                             for (String key : equalities.keySet())
@@ -122,7 +128,10 @@ public class CStructureTraverser {
                             glueTree2.put(anchor, new HashSet<>());
                         }
                         break;
-                    } else {
+                    }
+                    else
+                    {
+                        // Check if c-projection is associated with any daughter node
                         boolean isDaughter = false;
                         for (String daughter : pc.daughters.keySet()) {
                             if (pc.daughters.get(daughter).contains(currentCproj)) {
@@ -159,6 +168,7 @@ public class CStructureTraverser {
 
             //recursively traverse down the tree
             if (((LinkedHashMap) cstructure).get(currentRoot) != null) {
+
                 //if available, recurse down right node first
                 if (((LinkedHashMap) cstructure).get(currentRoot) instanceof Object[]) {
                     Object[] keySet = (Object[]) ((LinkedHashMap) cstructure).get(currentRoot);
