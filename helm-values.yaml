@@ -19,6 +19,11 @@ app:
 
   regcred: regcred-cuepaq
 
+#   requests:
+#    cpu: 250m
+#    memory: 1gi
+#    ephemeralStorage: 1Gi
+
   requests:
     cpu: 10m
     memory: 128Mi
