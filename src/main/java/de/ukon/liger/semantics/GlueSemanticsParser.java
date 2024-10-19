@@ -2,6 +2,7 @@ package de.ukon.liger.semantics;
 
 import de.ukon.liger.utilities.VariableHandler;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,6 +52,25 @@ public class GlueSemanticsParser {
 
         System.out.println(mc);
 
+    }
+
+    public String convertGlueGrammar(String grammarString) throws IOException {
+        //get all files in glueDir
+
+        //Determine glueDir from selected file (i.e., the dir the file is in)
+
+        File grammarFile = new File(grammarString);
+        String glueDir = grammarFile.getParent();
+
+        List<Path> files = new ArrayList<>();
+        Files.walk(Path.of(glueDir)).filter(Files::isRegularFile).forEach(files::add);
+
+        for (Path file : files) {
+            if (file.toString().endsWith(".lfg.glue")) {
+                createLFGfile(file.toString());
+            }
+        }
+        return grammarString.substring(0,grammarString.length() - 5);
     }
 
     public void createLFGfile(String lfgGlueFile) throws IOException {

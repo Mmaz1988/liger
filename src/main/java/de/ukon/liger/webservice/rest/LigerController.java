@@ -33,7 +33,9 @@ import de.ukon.liger.webservice.rest.dtos.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -542,7 +544,7 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
     }
 
 
-
+/*
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @GetMapping(value = "/list_grammars", produces = "application/json")
@@ -556,6 +558,21 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
 
        return new GrammarList(grammarPaths);
     }
+
+ */
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @GetMapping(value = "/list_grammars1", produces = "application/json")
+    public FileTree listGrammar1() throws Exception {
+
+        String grammarPaths = Paths.get("./grammars").toString();
+        FileTree ft = FileTree.buildFileTree(new File(grammarPaths));
+
+        LOGGER.info("Listing grammars in ./grammars.");
+
+        return ft;
+    }
+
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
