@@ -28,7 +28,7 @@ public class GlueSemanticsParser {
 
 
         /*
-         String testFile = "/Users/princess_zelda/Projects/multistage_proving/multistage_xle_adj.lfg.glue";
+         String testFile = "/Users/princess_zelda/Projects/multistage_proving/multistage_grammar.lfg.glue";
 
         GlueSemanticsParser gs = new GlueSemanticsParser(new VariableHandler());
 

@@ -202,13 +202,16 @@ public class XLEStarter {
     }
 
 
+    /**
+     * If grammar is a single grammar, only translate grammar to LFG format
+     * @throws IOException
+     */
     public void useGlueGrammar() throws IOException {
         if (this.grammarPath.endsWith(".glue")) {
             GlueSemanticsParser gp = new GlueSemanticsParser(new VariableHandler());
 
-            gp.createLFGfile(this.grammarPath);
+            this.grammarPath = gp.convertGlueGrammar(this.grammarPath);
             // use this.grammarPath without .glue ending
-            this.grammarPath = this.grammarPath.substring(0, this.grammarPath.length() - 5);
             this.isGlue = true;
         } else {
             this.isGlue = false;
