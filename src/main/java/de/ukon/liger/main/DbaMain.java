@@ -128,7 +128,7 @@ public class DbaMain {
                 case "-glue2lfg":
                     File glueFile = new File(args[i + 1]);
                     GlueSemanticsParser gps = new GlueSemanticsParser(new VariableHandler());
-                    gps.createLFGfile(glueFile.toString());
+                    gps.convertGlueGrammar(glueFile.toString());
                     System.exit(0);
                     break;
 
