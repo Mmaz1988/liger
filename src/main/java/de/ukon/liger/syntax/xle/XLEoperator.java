@@ -196,43 +196,40 @@ public class XLEoperator extends SyntaxOperator {
         {
             LOGGER.warning("Something went wrong while setting temporary files for parsing.\n" + e.getMessage());
         }
-        try
-        {
-            // For windows
-            //ProcessBuilder proc = new ProcessBuilder("wsl",xlebashcommand);
-            //For mac
+        try {
             String processString = xlebashcommand;
 
             if (this.os.equals(XLEStarter.OS.WINDOWS)) {
-
-                //Translate windows path to unix path
-                // trans late [A-Z]: to /mnt/[a-z]
-
                 processString = HelperMethods.formatWslString(processString);
-
-             //   processString = "wsl" + processString;
             }
 
-            ProcessBuilder proc = null;
+            ProcessBuilder proc = this.os.equals(XLEStarter.OS.WINDOWS)
+                    ? new ProcessBuilder("wsl", processString)
+                    : new ProcessBuilder(processString);
 
-            if (this.os.equals(XLEStarter.OS.WINDOWS)) {
-            proc = new ProcessBuilder("wsl", processString);
-            } else
-            {
-                proc = new ProcessBuilder(processString);
+            Process process = proc.start();
+
+            // Log the process output
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                 BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    LOGGER.info(line);
+                }
+
+                while ((line = errorReader.readLine()) != null) {
+                    LOGGER.severe(line);
+                }
             }
 
-            proc.start().waitFor();
+            int exitCode = process.waitFor();
+            LOGGER.info("Process exited with code: " + exitCode);
 
-          //  f.delete();
-
-
-
-
-        } catch (Exception e)
-        {
-            e.printStackTrace();
+        } catch (Exception e) {
+            LOGGER.warning("Failed to execute process: " + e.getMessage());
         }
+
     }
 
     //TODO parse multiple
