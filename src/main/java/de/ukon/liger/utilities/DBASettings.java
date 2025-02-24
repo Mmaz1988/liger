@@ -39,6 +39,10 @@ public class DBASettings {
     //resources directory
     public String resources;
 
+    public Boolean prolog; //prolog or glue
+
+    public String glueGrammarFile;
+
     public Boolean semanticParsing;
     public Boolean interactiveMode;
 
@@ -63,6 +67,7 @@ public class DBASettings {
         this.multi = false;
         this.os = determineOs();
         this.multi = false;
+        this.prolog = false;
     }
 
 
