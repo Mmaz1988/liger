@@ -33,6 +33,7 @@ import de.ukon.liger.webservice.rest.dtos.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -560,6 +561,7 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
     }
 
  */
+    /*
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @GetMapping(value = "/list_grammars1", produces = "application/json")
@@ -572,12 +574,27 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
 
         return ft;
     }
+     */
+
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/list_grammars1", produces = "application/json", consumes = "application/json")
+    public FileTree listGrammar1(@RequestBody GrammarString gs) throws Exception {
+
+        String grammarPaths = Paths.get(gs.grammar).toString();
+        FileTree ft = FileTree.buildFileTree(new File(grammarPaths));
+
+        LOGGER.info("Listing files in " + gs.grammar + ".");
+
+        return ft;
+    }
+
 
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/change_grammar", produces = "application/json", consumes = "application/json")
-    public GrammarString listGrammars(@RequestBody GrammarString gs) throws IOException {
+    public GrammarString changeGrammars(@RequestBody GrammarString gs) throws IOException {
 
         LOGGER.info("Changing grammar to " + gs.grammar + ".");
 
@@ -591,6 +608,30 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
 
     }
 
+
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/load_rules", produces = "application/json", consumes = "application/json")
+    public GrammarString loadRules(@RequestBody GrammarString gs) throws IOException {
+
+        LOGGER.info("Loading rules from " + gs.grammar + ".");
+
+        File f = new File(gs.grammar);
+        //Load string content of file
+        BufferedReader br = new BufferedReader(new java.io.FileReader(f));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = br.readLine()) != null) {
+            sb.append(line);
+            sb.append(System.lineSeparator());
+        }
+        br.close();
+
+        String ruleString = sb.toString();
+
+        return new GrammarString(ruleString);
+
+    }
 
 
 /*
