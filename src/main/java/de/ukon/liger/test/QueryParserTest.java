@@ -794,7 +794,7 @@ public class QueryParserTest {
 
         rp.addAnnotation2(fslist.get(0));
 
-        assertEquals(463, fslist.get(0).constraints.size());
+        assertEquals(420, fslist.get(0).constraints.size());
     }
 
     /**

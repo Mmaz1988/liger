@@ -23,6 +23,12 @@ package de.ukon.liger.utilities;
 
 import de.ukon.liger.syntax.GraphConstraint;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -206,6 +212,24 @@ public class HelperMethods {
     }
     return mcs;
 }
+
+    public static String computeSHA256(File file) throws IOException, NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        try (InputStream fis = new FileInputStream(file)) {
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                digest.update(buffer, 0, bytesRead);
+            }
+        }
+        byte[] hashBytes = digest.digest();
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hashBytes) {
+            hexString.append(String.format("%02x", b));
+        }
+        return hexString.toString();
+    }
+
 }
 
 

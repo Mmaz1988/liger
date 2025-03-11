@@ -26,12 +26,14 @@ import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.xle.XLEoperator;
-import de.ukon.liger.utilities.HelperMethods;
 import de.ukon.liger.utilities.VariableHandler;
 import de.ukon.liger.utilities.XLEStarter;
 import de.ukon.liger.webservice.rest.dtos.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -53,159 +55,15 @@ public class LigerController {
 
     };
 
-        //return new TestGraph(nodeList);
-        //new Greeting(counter.incrementAndGet(),String.format(template,in));
+
+    /************************************************************************
+     Methods for processing single sentences
+     TODO: allow for switching between packed and unpacked f-structures
+     ************************************************************************/
 
 
-    /*
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @PostMapping(value = "/semantics", produces = "application/json")
-    public LigerWebGraph semanticsRequest2(
-            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) throws IOException {
-
-        UDoperator parser = new UDoperator();
-
-        LinguisticStructure fs = parser.parseSingle(input);
-        LOGGER.fine(fs.constraints.toString());
-      //  System.out.println(fs.constraints);
-        List<LinguisticStructure> fsList = new ArrayList<>();
-        fsList.add(fs);
-
-        RuleParser rp = new RuleParser(fsList, Paths.get(PathVariables.testPath + "testRulesUD1.txt"));
-        rp.addAnnotation2(fs);
-
-        try {
-            fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
-        } catch (Exception e) {
-          LOGGER.warning("Sorting annotation failed.");
-        }
-
-        GlueSemantics sem = new GlueSemantics();
-        String semantics = sem.calculateSemantics(fs);
-
-
-      //  return new TestGraph(nodeList,semantics);
-
-
-
-        return new LigerWebGraph(fs.constraints,fs.annotation,semantics);
-        //new Greeting(counter.incrementAndGet(),String.format(template,in));
-    }
-
-*/
-
-
-
-    /*
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @PostMapping(value = "/semantics_xle", produces = "application/json")
-    public LigerWebGraph semanticsRequestXLE(
-            @RequestParam(value = "in", defaultValue = "Didn't pass sentence") String input) throws IOException {
-
-        XLEoperator parser = new XLEoperator(new VariableHandler());
-
-        LinguisticStructure fs = parser.parseSingle(input);
-        LOGGER.fine(fs.constraints.toString());
-        //  System.out.println(fs.constraints);
-        List<LinguisticStructure> fsList = new ArrayList<>();
-        fsList.add(fs);
-
-        RuleParser rp = new RuleParser(fsList, Paths.get(PathVariables.testPath + "testRulesLFG9.txt"));
-        rp.addAnnotation2(fs);
-
-        try {
-            fs.annotation.sort(Comparator.comparing(GraphConstraint::getFsNode));
-        } catch (Exception e) {
-            LOGGER.warning("Sorting annotation failed.");
-        }
-        GlueSemantics sem = new GlueSemantics();
-        String semantics = sem.calculateSemantics(fs);
-
-        //  return new TestGraph(nodeList,semantics);
-
-        return new LigerWebGraph(fs.constraints,fs.annotation,semantics);
-        //new Greeting(counter.incrementAndGet(),String.format(template,in));
-    }
-    */
-
-/*
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @PostMapping(value = "/apply_rule_xle", produces = "application/json", consumes = "application/json")
-    public LigerRuleAnnotation applyRuleRequestXLE(@RequestBody LigerRequest request) {
-
-        //    System.out.println(request.sentence);
-        //   System.out.println(request.ruleString);
-        XLEoperator parser = new XLEoperator(new VariableHandler());
-
-        LinguisticStructure fs = parser.parseSingle(request.sentence);
-        LOGGER.fine(fs.constraints.toString());
-        // System.out.println(fs.constraints);
-        List<LinguisticStructure> fsList = new ArrayList<>();
-        fsList.add(fs);
-
-        RuleParser rp = new RuleParser(fsList, request.ruleString);
-        rp.addAnnotation2(fs);
-
-        GlueSemantics sem = new GlueSemantics();
-        String semantics = sem.returnMeaningConstructors(fs);
-
-        LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation,semantics);
-
-        return new LigerRuleAnnotation(lg,rp.getAppliedRules(),sem.returnMeaningConstructors(fs));
-    }
-
- */
-
-@CrossOrigin
-    //(origins = "http://localhost:63342")
-@PostMapping(value = "hybrid_analysis", produces = "application/json", consumes = "application/json")
-public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) throws IOException {
-
-    XLEStarter starter = new XLEStarter();
-    starter.generateXLEStarterFile();
-    XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
-
-    //Load f-structure
-    String fsProlog = parser.parse2Prolog(request.sentence);
-    LinkedHashMap<String,LinguisticStructure> fsRef = parser.fsString2Java(fsProlog,"S1");
-    LinguisticStructure fs = fsRef.get(fsRef.keySet().iterator().next());
-    List<LinguisticStructure> fsList = new ArrayList<>();
-    fsList.add(fs);
-
-
-    //Annotate f-structure with liger
-    RuleParser rp = new RuleParser(fsList, request.ruleString);
-    rp.addAnnotation2(fs);
-
-    List<LigerRule> appliedLigerRules = new ArrayList<>();
-    for (Rule r : rp.getAppliedRules())
-    {
-        appliedLigerRules.add(new LigerRule(r.toString(),r.getRuleIndex(),r.getLineNumber()));
-    }
-
-    LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation);
-
-    //Create Glue semantics
-    GlueSemantics sem = new GlueSemantics();
-
-    String extractedMCs = sem.extractMCsFromFs(fsProlog);
-    String ligerMCs = sem.returnMeaningConstructors(fs,false,false);
-
-    //Remove last line from extractedMCs
-    extractedMCs = HelperMethods.unwrapMCs(extractedMCs);
-    ligerMCs = HelperMethods.unwrapMCs(ligerMCs);
-
-    String outputMCs = "{\n//grammar\n" + extractedMCs + "\n//liger\n" + ligerMCs + "\n}";
-
-
-    return new LigerRuleAnnotation(lg,appliedLigerRules,outputMCs);
-
-}
-
-//Extract mcs from grammar. No call to LiGER.
+    /** This method is used for analyzying a multistage grammar. This only allows mcs from the grammar
+     */
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/parse_xle", produces = "application/json", consumes = "application/json")
@@ -217,24 +75,29 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
         starter.generateXLEStarterFile();
         XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
 
-
         String fsProlog = parser.parse2Prolog(request.sentence);
 
-        LinkedHashMap<String,LinguisticStructure> fsRef = parser.fsString2Java(fsProlog,"S1");
-
-        LinguisticStructure fs = fsRef.get(fsRef.keySet().iterator().next());
+        List<LinguisticStructure> fsList = parser.parseSingle(request.sentence, true);
 
        // System.out.println(fs.getSubstructures("GLUE"));
 
-        LOGGER.fine(fs.constraints.toString());
-
-        LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation);
+        LigerWebGraph lg = null;
 
         GlueSemantics sem = new GlueSemantics();
+        List<String> semString = new ArrayList<>();
 
-        return new LigerRuleAnnotation(lg,null,sem.returnMultiStageMeaningConstructors(fs));
+        for (LinguisticStructure fs : fsList) {
+            LOGGER.fine(fs.constraints.toString());
+            lg = new LigerWebGraph(fs.constraints,fs.annotation);
+            semString.add(sem.returnMultiStageMeaningConstructors(fs));
+        }
+
+        return new LigerRuleAnnotation(lg,null,String.join("\n",semString));
     }
 
+
+    /** The method for applying a hybrid semantic analysis with meaning constructors in the grammar and additiona mcs from Liger
+     */
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rules_xle", produces = "application/json", consumes = "application/json")
@@ -246,29 +109,43 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
         starter.generateXLEStarterFile();
         XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
 
-        LinguisticStructure fs = parser.parseSingle(request.sentence);
-        LOGGER.fine(fs.constraints.toString());
-        // System.out.println(fs.constraints);
-        List<LinguisticStructure> fsList = new ArrayList<>();
-        fsList.add(fs);
+        //request.unpack
+        List<LinguisticStructure> fsList = parser.parseSingle(request.sentence,true);
 
         RuleParser rp = new RuleParser(fsList, request.ruleString);
-        rp.addAnnotation2(fs);
 
         GlueSemantics sem = new GlueSemantics();
+        List<String> semString = new ArrayList<>();
+        LigerWebGraph lg = null;
 
-        LigerWebGraph lg = new LigerWebGraph(fs.constraints,fs.annotation);
+        LinkedHashMap<String,List<LigerRule>> appliedRules = new LinkedHashMap<>();
 
-        List<LigerRule> appliedLigerRules = new ArrayList<>();
-        for (Rule r : rp.getAppliedRules())
-        {
-            appliedLigerRules.add(new LigerRule(r.toString(),r.getRuleIndex(),r.getLineNumber()));
+        for (LinguisticStructure fs : fsList) {
+            List<LigerRule> appliedLigerRules = new ArrayList<>();
+
+            rp.addAnnotation2(fs);
+
+            lg = new LigerWebGraph(fs.constraints, fs.annotation);
+
+
+            for (Rule r : rp.getAppliedRules()) {
+                appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
+            }
+            appliedRules.put(fs.local_id,appliedLigerRules);
+            semString.add(sem.returnMeaningConstructors(fs,!starter.isGlue,false));
         }
 
-        return new LigerRuleAnnotation(lg,appliedLigerRules,sem.returnMeaningConstructors(fs,!starter.isGlue,false));
+        return new LigerRuleAnnotation(lg,
+                                    appliedRules.get(appliedRules.keySet().stream().findFirst().get()),
+                                    String.join("\n",semString));
     }
 
 
+    /************************************************************************
+     Methods for batch processing
+     ************************************************************************/
+
+    //Method for applying hybrid semantic analysis to a testsuite
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rules_to_batch", produces = "application/json", consumes = "application/json")
@@ -322,46 +199,51 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
             }
         });
 
+        GlueSemantics sem = new GlueSemantics();
+
         //Parsing routine
         for (int i = 0; i < keys.size(); i++) {
 
             String id = keys.get(i);
             String sentence = request.sentences.get(id);
 
-            LinguisticStructure fs = parser.parseSingle(sentence);
-            fs.local_id = id;
-            LOGGER.fine(fs.constraints.toString());
-            // System.out.println(fs.constraints);
-            List<LinguisticStructure> fsList = new ArrayList<>();
-            fsList.add(fs);
+            LigerWebGraph lg = null;
+            List<String> semString = new ArrayList<>();
 
-            if (!request.ruleString.equals("")) {
-                rp.addAnnotation2(fs);
-            }
-           // rp.addAnnotation2(fs);
-
-            GlueSemantics sem = new GlueSemantics();
-
-            LigerWebGraph lg = new LigerWebGraph(fs.constraints, fs.annotation);
-
+            List<LinguisticStructure> fsList = parser.parseSingle(sentence);
             List<LigerRule> appliedLigerRules = new ArrayList<>();
+
+            int addedAnnotations = 0;
+
             for (Rule r : rp.getAppliedRules()) {
                 appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
             }
 
+            for (LinguisticStructure fs : fsList) {
 
-            String semString = sem.returnMeaningConstructors(fs,!starter.isGlue,false);
+                if (!request.ruleString.equals("")) {
+                    rp.addAnnotation2(fs);
+                }
+                // rp.addAnnotation2(fs);
 
-            List<String> meaningConstructors = List.of(semString.split("\n"));
-            //remove lines which equal }\n or {\n
-            meaningConstructors = meaningConstructors.stream().filter(s -> !s.equals("}") && !s.equals("{") && !s.startsWith("//")).collect(Collectors.toList());
+                semString.add(sem.returnMeaningConstructors(fs, !starter.isGlue, false));
+                addedAnnotations = addedAnnotations + fs.annotation.size();
+            }
+                String currentSemString = String.join("\n", semString);
 
 
-            reportBuilder.append(String.format("%s\t\t%s\t\t%s\t\t%s", id, appliedLigerRules.size(), fs.annotation.size(),meaningConstructors.size()));
-            reportBuilder.append(System.lineSeparator());
+                List<String> meaningConstructors = List.of(currentSemString.split("\n"));
+                //remove lines which equal }\n or {\n
+                meaningConstructors = meaningConstructors.stream().filter(s -> !s.equals("}") && !s.equals("{") && !s.startsWith("//")).collect(Collectors.toList());
 
-            output.put(id,new LigerRuleAnnotation(lg, appliedLigerRules, semString));
-            allAppliedRules.add(appliedLigerRules);
+                lg = new LigerWebGraph(fsList.get(0).constraints, fsList.get(0).annotation);
+
+                reportBuilder.append(String.format("%s\t\t%s\t\t%s\t\t%s", id, appliedLigerRules.size(), addedAnnotations, meaningConstructors.size()));
+                reportBuilder.append(System.lineSeparator());
+
+                output.put(id, new LigerRuleAnnotation(lg, appliedLigerRules, currentSemString));
+                allAppliedRules.add(appliedLigerRules);
+
 
 
         }
@@ -371,103 +253,7 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
         return new LigerBatchParsingAnalysis(output,appliedRulesGraph,reportBuilder.toString());
         }
 
-
-
-        public List<LigerGraphComponent> createLigerAnnotationGraph(HashMap<String,String> sentences,  RuleParser rp, List<List<LigerRule>> allAppliedRules) {
-
-            List<LigerGraphComponent> appliedRulesGraph = new ArrayList<>();
-
-            for (int i = 0; i < rp.getRules().size(); i++) {
-                Rule r = rp.getRules().get(i);
-                HashMap<String, Object> node = new HashMap<>();
-                node.put("rule", r.toString());
-                node.put("id", i);
-                node.put("line", r.getLineNumber());
-                node.put("node_type", "rule");
-
-                LigerGraphComponent lgc = new LigerGraphComponent(node);
-                appliedRulesGraph.add(lgc);
-            }
-
-
-            // HashMap<String, LigerGraphComponent> nodes = new HashMap<>();
-            HashMap<String, LigerGraphComponent> edges = new HashMap<>();
-
-            for (List<LigerRule> appliedRules : allAppliedRules)
-            {
-                for (int i = 0; i < appliedRules.size()-1; i = i + 1)
-                {
-                /*
-                if (!nodes.containsKey(String.valueOf(appliedRules.get(i).index)))
-                {
-                    HashMap<String,Object> node = new HashMap<>();
-                    node.put("rule",appliedRules.get(i).rule);
-                    node.put("id", appliedRules.get(i).index);
-                    node.put("line", appliedRules.get(i).lineNumber);
-                    node.put("node_type","rule");
-
-                    LigerGraphComponent lgc = new LigerGraphComponent(node);
-
-                    nodes.put(String.valueOf(appliedRules.get(i).index),lgc);
-                }
-
-                if (!nodes.containsKey(String.valueOf(appliedRules.get(i+1).index)))
-                {
-                    HashMap<String,Object> node = new HashMap<>();
-                    node.put("rule",appliedRules.get(i+1).rule);
-                    node.put("id", appliedRules.get(i+1).index);
-                    node.put("line", appliedRules.get(i+1).lineNumber);
-                    node.put("node_type","rule");
-
-                    LigerGraphComponent lgc = new LigerGraphComponent(node);
-
-                    nodes.put(String.valueOf(appliedRules.get(i+1).index),lgc);
-                }
-
-                 */
-
-                    if (!edges.containsKey(appliedRules.get(i).index + "+" +
-                            appliedRules.get(i+1).index))
-                    {
-                        HashMap<String,Object> edge = new HashMap<>();
-                        edge.put("source",appliedRules.get(i).index);
-
-                        edge.put("target", appliedRules.get(i+1).index);
-                        edge.put("timesUsed",1);
-                        edge.put("edge_type","edge");
-
-                        edge.put("id",appliedRules.get(i).index + "+" +
-                                appliedRules.get(i+1).index);
-
-                        LigerGraphComponent lgc = new LigerGraphComponent(edge);
-
-                        edges.put(appliedRules.get(i).index + "+" +
-                                appliedRules.get(i+1).index, lgc);
-                    } else
-                    {
-                        String edgeID = appliedRules.get(i).index + "+" +
-                                appliedRules.get(i+1).index;
-
-                        Object timesUsed = edges.get(edgeID).data.get("timesUsed");
-
-                        edges.get(edgeID).data.put("timesUsed", (Integer) timesUsed + 1);
-
-                    }
-
-
-
-
-                }
-
-                // appliedRulesGraph.addAll(nodes.values());
-                appliedRulesGraph.addAll(edges.values());
-            }
-
-            return appliedRulesGraph;
-
-        }
-
-
+        //Method for applying a multistage grammar to a testsuite
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/multistage_to_batch", produces = "application/json", consumes = "application/json")
@@ -505,28 +291,27 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
             }
         });
 
+        GlueSemantics sem = new GlueSemantics();
 
         for (int i = 0; i < keys.size(); i++) {
 
             String id = keys.get(i);
             String sentence = request.sentences.get(id);
-
-            LinguisticStructure fs = parser.parseSingle(sentence);
-            fs.local_id = id;
-            LOGGER.fine(fs.constraints.toString());
-            // System.out.println(fs.constraints);
-            List<LinguisticStructure> fsList = new ArrayList<>();
-            fsList.add(fs);
-
-
-
-            GlueSemantics sem = new GlueSemantics();
-
-            LigerWebGraph lg = new LigerWebGraph(fs.constraints, fs.annotation);
-
             Integer numberOfMcs = 0;
 
-            String mcs = sem.returnMultiStageMeaningConstructors(fs);
+            List<LinguisticStructure> fslist = parser.parseSingle(sentence);
+
+            LigerWebGraph lg = null;
+            List<String> semString = new ArrayList<>();
+
+            for (LinguisticStructure fs : fslist) {
+
+                lg = new LigerWebGraph(fs.constraints, fs.annotation);
+
+               semString.add(sem.returnMultiStageMeaningConstructors(fs));
+            }
+
+            String mcs = String.join("\n", semString);
 
             if (mcs != null) {
                 List<String> meaningConstructors = List.of(mcs.split("\n"));
@@ -544,37 +329,9 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
         return new LigerBatchParsingAnalysis(output,null,reportBuilder.toString());
     }
 
-
-/*
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @GetMapping(value = "/list_grammars", produces = "application/json")
-    public GrammarList listGrammars() throws IOException {
-
-       XLEStarter starter = new XLEStarter();
-
-       List<String> grammarPaths = starter.listGrammars();
-
-        LOGGER.info("Listed grammars in ./grammars." + grammarPaths.size() + " grammars found.");
-
-       return new GrammarList(grammarPaths);
-    }
-
- */
-    /*
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @GetMapping(value = "/list_grammars1", produces = "application/json")
-    public FileTree listGrammar1() throws Exception {
-
-        String grammarPaths = Paths.get("./grammars").toString();
-        FileTree ft = FileTree.buildFileTree(new File(grammarPaths));
-
-        LOGGER.info("Listing grammars in ./grammars.");
-
-        return ft;
-    }
-     */
+    /************************************************************************
+    Methods for file handling
+     ************************************************************************/
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
@@ -633,37 +390,63 @@ public LigerRuleAnnotation hybridAnalysis(@RequestBody LigerRequest request) thr
 
     }
 
+    /************************************************************************
+     Other stuff
+     ************************************************************************/
 
-/*
-    @CrossOrigin
-    //(origins = "http://localhost:63342")
-    @PostMapping(value = "/annotate_xle", produces = "application/json", consumes = "application/json")
-    public LigerWebGraph annotateXLEoutput(@RequestBody LigerRequest request) throws IOException {
+    public List<LigerGraphComponent> createLigerAnnotationGraph(HashMap<String,String> sentences,  RuleParser rp, List<List<LigerRule>> allAppliedRules) {
 
-        //    System.out.println(request.sentence);
-        //   System.out.println(request.ruleString);
-        XLEoperator parser = new XLEoperator(new VariableHandler());
-        try {
-            LinguisticStructure fs = parser.parseSingle(request.sentence);
+        List<LigerGraphComponent> appliedRulesGraph = new ArrayList<>();
 
-       // System.out.println(fs.constraints);
-        List<LinguisticStructure> fsList = new ArrayList<>();
-        fsList.add(fs);
+        for (int i = 0; i < rp.getRules().size(); i++) {
+            Rule r = rp.getRules().get(i);
+            HashMap<String, Object> node = new HashMap<>();
+            node.put("rule", r.toString());
+            node.put("id", i);
+            node.put("line", r.getLineNumber());
+            node.put("node_type", "rule");
 
-        RuleParser rp = new RuleParser(fsList, request.ruleString,true);
-        rp.addAnnotation2(fs);
-
-        GlueSemantics sem = new GlueSemantics();
-        String semantics = sem.returnMeaningConstructors(fs);
-
-
-        return new LigerWebGraph(fs.constraints,fs.annotation,semantics);
-
-        }catch(Exception e)
-        {
-            LOGGER.warning("Failed to load xle prolog file.");
+            LigerGraphComponent lgc = new LigerGraphComponent(node);
+            appliedRulesGraph.add(lgc);
         }
-        return null;
+
+        HashMap<String, LigerGraphComponent> edges = new HashMap<>();
+
+        for (List<LigerRule> appliedRules : allAppliedRules)
+        {
+            for (int i = 0; i < appliedRules.size()-1; i = i + 1)
+            {
+                if (!edges.containsKey(appliedRules.get(i).index + "+" +
+                        appliedRules.get(i+1).index))
+                {
+                    HashMap<String,Object> edge = new HashMap<>();
+                    edge.put("source",appliedRules.get(i).index);
+
+                    edge.put("target", appliedRules.get(i+1).index);
+                    edge.put("timesUsed",1);
+                    edge.put("edge_type","edge");
+
+                    edge.put("id",appliedRules.get(i).index + "+" +
+                            appliedRules.get(i+1).index);
+
+                    LigerGraphComponent lgc = new LigerGraphComponent(edge);
+
+                    edges.put(appliedRules.get(i).index + "+" +
+                            appliedRules.get(i+1).index, lgc);
+                } else
+                {
+                    String edgeID = appliedRules.get(i).index + "+" +
+                            appliedRules.get(i+1).index;
+
+                    Object timesUsed = edges.get(edgeID).data.get("timesUsed");
+
+                    edges.get(edgeID).data.put("timesUsed", (Integer) timesUsed + 1);
+                }
+            }
+            // appliedRulesGraph.addAll(nodes.values());
+            appliedRulesGraph.addAll(edges.values());
+        }
+        return appliedRulesGraph;
     }
- */
+
 }

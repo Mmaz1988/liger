@@ -142,7 +142,9 @@ public class CStructureTraverser {
                                 if (!glueTree2.containsKey(previousAnchor)) {
                                     glueTree2.put(previousAnchor, new HashSet<>());
                                 }
-                                glueTree2.get(previousAnchor).add(daughter);
+                                if (previousAnchor != daughter) {
+                                    glueTree2.get(previousAnchor).add(daughter);
+                                }
                                 break;
                             }
                         }

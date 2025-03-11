@@ -20,9 +20,9 @@ public class XLEStarter {
 
     ;
 
-    public String xlePath;
+    public static String xlePath;
     public String grammarPath;
-    public OS operatingSystem;
+    public static OS operatingSystem;
 
     public boolean isGlue;
 
@@ -76,6 +76,106 @@ public class XLEStarter {
 
         LOGGER.info("Initialized paths...");
 
+    }
+
+
+    /*
+    Example command: xle -noTk -e "unpack-prolog-graph fschart2 100; exit"
+     */
+
+    public static String unpackFsViaXLE(String fsPath, String noOfSolutions) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("#!/bin/bash\n");
+
+        /*
+        export XLEPATH=/bin/xle
+        export PATH=${XLEPATH}/bin:$PATH
+        export DYLD_LIBRARY_PATH=$XLEPATH/lib:$XLEPATH/bin/sp-3.12.7
+        export LD_LIBRARY_PATH=${XLEPATH}/lib
+        export LD_LIBRARY_PATH=${XLEPATH}/lib:$LD_LIBRARY_PATH
+        export DYLD_LIBRARY_PATH=${XLEPATH}/lib:$DYLD_LIBRARY_PATH
+         */
+
+        sb.append("export XLEPATH=");
+        sb.append(xlePath);
+        sb.append("\n");
+        sb.append("export PATH=${XLEPATH}/bin:$PATH");
+        sb.append("\n");
+        sb.append("export DYLD_LIBRARY_PATH=$XLEPATH/lib:$XLEPATH/bin/sp-3.12.7");
+        sb.append("\n");
+        sb.append("export LD_LIBRARY_PATH=${XLEPATH}/lib");
+        sb.append("\n");
+        sb.append("export LD_LIBRARY_PATH=${XLEPATH}/lib:$LD_LIBRARY_PATH");
+        sb.append("\n");
+        sb.append("export DYLD_LIBRARY_PATH=${XLEPATH}/lib:$DYLD_LIBRARY_PATH");
+        sb.append("\n");
+        sb.append("\n");
+
+        //   if (this.operatingSystem.equals(OS.WINDOWS)) {
+            /*
+            export TCL_LIBRARY=${XLEPATH}/tcl/scripts/tcl
+            export TCLLIBPATH=${XLEPATH}/tcl/scripts/tcl
+            export TKLIBPATH=${XLEPATH}/tcl/scripts/tk
+            export TK_LIBRARY=${XLEPATH}/tcl/scripts/tk
+             */
+        sb.append("export TCL_LIBRARY=${XLEPATH}/tcl/scripts/tcl");
+        sb.append("\n");
+        sb.append("export TCLLIBPATH=${XLEPATH}/tcl/scripts/tcl");
+        sb.append("\n");
+        sb.append("export TKLIBPATH=${XLEPATH}/tcl/scripts/tk");
+        sb.append("\n");
+        sb.append("export TK_LIBRARY=${XLEPATH}/tcl/scripts/tk");
+        sb.append("\n");
+        sb.append("\n");
+
+        // }
+
+
+        // xle -noTk -e "create-parser /mnt/d/Resources/english_pargram/index/main.lfg; parse-testfile testfile.lfg -outputPrefix parser_output/sentence; exit"
+
+        sb.append("xle -noTk -e \"unpack-prolog-graph ");
+
+        String fileString = fsPath;
+
+        sb.append(fileString);
+
+        sb.append(" ");
+        sb.append(noOfSolutions);
+        sb.append("; exit\"");
+
+        File tempDir = new File(Paths.get(PathVariables.workingDirectory, "tmp").toString());
+
+        if (!tempDir.exists()) {
+            tempDir.mkdir();
+        }
+
+        //open file and write
+        File file = new File(Paths.get(PathVariables.workingDirectory, "tmp", "xle-unpack.sh").toString());
+
+        try {
+            java.io.FileWriter fw = new java.io.FileWriter(file);
+            fw.write(sb.toString());
+            fw.close();
+        } catch (
+                Exception e) {
+            System.out.println("Failed to write xle-unpack.sh");
+        }
+
+        try {
+            String chmodCommand = "";
+
+            if (operatingSystem.equals(OS.WINDOWS)) {
+                chmodCommand = "wsl chmod +x " + HelperMethods.formatWslString(file.getCanonicalPath());
+            } else {
+                chmodCommand = "chmod +x " + file.getCanonicalPath();
+            }
+
+            Runtime.getRuntime().exec(chmodCommand);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        LOGGER.info("Generated xle-unpack.sh at " + file.getCanonicalFile());
+        return Paths.get(PathVariables.workingDirectory, "tmp", "xle-unpack.sh").toString();
     }
 
 
@@ -157,7 +257,6 @@ public class XLEStarter {
         if (operatingSystem.equals(OS.WINDOWS)) {
             outputPrefix = HelperMethods.formatWslString(outputPrefix);
         }
-
 
         sb.append(" -outputPrefix ");
         sb.append(outputPrefix);

@@ -362,7 +362,7 @@ public class DbaMain {
 
 
         assert syn != null;
-        fs = syn.parseSingle(input);
+        fs = syn.parseSingle(input).get(0);
         //     System.out.println(fs.constraints);
 
         List<LinguisticStructure> fsList = new ArrayList<>();
