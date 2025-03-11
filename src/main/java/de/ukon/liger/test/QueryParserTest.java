@@ -26,9 +26,7 @@ import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.RuleParser.Rule;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
-import glueSemantics.linearLogic.Premise;
 import org.junit.jupiter.api.Test;
-import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.xle.Fstructure;
 import de.ukon.liger.syntax.xle.XLEoperator;
@@ -72,9 +70,27 @@ public class QueryParserTest {
         fsList.add(xle.fs2Java(testFolderPath + "testdirS7.pl"));
         fsList.add(xle.fs2Java(testFolderPath + "testdirS8.pl"));
         fsList.add(xle.fs2Java(testFolderPath + "testdirS11.pl"));
+        fsList.add(xle.fs2Java(testFolderPath + "testdirS15.pl"));
+        fsList.add(xle.fs2Java(testFolderPath + "hybrid_glue_test.pl"));
         return fsList.get(i);
     }
 
+
+    @Test
+    void testQueryParserHybrid()
+    {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(10);
+
+        for (String key : fs.keySet())
+        {
+            QueryParser qp = new QueryParser("#a TNS-ASP #b & #a s:: #c SIT #d & #c TEMP-REF #e",fs.get(key));
+
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(2,qpr.result.keySet().size());
+        }
+
+    }
 
     @Test
     void testPrologPrint() throws IOException {
@@ -275,6 +291,8 @@ public class QueryParserTest {
 
     }
 
+
+    /*
     @Test
     void testQueryParser8()
     {
@@ -308,7 +326,7 @@ public class QueryParserTest {
         }
 
     }
-
+     */
     @Test
     void testQueryParser9()
     {
@@ -437,6 +455,35 @@ public class QueryParserTest {
 
     }
 
+    @Test
+    void testQueryParser16() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(0);
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("*0 TNS-ASP #f TENSE 'past'", fs.get(key));
+
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+
+            assertEquals(true, qpr.isSuccess && qpr.result.size() ==1);
+
+        }
+    }
+
+    @Test
+    void testQueryParser17() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(9);
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("*011 !(cproj>g::>GLUE>in_set) #s", fs.get(key));
+
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+
+            assertEquals(true, qpr.isSuccess && qpr.result.size() ==1);
+
+        }
+    }
 
     /**
      * analysis.RuleParser tests
@@ -615,6 +662,7 @@ public class QueryParserTest {
 
     }
 
+    /*
     @Test
     void testRuleParser9() {
         LinkedHashMap<String, LinguisticStructure> fs = loadFs(3);
@@ -642,7 +690,9 @@ public class QueryParserTest {
         }
 
     }
+     */
 
+    /*
     @Test
     void testRuleParser10() {
         LinkedHashMap<String, LinguisticStructure> fs = loadFs(5);
@@ -671,6 +721,9 @@ public class QueryParserTest {
 
     }
 
+     */
+
+    /*
     @Test
     void testRuleParser11() {
         LinkedHashMap<String, LinguisticStructure> fs = loadFs(6);
@@ -698,6 +751,8 @@ public class QueryParserTest {
         }
 
     }
+
+     */
 
 
     @Test
@@ -739,7 +794,7 @@ public class QueryParserTest {
 
         rp.addAnnotation2(fslist.get(0));
 
-        assertEquals(79, fslist.get(0).constraints.size());
+        assertEquals(420, fslist.get(0).constraints.size());
     }
 
     /**

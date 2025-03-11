@@ -138,8 +138,14 @@ public class QueryParser {
                         if (getVh().getReservedVariables().get(VariableHandler.variableType.FS_NODE)
                                 .contains(fsM.group(1)) || HelperMethods.isInteger(fsM.group(1)) ) {
 
-                            if (!usedFsNodes.containsKey(fsM.group(1)) && !HelperMethods.isInteger(fsM.group(1))) {
-                                Node newNode = new Node(deque.get(i), fsM.group(1), getFsIndices(), this);
+                            if (!usedFsNodes.containsKey(fsM.group(1))) {
+                                //if the first symbol of fsm.group(1) is * set boolean to true
+                                boolean constant = false;
+                                if (deque.get(i).charAt(0) == '*') {
+                                    constant = true;
+                                }
+
+                                Node newNode = new Node(deque.get(i), fsM.group(1), getFsIndices(), constant, this);
                                 usedFsNodes.put(fsM.group(1),newNode);
                                 queryList.add(i, newNode);
                             }

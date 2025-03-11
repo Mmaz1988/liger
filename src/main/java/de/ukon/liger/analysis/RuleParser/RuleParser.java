@@ -49,7 +49,7 @@ public class RuleParser {
 
 
 
-    private List<String> appliedRules = new ArrayList<>();
+    private LinkedHashSet<Rule> appliedRules = new LinkedHashSet<>();
     private static Pattern graphPattern = Pattern.compile("(#.+?)\\s+(\\S+)\\s+(.+)");
     private Boolean replace;
     private Set<String> usedKeys = new HashSet<>();
@@ -145,6 +145,7 @@ public class RuleParser {
 
         for (int k = 0; k < rules.size(); k++) {
             Rule r = rules.get(k);
+            r.setRuleIndex(k);
 
             LOGGER.debug("Currently processing rule with index " + k + ":\n" +
                     "\t" + r.toString());
@@ -207,8 +208,7 @@ public class RuleParser {
                                                         newChoice.add(choice);
                                                         c.setReading(newChoice);
                                                     }
-                                                }
-                                                //Readings experiment end
+                                                }//Readings experiment end
 
                                                 qpr.result.get(solutionKey).get(nodeMatcher.group(1)).get(key2).put(key, c);
                                                 newConstraints.put(key, c);
@@ -294,7 +294,7 @@ public class RuleParser {
                                                     c.setRelationLabel(newLabel);
                                                     replaceValue = true;
 
-                                                    appliedRules.add(r.toString());
+                                                    this.appliedRules.add(r);
                                                 }
                                             }
                                             }
@@ -484,7 +484,7 @@ public class RuleParser {
                 LOGGER.debug("\n" + added);
 
                 LOGGER.debug("\t" + "Rule has been applied!");
-                this.appliedRules.add(r.toString());
+                this.appliedRules.add(r);
 
             }
         }
@@ -516,9 +516,21 @@ public class RuleParser {
         //Replace fsNode variables
         while (matcher.find()) {
 
-            if (qpr.result.get(solutionKey).containsKey(matcher.group(1))) {
-                String key = qpr.result.get(solutionKey).get(matcher.group(1)).keySet().stream().findAny().get();
-                matcher.appendReplacement(sb, key);
+            String replaceString = matcher.group(1);
+            String type = "";
+            boolean typed = false;
+
+            if (replaceString.split("_").length == 2)
+            {
+                 replaceString = matcher.group(1).split("_")[0];
+                 type = "_" + matcher.group(1).split("_")[1];
+            }
+
+            if (qpr.result.get(solutionKey).containsKey(replaceString)) {
+                String key = qpr.result.get(solutionKey).get(replaceString).keySet().stream().findAny().get();
+
+
+                matcher.appendReplacement(sb, key+type);
             } else {
                 matcher.appendReplacement(sb, returnUnusedVar());
             }
@@ -546,6 +558,7 @@ public class RuleParser {
         replacedFsVars = sb2.toString();
 
 
+        //search dictionary
         Matcher matcher3 = lexPattern.matcher(replacedFsVars);
         StringBuffer sb3 = new StringBuffer();
 
@@ -596,21 +609,9 @@ public class RuleParser {
 
     //Parse rule file
     public List<Rule> parseRuleFile(String fileString) {
-        int lineCounter = 0;
+        int lineCounter = 1;
 
         List<Rule> out = new ArrayList<>();
-
-        /*
-        String fileString = null;
-        try {
-            fileString = new String(Files.readAllBytes(Paths.get(file)));
-        }catch(Exception e)
-        {
-            System.out.println("Failed to load rule file");
-            e.printStackTrace();
-        }
-        */
-
 
         if (fileString != null && fileString.length() > 0) {
 
@@ -620,6 +621,11 @@ public class RuleParser {
 
                 char c = fileString.charAt(i);
 
+                if (c == '\n') {
+                    left.append(c);
+                    lineCounter++;
+                    continue;
+                }
 
                 if (c == '-' && fileString.charAt(i+1) == '-') {
                     c = fileString.charAt(i + 2);
@@ -654,17 +660,18 @@ public class RuleParser {
                             }
                             i++;
                         }
-
+                   //     System.out.println(fileString.charAt(i));
+                     continue;
                     }
 
 
                     while (String.valueOf(fileString.charAt(i)).matches(".")) {
                         i++;
                     }
-                    if (!String.valueOf(fileString.charAt(i)).matches(".")) {
-                        i++;
+                    if (c == '\n') {
                         lineCounter++;
                     }
+                    continue;
                 }
 
                 if (c == '/' && fileString.charAt(i+1) == '/')
@@ -697,6 +704,11 @@ public class RuleParser {
                     i = i + 3;
                     c = fileString.charAt(i);
                     while (!(c == '.' && !String.valueOf(fileString.charAt(i + 1)).matches("."))) {
+
+                        if (c == '\n') {
+                            lineCounter++;
+                        }
+
                         right.append(c);
                         i++;
                         c = fileString.charAt(i);
@@ -706,19 +718,18 @@ public class RuleParser {
                     }
 
                     Rule r = new Rule(left.toString().trim(),right.toString().trim(), rewrite,branch);
+                    r.setLineNumber(lineCounter);
                     out.add(r);
 
                     left = new StringBuilder();
                     right = new StringBuilder();
-                    i = i + 2;
+                    continue;
                 }
+
 
 
                 if (i < fileString.length() - 1) {
                     c = fileString.charAt(i);
-                    if (!String.valueOf(c).matches(".")) {
-                        lineCounter++;
-                    }
                     left.append(c);
                 }
 
@@ -745,6 +756,7 @@ public class RuleParser {
     public void resetRuleParser() {
         usedKeys = new HashSet<>();
         usedReadings = new HashSet<>();
+        appliedRules = new LinkedHashSet<>();
     }
 
 
@@ -754,13 +766,30 @@ public class RuleParser {
 
         for (String key : result.keySet()) {
             for (String key2 : result.get(key).keySet()) {
+
+                 List<ChoiceVar> embeddedChoices = new ArrayList<>();
+                 boolean containsTop = false;
                 for (Integer key3 : result.get(key).get(key2).keySet()) {
 
-                    if (!result.get(key).get(key2).get(key3).getReading().stream().findAny().get().toString().equals("1") &&
+
+                    if (result.get(key).get(key2).get(key3).getReading().stream().findAny().get().toString().equals("1")) {
+                    containsTop = true;
+                    } else
+                    {
+                        embeddedChoices.addAll(result.get(key).get(key2).get(key3).getReading());
+                    }
+
+/*
+                    if (result.get(key).get(key2).get(key3).getReading().stream().noneMatch(s -> s.toString().equals("1")) &&
                             !newConstraints.keySet().contains(key3)) {
                         out.addAll(result.get(key).get(key2).get(key3).getReading());
                     }
-
+ */
+                }
+                //TODO search for highest available context when there is no top context
+                if (!containsTop)
+                {
+                    out.addAll(embeddedChoices);
                 }
             }
         }
@@ -772,11 +801,11 @@ public class RuleParser {
         }
     }
 
-    public List<String> getAppliedRules() {
-        return appliedRules;
+    public LinkedHashSet<Rule> getAppliedRules() {
+        return this.appliedRules;
     }
 
-    public void setAppliedRules(List<String> appliedRules) {
+    public void setAppliedRules(LinkedHashSet<Rule> appliedRules) {
         this.appliedRules = appliedRules;
     }
 }

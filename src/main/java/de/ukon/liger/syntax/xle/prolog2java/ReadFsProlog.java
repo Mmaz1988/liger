@@ -21,7 +21,9 @@
 
 package de.ukon.liger.syntax.xle.prolog2java;
 
+import de.ukon.liger.packing.ChoiceNode;
 import de.ukon.liger.packing.ChoiceSpace;
+import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.utilities.VariableHandler;
 
 import java.io.*;
@@ -39,6 +41,7 @@ public class ReadFsProlog implements Serializable {
     public String sentenceID;
    public VariableHandler vh;
    public ChoiceSpace cp;
+   public String prologString;
     private final static Logger LOGGER = Logger.getLogger(ReadFsProlog.class.getName());
 
     public ReadFsProlog(String sentenceID, String sentence, List<String> fsConstraints, VariableHandler vh)
@@ -134,7 +137,7 @@ public class ReadFsProlog implements Serializable {
             {
                 fStrReader = br;
             }
-                String fline;
+            String fline;
 
             //Read in f-structure information
             while ((fline = fStrReader.readLine()) != null)
@@ -184,10 +187,14 @@ public class ReadFsProlog implements Serializable {
        //     Pattern cstructure = Pattern.compile("((surfaceform|semform_data)\\(.+\\))");
 
             //TODO do not iterate through all lines again but only the necessary ones
-            while ((strLine = br.readLine()) != null) {
 
-                Matcher sentenceMatcher = sentence.matcher(strLine);
-                Matcher choiceMatcher = choice.matcher(strLine);
+            BufferedReader metaReader = new BufferedReader(new FileReader(inFile));
+
+            String metaLine;
+            while ((metaLine = metaReader.readLine()) != null) {
+
+                Matcher sentenceMatcher = sentence.matcher(metaLine);
+                Matcher choiceMatcher = choice.matcher(metaLine);
                 //             Matcher cstructureMatcher = cstructure.matcher(strLine);
 
                 if (sentenceMatcher.find()) {
@@ -216,28 +223,179 @@ public class ReadFsProlog implements Serializable {
         }
 
         //close infile
+
+
+       fsConstraints = simplifyFs(fsConstraints,cp);
+      //  fsConstraints = contractFstructure(fsConstraints);
+       // fsConstraints = removeEqualities(fsConstraints);
+
+        ReadFsProlog fstructure = new ReadFsProlog(sentenceID, inSentence, fsConstraints, cstrFacts, cp, vh);
+
+        try {
+            br = new BufferedReader(new FileReader(inFile));
+            String prologString = br.lines().collect(Collectors.joining("\n"));
+
+            fstructure.prologString = prologString;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
         try {
             br.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-       fsConstraints = simplifyFs(fsConstraints);
-      //  fsConstraints = contractFstructure(fsConstraints);
-       // fsConstraints = removeEqualities(fsConstraints);
+        return fstructure;
+    }
+
+    public static ReadFsProlog readPrologString(String inputString, String id, VariableHandler vh)
+    {
+
+        String sentenceID = id;
+
+        BufferedReader br = null;
+
+        // This list will contain our f-structure constraints
+        String inSentence = "";
+        List<String> fsConstraints = new ArrayList<String>();
+        List<String> cstrFacts = new ArrayList<>();
+        List<String> choiceSpace = new ArrayList<>();
+        ChoiceSpace cp = null;
+
+        try {
+            // reads in File
+            br = new BufferedReader(new StringReader(inputString));
+
+            String strLine;
+            //      int  counter = 0;
+            // matches all constraints of the syntactic
+            Pattern fstr = Pattern.compile("% Constraints:\\n\\t\\[(.+)\\n\\t\\],",Pattern.DOTALL);
+
+            Pattern constraints = Pattern.compile("(cf\\(.*\\))");
+            Pattern cStr = Pattern.compile("% C-Structure:\\n\\t\\[(.+)\\n\\t\\]\\)",Pattern.DOTALL);
+            // Mark up free sentence
+            Pattern sentence = Pattern.compile( "'markup_free_sentence'\\((.*?)\\)");
+
+            Pattern choice = Pattern.compile("choice\\((.+)\\),?");
+
+            String fstrString = br.lines().collect(Collectors.joining("\n"));
+
+            Matcher constraintListMatcher = fstr.matcher(fstrString);
+            Matcher cStrMatcher = cStr.matcher(fstrString);
+
+            BufferedReader fStrReader = null;
+
+            if (constraintListMatcher.find()) {
+                fStrReader = new BufferedReader(new StringReader(constraintListMatcher.group(1)));
+            } else
+            {
+                fStrReader = br;
+            }
+            String fline;
+
+            //Read in f-structure information
+            while ((fline = fStrReader.readLine()) != null)
+            {
+                Matcher constraintMatcher = constraints.matcher(fline);
+
+                if (constraintMatcher.find()) {
+                    // Material that we want to translate into java objects is stored in arrayList
+                    fsConstraints.add(constraintMatcher.group(1));
+                    //    counter++;
+
+//                if (cstructureMatcher.find())
+//                {
+//                    fsConstraints.add(cstructureMatcher.group(1));
+//                }
+                }
+            }
+
+            //Read in c-structure information
+            String cstr = null;
+            BufferedReader cStrReader = null;
+
+            if (cStrMatcher.find())
+            {
+                cstr = cStrMatcher.group(1);
+                cStrReader = new BufferedReader(new StringReader(cStrMatcher.group(1)));
+            } else
+            { cStrReader = br;
+            }
+
+
+            String cline;
+            while ((cline = cStrReader.readLine()) != null)
+            {
+                Matcher constraintMatcher = constraints.matcher(cline);
+
+                if (constraintMatcher.find())
+                {
+                    cstrFacts.add(constraintMatcher.group(1));
+                }
+
+            }
+
+
+
+            // matches c-structure constraints (this is very ugly but maybe enough)
+            //     Pattern cstructure = Pattern.compile("((surfaceform|semform_data)\\(.+\\))");
+
+            //TODO do not iterate through all lines again but only the necessary ones
+            while ((strLine = br.readLine()) != null) {
+
+                Matcher sentenceMatcher = sentence.matcher(strLine);
+                Matcher choiceMatcher = choice.matcher(strLine);
+                //             Matcher cstructureMatcher = cstructure.matcher(strLine);
+
+                if (sentenceMatcher.find()) {
+                    inSentence = sentenceMatcher.group(1);
+                }
+
+
+                if (choiceMatcher.find())
+                {
+                    choiceSpace.add(choiceMatcher.group(1));
+                }
+            }
+            //  System.out.println(counter);
+
+
+            cp = new ChoiceSpace(choiceSpace);
+
+            /* Print out f-structure facts for test purposes
+            for (int i = 0; i < fsConstraints.size(); i++) {
+                System.out.println(fsConstraints.get(i));
+            }
+*/
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //close infile
+        try {
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        fsConstraints = simplifyFs(fsConstraints, cp);
+        //  fsConstraints = contractFstructure(fsConstraints);
+        // fsConstraints = removeEqualities(fsConstraints);
 
         ReadFsProlog Fstructure = new ReadFsProlog(sentenceID, inSentence, fsConstraints, cstrFacts, cp, vh);
         return Fstructure;
     }
 
 
-    public static List<String> simplifyFs(List<String> fsConstraints)
+    public static List<String> simplifyFs(List<String> fsConstraints, ChoiceSpace cp)
     {
-        List<String[]> varEqualities = new ArrayList<>();
-        List<String[]> valEqualities = new ArrayList<>();
+        HashMap<String,List<String[]>> varEqualities = new HashMap<>();
+        HashMap<String,List<String[]>> valEqualities = new HashMap<>();
 
-        Pattern eq = Pattern.compile("eq\\((var\\(\\d+\\)),(.*)\\)\\)");
+        Pattern eq = Pattern.compile("cf\\((.*),eq\\((var\\(\\d+\\)),(.*)\\)\\)");
         Pattern var = Pattern.compile("var\\(\\d+\\)");
+         Pattern ambiguities = Pattern.compile("cf\\((.+?),\\w+\\(");
 
         ListIterator<String> iter = fsConstraints.listIterator();
 
@@ -245,41 +403,86 @@ public class ReadFsProlog implements Serializable {
             {
                 String c = iter.next();
                 Matcher eqM = eq.matcher(c);
+
                 if (eqM.find()) {
-                    String[] equal = {eqM.group(1), eqM.group(2)};
-                    Matcher varM = var.matcher(eqM.group(2));
+                    String context = eqM.group(1);
+                    String[] equal = {eqM.group(2), eqM.group(3)};
+                    Matcher varM = var.matcher(eqM.group(3));
                     if (varM.matches()) {
-                        varEqualities.add(equal);
+
+                        if (!varEqualities.containsKey(context)) {
+                            varEqualities.put(context, new ArrayList<>());
+                        }
+                        varEqualities.get(context).add(equal);
                     } else {
-                        valEqualities.add(equal);
+                        if (!valEqualities.containsKey(context)) {
+                            valEqualities.put(context, new ArrayList<>());
+                        }
+                        valEqualities.get(context).add(equal);
                     }
                     iter.remove();
                 }
             }
         }
 
-        for (int i =0; i < fsConstraints.size(); i++)
-        {
+        List<String> additionalConstraints = new ArrayList<>();
 
-            for (String[] equal : varEqualities)
+        for (String context : varEqualities.keySet())
+        {
+            for (int i =0; i < fsConstraints.size(); i++)
             {
-                if (fsConstraints.get(i).contains(equal[0])) {
-                    String replace = fsConstraints.get(i).replace(equal[0],equal[1]);
-                   fsConstraints.set(i,replace);
-                          }
+                for (String[] equal : varEqualities.get(context))
+                {
+                    List<String> currentAdditionalConstraints = new ArrayList<>();
+
+                    if (fsConstraints.get(i).contains(equal[0])) {
+                        if (context.equals("1")) {
+                            String replace = fsConstraints.get(i).replace(equal[0], equal[1]);
+                            fsConstraints.set(i, replace);
+                        } else {
+                            Matcher ambMatcher = ambiguities.matcher(fsConstraints.get(i));
+                            //replace only the first instance of ambMatcher group 1 with context and add to currentAdditionalConstraints
+                            if (ambMatcher.find()) {
+
+                                boolean competing = false;
+                                for (ChoiceNode choiceNode : cp.choiceNodes)
+                                {
+                                    if (choiceNode.daughterNodes.contains(new ChoiceVar(context)) &&
+                                    choiceNode.daughterNodes.contains(new ChoiceVar(ambMatcher.group(1))))
+                                    {
+                                        competing = true;
+                                        break;
+                                    }
+                                }
+                                if (!competing) {
+                                    String replace = fsConstraints.get(i).replaceFirst(ambMatcher.group(1), context);
+                                    replace = replace.replace(equal[0], equal[1]);
+                                    currentAdditionalConstraints.add(replace);
+                                }
+                            }
+                        }
+                    }
+                    additionalConstraints.addAll(currentAdditionalConstraints);
+                }
+
+
+
             }
+
         }
 
-        for (int i = 0; i < fsConstraints.size(); i++) {
-            for (String[] equal : valEqualities) {
-                if (fsConstraints.get(i).contains(equal[0])) {
-                    String replace = fsConstraints.get(i).replace(equal[0],equal[1]);
-                    fsConstraints.set(i,replace);
+        for (String context : valEqualities.keySet()) {
+            for (int i = 0; i < fsConstraints.size(); i++) {
+                for (String[] equal : valEqualities.get(context)) {
+                    if (fsConstraints.get(i).contains(equal[0])) {
+                        String replace = fsConstraints.get(i).replace(equal[0], equal[1]);
+                        fsConstraints.set(i, replace);
+                    }
                 }
             }
         }
-
-     List<String> newfsConstraints = fsConstraints.stream().distinct().collect(Collectors.toList());
+        List<String> newfsConstraints = fsConstraints.stream().distinct().collect(Collectors.toList());
+        newfsConstraints.addAll(additionalConstraints);
         return newfsConstraints;
     }
 

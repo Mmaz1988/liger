@@ -34,10 +34,11 @@ public class Rule {
     private String left;
     private String right;
     private boolean rewrite;
-
     private  boolean branch;
-    private static Pattern rulePattern = Pattern.compile("(.+)=(=|-|\\+)>(.+)");
 
+    private int lineNumber;
+    private int ruleIndex;
+    private static Pattern rulePattern = Pattern.compile("(.+)=(=|-|\\+)>(.+)");
 
     private List<GraphConstraint> annotation;
 
@@ -155,6 +156,23 @@ public class Rule {
     public void setBranch(boolean branch) {
         this.branch = branch;
     }
+
+    public int getLineNumber() {
+        return lineNumber;
+    }
+
+    public void setLineNumber(int lineNumber) {
+        this.lineNumber = lineNumber;
+    }
+
+    public int getRuleIndex() {
+        return ruleIndex;
+    }
+
+    public void setRuleIndex(int ruleIndex) {
+        this.ruleIndex = ruleIndex;
+    }
+
 
 }
 

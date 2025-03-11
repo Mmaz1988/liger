@@ -1,0 +1,886 @@
+DEMO   ENGLISH   CONFIG (1.0)
+  ROOTCAT   ROOT.  "changed to ROOT from S"
+  FILES common.templates.lfg  .
+  LEXENTRIES   (DEMO ENGLISH) (MORPH ENGLISH).
+  TEMPLATES (DEMO ENGLISH) (GLUE BASIC) (MULTISTAGE BASIC) (STANDARD COMMON).  "added common ParGram templates"
+  RULES   (DEMO ENGLISH) (MORPH ENGLISH).
+  MORPHOLOGY (DEMO ENGLISH).
+  GOVERNABLERELATIONS    SUBJ OBJ OBJ2 COMP XCOMP OBL OBL-?+.
+  SEMANTICFUNCTIONS    ADJUNCT  TOPIC FOCUS POSS STANDARD.
+  NONDISTRIBUTIVES   NUM PERS COORD-FORM.
+  EPSILON   e.
+  OPTIMALITYORDER NOGOOD  PPadj +PPattach +sg-imp +PPpassiv.
+  GENOPTIMALITYORDER GenBadPunct NOGOOD +Punct.
+
+----
+
+DEMO ENGLISH MORPHOLOGY (1.0)
+
+TOKENIZE:
+P!tokenizers/basic-parse-tok.fst G!tokenizers/default-gen-tokenizer.fst
+
+ANALYZE:
+tokenizers/english.infl.patch.full.fst
+
+----
+
+DEMO   ENGLISH   RULES (1.0)
+
+   ROOT --> "can have other things here as well, imperatives, etc."
+ 	  { S:
+	    @(EQUAL-GLUE * t::^);
+ 	    (PERIOD: @(OT-MARK Punct)) "prefer for generation"
+	  | Simp}.
+
+  Simp --> e: (^ SUBJ PRED) = 'pro'
+	       (^ SUBJ PERS) = 2;
+ 	  VP
+ 	  EXCL.  "obligatory exclamation mark"
+
+   S --> NP: (^ SUBJ)=!
+	     (! CASE)=nom
+	     @(EQUAL-GLUE * t::^);
+ 	 VP: (^ TNS-ASP TENSE). "require that sentences have tense"
+
+
+   VP --> (AUX) "auxiliary introduced for passive"
+ 	  V: ^=!
+	     @(DOMINATES-GLUE * t::^ 1);
+ 	  (NP: (^ OBJ)=! "direct object"
+	       (! CASE)=acc
+	       @(EQUAL-GLUE * t::^))
+ 	  (NP: (^ OBJ2) = !
+	       @(DOMINATES-GLUE * t::^ 1)) "secondary object"
+ 	  PP*: { ! $ (^ ADJUNCT) "PPs can be all types of adjuncts"
+		 (! PTYPE) =c sem "only semantic PPs here"
+		 @(OT-MARK PPadj) "disprefer adjunct PPs"
+	       | (^ OBL) = ! "or a a general oblique"
+	       };
+ 	  (PP: (^ OBL-TO) = ! "special obl for ditransitives"
+	       "example of a constraining equation: require a value with =c"
+	       (! PFORM) =c to )
+ 	  (PP: (^ OBL-AG) = ! "oblique agent of passive"
+	       "example of a constraining equation: require a value with =c"
+	       (! PFORM) =c by
+	       @(OT-MARK PPpassiv))
+ 	  ({ CP: (^ COMP) = !
+	      t::(^ COMP) = t::^;
+ 	   | VPinf: (^XCOMP) = !
+		    (! VFORM) = inf}).
+
+   CP -->  C
+	   S.
+
+   VPinf --> PARTinf VP.
+
+"
+   NP -->
+ 	  { (D: ^=!)
+ 	    AP*: ! $ (^ ADJUNCT)
+ 	    @(DOMINATES-GLUE * t::M* 1);
+ 	    N: ^=!;
+ 	    PP*: ! $ (^ ADJUNCT)
+		 (! PTYPE) =c sem
+		 @(OT-MARK PPattach)
+ 	  | PRON}.
+"
+
+   NP --> { (D: ^=!)
+ 	    NP'
+	    PP*: ! $ (^ ADJUNCT)
+	       (! PTYPE) =c sem
+ 	  | PRON}.
+
+
+   NP' --> { AP: ! $ (^ ADJUNCT)
+		 @(EQUAL-GLUE * t::M*);
+ 	    NP': ^=!
+		 @(DOMINATES-GLUE * t::M* 1);
+ 	   |
+ 	    N: ^=!
+ 	  }. 
+
+
+   AP --> ADV*: ! $ (^ ADJUNCT);
+ 	  A
+ 	  (COMMA).						
+
+   PP --> { P: ^ = ! "head of PP"
+	       (! PTYPE) =c sem; "semantic type, Adjunct"
+ 	    NP: (^ OBJ) = !
+		(! CASE) = acc
+ 	  | P: ^ = ! "head of PP" 
+	       (! PTYPE) =c nosem; "non-semantic type, OBL"
+ 	    NP
+ 	  }. 
+
+
+----
+DEMO   ENGLISH   TEMPLATES (1.0)
+
+   OT-MARK(_mark) = "assigns an OT mark, from common templates"
+	  _mark $ o::*.
+
+   PASS(FRAME) = { FRAME "no passive, just give back subcat frame"
+	    (^ PASSIVE) = - "no passive"
+	  | FRAME "passive"
+	    (^ PASSIVE) = + "mark as such"
+	    (^ PARTICIPLE) =c past "make sure to have a past participle"
+	    (^ OBJ)-->(^ SUBJ) "obj goes to subj"
+	    { (^ SUBJ)-->(^ OBL-AG) "either make subj obl-ag"
+	    | (^ SUBJ)--> NULL "or delete"
+	    }
+	  }. 
+
+   DAT-SHIFT(SCHEMATA) = { SCHEMATA
+	    (^ DATIVE-SHIFT) = -
+	  | SCHEMATA
+	    (^ DATIVE-SHIFT) = +
+	    (^ OBJ)-->(^ OBJ2)
+	    (^ OBL-TO)-->(^ OBJ)}.
+
+   DITRANS(P) = @(PASS @(DAT-SHIFT (^ PRED)='P<(^ SUBJ) (^ OBJ) (^ OBL-TO)>'))
+	       @(DITRANS-PASSIVE-ARGS %arg1 %arg2 %arg3)
+	  @(LLCLOSURE %mc6)
+@(LLATOM %mc0 s::%arg1 e)
+@(LLATOM %mc1 s::%arg2 e)
+@(LLATOM %mc2 s::%arg3 e)
+@(LLATOM %mc3 s::^ t)
+@(LLIMP %mc4 %mc2 %mc3)
+@(LLIMP %mc5 %mc1 %mc4)
+@(LLIMP %mc6 %mc0 %mc5)
+@(CONCAT  `[  `/ x `_ e `.  `[  `/ y `_ e `.  `[  `/ z `_ e `. P `( x `, y `, z `)  `]  `]  `]  %mc7)
+@(GLUE-MEANING %mc6 %mc7).
+
+
+ "transitives can passivize"
+
+   TRANS(P) = @(PASS (^ PRED)='P<(^ SUBJ) (^ OBJ)>')
+   	  @(TRANS-PASSIVE-ARGS %arg1 %arg2)
+	  @(LLCLOSURE %mc12)
+@(LLATOM %mc8 s::%arg1 e)
+@(LLATOM %mc9 s::%arg2 e)
+@(LLATOM %mc10 s::^ t)
+@(LLIMP %mc11 %mc9 %mc10)
+@(LLIMP %mc12 %mc8 %mc11)
+@(CONCAT  `[  `/ x `_ e `.  `[  `/ y `_ e `. P `( x `, y `)  `]  `]  %mc13)
+@(GLUE-MEANING %mc12 %mc13).
+
+
+   TRANS-PASSIVE-ARGS(ARG1 ARG2) = { 
+	    (^ PASSIVE) =c - 
+	    ARG1 = (^ SUBJ)
+	    ARG2 = (^ OBJ)
+	   |
+	    (^ PASSIVE) =c +
+	    { 
+	      (^OBL-AG) = ARG1 |
+	      ~(^OBL-AG)
+	      ARG1 = %empty
+	      @(LLCLOSURE %mc18)
+@(LLATOM %mc14 s::%empty e)
+@(LLATOM %mc15 s::^ t)
+@(LLIMP %mc16 %mc14 %mc15)
+@(LLATOM %mc17 s::^ t)
+@(LLIMP %mc18 %mc16 %mc17)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `. Ex `_ e `[ P `( x `)  `]  `]  %mc19)
+@(GLUE-MEANING %mc18 %mc19)	      }
+	      ARG2 = (^ SUBJ)
+	    }. 
+
+   DITRANS-PASSIVE-ARGS(ARG1 ARG2 ARG3) = { 
+	    (^ PASSIVE) =c - 
+	    ARG1 = (^ SUBJ)
+	    { 
+	      (^ DATIVE-SHIFT) =c -
+	      ARG2 = (^ OBJ)
+	      ARG3 = (^ OBL-TO)
+	     |
+	      (^ DATIVE-SHIFT) =c +
+	      ARG3 = (^ OBJ)
+	      ARG2 = (^ OBJ2) 
+	    } 
+	   |
+	    (^ PASSIVE) =c +
+	    { 
+	      (^OBL-AG) = ARG1 |
+	      ARG1 = %empty
+	      @(LLCLOSURE %mc18)
+@(LLATOM %mc14 s::%empty e)
+@(LLATOM %mc15 s::^ t)
+@(LLIMP %mc16 %mc14 %mc15)
+@(LLATOM %mc17 s::^ t)
+@(LLIMP %mc18 %mc16 %mc17)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `. Ex `_ e `[ P `( x `)  `]  `]  %mc19)
+@(GLUE-MEANING %mc18 %mc19)	      }
+	      { 
+	      (^ DATIVE-SHIFT) =c -
+	      ARG2 = (^ SUBJ)
+	      ARG3 = (^ OBL-TO)  
+	     |
+	      (^ DATIVE-SHIFT) =c +
+	      ARG2 = (^ OBJ2)
+	      ARG3 = (^ SUBJ)
+	    } 
+	    }.
+  
+
+   INTRANS(P) = (^ PRED) = 'P<(^SUBJ)>'
+	  @(LLCLOSURE %mc28)
+@(LLATOM %mc26 s::(^ SUBJ) e)
+@(LLATOM %mc27 s::^ t)
+@(LLIMP %mc28 %mc26 %mc27)
+@(CONCAT  `[  `/ x `_ e `. P `( x `)  `]  %mc29)
+@(GLUE-MEANING %mc28 %mc29).
+
+   INTRANS-OBL(P) = (^ PRED) = 'P<(^SUBJ)(^OBL)>'.
+
+   OPT-TRANS(P) = { (^ PRED) = 'P<(^SUBJ)(^OBJ)>' "P is a variable"
+	    @(LLCLOSURE %mc34)
+@(LLATOM %mc30 s::(^SUBJ) e)
+@(LLATOM %mc31 s::(^OBJ) e)
+@(LLATOM %mc32 s::^ t)
+@(LLIMP %mc33 %mc31 %mc32)
+@(LLIMP %mc34 %mc30 %mc33)
+@(CONCAT  `[  `/ x `_ e `.  `[  `/ y `_ e `. P `( x `, y `)  `]  `]  %mc35)
+@(GLUE-MEANING %mc34 %mc35)	          | (^ PRED) = 'P<(^SUBJ)>'
+		  @(LLCLOSURE %mc38)
+@(LLATOM %mc36 s::(^ SUBJ) e)
+@(LLATOM %mc37 s::^ t)
+@(LLIMP %mc38 %mc36 %mc37)
+@(CONCAT  `[  `/ x `_ e `. P `( x `)  `]  %mc39)
+@(GLUE-MEANING %mc38 %mc39)		  }.  "this template takes one argument:  P"
+	  
+   TENSE(T) = (^ TENSE) = T.  "the more general case"
+
+   CASE(C) = (^ CASE) = C.   
+
+   MOOD(M) = (^ MOOD) = M.
+
+   VPRES = { (^VFORM) ~= inf
+	    @(TENSE pres) 
+	    @(MOOD indicative)
+	  | (^VFORM) = inf}. 
+
+   VPAST = @(TENSE past) 
+	  @(MOOD indicative). 
+
+   VPROG = (^ ASPECT PROG) = +.
+
+   PRED(P) = (^ PRED) = 'P'. 
+
+   PASTP = (^ PARTICIPLE) = past. 
+
+   BARE-AGR = { (^VFORM) ~= inf 
+	    { (^ SUBJ NUM) = pl "either it is plural"
+	    | (^ SUBJ PERS) ~= 3 "or singular and not 3rd person"
+	      (^ SUBJ NUM) = sg
+	      @(OT-MARK sg-imp) "prefer a singular imperative"
+	    }
+	  | (^VFORM) = inf}.
+
+   S-AGR = (^ SUBJ PERS) = 3 "for verbs in -s"
+	  (^ SUBJ NUM) = sg. 
+
+"template for ntypes, called NPOS here because of clash with common templates"
+
+   NPOS(N) = (^ NTYPE) = N. 
+
+   PREP(P) = "template for most prepositions"
+	  { (^ PRED) = 'P<(^OBJ)>' 
+	    (^ PTYPE) = sem
+	  | (^ PTYPE) = nosem
+	    (^ PFORM) = P}.
+
+"template for pronouns of all types" 
+
+   PRON(P Z N T) = (^ PRED) = 'P'
+	  (^ NUM) = N
+	  (^ PERS) = Z
+	  (^ PRON-TYPE) = T
+	  (^ NTYPE) = pron. 
+
+   DEF = (^ DEF).
+
+
+----
+
+DEMO ENGLISH LEXICON (1.0)
+
+"took out all names and nouns because they are now handled via the morphology"
+
+"all verbs here -- still need to convert fully to just have lemmas" 
+
+"verbs with clausal arguments"
+
+say 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^COMP)>'
+	      @(LLCLOSURE %mc44)
+@(LLATOM %mc40 s::(^ COMP) t)
+@(LLATOM %mc41 s::(^ SUBJ) e)
+@(LLATOM %mc42 s::^ t)
+@(LLIMP %mc43 %mc41 %mc42)
+@(LLIMP %mc44 %mc40 %mc43)
+@(CONCAT  `[  `/ p `_ t `.  `[  `/ x `_ e `. %stem `( x `, p `)  `]  `]  %mc45)
+@(GLUE-MEANING %mc44 %mc45).
+
+think 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^COMP)>'
+		  @(LLCLOSURE %mc44)
+@(LLATOM %mc40 s::(^ COMP) t)
+@(LLATOM %mc41 s::(^ SUBJ) e)
+@(LLATOM %mc42 s::^ t)
+@(LLIMP %mc43 %mc41 %mc42)
+@(LLIMP %mc44 %mc40 %mc43)
+@(CONCAT  `[  `/ p `_ t `.  `[  `/ x `_ e `. %stem `( x `, p `)  `]  `]  %mc45)
+@(GLUE-MEANING %mc44 %mc45).
+
+ensure 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^COMP)>'
+		  @(LLCLOSURE %mc44)
+@(LLATOM %mc40 s::(^ COMP) t)
+@(LLATOM %mc41 s::(^ SUBJ) e)
+@(LLATOM %mc42 s::^ t)
+@(LLIMP %mc43 %mc41 %mc42)
+@(LLIMP %mc44 %mc40 %mc43)
+@(CONCAT  `[  `/ p `_ t `.  `[  `/ x `_ e `. %stem `( x `, p `)  `]  `]  %mc45)
+@(GLUE-MEANING %mc44 %mc45).
+
+
+convince  V-S XLE (^PRED) = '%stem<(^SUBJ)(^OBJ)(^XCOMP)>'
+		  (^ XCOMP SUBJ) = (^OBJ). 
+
+try 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^XCOMP)>'
+		  (^ XCOMP SUBJ) = (^SUBJ)
+		  @(LLCLOSURE %mc64)
+@(LLATOM %mc58 s::(^XCOMP SUBJ) e)
+@(LLATOM %mc59 s::(^ XCOMP SUBJ) e)
+@(LLATOM %mc60 s::(^ XCOMP) t)
+@(LLIMP %mc61 %mc59 %mc60)
+@(LLATOM %mc62 s::^ t)
+@(LLIMP %mc63 %mc61 %mc62)
+@(LLIMP %mc64 %mc58 %mc63)
+@(CONCAT  `[  `/ x `_ e `.  `[  `/ P `_  `< e `, t `>  `. try `( x `, P `( x `)  `)  `]  `]  %mc65)
+@(GLUE-MEANING %mc64 %mc65).
+
+seem 	  V-S XLE (^PRED) = '%stem<(^SUBJ)(^XCOMP)>'
+		  (^ XCOMP SUBJ) = (^SUBJ)
+		  @(LLCLOSURE %mc68)
+@(LLATOM %mc66 s::(^ XCOMP) t)
+@(LLATOM %mc67 s::^ t)
+@(LLIMP %mc68 %mc66 %mc67)
+@(CONCAT  `[  `/ P `_ t `. seem `( P `)  `]  `]  %mc69)
+@(GLUE-MEANING %mc68 %mc69).
+
+"Intransitives"
+
+appear 	  V-S XLE @(INTRANS %stem).
+
+disappear V-S XLE @(INTRANS %stem).
+
+laugh 	  V-S XLE @(INTRANS %stem).
+
+meow 	  V-S XLE @(INTRANS meow).
+
+	       "ate V * @(OPT-TRANS eat) optionally transitive verbs"
+	       "VPAST."
+	       
+	       "unnecesary entry -- have morphological analyzer now"
+	       "eats V * @(OPT-TRANS eat)
+	       @VPRES	       @S-AGR. "
+
+sleep 	  V-S XLE * @(INTRANS sleep).
+
+"Optional transitives"
+
+drinks 	  V-S XLE @(OPT-TRANS drink).
+
+eat 	  V-S XLE @(OPT-TRANS %stem).
+
+escape 	  V-S XLE @(OPT-TRANS %stem).
+
+"Transitives" 
+
+devour 	  V-S XLE @(TRANS devour).
+
+hate 	  V-S XLE @(TRANS %stem).  "using the morphological analyzer"
+
+implement V-S XLE @(TRANS %stem).
+
+love 	  V-S XLE @(TRANS %stem).
+
+receive   V-S XLE @(TRANS %stem).
+
+see 	  V-S XLE @(TRANS %stem).
+
+"Ditransitives"
+
+give 	  V-S XLE @(DITRANS give).
+
+"Nouns"
+
+cat 	  N * (^PRED) = 'cat'
+	      (^ NTYPE) = count
+	      @(LLCLOSURE %mc72)
+@(LLATOM %mc70 (s::^ VAR) e)
+@(LLATOM %mc71 (s::^ RESTR) t)
+@(LLIMP %mc72 %mc70 %mc71)
+@(CONCAT  `[  `/ x `_ e `. %stem `( x `)  `]  %mc73)
+@(GLUE-MEANING %mc72 %mc73).
+
+"adjectives --- should really be done via the morphology, like the nouns"
+
+
+angry 	  A * @(PRED angry)
+	      @(LLCLOSURE %mc80)
+@(LLATOM %mc74 (s::(ADJUNCT $ ^) VAR) e)
+@(LLATOM %mc75 (s::(ADJUNCT $ ^) RESTR) t)
+@(LLIMP %mc76 %mc74 %mc75)
+@(LLATOM %mc77 (s::(ADJUNCT $ ^) VAR) e)
+@(LLATOM %mc78 (s::(ADJUNCT $ ^) RESTR) t)
+@(LLIMP %mc79 %mc77 %mc78)
+@(LLIMP %mc80 %mc76 %mc79)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `.  `[  `/ x `_ e `.  `( angry `( x `)   `&  P `( x `)  `)  `]  `]  %mc81)
+@(GLUE-MEANING %mc80 %mc81).
+
+big 	  A * @(PRED big)
+           %var = (s::(ADJUNCT $ ^) VAR)
+           %restr = (s::(ADJUNCT $ ^) RESTR)
+	      @(LLCLOSURE %mc88)
+@(LLATOM %mc82 %var e)
+@(LLATOM %mc83 %restr t)
+@(LLIMP %mc84 %mc82 %mc83)
+@(LLATOM %mc85 %var e)
+@(LLATOM %mc86 %restr t)
+@(LLIMP %mc87 %mc85 %mc86)
+@(LLIMP %mc88 %mc84 %mc87)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `.  `[  `/ x `_ e `.  `( big `( x `)   `&  P `( x `)  `)  `]  `]  %mc89)
+@(GLUE-MEANING %mc88 %mc89).
+
+black 	  A * @(PRED black)
+	      @(LLCLOSURE %mc96)
+@(LLATOM %mc90 (s::(ADJUNCT $ ^) VAR) e)
+@(LLATOM %mc91 (s::(ADJUNCT $ ^) RESTR) t)
+@(LLIMP %mc92 %mc90 %mc91)
+@(LLATOM %mc93 (s::(ADJUNCT $ ^) VAR) e)
+@(LLATOM %mc94 (s::(ADJUNCT $ ^) RESTR) t)
+@(LLIMP %mc95 %mc93 %mc94)
+@(LLIMP %mc96 %mc92 %mc95)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `.  `[  `/ x `_ e `.  `( black `( x `)   `&  P `( x `)  `)  `]  `]  %mc97)
+@(GLUE-MEANING %mc96 %mc97).
+
+scottish  A * @(PRED scottish)
+	      @(LLCLOSURE %mc104)
+@(LLATOM %mc98 (s::(ADJUNCT $ ^) VAR) e)
+@(LLATOM %mc99 (s::(ADJUNCT $ ^) RESTR) t)
+@(LLIMP %mc100 %mc98 %mc99)
+@(LLATOM %mc101 (s::(ADJUNCT $ ^) VAR) e)
+@(LLATOM %mc102 (s::(ADJUNCT $ ^) RESTR) t)
+@(LLIMP %mc103 %mc101 %mc102)
+@(LLIMP %mc104 %mc100 %mc103)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `.  `[  `/ x `_ e `.  `( scottish `( x `)   `&  P `( x `)  `)  `]  `]  %mc105)
+@(GLUE-MEANING %mc104 %mc105).
+
+trustworthy A * @(PRED trustworthy)
+		@(LLCLOSURE %mc112)
+@(LLATOM %mc106 (s::(ADJUNCT $ ^) VAR) e)
+@(LLATOM %mc107 (s::(ADJUNCT $ ^) RESTR) t)
+@(LLIMP %mc108 %mc106 %mc107)
+@(LLATOM %mc109 (s::(ADJUNCT $ ^) VAR) e)
+@(LLATOM %mc110 (s::(ADJUNCT $ ^) RESTR) t)
+@(LLIMP %mc111 %mc109 %mc110)
+@(LLIMP %mc112 %mc108 %mc111)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `.  `[  `/ x `_ e `.  `( trustworthy `( x `)   `&  P `( x `)  `)  `]  `]  %mc113)
+@(GLUE-MEANING %mc112 %mc113).
+
+alleged   A * @(PRED alleged)
+	      @(LLCLOSURE %mc120)
+@(LLATOM %mc114 (s::(ADJUNCT $ ^) VAR) e)
+@(LLATOM %mc115 (s::(ADJUNCT $ ^) RESTR) t)
+@(LLIMP %mc116 %mc114 %mc115)
+@(LLATOM %mc117 (s::(ADJUNCT $ ^) VAR) e)
+@(LLATOM %mc118 (s::(ADJUNCT $ ^) RESTR) t)
+@(LLIMP %mc119 %mc117 %mc118)
+@(LLIMP %mc120 %mc116 %mc119)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `.  `[  `/ x `_ e `. alleged `( P `( x `)  `)  `]  `]  %mc121)
+@(GLUE-MEANING %mc120 %mc121).
+
+former 	  A * @(PRED former)
+	      @(LLCLOSURE %mc128)
+@(LLATOM %mc122 (s::(ADJUNCT $ ^) VAR) e)
+@(LLATOM %mc123 (s::(ADJUNCT $ ^) RESTR) t)
+@(LLIMP %mc124 %mc122 %mc123)
+@(LLATOM %mc125 (s::(ADJUNCT $ ^) VAR) e)
+@(LLATOM %mc126 (s::(ADJUNCT $ ^) RESTR) t)
+@(LLIMP %mc127 %mc125 %mc126)
+@(LLIMP %mc128 %mc124 %mc127)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `.  `[  `/ x `_ e `. former `( P `( x `)  `)  `]  `]  %mc129)
+@(GLUE-MEANING %mc128 %mc129).
+
+
+"adverbs --- should really be done via the morphology, like the nouns"
+
+quickly   ADV * @(PRED quickly). 
+
+very 	  ADV * @(PRED very). 
+
+
+"prepositions"
+
+by 	  P * @(PREP by). 
+
+to 	  P * @(PREP to); 
+	  PARTinf * (^ VFORM) =c inf. 
+
+on 	  P * @(PREP on)
+          @(PREP-SEM on).
+
+in 	  P * @(PREP in). 
+
+with  P * @(PREP with)
+          @(PREP-SEM with).
+
+of 	  P * @(PREP of).
+
+
+"auxiliaries"
+
+was 	  AUX * @(TENSE past)
+		{ (^ SUBJ PERS) = 1
+                | (^ SUBJ PERS) = 3
+                }
+                (^ SUBJ NUM) = sg. 
+
+"determiners"
+
+the 	  D * (^DEF) = +
+	      @(LLCLOSURE %mc134)
+@(LLATOM %mc130 (s::^ VAR) e)
+@(LLATOM %mc131 (s::^ RESTR) t)
+@(LLIMP %mc132 %mc130 %mc131)
+@(LLATOM %mc133 s::^ e)
+@(LLIMP %mc134 %mc132 %mc133)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `. Ix `_ e `[ P `( x `)  `]  `]  %mc135)
+@(GLUE-MEANING %mc134 %mc135).
+
+The 	  D * (^DEF) = +
+	      @(LLCLOSURE %mc134)
+@(LLATOM %mc130 (s::^ VAR) e)
+@(LLATOM %mc131 (s::^ RESTR) t)
+@(LLIMP %mc132 %mc130 %mc131)
+@(LLATOM %mc133 s::^ e)
+@(LLIMP %mc134 %mc132 %mc133)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `. Ix `_ e `[ P `( x `)  `]  `]  %mc135)
+@(GLUE-MEANING %mc134 %mc135).
+
+
+a 	  D * @(SPEC-DET-PRED a)
+	      (^ DEF) = - "this indefinite only marks singulars" 
+	      (^ NUM) = sg
+	      @(QUANT-SCOPE ^ %q) 
+	      @(LLCLOSURE %mc150)
+@(LLATOM %mc142 (s::^ VAR) e)
+@(LLATOM %mc143 (s::^ RESTR) t)
+@(LLIMP %mc144 %mc142 %mc143)
+@(LLATOM %mc145 s::^ e)
+@(LLATOM %mc146 %q t)
+@(LLIMP %mc147 %mc145 %mc146)
+@(LLATOM %mc148 %q t)
+@(LLIMP %mc149 %mc147 %mc148)
+@(LLIMP %mc150 %mc144 %mc149)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `.  `[  `/ Q `_  `< e `, t `>  `. Ex `_ e `[ P `( x `)   `&  Q `( x `)  `]  `]  `]  %mc151)
+@(GLUE-MEANING %mc150 %mc151).
+
+an 	  D * @(SPEC-DET-PRED a)
+	      (^ DEF) = - "this indefinite only marks singulars" 
+	      (^ NUM) = sg
+	      @(QUANT-SCOPE ^ %q) 
+	      @(LLCLOSURE %mc150)
+@(LLATOM %mc142 (s::^ VAR) e)
+@(LLATOM %mc143 (s::^ RESTR) t)
+@(LLIMP %mc144 %mc142 %mc143)
+@(LLATOM %mc145 s::^ e)
+@(LLATOM %mc146 %q t)
+@(LLIMP %mc147 %mc145 %mc146)
+@(LLATOM %mc148 %q t)
+@(LLIMP %mc149 %mc147 %mc148)
+@(LLIMP %mc150 %mc144 %mc149)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `.  `[  `/ Q `_  `< e `, t `>  `. Ex `_ e `[ P `( x `)   `&  Q `( x `)  `]  `]  `]  %mc151)
+@(GLUE-MEANING %mc150 %mc151).
+	
+A 	  D * @(SPEC-DET-PRED a)
+	      (^ DEF) = - "this indefinite only marks singulars" 
+	      (^ NUM) = sg
+	      @(QUANT-SCOPE ^ %q) 
+	      @(LLCLOSURE %mc150)
+@(LLATOM %mc142 (s::^ VAR) e)
+@(LLATOM %mc143 (s::^ RESTR) t)
+@(LLIMP %mc144 %mc142 %mc143)
+@(LLATOM %mc145 s::^ e)
+@(LLATOM %mc146 %q t)
+@(LLIMP %mc147 %mc145 %mc146)
+@(LLATOM %mc148 %q t)
+@(LLIMP %mc149 %mc147 %mc148)
+@(LLIMP %mc150 %mc144 %mc149)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `.  `[  `/ Q `_  `< e `, t `>  `. Ex `_ e `[ P `( x `)   `&  Q `( x `)  `]  `]  `]  %mc151)
+@(GLUE-MEANING %mc150 %mc151).
+
+An 	  D * @(SPEC-DET-PRED a)
+	      (^ DEF) = - "this indefinite only marks singulars" 
+	      (^ NUM) = sg
+	      @(QUANT-SCOPE ^ %q) 
+	      @(LLCLOSURE %mc150)
+@(LLATOM %mc142 (s::^ VAR) e)
+@(LLATOM %mc143 (s::^ RESTR) t)
+@(LLIMP %mc144 %mc142 %mc143)
+@(LLATOM %mc145 s::^ e)
+@(LLATOM %mc146 %q t)
+@(LLIMP %mc147 %mc145 %mc146)
+@(LLATOM %mc148 %q t)
+@(LLIMP %mc149 %mc147 %mc148)
+@(LLIMP %mc150 %mc144 %mc149)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `.  `[  `/ Q `_  `< e `, t `>  `. Ex `_ e `[ P `( x `)   `&  Q `( x `)  `]  `]  `]  %mc151)
+@(GLUE-MEANING %mc150 %mc151).
+
+every 	  D * @(SPEC-DET-PRED every)
+	      (^ DEF) = - "this indefinite only marks singulars" 
+	      (^ NUM) = sg
+	      @(QUANT-SCOPE ^ %q) 
+	      @(LLCLOSURE %mc190)
+@(LLATOM %mc182 (s::^ VAR) e)
+@(LLATOM %mc183 (s::^ RESTR) t)
+@(LLIMP %mc184 %mc182 %mc183)
+@(LLATOM %mc185 s::^ e)
+@(LLATOM %mc186 %q t)
+@(LLIMP %mc187 %mc185 %mc186)
+@(LLATOM %mc188 %q t)
+@(LLIMP %mc189 %mc187 %mc188)
+@(LLIMP %mc190 %mc184 %mc189)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `.  `[  `/ Q `_  `< e `, t `>  `. Ax `_ e `[ P `( x `)   `-  `>  Q `( x `)  `]  `]  `]  %mc191)
+@(GLUE-MEANING %mc190 %mc191).
+
+Every 	  D * @(SPEC-DET-PRED every)
+	      (^ DEF) = - "this indefinite only marks singulars" 
+	      (^ NUM) = sg
+	      @(QUANT-SCOPE ^ %q) 
+	      @(LLCLOSURE %mc190)
+@(LLATOM %mc182 (s::^ VAR) e)
+@(LLATOM %mc183 (s::^ RESTR) t)
+@(LLIMP %mc184 %mc182 %mc183)
+@(LLATOM %mc185 s::^ e)
+@(LLATOM %mc186 %q t)
+@(LLIMP %mc187 %mc185 %mc186)
+@(LLATOM %mc188 %q t)
+@(LLIMP %mc189 %mc187 %mc188)
+@(LLIMP %mc190 %mc184 %mc189)
+@(CONCAT  `[  `/ P `_  `< e `, t `>  `.  `[  `/ Q `_  `< e `, t `>  `. Ax `_ e `[ P `( x `)   `-  `>  Q `( x `)  `]  `]  `]  %mc191)
+@(GLUE-MEANING %mc190 %mc191).
+
+
+"complementizers"
+
+that  C * (^COMP-FORM) = that. 
+
+
+"conjunctions"
+
+and 	  CONJ * @(COORD-FORM %stem);
+	  CONJnp * @(COORD-FORM %stem) @(NUM pl).
+
+
+"punctuation, now with some functional information"
+
+. 	  PERIOD * (^ STMT-TYPE) = declarative. 
+
+, 	  COMMA * . 
+
+! 	  EXCL * (^ STMT-TYPE) = exclamation. 
+
+
+----
+
+MORPH   ENGLISH   RULES (1.0)
+
+"sample rule"
+
+"this deals with verbs.  
+The sublexcial items are the POS assigned to the various tags in morph-lex.lfg" 
+
+   V --> V-S_BASE "verb stem, e.g. run"
+ 	 V-POS_BASE "suffix saying that this is a verb: +Verb"
+ 	 {TNS_BASE "tense suffix, e.g. +Pres" 
+ 	   PERS_BASE "person suffix, e.g. +3sg"
+ 	 | ASP_BASE}.   "aspectual information"
+
+  
+   N --> N-S_BASE "noun stem"
+ 	 N-POS_BASE
+ 	 (N-NAME_BASE) "allow for +Giv or +Place in names"
+ 	 (N-GEND_BASE) "allow for gender information" 
+ 	 N-NUM_BASE.
+
+   A --> ADJ-S_BASE
+ 	 ADJ-POS_BASE.
+	 
+   ADV --> ADV-S_BASE
+ 	  ADV-POS_BASE.
+
+----
+MORPH   ENGLISH   LEXICON (1.0)
+
+"this guesses words that are unknown to your lexicon
+ to be either adjectives or nouns"
+-unknown  ADJ-S XLE @(PRED %stem);
+	  ADV-S XLE @(PRED %stem);
+	  N-S XLE @(PRED %stem)
+		  { (^ NTYPE) = count
+		    @(LLCLOSURE %mc204)
+@(LLATOM %mc202 (s::^ VAR) e)
+@(LLATOM %mc203 (s::^ RESTR) t)
+@(LLIMP %mc204 %mc202 %mc203)
+@(CONCAT  `[  `/ x `_ e `. %stem `( x `)  `]  %mc205)
+@(GLUE-MEANING %mc204 %mc205)		  |
+		  (^ NTYPE) = name
+		  @(LLCLOSURE %mc206)
+@(LLATOM %mc206 s::^ e)
+@(CONCAT %stem %mc207)
+@(GLUE-MEANING %mc206 %mc207)		  }. 
+
+"lexical entries for tags coming out of the morphological analyzer" 
+
++Verb 	  V-POS XLE .
+
++Pres 	  TNS XLE @VPRES.
+
++3sg 	  PERS XLE @S-AGR
+		   @(PROG -_)
+		   @(PERF -_).
+
++PastBoth TNS XLE "past tense or past particle"
+		  { @VPAST | @PASTP }
+		  @(PROG -_)
+		  @(PERF -_). 
+
++PastTense TNS XLE "past tense"
+		   @VPAST
+		   @(PROG -_)
+		   @(PERF -_).
+
++PastPerf TNS XLE @PASTP.
+
++123SP 	  PERS XLE .
+
++Non3sg   PERS XLE @BARE-AGR.
+
++Prog 	  ASP XLE @VPROG.  
+
++Noun 	  N-POS XLE @(NPOS count) "3rd person count noun"
+		    @(PERS 3).
+		       
++Prop 	  N-POS XLE @(NPOS name) "3rd person name"
+		    @(PERS 3).   
+
++Giv 	  N-NAME XLE .   "for given names, no info associated so far"
+
++Pl 	  N-NUM XLE (^ NUM) = pl. 
+
++Sg 	  N-NUM XLE (^ NUM) = sg. 
+
++Fem 	  N-GEND XLE (^GEND) = fem. 
+
++Masc 	  N-GEND XLE (^GEND) = masc.
+
++Adj 	  ADJ-POS XLE .
+
++Adv 	  ADV-POS XLE .
+
+
+----
+
+GLUE   BASIC   TEMPLATES (1.0)
+
+   LLIMP(N L R) = (N ANT) = L
+	  (N CONS) = R.
+	      
+   LLATOM(N L T) = (N RESOURCE) = L
+	  (N TYPE) = T.
+
+   LLCLOSURE(G) = G $ (g::* GLUE).
+
+   GLUE-MEANING(TypedRES M) = 
+	  (TypedRES MEANING) = M.
+
+   NOSCOPE(G) = (G NOSCOPE) = +.  
+
+   QUANT-SCOPE(UP NAME) =
+	  NAME = s::({SUBJ | OBJ | OBJ2 | COMP | OBL-TO | OBL-AG | OBL}+ ^).
+
+   PREP-SEM(P) =
+             {
+         ((ADJUNCT ^) TNS-ASP)
+	     %scope = s::(ADJUNCT ^)
+	     %ppscope = (ADJUNCT ^)
+	    @(LLCLOSURE %mc218)
+@(LLATOM %mc208 s::(%ppscope SUBJ) e)
+@(LLATOM %mc209 s::^ t)
+@(LLIMP %mc210 %mc208 %mc209)
+@(LLATOM %mc211 s::(%ppscope SUBJ) e)
+@(LLATOM %mc212 s::%ppscope t)
+@(LLIMP %mc213 %mc211 %mc212)
+@(LLATOM %mc214 s::(%ppscope SUBJ) e)
+@(LLATOM %mc215 s::%ppscope t)
+@(LLIMP %mc216 %mc214 %mc215)
+@(LLIMP %mc217 %mc213 %mc216)
+@(LLIMP %mc218 %mc210 %mc217)
+@(CONCAT  `[  `/ U `_  `< e `, t `>  `.  `[  `/ V `_  `< e `, t `>  `.  `[  `/ x `_ e `.  `( U `( x `)   `&  V `( x `)  `)  `]  `]  `]  %mc219)
+@(GLUE-MEANING %mc218 %mc219)
+@(NOSCOPE %mc218)	    @(LLCLOSURE %mc224)
+@(LLATOM %mc220 s::(%ppscope SUBJ) e)
+@(LLATOM %mc221 s::(^OBJ) e)
+@(LLATOM %mc222 s::^ t)
+@(LLIMP %mc223 %mc221 %mc222)
+@(LLIMP %mc224 %mc220 %mc223)
+@(CONCAT  `[  `/ x `_ e `.  `[  `/ y `_ e `. P `( x `, y `)  `]  `]  %mc225)
+@(GLUE-MEANING %mc224 %mc225)	    |
+	    ((ADJUNCT ^) NTYPE)
+	    %scope = s::(ADJUNCT ^)
+	    %ppscope = ({SUBJ | OBJ | OBJ2 | COMP | OBL-TO | OBL-AG | OBL}+ ADJUNCT ^)
+	    @(LLCLOSURE %mc236)
+@(LLATOM %mc226 %scope e)
+@(LLATOM %mc227 s::^ t)
+@(LLIMP %mc228 %mc226 %mc227)
+@(LLATOM %mc229 s::(%ppscope OBJ) e)
+@(LLATOM %mc230 s::%ppscope t)
+@(LLIMP %mc231 %mc229 %mc230)
+@(LLATOM %mc232 s::(%ppscope OBJ) e)
+@(LLATOM %mc233 s::%ppscope t)
+@(LLIMP %mc234 %mc232 %mc233)
+@(LLIMP %mc235 %mc231 %mc234)
+@(LLIMP %mc236 %mc228 %mc235)
+@(CONCAT  `[  `/ U `_  `< e `, t `>  `.  `[  `/ V `_  `< e `, t `>  `.  `[  `/ x `_ e `.  `( U `( x `)   `&  V `( x `)  `)  `]  `]  `]  %mc237)
+@(GLUE-MEANING %mc236 %mc237)
+@(NOSCOPE %mc236)	    @(LLCLOSURE %mc242)
+@(LLATOM %mc238 %scope e)
+@(LLATOM %mc239 s::(^OBJ) e)
+@(LLATOM %mc240 s::^ t)
+@(LLIMP %mc241 %mc239 %mc240)
+@(LLIMP %mc242 %mc238 %mc241)
+@(CONCAT  `[  `/ x `_ e `.  `[  `/ y `_ e `. P `( x `, y `)  `]  `]  %mc243)
+@(GLUE-MEANING %mc242 %mc243)	     }.
+
+----
+
+MULTISTAGE   BASIC   TEMPLATES (1.0)
+
+   EQUAL-GLUE(DOWN UP) =
+	  UP = %up
+	  DOWN = %down
+	  %down $ (%up ELEMENTS).
+
+   DOMINATES-GLUE(DOWN UP N) =
+	  @(CONCAT DAUGHTER N %daughter)
+	  UP = %up
+	  DOWN = %down
+	  %down $ (%up %daughter ELEMENTS).
+
+
+
+----
+

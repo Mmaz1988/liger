@@ -1,7 +1,6 @@
 package de.ukon.liger.annotation;
 
 import com.google.gson.Gson;
-import glueSemantics.semantics.lambda.SemType;
 
 import java.lang.annotation.Annotation;
 import java.util.*;

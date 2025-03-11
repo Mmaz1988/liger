@@ -21,11 +21,9 @@
 
 package de.ukon.liger.syntax.xle;
 
-import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
-import de.ukon.liger.syntax.xle.avp_elements.AttributeValuePair;
 import de.ukon.liger.syntax.xle.prolog2java.FsProlog2Java;
 import de.ukon.liger.syntax.xle.prolog2java.ReadFsProlog;
 import de.ukon.liger.utilities.HelperMethods;
@@ -37,21 +35,14 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import static de.ukon.liger.syntax.ud.UDoperator.extractModals;
-
 
 public class XLEoperator extends SyntaxOperator {
 
     public VariableHandler vh;
-
     public XLEStarter.OS os;
-
     //for Mac
     public String xlebashcommand = Paths.get(PathVariables.workingDirectory,  "tmp" , "xlebash.sh").toString();
 
@@ -60,9 +51,8 @@ public class XLEoperator extends SyntaxOperator {
     private final static Logger LOGGER = Logger.getLogger(XLEoperator.class.getName());
 
 
-    public static void main(String[] args) // throws VariableBindingException
+    public static void main(String[] args) throws IOException // throws VariableBindingException
     {
-
         PathVariables.initializePathVariables();
 
         String xlePath = "/bin/xle";
@@ -85,8 +75,8 @@ public class XLEoperator extends SyntaxOperator {
                 input = s.nextLine();
                 if (input.equals("quit"))
                     break;
-                LinguisticStructure out = xleops.parseSingle(input);
-                System.out.println(out.constraints);
+                List<LinguisticStructure> out = xleops.parseSingle(input);
+                System.out.println(out.get(0).constraints);
 
             }
         }
@@ -110,7 +100,6 @@ public class XLEoperator extends SyntaxOperator {
 
     }
 
-
     public XLEoperator(VariableHandler vh)
     {
         this.vh = vh;
@@ -122,38 +111,9 @@ public class XLEoperator extends SyntaxOperator {
         this.os = os;
     }
 
-    public void parseSentences(String testFile)
-    {
-        File f = new File(testFile);
-        try
-        {
-            // ProcessBuilder proc = new ProcessBuilder(xlebashcommand);
-
-            //For Windows
-
-//            proc.start().waitFor();
-
-            String processString = xlebashcommand;
-
-            if (this.os.equals(XLEStarter.OS.WINDOWS)) {
-                processString = "wsl $(wslpath " + processString + ")";
-            }
-
-            ProcessBuilder proc = new ProcessBuilder(processString);
-
-            proc.start().waitFor();
 
 
-            f.delete();
-
-
-        } catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-    public void parseSentences(List<String> sentences){
+    public void parseSentences(List<String> sentences, boolean unpack){
 
 
         File testdir = new File( Paths.get(PathVariables.workingDirectory,"tmp","parser_output").toString());
@@ -194,57 +154,102 @@ public class XLEoperator extends SyntaxOperator {
         {
             for (String sentence : sentences) {
                 out.println(sentence);
+                out.println(System.lineSeparator());
             }
         }
         catch(Exception e)
         {
-            LOGGER.warning("Something went wrong.\n" + e.getMessage());
+            LOGGER.warning("Something went wrong while setting temporary files for parsing.\n" + e.getMessage());
         }
-        try
-        {
-            // For windows
-            //ProcessBuilder proc = new ProcessBuilder("wsl",xlebashcommand);
-            //For mac
+        try {
             String processString = xlebashcommand;
 
             if (this.os.equals(XLEStarter.OS.WINDOWS)) {
-
-                //Translate windows path to unix path
-                // trans late [A-Z]: to /mnt/[a-z]
-
                 processString = HelperMethods.formatWslString(processString);
-
-             //   processString = "wsl" + processString;
             }
 
-            ProcessBuilder proc = null;
+            ProcessBuilder proc = this.os.equals(XLEStarter.OS.WINDOWS)
+                    ? new ProcessBuilder("wsl", processString)
+                    : new ProcessBuilder(processString);
 
-            if (this.os.equals(XLEStarter.OS.WINDOWS)) {
-            proc = new ProcessBuilder("wsl", processString);
-            } else
-            {
-                proc = new ProcessBuilder(processString);
+            Process process = proc.start();
+
+            // Log the process output
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                 BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    LOGGER.info(line);
+                }
+
+                while ((line = errorReader.readLine()) != null) {
+                    LOGGER.severe(line);
+                }
             }
 
-            proc.start().waitFor();
+            int exitCode = process.waitFor();
+            LOGGER.info("Process exited with code: " + exitCode);
 
-          //  f.delete();
+            if (exitCode == 0 && unpack){
+                String unpackProcessString =
+                        XLEStarter.unpackFsViaXLE(
+                                Paths.get(PathVariables.workingDirectory,"tmp","parser_output","sentence1").toString(),
+                                "100");
 
+                if (this.os.equals(XLEStarter.OS.WINDOWS)) {
+                    unpackProcessString = HelperMethods.formatWslString(unpackProcessString);
+                }
 
+                ProcessBuilder unpackProc = this.os.equals(XLEStarter.OS.WINDOWS)
+                        ? new ProcessBuilder("wsl", unpackProcessString)
+                        : new ProcessBuilder(unpackProcessString);
 
+                Process unpackProcess = unpackProc.start();
 
-        } catch (Exception e)
-        {
-            e.printStackTrace();
+                // Log the process output
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(unpackProcess.getInputStream()));
+                     BufferedReader errorReader = new BufferedReader(new InputStreamReader(unpackProcess.getErrorStream()))) {
+
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        LOGGER.info(line);
+                    }
+
+                    while ((line = errorReader.readLine()) != null) {
+                        LOGGER.severe(line);
+                    }
+                }
+
+                int unpackExitCode = unpackProcess.waitFor();
+                if (unpackExitCode == 0) {
+                    LOGGER.info("Unpacking process exited with code: " + unpackExitCode);
+                    //Delete original file
+                    File fo = new File(Paths.get(PathVariables.workingDirectory,"tmp","parser_output","sentence1.pl").toString());
+                    if (fo.exists()) {
+                        fo.delete();
+                    }
+                } else {
+                    LOGGER.warning("Unpacking process exited with code: " + unpackExitCode);
+                }
+
+            }
+        } catch (Exception e) {
+            LOGGER.warning("Failed to execute process: " + e.getMessage());
         }
-    }
-    @Override
-    public LinguisticStructure parseSingle(String sentence) {
-        List<String> singletonList = new ArrayList<>();
-        singletonList.add(sentence);
-        parseSentences(singletonList);
 
-        //File fsFile = new File("/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/parser_output");
+    }
+
+    //TODO parse multiple
+    /*
+    public HashMap<Integer,LinguisticStructure> parseMultiple(LinkedHashMap<Integer,String> sentences)
+    {
+        List<String> sentenceList = new ArrayList<>();
+        sentenceList.addAll(sentences.values());
+
+        parseSentences(sentenceList);
+
+
 
         File fsFile = new File(Paths.get(PathVariables.workingDirectory,"tmp","parser_output").toString());
 
@@ -255,76 +260,92 @@ public class XLEoperator extends SyntaxOperator {
                 LinkedHashMap<String, LinguisticStructure> fsRef = fs2Java(files[i].getPath());
                 //close fsFile
 
+            }
 
-                return fsRef.get(fsRef.keySet().iterator().next()) ;
+        }
+            return null;
+    }
+
+     */
+
+    public List<LinguisticStructure> parseSingle(String sentence)
+    {
+        return parseSingle(sentence,true);
+    }
+
+    @Override
+    public List<LinguisticStructure> parseSingle(String sentence, boolean unpack) {
+        List<String> singletonList = new ArrayList<>();
+        singletonList.add(sentence);
+        parseSentences(singletonList, unpack);
+
+        List<LinguisticStructure> out = new ArrayList<>();
+        //File fsFile = new File("/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/parser_output")
+        File fsFile = new File(Paths.get(PathVariables.workingDirectory,"tmp","parser_output").toString());
+
+        if (fsFile.isDirectory()) {
+            List<File> files = new ArrayList<>(Arrays.asList(fsFile.listFiles((d, name) -> name.endsWith(".pl"))));
+
+            if (files.size() > 1) {
+                // Delete files with same string contents
+                Map<String, File> seenFiles = new HashMap<>();
+                Iterator<File> iterator = files.iterator();
+
+                while (iterator.hasNext()) {
+                    File file = iterator.next();
+                    try {
+                        String hash = HelperMethods.computeSHA256(file);
+                        if (seenFiles.containsKey(hash)) {
+                            file.delete();  // Delete duplicate
+                            iterator.remove();  // Remove from list
+                        } else {
+                            seenFiles.put(hash, file);
+                        }
+                    } catch (IOException | NoSuchAlgorithmException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+
+            // Process remaining files
+            for (File file : files) {
+                LinkedHashMap<String, LinguisticStructure> fsRef = fs2Java(file.getPath());
+                for (String key : fsRef.keySet()) {
+                    out.add(fsRef.get(key));
+                }
+            }
+            return out;
+        }
+        return null;
+    }
+
+    public String parse2Prolog(String sentence) {
+        List<String> singletonList = new ArrayList<>();
+        singletonList.add(sentence);
+        parseSentences(singletonList, true);
+
+        //File fsFile = new File("/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/parser_output");
+
+        File fsFile = new File(Paths.get(PathVariables.workingDirectory,"tmp","parser_output").toString());
+
+        if (fsFile.isDirectory()) {
+            File[] files = fsFile.listFiles((d, name) -> name.endsWith(".pl"));
+
+            for (int i = 0; i < files.length; i++) {
+                //read in files.get(i)
+
+                try {
+                    return Files.readString(Paths.get(files[i].getPath()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
             }
         }
         return null;
     }
 
-    public LinkedHashMap loadPrologFstructures()
-    {
-        VariableHandler vh = new VariableHandler();
-        File folder = new File("/Users/red_queen/IdeaProjects/xlebatchparsing/src/test/prolog/");
-        List<Path> listOfPrologFiles = new ArrayList<>();
-        try {
-            listOfPrologFiles = Files.list(Paths.get(folder.getPath())).filter(Files::isRegularFile).sorted().collect(Collectors.toList());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        Collections.sort(listOfPrologFiles, new Comparator<Path>() {
-            public int compare(Path f1, Path f2) {
-                Pattern treeBankFile = Pattern.compile(".*S(\\d+)");
-                Matcher f1Matcher = treeBankFile.matcher(f1.toString());
-                Matcher f2Matcher = treeBankFile.matcher(f2.toString());
-
-                try {
-                    if (f1Matcher.find() && f2Matcher.find()) {
-                        int i1 = Integer.parseInt(f1Matcher.group(1));
-                        int i2 = Integer.parseInt(f2Matcher.group(1));
-
-                        return i1 - i2;
-                    }
-                } catch (IllegalStateException e) {
-                    throw new AssertionError(e);
-                }
-                return 0;
-            }
-
-        });
-
-        LinkedHashMap<String, LinguisticStructure> prologsJavaObjects = new LinkedHashMap<>();
-
-        for (int i = 0; i < listOfPrologFiles.size(); i++) {
-
-            String prologFilePath = listOfPrologFiles.get(i).toString();
-            LinkedHashMap<String, LinguisticStructure> prologJavaObject = fs2Java(prologFilePath);
-
-            for (String key : prologJavaObject.keySet())
-            {
-                prologsJavaObjects.put(key,prologJavaObject.get(key));
-            }
-        }
-
-        return prologsJavaObjects;
-    }
-
-    public List<List<String>> extractModalsFromXLE(LinkedHashMap<String, LinguisticStructure> sentences)
-    {
-        List<List<String>> output = new ArrayList<>();
-
-        for (String key : sentences.keySet())
-        {
-            output.add(extractModals(sentences.get(key)));
-        }
-        return output;
-    }
-
-
-
-
-    public LinkedHashMap<String, LinguisticStructure> fs2Java(String inputPath)
+    public LinkedHashMap<String,LinguisticStructure> fs2Java(String inputPath)
     {
         //In
         File f = new File(inputPath);
@@ -356,10 +377,12 @@ public class XLEoperator extends SyntaxOperator {
 
             ReadFsProlog fs2pl = ReadFsProlog.readPrologFile(sentence,vh);
 
-            LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
-            List<GraphConstraint> fsList = FsProlog2Java.fsHash2List(fsHash);
+           // LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
+            List<GraphConstraint> fsList = FsProlog2Java.fs2List(fs2pl);
 
             Fstructure fs = new Fstructure(fs2pl.sentenceID,fs2pl.sentence,fsList,fs2pl.cp);
+
+            fs.prologString = fs2pl.prologString;
 
             out.put(fs2pl.sentenceID,fs);
 
@@ -367,6 +390,23 @@ public class XLEoperator extends SyntaxOperator {
 
         return out;
     }
+
+    public LinkedHashMap<String, LinguisticStructure> fsString2Java(String prologString,String id)
+    {
+            LinkedHashMap<String,LinguisticStructure> out = new LinkedHashMap<>();
+
+            ReadFsProlog fs2pl = ReadFsProlog.readPrologString(prologString,id,vh);
+
+          //  LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
+            List<GraphConstraint> fsList = FsProlog2Java.fs2List(fs2pl);
+
+            Fstructure fs = new Fstructure(fs2pl.sentenceID,fs2pl.sentence,fsList,fs2pl.cp);
+
+            out.put(fs2pl.sentenceID,fs);
+
+        return out;
+    }
+
 
     //Load single xle structure as a syntactic structure:
     public LinguisticStructure xle2Java(String inputPath) throws IOException {
@@ -392,8 +432,8 @@ public class XLEoperator extends SyntaxOperator {
 
             ReadFsProlog fs2pl = ReadFsProlog.readPrologFile(sentence,vh);
 
-            LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
-            List<GraphConstraint> fsList = FsProlog2Java.fsHash2List(fsHash);
+           // LinkedHashMap<Set<ChoiceVar>, LinkedHashMap<Integer, List<AttributeValuePair>>> fsHash = FsProlog2Java.fs2Hash(fs2pl);
+            List<GraphConstraint> fsList = FsProlog2Java.fs2List(fs2pl);
 
             return new Fstructure(fs2pl.sentenceID,fs2pl.sentence,fsList,fs2pl.cp);
 

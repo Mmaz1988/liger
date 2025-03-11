@@ -25,14 +25,18 @@ import de.ukon.liger.packing.ChoiceSpace;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.GraphConstraint;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Fstructure extends LinguisticStructure {
 
     public boolean packed;
 
+    public List<GraphConstraint> fstructureFacts;
+    public List<GraphConstraint> cStructureFacts;
+
+
+    public String prologString;
 
     //TODO
     //public Integer global_id
@@ -45,6 +49,9 @@ public class Fstructure extends LinguisticStructure {
         }else{
             this.packed = false;
         }
+
+        this.fstructureFacts = fsFacts.stream().filter(x -> x.getProj().equals("f")).collect(Collectors.toList());
+        this.cStructureFacts = fsFacts.stream().filter(x -> x.getProj().equals("c")).collect(Collectors.toList());
     }
 
     public String writeToProlog(Boolean annotated){
@@ -91,6 +98,51 @@ public class Fstructure extends LinguisticStructure {
 
 
         return prologStringBuilder.toString();
+    }
+
+    // String root = this.cStructureFacts.stream().filter(GraphConstraint::isRoot).map(GraphConstraint::getFsNode).findFirst().get();
+    public LinkedHashMap<String, Object> builtCstructureTree(String root) {
+        LinkedHashMap<String, Object> cStructureTree = new LinkedHashMap<>();
+
+        List<GraphConstraint> currentConstraints = this.cStructureFacts.stream().filter(x -> x.getFsNode().equals(root)).collect(Collectors.toList());
+
+        Set<GraphConstraint> leftSet = currentConstraints.stream().filter(c1 -> c1.getFsNode().equals(root) && c1.getRelationLabel().equals("left")).collect(Collectors.toSet());
+        Set<GraphConstraint> rightSet = currentConstraints.stream().filter(c1 -> c1.getFsNode().equals(root) && c1.getRelationLabel().equals("right")).collect(Collectors.toSet());
+
+        String left = null;
+        if (!leftSet.isEmpty()) {
+            left = leftSet.stream().map(GraphConstraint::getFsValue).findFirst().get().toString();
+        }
+
+        String right = null;
+        if (!rightSet.isEmpty())
+        {
+            right = rightSet.stream().map(GraphConstraint::getFsValue).findFirst().get().toString();
+        }
+
+        if (left == null && right == null)
+        {
+            cStructureTree.put(root,null);
+        } else {
+
+            Object[] daughters = new Object[2];
+
+            if (left != null) {
+                LinkedHashMap<String, Object> leftTree = builtCstructureTree(left);
+                if (leftTree != null) {
+                    daughters[0] = leftTree;
+                }
+            }
+            if (right != null) {
+                LinkedHashMap<String, Object> rightTree = builtCstructureTree(right);
+                if (rightTree != null) {
+                    daughters[1] = rightTree;
+                }
+            }
+            cStructureTree.put(root,daughters);
+        }
+
+        return cStructureTree;
     }
 
 

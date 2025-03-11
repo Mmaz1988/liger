@@ -49,6 +49,17 @@ public class LigerWebNode extends LigerGraphComponent {
         this.data = data;
     }
 
+    public LigerWebNode(String id, String type, HashMap<String, String> avp, String projection)
+    {
+        HashMap<String,Object> data = new HashMap<>();
+        data.put("id",id);
+        data.put("node_type",type);
+        data.put("avp",avp);
+        data.put("projection",projection);
+
+        this.data = data;
+    }
+
     //Edge
     public LigerWebNode(String id, String source, String target, String label, String type)
     {

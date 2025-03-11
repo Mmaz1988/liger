@@ -39,6 +39,10 @@ public class DBASettings {
     //resources directory
     public String resources;
 
+    public Boolean prolog; //prolog or glue
+
+    public String glueGrammarFile;
+
     public Boolean semanticParsing;
     public Boolean interactiveMode;
 
@@ -49,9 +53,8 @@ public class DBASettings {
     //For meaning constructor output
     public Boolean mcs;
 
-    public String xleBinary;
-
-    public String xleGrammar;
+    //for multistage proving
+    public Boolean multi;
 
     public XLEStarter.OS os;
 
@@ -61,7 +64,10 @@ public class DBASettings {
         this.semanticParsing = false;
         this.web = false;
         this.mcs = false;
+        this.multi = false;
         this.os = determineOs();
+        this.multi = false;
+        this.prolog = false;
     }
 
 

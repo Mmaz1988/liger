@@ -7,5 +7,6 @@ public class Projection extends AttributeValuePair{
         {
             this.attribute = attr;
             this.value = val;
+            this.projection = "none";
         }
 }

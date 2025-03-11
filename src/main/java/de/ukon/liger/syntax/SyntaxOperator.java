@@ -42,12 +42,14 @@
 
 package de.ukon.liger.syntax;
 
+import java.util.List;
+
 public abstract class SyntaxOperator {
 
     public SyntaxOperator()
     {}
 
-    public abstract LinguisticStructure parseSingle(String sentence);
+    public abstract List<LinguisticStructure> parseSingle(String sentence);
 
-
+    public abstract List<LinguisticStructure> parseSingle(String sentence, boolean unpack);
 }

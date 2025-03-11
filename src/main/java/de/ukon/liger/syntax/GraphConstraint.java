@@ -42,6 +42,9 @@ public class GraphConstraint implements Serializable {
     private String fsValue;
     private Boolean projection;
 
+    private String proj;
+    private boolean root;
+
 
     public GraphConstraint()
     {this.projection = false;}
@@ -63,6 +66,27 @@ public class GraphConstraint implements Serializable {
         this.relationLabel = relationLabel;
         this.fsValue = fsValue;
         this.projection = projection;
+        //    this.pathNodes = new HashSet<>();
+    }
+
+    public GraphConstraint(Set<ChoiceVar> reading, Integer fsNode, String relationLabel, String fsValue, String projection)
+    {
+        this.reading = reading;
+        this.nodeIdentifier = fsNode.toString();
+        this.relationLabel = relationLabel;
+        this.fsValue = fsValue;
+        this.proj = projection;
+        //    this.pathNodes = new HashSet<>();
+    }
+
+    public GraphConstraint(Set<ChoiceVar> reading, String fsNode, String relationLabel, String fsValue, String projection, boolean root)
+    {
+        this.reading = reading;
+        this.nodeIdentifier = fsNode;
+        this.relationLabel = relationLabel;
+        this.fsValue = fsValue;
+        this.proj = projection;
+        this.root = root;
         //    this.pathNodes = new HashSet<>();
     }
 
@@ -164,7 +188,7 @@ public class GraphConstraint implements Serializable {
         {
             return String.format("cf(%1$s,%2$s(%3$s,var(%4$s)))",choice,getRelationLabel(),value,nodeIdentifier);
         }
-        else if (this.projection)
+        else if (this.projection != null && this.projection)
         {
             return String.format("cf(%1$s,eq(proj(var(%2$s),'%3$s'),%4$s))",choice,nodeIdentifier,getRelationLabel(),value);
         }
@@ -240,6 +264,23 @@ public class GraphConstraint implements Serializable {
 
     public void setReading(Set<ChoiceVar> reading) {
         this.reading = reading;
+    }
+
+    public String getProj() {
+        return proj;
+    }
+
+    public void setProj(String proj) {
+        this.proj = proj;
+    }
+
+
+    public boolean isRoot() {
+        return root;
+    }
+
+    public void setRoot(boolean root) {
+        this.root = root;
     }
 
 }

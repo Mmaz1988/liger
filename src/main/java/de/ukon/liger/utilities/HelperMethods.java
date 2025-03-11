@@ -23,6 +23,12 @@ package de.ukon.liger.utilities;
 
 import de.ukon.liger.syntax.GraphConstraint;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,7 +36,7 @@ import java.util.regex.Pattern;
 public class HelperMethods {
 
 
-    public static Pattern fsNodePattern = Pattern.compile("#([a-z])");
+    public static Pattern fsNodePattern = Pattern.compile("[#*](\\w+)");
     public static Pattern valueVarPattern = Pattern.compile("(%[a-z])");
     //semform('say',3,[var(11),var(2)],[]))
     public static Pattern predPattern = Pattern.compile("semform\\('(.+)',.+\\)");
@@ -40,30 +46,26 @@ public class HelperMethods {
     public static Pattern uncertaintyPattern = Pattern.compile("([\\^|!])\\((.*)\\)");
 
 
-        public static boolean isInteger (Object s)
-        {
-            boolean isValidInteger = false;
-            try {
-                Integer.parseInt((String) s);
+    public static boolean isInteger(Object s) {
+        boolean isValidInteger = false;
+        try {
+            Integer.parseInt((String) s);
 
-                // s is a valid integer
+            // s is a valid integer
 
-                isValidInteger = true;
-            } finally {
-                return isValidInteger;
-                // s is not an integer
-            }
+            isValidInteger = true;
+        } finally {
+            return isValidInteger;
+            // s is not an integer
         }
+    }
 
-    public static String stripValue(String value)
-    {
+    public static String stripValue(String value) {
         Matcher m = predPattern.matcher(value);
 
-        if (m.matches())
-        {
+        if (m.matches()) {
             return m.group(1);
-        } else
-        {
+        } else {
             Matcher m2 = hyphenPattern.matcher(value);
             if (m2.matches()) {
                 return m2.group(1);
@@ -83,42 +85,40 @@ public class HelperMethods {
             char c = value.charAt(i);
 
             if (c == 's') {
-               try {
-                   int j = i;
-                   if (value.charAt(j + 1) == 't' && value.charAt(j + 2) == 'r' && value.charAt(j + 3) == 'i' && value.charAt(j + 4) == 'p'
-                           && value.charAt(j + 5) == '(') {
-                       StringBuilder sb = new StringBuilder();
-                       int bracketCounter = 1;
-                       i = i + 6;
-                       while (bracketCounter > 0) {
-                           char ch = value.charAt(i);
-                           if (ch == '(') {
-                               sb.append(ch);
-                               i++;
-                               bracketCounter++;
-                           } else if (ch == ')' && bracketCounter > 1) {
-                               sb.append(ch);
-                               i++;
-                               bracketCounter = bracketCounter - 1;
-                           } else if (ch == ')' && bracketCounter == 1) {
-                               bracketCounter = bracketCounter - 1;
-                               i++;
-                           } else {
-                               sb.append(ch);
-                               i++;
-                           }
-                       }
-                       newString.append(HelperMethods.stripValue(sb.toString()));
-                   }
-               } catch(Exception e)
-               {
-                   System.out.println("Hit end of string");
-               }
+                try {
+                    int j = i;
+                    if (value.charAt(j + 1) == 't' && value.charAt(j + 2) == 'r' && value.charAt(j + 3) == 'i' && value.charAt(j + 4) == 'p'
+                            && value.charAt(j + 5) == '(') {
+                        StringBuilder sb = new StringBuilder();
+                        int bracketCounter = 1;
+                        i = i + 6;
+                        while (bracketCounter > 0) {
+                            char ch = value.charAt(i);
+                            if (ch == '(') {
+                                sb.append(ch);
+                                i++;
+                                bracketCounter++;
+                            } else if (ch == ')' && bracketCounter > 1) {
+                                sb.append(ch);
+                                i++;
+                                bracketCounter = bracketCounter - 1;
+                            } else if (ch == ')' && bracketCounter == 1) {
+                                bracketCounter = bracketCounter - 1;
+                                i++;
+                            } else {
+                                sb.append(ch);
+                                i++;
+                            }
+                        }
+                        newString.append(HelperMethods.stripValue(sb.toString()));
+                    }
+                } catch (Exception e) {
+                    System.out.println("Hit end of string");
+                }
             }
             if (i < value.length()) {
                 newString.append(value.charAt(i));
-            }else
-            {
+            } else {
                 break;
             }
         }
@@ -127,27 +127,23 @@ public class HelperMethods {
 
     /**
      * IDs are strings consisting of a type identifier (e.g. w for word) and an integer. For example
+     *
      * @param id
      * @return
      */
-    public static int getIntegerFromID(String id)
-    {
+    public static int getIntegerFromID(String id) {
         Pattern p = Pattern.compile("([a-z]|[A-Z])*(\\d+)");
         Matcher pm = p.matcher(id);
-        if (pm.matches())
-        {
+        if (pm.matches()) {
             return Integer.parseInt(pm.group(2));
         }
         return 0;
     }
 
 
-    public static boolean isValue(String query, HashMap<Integer, GraphConstraint> fsIndices)
-    {
-        for (Integer key : fsIndices.keySet())
-        {
-            if (fsIndices.get(key).getFsValue().equals(query))
-            {
+    public static boolean isValue(String query, HashMap<Integer, GraphConstraint> fsIndices) {
+        for (Integer key : fsIndices.keySet()) {
+            if (fsIndices.get(key).getFsValue().equals(query)) {
                 return true;
             }
         }
@@ -156,39 +152,31 @@ public class HelperMethods {
         Matcher sm = HelperMethods.stripPattern.matcher(query);
         Matcher vm = HelperMethods.valueStringPattern.matcher(query);
 
-        if (m.matches())
-        {
+        if (m.matches()) {
             return true;
         }
 
-        if (sm.matches())
-        {
+        if (sm.matches()) {
             return true;
         }
 
-        if (vm.matches())
-        {
+        if (vm.matches()) {
             return true;
         }
         return false;
     }
 
 
-    public static boolean isInteger(String s)
-    {
-        try
-        {
+    public static boolean isInteger(String s) {
+        try {
             Integer.parseInt(s);
             return true;
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             return false;
         }
     }
 
-    public static String formatWslString(String winpath)
-    {
+    public static String formatWslString(String winpath) {
 
         String wslPath = "";
 
@@ -205,6 +193,41 @@ public class HelperMethods {
         wslPath = wslPath.replaceAll("\\\\", "/");
 
         return wslPath;
+    }
+
+
+    public static String unwrapMCs(String mcs) {
+
+
+    int eindex = mcs.lastIndexOf("\n");
+    if(eindex >-1)
+    {
+        mcs = mcs.substring(0, eindex);
+    }
+    //Remove first line from ligerMCs1
+    int lindex = mcs.indexOf("\n");
+    if(lindex >-1)
+    {
+        mcs = mcs.substring(lindex + 1);
+    }
+    return mcs;
+}
+
+    public static String computeSHA256(File file) throws IOException, NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        try (InputStream fis = new FileInputStream(file)) {
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                digest.update(buffer, 0, bytesRead);
+            }
+        }
+        byte[] hashBytes = digest.digest();
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hashBytes) {
+            hexString.append(String.format("%02x", b));
+        }
+        return hexString.toString();
     }
 
 }
