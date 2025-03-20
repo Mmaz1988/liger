@@ -717,7 +717,12 @@ public class RuleParser {
                         }
                     }
 
-                    Rule r = new Rule(left.toString().trim(),right.toString().trim(), rewrite,branch);
+                    String leftString = left.toString().trim();
+                    leftString = leftString.replaceAll("\\s+"," ");
+                    String rightString = right.toString().trim();
+                    rightString = rightString.replaceAll("\\s+"," ");
+
+                    Rule r = new Rule(leftString,rightString, rewrite,branch);
                     r.setLineNumber(lineCounter);
                     out.add(r);
 
@@ -736,6 +741,7 @@ public class RuleParser {
 
             }
         }
+
 
         return out;
 
