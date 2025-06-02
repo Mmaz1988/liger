@@ -43,8 +43,14 @@ public class GlueSemanticsParser {
                 "\t    ((%scope_e -o s::^_t) -o ((%scope_v -o %scope_t) -o (%scope_v -o %scope_t))),");
                 */
 
-        String mc =  glueSemanticsParser.parseMeaningConstructor("        :$ test :\n" +
-                "\t    \t((s::^ COORD1)_e -o ((s::^ COORD2)_e -o (s::^ COORD2)))");
+        String mc =  glueSemanticsParser.parseMeaningConstructor(":$ lam(P,lam(Q,merge(\n" +
+                " \t                drs([D],[]),\n" +
+                " \t                merge(drs([X],[]),\n" +
+                " \t                    merge(app(P,X), merge(app(Q,X), app(app(many,X),D))\n" +
+                " \t                    )\n" +
+                " \t                )\n" +
+                " \t        ))) :\n" +
+                "\t      ((s::^_e -o s::^_t) -o ((s::^_e -o %q_t) -o %q_t))");
 
         /*
 
