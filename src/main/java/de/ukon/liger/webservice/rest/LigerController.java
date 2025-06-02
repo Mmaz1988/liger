@@ -101,7 +101,7 @@ public class LigerController {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rules_xle", produces = "application/json", consumes = "application/json")
-    public LigerRuleAnnotation applyRuleRequestXLE2(@RequestBody LigerRequest request) throws IOException {
+    public List<LigerRuleAnnotation> applyRuleRequestXLE2(@RequestBody LigerRequest request) throws IOException {
 
         //    System.out.println(request.sentence);
         //   System.out.println(request.ruleString);
@@ -118,7 +118,9 @@ public class LigerController {
         List<String> semString = new ArrayList<>();
         LigerWebGraph lg = null;
 
-        LinkedHashMap<String,List<LigerRule>> appliedRules = new LinkedHashMap<>();
+        List<LigerRuleAnnotation> results = new ArrayList<>();
+
+        //LinkedHashMap<String,List<LigerRule>> appliedRules = new LinkedHashMap<>();
 
         for (LinguisticStructure fs : fsList) {
             List<LigerRule> appliedLigerRules = new ArrayList<>();
@@ -131,13 +133,13 @@ public class LigerController {
             for (Rule r : rp.getAppliedRules()) {
                 appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
             }
-            appliedRules.put(fs.local_id,appliedLigerRules);
             semString.add(sem.returnMeaningConstructors(fs,!starter.isGlue,false));
+
+            results.add(new LigerRuleAnnotation(lg,appliedLigerRules,String.join("\n",semString)));
         }
 
-        return new LigerRuleAnnotation(lg,
-                                    appliedRules.get(appliedRules.keySet().stream().findFirst().get()),
-                                    String.join("\n",semString));
+        return results;
+
     }
 
 
@@ -172,13 +174,7 @@ public class LigerController {
 
         StringBuilder reportBuilder = new StringBuilder();
 
-        if (!appliedRulesGraph.isEmpty()){
-            rules = true;
-        }
 
-        if (!rules){
-            reportBuilder.append("No rewrite rules applied to testsuite!");
-        }
 
         reportBuilder.append(System.lineSeparator());
         reportBuilder.append("ID:     Applied rules:     Added facts:     No of meaning constructors:\n");
@@ -238,17 +234,23 @@ public class LigerController {
 
                 lg = new LigerWebGraph(fsList.get(0).constraints, fsList.get(0).annotation);
 
-                reportBuilder.append(String.format("%s\t\t%s\t\t%s\t\t%s", id, appliedLigerRules.size(), addedAnnotations, meaningConstructors.size()));
-                reportBuilder.append(System.lineSeparator());
-
                 output.put(id, new LigerRuleAnnotation(lg, appliedLigerRules, currentSemString));
                 allAppliedRules.add(appliedLigerRules);
 
-
+            reportBuilder.append(String.format("%s\t\t%s\t\t%s\t\t%s", id, appliedLigerRules.size(), addedAnnotations, meaningConstructors.size()));
+            reportBuilder.append(System.lineSeparator());
 
         }
 
         appliedRulesGraph = createLigerAnnotationGraph(request.sentences,rp, allAppliedRules);
+
+        if (!appliedRulesGraph.isEmpty()){
+            rules = true;
+        }
+
+        if (!rules){
+            reportBuilder.append("No rewrite rules applied to testsuite!");
+        }
 
         return new LigerBatchParsingAnalysis(output,appliedRulesGraph,reportBuilder.toString());
         }
