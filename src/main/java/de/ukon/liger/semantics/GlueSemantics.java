@@ -35,6 +35,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
@@ -604,8 +605,12 @@ public class GlueSemantics {
 
                 //Strip single quotes of meaning
                 currentMeaning = currentMeaning.substring(1,currentMeaning.length()-1);
+                //replace \'...\' with '...lowercase'
+                Pattern pattern = Pattern.compile("\\\\'(.*?)\\\\'");
+                currentMeaning = pattern.matcher(currentMeaning).replaceAll(m -> "'" + m.group(1).toLowerCase() + "'" );
                 //replace \' with '
-                currentMeaning = currentMeaning.replace("\\'","'");
+               // currentMeaning = currentMeaning.replace("\\'","'");
+
                 unpackedMeanings.put( meaningConstraint.getReading(), currentMeaning);
             }
             //TODO ? possibly remove constraints that have already been covered?
@@ -781,6 +786,9 @@ public class GlueSemantics {
     }
 
 
+    /**
+     * Uses the old Prolog code by Mary to extract old-school XLE+Glue meaning constructors
+     */
 
     //For XLE+Glue version 1. Uses Prolog to extract MCs
     public String extractMCsFromFs(String fs) {
