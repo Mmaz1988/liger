@@ -23,6 +23,7 @@ package de.ukon.liger.webservice.rest;
 
 import de.ukon.liger.analysis.RuleParser.Rule;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
+import de.ukon.liger.reasoning.AxiomExtractor;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.xle.XLEoperator;
@@ -92,7 +93,8 @@ public class LigerController {
             semString.add(sem.returnMultiStageMeaningConstructors(fs));
         }
 
-        return new LigerRuleAnnotation(lg,null,String.join("\n",semString));
+        //TODO fix treatment of axioms
+        return new LigerRuleAnnotation(lg,null,String.join("\n",semString), new ArrayList<>());
     }
 
 
@@ -109,14 +111,17 @@ public class LigerController {
         starter.generateXLEStarterFile();
         XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
 
-        //request.unpack
+        //Parse sentence
         List<LinguisticStructure> fsList = parser.parseSingle(request.sentence,true);
 
+
+        //Apply rewrite rules
         RuleParser rp = new RuleParser(fsList, request.ruleString);
 
         GlueSemantics sem = new GlueSemantics();
         List<String> semString = new ArrayList<>();
         LigerWebGraph lg = null;
+        List<String> axioms = null;
 
         LinkedHashMap<String,List<LigerRule>> appliedRules = new LinkedHashMap<>();
 
@@ -131,13 +136,20 @@ public class LigerController {
             for (Rule r : rp.getAppliedRules()) {
                 appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
             }
-            appliedRules.put(fs.local_id,appliedLigerRules);
-            semString.add(sem.returnMeaningConstructors(fs,!starter.isGlue,false));
+            appliedRules.put(fs.local_id, appliedLigerRules);
+            semString.add(sem.returnMeaningConstructors(fs, !starter.isGlue, false));
+
+
+            //Extract axioms
+            AxiomExtractor axiomExtractor = new AxiomExtractor();
+
+            axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(fs);
+
         }
 
         return new LigerRuleAnnotation(lg,
                                     appliedRules.get(appliedRules.keySet().stream().findFirst().get()),
-                                    String.join("\n",semString));
+                                    String.join("\n",semString), axioms);
     }
 
 
@@ -429,7 +441,8 @@ public class LigerController {
             reportBuilder.append(String.format("%s\t\t%s", id, numberOfMcs));
             reportBuilder.append(System.lineSeparator());
 
-            output.put(id,new LigerRuleAnnotation(null, null, mcs));
+            //TODO fix treatment of axioms
+            output.put(id,new LigerRuleAnnotation(null, null, mcs, new ArrayList<>()));
 
         }
         return new LigerBatchParsingAnalysis(output,null,reportBuilder.toString());
