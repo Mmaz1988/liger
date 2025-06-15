@@ -232,7 +232,7 @@ public class XLEStarter {
 
         // xle -noTk -e "create-parser /mnt/d/Resources/english_pargram/index/main.lfg; parse-testfile testfile.lfg -outputPrefix parser_output/sentence; exit"
 
-        sb.append("xle -noTk -e \"create-parser ");
+        sb.append("xle -noTk -e \"set timeout 5; create-parser ");
 
         String grammarString = grammarPath;
 

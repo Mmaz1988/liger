@@ -26,7 +26,7 @@ public class AxiomExtractor {
         // Initialization if needed
     }
 
-    public String extractAxiomsFromString(String inputString) {
+    public String extractAxiomsFromString(String inputString, String logicType) {
         StringBuilder axiomBuilder = new StringBuilder();
 
         // 1. Filter out comment lines and collect the rest
@@ -49,11 +49,11 @@ public class AxiomExtractor {
             }
         }
 
-        return translatePrologAxioms(axiomBuilder.toString());
+        return translatePrologAxioms(axiomBuilder.toString(),logicType);
     }
 
 
-    public List<String> extractAxiomsFromLigerAnnotations(LinguisticStructure linguisticStructure) {
+    public List<String> extractAxiomsFromLigerAnnotations(LinguisticStructure linguisticStructure, String logicType) {
         StringBuilder axiomBuilder = new StringBuilder();
 
         List<GraphConstraint> allConstraints = linguisticStructure.returnFullGraph();
@@ -70,7 +70,7 @@ public class AxiomExtractor {
             return null;
         }
 
-        String axiomsString = translatePrologAxioms(axiomBuilder.toString());
+        String axiomsString = translatePrologAxioms(axiomBuilder.toString(),logicType);
 
         List<String> axioms = Arrays.stream(axiomsString.split("\\.\\n"))
                 .map(String::trim)
@@ -79,7 +79,7 @@ public class AxiomExtractor {
         return axioms;
     }
 
-    public String translatePrologAxioms(String prologAxioms) {
+    public String translatePrologAxioms(String prologAxioms,String logicType) {
         LOGGER.info("Translating Prolog axioms to tftf representation");
         File tmpDir = new File("./liger_resources/tmp/axiom_extractor_tmp");
 
@@ -168,7 +168,8 @@ public class AxiomExtractor {
                     "-t", "pl2Tftf.",
                     "--",
                     axiomFile.getAbsolutePath(),
-                    axiomOutputFile.getAbsolutePath()
+                    axiomOutputFile.getAbsolutePath(),
+                    logicType
             };
 
             LOGGER.info("Executing Prolog command: {}", String.join(" ", command));

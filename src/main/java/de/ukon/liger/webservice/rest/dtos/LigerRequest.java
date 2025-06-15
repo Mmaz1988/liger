@@ -25,10 +25,18 @@ public class LigerRequest {
     public String sentence;
     public String ruleString;
     public boolean unpack;
+    public String logicType;
 
     public LigerRequest(String sentence, String ruleString, boolean unpack) {
         this.sentence = sentence;
         this.ruleString = ruleString;
         this.unpack = unpack;
+    }
+
+    public LigerRequest(String sentence, String ruleString, boolean unpack, String logicType) {
+        this.sentence = sentence;
+        this.ruleString = ruleString;
+        this.unpack = unpack;
+        this.logicType = logicType;
     }
 }

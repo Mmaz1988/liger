@@ -162,6 +162,9 @@ public class XLEoperator extends SyntaxOperator {
             LOGGER.warning("Something went wrong while setting temporary files for parsing.\n" + e.getMessage());
         }
         try {
+
+            LOGGER.info("Parsing following sentences: " + String.join("\n", sentences));
+
             String processString = xlebashcommand;
 
             if (this.os.equals(XLEStarter.OS.WINDOWS)) {
