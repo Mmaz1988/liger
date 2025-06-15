@@ -72,7 +72,12 @@ public class GlueSemantics {
                     if (c.getRelationLabel().equals("GLUE")) {
                         if (!HelperMethods.isInteger(c.getFsValue())) {
                             if (unpackedSem.containsKey(c.getReading())) {
-                                unpackedSem.get(c.getReading()).add(c.getFsValue().toString());
+                                String currentMC = c.getFsValue().toString();
+                                Pattern pattern = Pattern.compile("'(.*?)'");
+                                currentMC = pattern.matcher(currentMC)
+                                        .replaceAll(m -> "'" + m.group(1).toLowerCase() + "'");
+
+                                unpackedSem.get(c.getReading()).add(currentMC);
                             }
                         }
                     }
