@@ -143,7 +143,12 @@ public class LigerController {
             //Extract axioms
             AxiomExtractor axiomExtractor = new AxiomExtractor();
 
-            axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(fs);
+            String logicType = "fof";
+            if (request.logicType != null && !request.logicType.isEmpty()) {
+                logicType = request.logicType;
+            }
+
+            axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(fs, logicType);
 
         }
 

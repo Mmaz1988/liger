@@ -72,7 +72,7 @@ public class AxiomExtractor {
 
         String axiomsString = translatePrologAxioms(axiomBuilder.toString(),logicType);
 
-        List<String> axioms = Arrays.stream(axiomsString.split("\\.\\n"))
+        List<String> axioms = Arrays.stream(axiomsString.split("\\.\\s*"))
                 .map(String::trim)
                 .collect(Collectors.toList());
 
@@ -89,34 +89,6 @@ public class AxiomExtractor {
             tmpDir.delete();
         }
         tmpDir.mkdir();
-
-        /*
-        try {
-            if (gswbFile.createNewFile()) {
-                LOGGER.fine("File created successfully!");
-            } else {
-                LOGGER.warning("File already exists!");
-            }
-        } catch (
-                IOException e) {
-            LOGGER.warning("An error occurred while creating the file: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(gswbFile));
-            for (String solution : solutions) {
-                writer.write(solution);
-                writer.newLine();
-            }
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try {
-         */
-
 
         File axiomFile = new File(tmpDir, "axiomFile.txt");
         File axiomOutputFile = new File(tmpDir, "axiomOutputFile.txt");
@@ -158,7 +130,6 @@ public class AxiomExtractor {
         }
 
         try {
-
 
             // Prepare command
             String[] command = {
@@ -203,26 +174,28 @@ public class AxiomExtractor {
             String result = "";
 
             // Write axioms to file
-            try {
-                BufferedReader reader = new BufferedReader(new FileReader(axiomOutputFile));
-                result = reader.lines()
-                        .map(String::trim)
-                        .filter(line -> !line.isEmpty())
-                        .collect(Collectors.joining("\n"));
-                reader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
 
             try {
                 int exitCode = task.get(5, TimeUnit.SECONDS);
 
                 stderrThread.join(); // wait for stderr reading to finish
 
+                LOGGER.info("Prolog exited with code {}", exitCode);
                 if (exitCode != 0) {
-                    LOGGER.error("Prolog exited with code {}", exitCode);
+
                     LOGGER.error("Prolog stderr:\n{}", errorOutput.toString());
                     throw new RuntimeException("Prolog failed:\n" + errorOutput.toString());
+                }
+
+                try {
+                    BufferedReader reader = new BufferedReader(new FileReader(axiomOutputFile));
+                    result = reader.lines()
+                            .map(String::trim)
+                            .filter(line -> !line.isEmpty())
+                            .collect(Collectors.joining("\n"));
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
 
                 // Read result from output file
