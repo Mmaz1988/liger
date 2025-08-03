@@ -21,6 +21,7 @@
 
 package de.ukon.liger.webservice.rest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.ukon.liger.analysis.RuleParser.Rule;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.reasoning.AxiomExtractor;
@@ -157,6 +158,71 @@ public class LigerController {
                                     String.join("\n",semString), axioms);
     }
 
+
+    /** Method that takes a linguistic structure sjon and a rule string and applies the rules to the linguistic structure.
+     * This assumes the sentence field to be a json string serializable into a Linguistic structure.
+     */
+
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/apply_rules_base", produces = "application/json", consumes = "application/json")
+    public LigerRuleAnnotation applyRulesToLingStructure(@RequestBody LigerRequest request) throws IOException {
+
+
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        //Assume that sentence is a json String describing a linguistic structure
+
+        //parse Json string to hashmap
+        LinkedHashMap lsmap = mapper.readValue(request.sentence, LinkedHashMap.class);
+
+        List<LinguisticStructure> fsList = new ArrayList<>();
+        LinguisticStructure ls = LinguisticStructure.parseFromJson(lsmap);
+
+        fsList.add(ls);
+
+        //Apply rewrite rules
+        RuleParser rp = new RuleParser(fsList, request.ruleString);
+
+        GlueSemantics sem = new GlueSemantics();
+        List<String> semString = new ArrayList<>();
+        LigerWebGraph lg = null;
+        List<String> axioms = null;
+
+        LinkedHashMap<String,List<LigerRule>> appliedRules = new LinkedHashMap<>();
+
+        for (LinguisticStructure fs : fsList) {
+            List<LigerRule> appliedLigerRules = new ArrayList<>();
+
+            rp.addAnnotation2(fs);
+
+            lg = new LigerWebGraph(fs.constraints, fs.annotation);
+
+
+            for (Rule r : rp.getAppliedRules()) {
+                appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
+            }
+            appliedRules.put(fs.local_id, appliedLigerRules);
+            semString.add(sem.returnMeaningConstructors(fs, false, false));
+
+
+            //Extract axioms
+            AxiomExtractor axiomExtractor = new AxiomExtractor();
+
+            String logicType = "fof";
+            if (request.logicType != null && !request.logicType.isEmpty()) {
+                logicType = request.logicType;
+            }
+
+            axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(fs, logicType);
+
+        }
+
+        return new LigerRuleAnnotation(lg,
+                appliedRules.get(appliedRules.keySet().stream().findFirst().get()),
+                String.join("\n",semString), axioms);
+    }
 
     /************************************************************************
      Methods for batch processing
