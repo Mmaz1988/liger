@@ -3,6 +3,7 @@ package de.ukon.liger.reasoning;
 
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
+import de.ukon.liger.utilities.HelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +72,8 @@ public class AxiomExtractor {
         }
 
         String axiomsString = translatePrologAxioms(axiomBuilder.toString(),logicType);
+
+        axiomsString = HelperMethods.wrapHyphenatedWords(axiomsString);
 
         List<String> axioms = Arrays.stream(axiomsString.split("\\.\\s*"))
                 .map(String::trim)

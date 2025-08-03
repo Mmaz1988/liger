@@ -23,12 +23,9 @@ package de.ukon.liger.syntax;
 
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.utilities.HelperMethods;
-import org.springframework.boot.actuate.endpoint.web.Link;
 
-import java.awt.*;
 import java.io.Serializable;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class GraphConstraint implements Serializable {
@@ -132,8 +129,9 @@ public class GraphConstraint implements Serializable {
         constraintProperties.put("sourceNode",this.nodeIdentifier);
         constraintProperties.put("relationLabel",this.relationLabel);
         constraintProperties.put("targetNode",this.fsValue);
-        constraintProperties.put("projection",this.projection.toString());
-
+        if (this.projection != null) {
+            constraintProperties.put("projection", this.projection.toString());
+        }
 
 
         return constraintProperties;

@@ -230,6 +230,21 @@ public class HelperMethods {
         return hexString.toString();
     }
 
+
+    public static String wrapHyphenatedWords(String input) {
+        Pattern pattern = Pattern.compile("\\b[\\w\\d]+-[\\w\\d]+\\b");
+        Matcher matcher = pattern.matcher(input);
+        StringBuffer result = new StringBuffer();
+
+        while (matcher.find()) {
+            String match = matcher.group();
+            matcher.appendReplacement(result, "'" + match + "'");
+        }
+        matcher.appendTail(result);
+
+        return result.toString();
+    }
+
 }
 
 
