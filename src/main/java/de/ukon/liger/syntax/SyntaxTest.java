@@ -18,7 +18,7 @@ public class SyntaxTest {
     {
 
         PathVariables.initializePathVariables();
-        String testfile = PathVariables.testPath + "testdirS12.pl";
+        String testfile = PathVariables.testPath + "testdirS1.pl";
 
         XLEoperator xle = new XLEoperator(new VariableHandler());
 

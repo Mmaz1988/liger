@@ -169,7 +169,6 @@ public class LigerController {
     public LigerRuleAnnotation applyRulesToLingStructure(@RequestBody LigerRequest request) throws IOException {
 
 
-
         ObjectMapper mapper = new ObjectMapper();
 
         //Assume that sentence is a json String describing a linguistic structure
@@ -179,6 +178,9 @@ public class LigerController {
 
         List<LinguisticStructure> fsList = new ArrayList<>();
         LinguisticStructure ls = LinguisticStructure.parseFromJson(lsmap);
+
+        ls.cp.choiceNodes = new ArrayList<>();
+        ls.cp.choices.add(ls.cp.rootChoice);
 
         fsList.add(ls);
 
