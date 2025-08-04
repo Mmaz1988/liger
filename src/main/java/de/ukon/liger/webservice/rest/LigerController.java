@@ -94,6 +94,8 @@ public class LigerController {
             semString.add(sem.returnMultiStageMeaningConstructors(fs));
         }
 
+        LOGGER.info("Finished LiGER annotation. Returning results...");
+
         //TODO fix treatment of axioms
         return new LigerRuleAnnotation(lg,null,String.join("\n",semString), new ArrayList<>());
     }
@@ -152,6 +154,8 @@ public class LigerController {
             axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(fs, logicType);
 
         }
+
+        LOGGER.info("Finished LiGER annotation. Returning results...");
 
         return new LigerRuleAnnotation(lg,
                                     appliedRules.get(appliedRules.keySet().stream().findFirst().get()),
@@ -220,6 +224,8 @@ public class LigerController {
             axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(fs, logicType);
 
         }
+
+        LOGGER.info("Finished LiGER annotation. Returning results...");
 
         return new LigerRuleAnnotation(lg,
                 appliedRules.get(appliedRules.keySet().stream().findFirst().get()),
@@ -441,6 +447,7 @@ public class LigerController {
 
         appliedRulesGraph = createLigerAnnotationGraph(request.sentences,rp, allAppliedRules);
 
+        LOGGER.info("Finished LiGER annotation. Returning results...");
         return new LigerBatchParsingAnalysis(output,appliedRulesGraph,reportBuilder.toString());
     }
 
@@ -518,6 +525,7 @@ public class LigerController {
             output.put(id,new LigerRuleAnnotation(null, null, mcs, new ArrayList<>()));
 
         }
+        LOGGER.info("Finished LiGER annotation. Returning results...");
         return new LigerBatchParsingAnalysis(output,null,reportBuilder.toString());
     }
 
@@ -587,6 +595,9 @@ public class LigerController {
             List<LinguisticStructure> fsList = new ArrayList<>();
             LinguisticStructure ls = LinguisticStructure.parseFromJson(lsmap);
 
+            ls.cp.choiceNodes = new ArrayList<>();
+            ls.cp.choices.add(ls.cp.rootChoice);
+
             fsList.add(ls);
 
             int addedAnnotations = 0;
@@ -625,6 +636,8 @@ public class LigerController {
         }
 
         appliedRulesGraph = createLigerAnnotationGraph(request.sentences,rp, allAppliedRules);
+
+        LOGGER.info("Finished LiGER annotation. Returning results...");
 
         return new LigerBatchParsingAnalysis(output,appliedRulesGraph,reportBuilder.toString());
     }
