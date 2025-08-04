@@ -521,6 +521,114 @@ public class LigerController {
         return new LigerBatchParsingAnalysis(output,null,reportBuilder.toString());
     }
 
+    @CrossOrigin
+    //(origins = "http://localhost:63342")
+    @PostMapping(value = "/apply_rules_to_dependency_batch", produces = "application/json", consumes = "application/json")
+    public LigerBatchParsingAnalysis applyRulesToStanzaTestsuite(@RequestBody LigerMultipleRequest request) throws IOException {
+
+        //    System.out.println(request.sentence);
+        //   System.out.println(request.ruleString);
+
+        List<LigerGraphComponent> appliedRulesGraph = new ArrayList<>();
+
+        boolean rules = false;
+
+        RuleParser rp = null;
+
+        rp = new RuleParser(request.ruleString);
+
+        HashMap<String,LigerRuleAnnotation> output = new HashMap<>();
+        List<List<LigerRule>> allAppliedRules = new ArrayList<>();
+
+        StringBuilder reportBuilder = new StringBuilder();
+
+        if (!appliedRulesGraph.isEmpty()){
+            rules = true;
+        }
+
+        if (!rules){
+            reportBuilder.append("No rewrite rules applied to testsuite!");
+        }
+
+        reportBuilder.append(System.lineSeparator());
+        reportBuilder.append("ID:     Applied rules:     Added facts:     No of meaning constructors:\n");
+
+        List<String> keys = new ArrayList<>(request.sentences.keySet());
+
+        //sort keys by string final number
+
+        keys.sort(new Comparator<String>() {
+            @Override
+            public int compare(String s1, String s2) {
+                // Extract the numbers from the end of the strings
+                int num1 = Integer.parseInt(s1.replaceAll("\\D", ""));
+                int num2 = Integer.parseInt(s2.replaceAll("\\D", ""));
+
+                // Compare the numbers
+                return Integer.compare(num1, num2);
+            }
+        });
+
+        GlueSemantics sem = new GlueSemantics();
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        //Parsing routine
+        for (int i = 0; i < keys.size(); i++) {
+
+            String id = keys.get(i);
+            String sentence = request.sentences.get(id);
+
+            LigerWebGraph lg = null;
+            List<String> semString = new ArrayList<>();
+
+            LinkedHashMap lsmap = mapper.readValue(sentence, LinkedHashMap.class);
+
+            List<LinguisticStructure> fsList = new ArrayList<>();
+            LinguisticStructure ls = LinguisticStructure.parseFromJson(lsmap);
+
+            fsList.add(ls);
+
+            int addedAnnotations = 0;
+
+            List<LigerRule> appliedLigerRules = new ArrayList<>();
+
+            for (LinguisticStructure fs : fsList) {
+
+                if (!request.ruleString.equals("")) {
+                    rp.addAnnotation2(fs);
+                }
+
+                // rp.addAnnotation2(fs);
+
+                for (Rule r : rp.getAppliedRules()) {
+                    appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
+                }
+
+                semString.add(sem.returnMeaningConstructors(fs, false, false));
+                addedAnnotations = addedAnnotations + fs.annotation.size();
+            }
+            String currentSemString = String.join("\n", semString);
+
+
+            List<String> meaningConstructors = List.of(currentSemString.split("\n"));
+            //remove lines which equal }\n or {\n
+            meaningConstructors = meaningConstructors.stream().filter(s -> !s.equals("}") && !s.equals("{") && !s.startsWith("//")).collect(Collectors.toList());
+
+            lg = new LigerWebGraph(fsList.get(0).constraints, fsList.get(0).annotation);
+
+            reportBuilder.append(String.format("%s\t\t%s\t\t%s\t\t%s", id, appliedLigerRules.size(), addedAnnotations, meaningConstructors.size()));
+            reportBuilder.append(System.lineSeparator());
+
+            output.put(id, new LigerRuleAnnotation(sentence, lg, appliedLigerRules, currentSemString, fsList.size()));
+            allAppliedRules.add(appliedLigerRules);
+        }
+
+        appliedRulesGraph = createLigerAnnotationGraph(request.sentences,rp, allAppliedRules);
+
+        return new LigerBatchParsingAnalysis(output,appliedRulesGraph,reportBuilder.toString());
+    }
+
     /************************************************************************
     Methods for file handling
      ************************************************************************/
