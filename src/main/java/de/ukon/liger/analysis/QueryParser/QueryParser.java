@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class QueryParser {
 
@@ -182,6 +183,16 @@ public class QueryParser {
                     Boolean strip = false;
 
                     String query = deque.get(i);
+
+                    //if value is wrapped in quotes, strip the quotes
+                    //e.g. "value" or 'value'
+                    Pattern quotePattern = Pattern.compile("[\"'](.*)[\"']");
+                    Matcher quoteMatcher = quotePattern.matcher(query);
+                    if (quoteMatcher.find())
+                    {
+                        query = quoteMatcher.group(1);
+                    }
+
                     Matcher sm = HelperMethods.stripPattern.matcher(deque.get(i));
                     if (sm.find())
                     {
@@ -311,7 +322,7 @@ public class QueryParser {
 
 
                         else {
-                            throw new IllegalArgumentException("Invalid query string! Error at " + it.nextIndex());
+                            throw new IllegalArgumentException("Invalid query string! Error at " + it.nextIndex() + " : " + current.toString());
 
                         }
                     } else {
@@ -363,8 +374,6 @@ public class QueryParser {
     }
 
 
-
-
     public void resetParser()
     {
         this.fsValueBindings = new HashMap<>();
@@ -379,17 +388,6 @@ public class QueryParser {
 
         this.queryList = generateQueryList(search);
     }
-
-    public void generateQuery()
-    {
-
-        Deque<String> search = new LinkedList<String>(Arrays.asList(query.split("\\s+")));
-
-        this.queryList = generateQueryList(search);
-    }
-
-
-
 
     public LinkedList<QueryExpression> getQueryList() {
         return queryList;
