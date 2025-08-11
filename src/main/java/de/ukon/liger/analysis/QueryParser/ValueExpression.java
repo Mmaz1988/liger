@@ -100,7 +100,14 @@ public class ValueExpression extends QueryExpression {
                             newValueBindings.get(key).put(right.getQuery(),
                                     (String) boundIndices.get(key2).getFsValue());
 
-                            varMatch = (String) boundIndices.get(key2).getFsValue();
+                            String fsValue = (String) boundIndices.get(key2).getFsValue();
+                            //If wrapped in single or double quotes, remove them
+                            if ((fsValue.startsWith("'") && fsValue.endsWith("'")) ||
+                                    (fsValue.startsWith("\"") && fsValue.endsWith("\""))) {
+                                fsValue = fsValue.substring(1, fsValue.length() - 1);
+                            }
+
+                            varMatch = fsValue;
 
                         } else {
                             varMatch = newValueBindings.get(key).get(right.getQuery());
@@ -111,7 +118,14 @@ public class ValueExpression extends QueryExpression {
                             varMatch = right.getQuery();
                         }
 
-                        if (boundIndices.get(key2).getFsValue().equals(varMatch)) {
+                        String fsValue = (String) boundIndices.get(key2).getFsValue();
+                        //If wrapped in single or double quotes, remove them
+                    if ((fsValue.startsWith("'") && fsValue.endsWith("'")) ||
+                            (fsValue.startsWith("\"") && fsValue.endsWith("\""))) {
+                        fsValue = fsValue.substring(1, fsValue.length() - 1);
+                    }
+
+                        if (fsValue.equals(varMatch)) {
                             matchingIndices.put(key2, boundIndices.get(key2));
                         } else if (!right.var)
                         {
