@@ -34,8 +34,6 @@ public class LinguisticStructure {
     public List<GraphConstraint> constraints;
     public ChoiceSpace cp;
 
-
-    //TODO move annotation to general LigerAnnotation structure
     public List<GraphConstraint> annotation = new ArrayList<>();
 
 
@@ -70,7 +68,13 @@ public class LinguisticStructure {
      ls.annotation = (List<GraphConstraint>) ((List) input.get("annotations")).
                 stream().map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList());
 
-     ls.cp = ChoiceSpace.parseJson((LinkedHashMap<String, Object>) input.get("choiceSpace"));
+
+     if (!((LinkedHashMap) input.get("choiceSpace")).isEmpty()) {
+         ls.cp = ChoiceSpace.parseJson((LinkedHashMap<String, Object>) input.get("choiceSpace"));
+     }
+     else {
+         ls.cp = new ChoiceSpace();
+         }
 
         return ls;
     }
