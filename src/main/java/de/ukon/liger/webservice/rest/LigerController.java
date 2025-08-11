@@ -94,9 +94,8 @@ public class LigerController {
             semString.add(sem.returnMultiStageMeaningConstructors(fs));
         }
 
-        LOGGER.info("Finished LiGER annotation. Returning results...");
-
         //TODO fix treatment of axioms
+        LOGGER.info("Finished LiGER annotation. Returning results...");
         return new LigerRuleAnnotation(lg,null,String.join("\n",semString), new ArrayList<>());
     }
 
@@ -156,7 +155,6 @@ public class LigerController {
         }
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
-
         return new LigerRuleAnnotation(lg,
                                     appliedRules.get(appliedRules.keySet().stream().findFirst().get()),
                                     String.join("\n",semString), axioms);
@@ -226,7 +224,6 @@ public class LigerController {
         }
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
-
         return new LigerRuleAnnotation(lg,
                 appliedRules.get(appliedRules.keySet().stream().findFirst().get()),
                 String.join("\n",semString), axioms);
@@ -638,7 +635,6 @@ public class LigerController {
         appliedRulesGraph = createLigerAnnotationGraph(request.sentences,rp, allAppliedRules);
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
-
         return new LigerBatchParsingAnalysis(output,appliedRulesGraph,reportBuilder.toString());
     }
 
