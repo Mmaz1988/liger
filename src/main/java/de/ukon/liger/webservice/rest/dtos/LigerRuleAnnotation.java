@@ -30,13 +30,14 @@ public class LigerRuleAnnotation {
         this.axioms = axioms;
     }
 
-    public LigerRuleAnnotation(String sentence, LigerWebGraph graph, List<LigerRule> appliedRules, String meaningConstructors, int numberOfMCsets)
+    public LigerRuleAnnotation(String sentence, LigerWebGraph graph, List<LigerRule> appliedRules, String meaningConstructors, int numberOfMCsets, List<String> axioms)
     {
         this.sentence = sentence;
         this.graph = graph;
         this.appliedRules = appliedRules;
         this.meaningConstructors = meaningConstructors;
         this.numberOfMCsets = numberOfMCsets;
+        this.axioms = axioms;
     }
 }
 

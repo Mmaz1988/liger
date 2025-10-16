@@ -804,6 +804,8 @@ GLUE   BASIC   TEMPLATES (1.0)
    LLATOM(N L T) = (N RESOURCE) = L
 	  (N TYPE) = T.
 
+    LLQUANT(N B) = (N BINDER) = B.
+
    LLCLOSURE(G) = G $ (g::* GLUE).
 
    GLUE-MEANING(R M) = 

@@ -402,6 +402,8 @@ public class LigerController {
             String sentence = request.sentences.get(id);
 
             LigerWebGraph lg = null;
+            List<String> axioms = new ArrayList<>();
+
             List<String> semString = new ArrayList<>();
 
             List<LinguisticStructure> fsList = parser.parseSingle(sentence);
@@ -423,6 +425,20 @@ public class LigerController {
                     appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
                 }
 
+                AxiomExtractor axiomExtractor = new AxiomExtractor();
+
+                String logicType = "fof";
+                if (request.logicType != null && !request.logicType.isEmpty()) {
+                    logicType = request.logicType;
+                }
+
+                List<String> currentAxioms = axiomExtractor.extractAxiomsFromLigerAnnotations(fs, logicType);
+
+                if (!(currentAxioms == null) && !currentAxioms.isEmpty()) {
+                    axioms.addAll(currentAxioms.stream()
+                            .filter(x -> !axioms.contains(x)).collect(Collectors.toList()));
+                }
+
                 semString.add(sem.returnMeaningConstructors(fs, !starter.isGlue, false));
                 addedAnnotations = addedAnnotations + fs.annotation.size();
             }
@@ -438,8 +454,11 @@ public class LigerController {
             reportBuilder.append(String.format("%s\t\t%s\t\t%s\t\t%s", id, appliedLigerRules.size(), addedAnnotations, meaningConstructors.size()));
             reportBuilder.append(System.lineSeparator());
 
-            output.put(id, new LigerRuleAnnotation(sentence, lg, appliedLigerRules, currentSemString, fsList.size()));
+            output.put(id, new LigerRuleAnnotation(sentence, lg, appliedLigerRules, currentSemString, fsList.size(),axioms));
             allAppliedRules.add(appliedLigerRules);
+
+
+
         }
 
         appliedRulesGraph = createLigerAnnotationGraph(request.sentences,rp, allAppliedRules);
@@ -628,7 +647,8 @@ public class LigerController {
             reportBuilder.append(String.format("%s\t\t%s\t\t%s\t\t%s", id, appliedLigerRules.size(), addedAnnotations, meaningConstructors.size()));
             reportBuilder.append(System.lineSeparator());
 
-            output.put(id, new LigerRuleAnnotation(sentence, lg, appliedLigerRules, currentSemString, fsList.size()));
+            //TODO Make Stanza inference compatible
+            output.put(id, new LigerRuleAnnotation(sentence, lg, appliedLigerRules, currentSemString, fsList.size(), new ArrayList<>()));
             allAppliedRules.add(appliedLigerRules);
         }
 

@@ -538,9 +538,19 @@ public class GlueSemantics {
             //resource is non-atomic
             String antString = "";
             String consString = "";
+            String binderString = "";
 
             List<GraphConstraint> antecedent = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("ANT")).collect(Collectors.toList());
             List<GraphConstraint> consequent = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("CONS")).collect(Collectors.toList());
+
+            List<GraphConstraint> binder = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("BINDER")).collect(Collectors.toList());
+
+            if (!binder.isEmpty())
+            {
+                binder = binder.stream().filter(c -> c.getReading().equals(Collections.singleton(new ChoiceVar()))).collect(Collectors.toList());
+                GraphConstraint b = binder.stream().findAny().get();
+                binderString = parseMCfromProlog( (String) b.getFsValue(),ls);
+            }
 
             if (!antecedent.isEmpty())
             {
@@ -562,12 +572,20 @@ public class GlueSemantics {
             {
                 paramString = " || " + params.stream().collect(Collectors.joining(", "));
             }
+
+            String formula = "(" + antString + " -o " + consString + ")";
+
+            if (!binderString.equals(""))
+            {
+                formula = "A" + binderString + "." + formula;
+            }
+
             if (meaning.equals(""))
             {
-                return  "(" + antString + " -o " + consString + ")";
+                return  formula;
             } else
             {
-                return meaning + " : " + "(" + antString + " -o " + consString + ")" + paramString;
+                return meaning + " : " + formula + paramString;
             }
 
         }
@@ -659,6 +677,15 @@ public class GlueSemantics {
                 {
                     String resource = currentResourceStrings.get(choice);
 
+                    //if resource is wrapped in single or double quotes, remove them
+                    if (resource.startsWith("'") && resource.endsWith("'"))
+                    {
+                        resource = resource.substring(1,resource.length()-1);
+                    } else if (resource.startsWith("\"") && resource.endsWith("\""))
+                    {
+                        resource = resource.substring(1,resource.length()-1);
+                    }
+
                     //Default type t
                     String type = "t";
 
@@ -690,9 +717,11 @@ public class GlueSemantics {
             //resource is non-atomic
             HashMap<Set<ChoiceVar>,String> possibleAntecedentStrings = new HashMap<>();
             HashMap<Set<ChoiceVar>,String> possibleConsequentStrings = new HashMap<>();
+            HashMap<Set<ChoiceVar>,String> possibleBinderStrings = new HashMap<>();
 
             List<GraphConstraint> antecedent = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("ANT")).collect(Collectors.toList());
             List<GraphConstraint> consequent = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("CONS")).collect(Collectors.toList());
+            List<GraphConstraint> binder = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("BINDER")).collect(Collectors.toList());
 
             if (!antecedent.isEmpty())
             {
@@ -706,6 +735,14 @@ public class GlueSemantics {
                 GraphConstraint cons = consequent.stream().findAny().get();
                 //consString = parseMCfromProlog((String) cons.getFsValue(),ls);
                 possibleConsequentStrings = parseMCfromPackedProlog((String) cons.getFsValue(),ls);
+            }
+
+            if (!binder.isEmpty())
+            {
+                GraphConstraint b = binder.stream().findAny().get();
+                //binderString = parseMCfromProlog( (String) b.getFsValue(),ls);
+                possibleBinderStrings = parseMCfromPackedProlog((String) b.getFsValue(),ls);
+
             }
 
 
@@ -727,6 +764,13 @@ public class GlueSemantics {
                      newMC.append(unpackedMeanings.get(defaultContext));
                     }
                     newMC.append(" : ");
+                }
+
+                if (possibleBinderStrings.containsKey(key))
+                {
+                    String binderString =  possibleBinderStrings.get(key);
+                    //Strip binderString of single quoutes
+                    newMC.append("A" + binderString + ".");
                 }
 
                 newMC.append("(");
@@ -770,6 +814,13 @@ public class GlueSemantics {
                             newMC.append(unpackedMeanings.get(defaultContext));
                         }
                         newMC.append(" : ");
+                    }
+
+                    if (possibleBinderStrings.containsKey(key))
+                    {
+                        String binderString =  possibleBinderStrings.get(key);
+                        //Strip binderString of single quoutes
+                        newMC.append("A" + binderString + ".");
                     }
 
                     newMC.append("(");
