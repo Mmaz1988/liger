@@ -26,6 +26,7 @@ import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.xle.Fstructure;
 import de.ukon.liger.utilities.HelperMethods;
+import de.ukon.liger.utilities.PathVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -854,7 +855,7 @@ public class GlueSemantics {
 
         LOGGER.info("Creating temporary files...");
         //create temporary directory gswb_resources/tmp
-        File tmpDir = new File("liger_resources/tmp/prolog");
+        File tmpDir = new File(PathVariables.workingDirectory,"tmp/prolog");
 
         if (tmpDir.exists()) {
             File[] files = tmpDir.listFiles();
@@ -864,9 +865,10 @@ public class GlueSemantics {
             tmpDir.delete();
         }
 
-        tmpDir.mkdir();
 
-        File prologFS = new File("liger_resources/tmp/prolog/prolog.pl");
+        tmpDir.mkdirs();
+        // make sure the directory exists
+        File prologFS = new File(PathVariables.workingDirectory, "/tmp/prolog/prolog.pl");
 
         try {
             if (prologFS.createNewFile()) {
@@ -875,10 +877,12 @@ public class GlueSemantics {
                 LOGGER.error("File already exists!");
             }
         } catch (IOException e) {
-            LOGGER.error("An error occurred while creating the file: " + e.getMessage() + "\n");
+            LOGGER.error("An error occurred while creating the file: "
+                    + prologFS.getAbsolutePath() + "\n"
+                    + e.getMessage() + "\n");
         }
 
-        File xleTransferOutput = new File("liger_resources/tmp/prolog/xle_prolog_mcs.txt");
+        File xleTransferOutput = new File(PathVariables.workingDirectory, "tmp/prolog/xle_prolog_mcs.txt");
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(prologFS));
             writer.write(fs);
@@ -926,7 +930,7 @@ public class GlueSemantics {
             try {
                 int exitCode = task.get(5, TimeUnit.SECONDS);
                 if (exitCode != 0) {
-                    LOGGER.error("\nFailed to read output from lambdaDRT.pl!\n");
+                    LOGGER.error("\nFailed to read output from premises.pl!\n");
                     return null;
                 }
             } catch (Exception e) {
