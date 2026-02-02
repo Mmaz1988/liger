@@ -229,6 +229,7 @@ public class LigerController {
                 String.join("\n",semString), axioms);
     }
 
+
     /************************************************************************
      Methods for batch processing
      ************************************************************************/
@@ -456,9 +457,6 @@ public class LigerController {
 
             output.put(id, new LigerRuleAnnotation(sentence, lg, appliedLigerRules, currentSemString, fsList.size(),axioms));
             allAppliedRules.add(appliedLigerRules);
-
-
-
         }
 
         appliedRulesGraph = createLigerAnnotationGraph(request.sentences,rp, allAppliedRules);
