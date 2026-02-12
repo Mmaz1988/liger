@@ -204,26 +204,6 @@ public class GraphConstraint implements Serializable {
 
       }
 
-
-    public static GraphConstraint returnRoot(List<GraphConstraint> fs)
-    {
-        //TODO This only works for proper f-structures; not fractured ones
-        for (GraphConstraint fsc : fs)
-        {
-            if (fsc.getFsNode().equals(0) && fsc.getRelationLabel().equals("PRED"))
-            {
-                return fsc;
-            }
-        }
-        return null;
-    }
-
-
-    //TODO this may be more suitable somewhere else?
-
-
-
-
     //for a given graph-constraint give a valid FsPath that is compatible with the annotation of the sentence
     // currently being annotated (via variable handler)
 /*

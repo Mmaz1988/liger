@@ -37,6 +37,34 @@ public class LinguisticStructure {
     public List<GraphConstraint> annotation = new ArrayList<>();
 
 
+
+
+    public LinguisticStructure()
+    {}
+
+    public LinguisticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts)
+    {
+        this.local_id = local_id;
+        this.text = sentence;
+        this.constraints = fsFacts;
+    }
+
+    public LinguisticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts, ChoiceSpace cp)
+    {
+        this.local_id = local_id;
+        this.text = sentence;
+        this.constraints = fsFacts;
+        this.cp = cp;
+    }
+
+    public List<GraphConstraint> returnFullGraph(){
+        List<GraphConstraint> allConstraints = new ArrayList<>();
+        allConstraints.addAll(this.constraints);
+        allConstraints.addAll(this.annotation);
+        return allConstraints;
+    }
+
+
     public LinkedHashMap<String,Object> toJson()
     {
         LinkedHashMap<String,Object> jsonMap = new LinkedHashMap<>();
@@ -58,45 +86,27 @@ public class LinguisticStructure {
 
     public static LinguisticStructure parseFromJson(LinkedHashMap input)
     {
-     LinguisticStructure ls = new LinguisticStructure();
+        LinguisticStructure ls = new LinguisticStructure();
 
-     ls.local_id = (String) input.get("id");
-     ls.text = (String) input.get("text");
-     ls.constraints = (List<GraphConstraint>) ((List) input.get("constraints")).
-             stream().map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList());
+        ls.local_id = (String) input.get("id");
+        ls.text = (String) input.get("text");
+        ls.constraints = (List<GraphConstraint>) ((List) input.get("constraints")).
+                stream().map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList());
 
-     ls.annotation = (List<GraphConstraint>) ((List) input.get("annotations")).
+        ls.annotation = (List<GraphConstraint>) ((List) input.get("annotations")).
                 stream().map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList());
 
 
-     if (!((LinkedHashMap) input.get("choiceSpace")).isEmpty()) {
-         ls.cp = ChoiceSpace.parseJson((LinkedHashMap<String, Object>) input.get("choiceSpace"));
-     }
-     else {
-         ls.cp = new ChoiceSpace();
-         }
+        if (!((LinkedHashMap) input.get("choiceSpace")).isEmpty()) {
+            ls.cp = ChoiceSpace.parseJson((LinkedHashMap<String, Object>) input.get("choiceSpace"));
+        }
+        else {
+            ls.cp = new ChoiceSpace();
+        }
 
         return ls;
     }
-
-
-    public LinguisticStructure()
-    {}
-
-    public LinguisticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts)
-    {
-        this.local_id = local_id;
-        this.text = sentence;
-        this.constraints = fsFacts;
-    }
-
-    public LinguisticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts, ChoiceSpace cp)
-    {
-        this.local_id = local_id;
-        this.text = sentence;
-        this.constraints = fsFacts;
-        this.cp = cp;
-    }
+/*
 
     //TODO fix for cyclic structures
     public List<List<GraphConstraint>> getSubstructures(String name)
@@ -125,8 +135,8 @@ public class LinguisticStructure {
                 {
 
                     if (HelperMethods.isInteger(g.getFsValue())) {
-                    daugtherNodes.add((String) g.getFsValue());
-                }
+                        daugtherNodes.add((String) g.getFsValue());
+                    }
                     matrix.add(g);
                 }
 
@@ -150,19 +160,14 @@ public class LinguisticStructure {
 
             }
 
-        out.add(matrix);
+            out.add(matrix);
         }
 
         return out;
 
     }
 
-    public List<GraphConstraint> returnFullGraph(){
-        List<GraphConstraint> allConstraints = new ArrayList<>();
-        allConstraints.addAll(this.constraints);
-        allConstraints.addAll(this.annotation);
-        return allConstraints;
-    }
+*/
 
 
 }
