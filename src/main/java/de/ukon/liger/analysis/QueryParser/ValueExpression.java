@@ -22,6 +22,8 @@
 package de.ukon.liger.analysis.QueryParser;
 
 import de.ukon.liger.syntax.GraphConstraint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +32,7 @@ import java.util.Set;
 
 public class ValueExpression extends QueryExpression {
 
+    private static final Logger log = LoggerFactory.getLogger(ValueExpression.class);
     private QueryExpression left;
     private Value right;
 
@@ -111,11 +114,16 @@ public class ValueExpression extends QueryExpression {
 
                         } else {
                             varMatch = newValueBindings.get(key).get(right.getQuery());
+                            if (varMatch.startsWith("'") && varMatch.endsWith("'") ||
+                                    (varMatch.startsWith("\"") && varMatch.endsWith("\""))) {
+                                varMatch = varMatch.substring(1, varMatch.length() - 1);
+                            }
                         }
                     }
                         else
                         {
                             varMatch = right.getQuery();
+
                         }
 
                         String fsValue = (String) boundIndices.get(key2).getFsValue();

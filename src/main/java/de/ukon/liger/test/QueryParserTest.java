@@ -346,7 +346,7 @@ public class QueryParserTest {
     @Test
     void testQueryParser10()
     {
-        LinkedHashMap<String, LinguisticStructure> fs = loadFs(2);
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs(0);
 
         for (String key : fs.keySet())
         {
@@ -354,7 +354,7 @@ public class QueryParserTest {
 
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
-            assertEquals(2,qpr.result.keySet().size());
+            assertEquals(4,qpr.result.keySet().size());
         }
 
     }
