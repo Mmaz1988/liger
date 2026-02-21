@@ -125,10 +125,10 @@ public class LigerController {
         LigerWebGraph lg = null;
         List<String> axioms = null;
 
-        LinkedHashMap<String,List<LigerRule>> appliedRules = new LinkedHashMap<>();
+        LinkedHashMap<String,LinkedHashSet<LigerRule>> appliedRules = new LinkedHashMap<>();
 
         for (LinguisticStructure fs : fsList) {
-            List<LigerRule> appliedLigerRules = new ArrayList<>();
+            LinkedHashSet<LigerRule> appliedLigerRules = new LinkedHashSet<>();
 
             rp.addAnnotation2(fs);
 
@@ -194,10 +194,10 @@ public class LigerController {
         LigerWebGraph lg = null;
         List<String> axioms = null;
 
-        LinkedHashMap<String,List<LigerRule>> appliedRules = new LinkedHashMap<>();
+        LinkedHashMap<String,LinkedHashSet<LigerRule>> appliedRules = new LinkedHashMap<>();
 
         for (LinguisticStructure fs : fsList) {
-            List<LigerRule> appliedLigerRules = new ArrayList<>();
+            LinkedHashSet<LigerRule> appliedLigerRules = new LinkedHashSet<>();
 
             rp.addAnnotation2(fs);
 
@@ -363,7 +363,7 @@ public class LigerController {
         rp = new RuleParser(request.ruleString);
 
         HashMap<String,LigerRuleAnnotation> output = new HashMap<>();
-        List<List<LigerRule>> allAppliedRules = new ArrayList<>();
+        HashMap<String,LinkedHashSet<LigerRule>> allAppliedRules = new HashMap();
 
         StringBuilder reportBuilder = new StringBuilder();
 
@@ -412,7 +412,7 @@ public class LigerController {
             int addedAnnotations = 0;
 
 
-            List<LigerRule> appliedLigerRules = new ArrayList<>();
+            LinkedHashSet<LigerRule> appliedLigerRules = new LinkedHashSet<>();
 
             for (LinguisticStructure fs : fsList) {
 
@@ -456,7 +456,7 @@ public class LigerController {
             reportBuilder.append(System.lineSeparator());
 
             output.put(id, new LigerRuleAnnotation(sentence, lg, appliedLigerRules, currentSemString, fsList.size(),axioms));
-            allAppliedRules.add(appliedLigerRules);
+            allAppliedRules.put(id,appliedLigerRules);
         }
 
         appliedRulesGraph = createLigerAnnotationGraph(request.sentences,rp, allAppliedRules);
@@ -560,7 +560,7 @@ public class LigerController {
         rp = new RuleParser(request.ruleString);
 
         HashMap<String,LigerRuleAnnotation> output = new HashMap<>();
-        List<List<LigerRule>> allAppliedRules = new ArrayList<>();
+        HashMap<String,LinkedHashSet<LigerRule>> allAppliedRules = new HashMap();
 
         StringBuilder reportBuilder = new StringBuilder();
 
@@ -616,7 +616,7 @@ public class LigerController {
 
             int addedAnnotations = 0;
 
-            List<LigerRule> appliedLigerRules = new ArrayList<>();
+            LinkedHashSet<LigerRule> appliedLigerRules = new LinkedHashSet<>();
 
             for (LinguisticStructure fs : fsList) {
 
@@ -647,7 +647,7 @@ public class LigerController {
 
             //TODO Make Stanza inference compatible
             output.put(id, new LigerRuleAnnotation(sentence, lg, appliedLigerRules, currentSemString, fsList.size(), new ArrayList<>()));
-            allAppliedRules.add(appliedLigerRules);
+            allAppliedRules.put(id, appliedLigerRules);
         }
 
         appliedRulesGraph = createLigerAnnotationGraph(request.sentences,rp, allAppliedRules);
@@ -721,7 +721,7 @@ public class LigerController {
      Other stuff
      ************************************************************************/
 
-    public List<LigerGraphComponent> createLigerAnnotationGraph(HashMap<String,String> sentences,  RuleParser rp, List<List<LigerRule>> allAppliedRules) {
+    public List<LigerGraphComponent> createLigerAnnotationGraph(HashMap<String,String> sentences,  RuleParser rp, HashMap<String,LinkedHashSet<LigerRule>> allAppliedRules) {
 
         List<LigerGraphComponent> appliedRulesGraph = new ArrayList<>();
 
@@ -739,13 +739,16 @@ public class LigerController {
 
         HashMap<String, LigerGraphComponent> edges = new HashMap<>();
 
-        for (List<LigerRule> appliedRules : allAppliedRules)
+        for (String key  : allAppliedRules.keySet())
         {
+            List<LigerRule> appliedRules =  allAppliedRules.get(key).stream().toList();
+
             for (int i = 0; i < appliedRules.size()-1; i = i + 1)
             {
                 if (!edges.containsKey(appliedRules.get(i).index + "+" +
                         appliedRules.get(i+1).index))
                 {
+
                     HashMap<String,Object> edge = new HashMap<>();
                     edge.put("source",appliedRules.get(i).index);
 
@@ -753,8 +756,14 @@ public class LigerController {
                     edge.put("timesUsed",1);
                     edge.put("edge_type","edge");
 
+
                     edge.put("id",appliedRules.get(i).index + "+" +
                             appliedRules.get(i+1).index);
+
+                    LinkedHashSet<String> sentenceList = new LinkedHashSet<>();
+                    sentenceList.add(sentences.get(key));
+
+                    edge.put("sentences",sentenceList);
 
                     LigerGraphComponent lgc = new LigerGraphComponent(edge);
 
@@ -768,11 +777,12 @@ public class LigerController {
                     Object timesUsed = edges.get(edgeID).data.get("timesUsed");
 
                     edges.get(edgeID).data.put("timesUsed", (Integer) timesUsed + 1);
+                    ((LinkedHashSet<String>) edges.get(edgeID).data.get("sentences")).add(sentences.get(key));
                 }
             }
             // appliedRulesGraph.addAll(nodes.values());
-            appliedRulesGraph.addAll(edges.values());
         }
+        appliedRulesGraph.addAll(edges.values());
         return appliedRulesGraph;
     }
 

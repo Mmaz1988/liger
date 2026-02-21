@@ -1,5 +1,6 @@
 package de.ukon.liger.webservice.rest.dtos;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public class LigerRuleAnnotation {
@@ -8,7 +9,7 @@ public class LigerRuleAnnotation {
 
     public LigerWebGraph graph;
 
-    public List<LigerRule> appliedRules;
+    public LinkedHashSet<LigerRule> appliedRules;
 
     public String meaningConstructors;
 
@@ -16,13 +17,13 @@ public class LigerRuleAnnotation {
 
     public List<String> axioms;
 
-    public LigerRuleAnnotation(LigerWebGraph graph, List<LigerRule> appliedRules)
+    public LigerRuleAnnotation(LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules)
     {
         this.graph = graph;
         this.appliedRules = appliedRules;
     }
 
-    public LigerRuleAnnotation(LigerWebGraph graph, List<LigerRule> appliedRules, String meaningConstructors, List<String> axioms)
+    public LigerRuleAnnotation(LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules, String meaningConstructors, List<String> axioms)
     {
         this.graph = graph;
         this.appliedRules = appliedRules;
@@ -30,7 +31,7 @@ public class LigerRuleAnnotation {
         this.axioms = axioms;
     }
 
-    public LigerRuleAnnotation(String sentence, LigerWebGraph graph, List<LigerRule> appliedRules, String meaningConstructors, int numberOfMCsets, List<String> axioms)
+    public LigerRuleAnnotation(String sentence, LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules, String meaningConstructors, int numberOfMCsets, List<String> axioms)
     {
         this.sentence = sentence;
         this.graph = graph;

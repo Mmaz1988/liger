@@ -25,6 +25,7 @@ import de.ukon.liger.syntax.GraphConstraint;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,8 +40,6 @@ public class Rule {
     private int lineNumber;
     private int ruleIndex;
     private static Pattern rulePattern = Pattern.compile("(.+)=(=|-|\\+)>(.+)");
-
-    private List<GraphConstraint> annotation;
 
     public Rule(String rule) {
         generateRule(rule);
@@ -172,6 +171,9 @@ public class Rule {
     public void setRuleIndex(int ruleIndex) {
         this.ruleIndex = ruleIndex;
     }
+
+
+
 
 
 }
