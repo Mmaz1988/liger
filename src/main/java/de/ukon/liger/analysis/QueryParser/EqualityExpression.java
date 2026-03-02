@@ -62,7 +62,14 @@ public class EqualityExpression extends QueryExpression {
                     {
                         //TODO ambiguity?
                         leftString = getParser().fsValueBindings.get(key2).get(left.getQuery());
-                        break;
+                        if (leftString != null)
+                        {
+                            break;
+                        } else
+                        {
+                            leftString = "";
+                        }
+
                     }
                 }
 
