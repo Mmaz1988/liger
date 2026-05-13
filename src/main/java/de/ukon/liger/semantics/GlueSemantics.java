@@ -88,7 +88,7 @@ public class GlueSemantics {
         //Remove elements with empty values from unpackedSem
         unpackedSem.entrySet().removeIf(entry -> entry.getValue().isEmpty());
 
-        HashMap<Set<ChoiceVar>, Set<String>> grammarSem = new HashMap<>();
+        Map<Set<ChoiceVar>, Set<String>> grammarSem = new LinkedHashMap<>();
 
         //Check if any constraint in fs.constraints has the relation label "GLUE"
         boolean hasGlue = false;
@@ -360,12 +360,12 @@ public class GlueSemantics {
         return null;
     }
 
-    public HashMap<Set<ChoiceVar>, Set<String>> translateMeaningConstructors(LinguisticStructure fs) {
+    public Map<Set<ChoiceVar>, Set<String>> translateMeaningConstructors(LinguisticStructure fs) {
 
-        HashMap<String,HashMap<Set<ChoiceVar>, List<String>>> disjunctiveSem = new HashMap<>();
+        Map<String, Map<Set<ChoiceVar>, List<String>>> disjunctiveSem = new LinkedHashMap<>();
         List<GraphConstraint> ls = new ArrayList<>(fs.returnFullGraph());
-     //   HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
-        HashMap<String,Set<ChoiceVar>> glueIndices = new HashMap<>();
+      //   HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
+        Map<String, Set<ChoiceVar>> glueIndices = new LinkedHashMap<>();
 
             for (GraphConstraint c : ls) {
                 if (c.getRelationLabel().equals("GLUE")) {
@@ -386,12 +386,22 @@ public class GlueSemantics {
                     }
                 }
             }
+
+            // sort in ascending order and keep that order stable
+            glueIndices = glueIndices.entrySet().stream()
+                    .sorted(Comparator.comparingInt(e -> Integer.parseInt(e.getKey())))
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue,
+                            (a, b) -> a,
+                            LinkedHashMap::new));
+
             for (String i : glueIndices.keySet()) {
                 HashMap<Set<ChoiceVar>,String> testMap = parseMCfromPackedProlog(i, ls);
 
                 if (!disjunctiveSem.containsKey(i))
                 {
-                    disjunctiveSem.put(i,new HashMap<>());
+                    disjunctiveSem.put(i,new LinkedHashMap<>());
                 }
                     for (Set<ChoiceVar> key : testMap.keySet()) {
                         if (!disjunctiveSem.get(i).containsKey(key)) {
@@ -403,17 +413,17 @@ public class GlueSemantics {
              //   unpackedSem.get(glueIndices.get(i)).add(mc);
             }
 
-            HashMap<Set<ChoiceVar>, Set<String>> unpackedSem2 = new HashMap<>();
+            Map<Set<ChoiceVar>, Set<String>> unpackedSem2 = new LinkedHashMap<>();
             Set<ChoiceVar> defaultReading = Collections.singleton(new ChoiceVar());
-            unpackedSem2.put(defaultReading, new HashSet<>());
+            unpackedSem2.put(defaultReading, new LinkedHashSet<>());
 
 
         // Use streams to partition the map entries
 
 
         // Extract the singleton and multi-element maps from the partitioned map
-        Map<String, HashMap<Set<ChoiceVar>, List<String>>> singletonMap = new HashMap<>();
-        Map<String, HashMap<Set<ChoiceVar>, List<String>>> multiElementMap = new HashMap<>();
+        Map<String, Map<Set<ChoiceVar>, List<String>>> singletonMap = new LinkedHashMap<>();
+        Map<String, Map<Set<ChoiceVar>, List<String>>> multiElementMap = new LinkedHashMap<>();
 
         for (String key : disjunctiveSem.keySet()){
             if (disjunctiveSem.get(key).keySet().size() == 1)
@@ -429,10 +439,10 @@ public class GlueSemantics {
             {
                 for (Set<ChoiceVar> key : singletonMap.get(i).keySet()) {
                     if (!unpackedSem2.containsKey(key)) {
-                        unpackedSem2.put(key, new HashSet<>());
-                    }
-                    unpackedSem2.get(key).addAll(singletonMap.get(i).get(key));
+                    unpackedSem2.put(key, new LinkedHashSet<>());
                 }
+                unpackedSem2.get(key).addAll(singletonMap.get(i).get(key));
+            }
             }
 
             //raise packed mcs to conjunctive normal form
@@ -440,9 +450,9 @@ public class GlueSemantics {
             {
                  for (Set<ChoiceVar> choice : multiElementMap.get(i).keySet()) {
                      if (!choice.equals(defaultReading)) {
-                         if (!unpackedSem2.containsKey(choice)) {
-                             unpackedSem2.put(choice, new HashSet<>());
-                         }
+                          if (!unpackedSem2.containsKey(choice)) {
+                              unpackedSem2.put(choice, new LinkedHashSet<>());
+                          }
                          unpackedSem2.get(choice).addAll(multiElementMap.get(i).get(choice));
 
 
