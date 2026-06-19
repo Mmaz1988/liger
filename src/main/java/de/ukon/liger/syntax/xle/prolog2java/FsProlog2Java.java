@@ -586,7 +586,7 @@ public class FsProlog2Java {
             // Processes terminal nodes in the f-structure
             if (terminalsMatcher.find()) {
 
-                graphConstraints.add(new GraphConstraint(context, terminalsMatcher.group(1), terminalsMatcher.group(2), terminalsMatcher.group(3), "f",root));
+                graphConstraints.add(new GraphConstraint(context, terminalsMatcher.group(1), terminalsMatcher.group(2), terminalsMatcher.group(3).replace("\\\\", "\\"), "f",root));
                 continue;
             }
 
