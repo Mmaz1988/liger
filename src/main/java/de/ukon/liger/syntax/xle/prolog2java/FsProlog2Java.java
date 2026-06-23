@@ -67,6 +67,8 @@ public class FsProlog2Java {
     public static Pattern cprojPattern = Pattern.compile("cf\\((.+?),cproj\\((.+?),var\\((\\d+)\\)\\)\\)");
     public static Pattern fspan = Pattern.compile("cf\\((.+?),fspan\\(var\\((.+)\\),(.+),(.+)\\)\\)");
 
+    private static final Set<String> GLUE_LABELS = Set.of("GLUE", "ANT", "CONS", "RESOURCE");
+
     private final static Logger LOGGER = LoggerFactory.getLogger(FsProlog2Java.class);
 
     public ReadFsProlog In;
@@ -535,7 +537,8 @@ public class FsProlog2Java {
 
             //Processes non-terminal nodes
             if (nonTerminalMatcher.find()) {
-                graphConstraints.add(new GraphConstraint(context, nonTerminalMatcher.group(1), nonTerminalMatcher.group(2), nonTerminalMatcher.group(3), "f",root));
+                String projection = GLUE_LABELS.contains(nonTerminalMatcher.group(2)) ? "g" : "f";
+                graphConstraints.add(new GraphConstraint(context, nonTerminalMatcher.group(1), nonTerminalMatcher.group(2), nonTerminalMatcher.group(3), projection,root));
                 continue;
             }
 
