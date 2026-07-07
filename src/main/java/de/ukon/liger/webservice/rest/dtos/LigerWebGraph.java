@@ -110,10 +110,9 @@ public class LigerWebGraph {
                 if (g.getProj() != null && !nodes.get(fsNode).containsKey("projection"))
                 {
                     nodes.get(fsNode).put("projection",g.getProj());
-                } else {
+                } else if (nodes.get(fsNode).containsKey("projection")) {
                     String proj = nodes.get(fsNode).get("projection");
-                    if (proj.equals("g")||
-                             g.getProj().equals("g"))
+                    if ("g".equals(proj) || "g".equals(g.getProj()))
                     {
                         nodes.get(fsNode).put("projection","g");
                     }
@@ -133,12 +132,9 @@ public class LigerWebGraph {
                     if (g.getProj() != null &&  !nodes.get(g.getFsValue().toString()).containsKey("projection"))
                     {
                         nodes.get(g.getFsValue().toString()).put("projection",g.getProj());
-                    } else {
-                        //This may crash when a constraint does not have a projection but targets existing nodes, because
-                        //existing nodes may not have projections either. However, this presupposes existance of nodes with projections
+                    } else if (nodes.get(g.getFsValue().toString()).containsKey("projection")) {
                         String proj = nodes.get(g.getFsValue().toString()).get("projection");
-                        if (proj.equals("g")||
-                                g.getProj().equals("g"))
+                        if ("g".equals(proj) || "g".equals(g.getProj()))
                         {
                             nodes.get(g.getFsValue().toString()).put("projection","g");
                         }
@@ -166,10 +162,10 @@ public class LigerWebGraph {
             LigerWebNode lwn = null;
 
             if (!nodes.get(key).keySet().isEmpty()) {
-                lwn = new LigerWebNode(key, type, nodes.get(key));
+                lwn = new LigerWebNode(key, type, key, nodes.get(key));
             } else
             {
-                lwn = new LigerWebNode(key,type);
+                lwn = new LigerWebNode(key,type,key);
             }
 
 

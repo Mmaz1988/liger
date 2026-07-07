@@ -159,9 +159,9 @@ public class GraphConstraint implements Serializable {
 
         g.setReading(choiceVars);
 
-        g.setFsNode((String) input.get("sourceNode"));
+        g.setFsNode(String.valueOf(input.get("sourceNode")));
         g.setRelationLabel((String) input.get("relationLabel"));
-        g.setFsValue((String) input.get("targetNode"));
+        g.setFsValue(String.valueOf(input.get("targetNode")));
 
         return g;
     }
@@ -268,6 +268,4 @@ public class GraphConstraint implements Serializable {
     }
 
 }
-
-
 

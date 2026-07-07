@@ -28,6 +28,7 @@ import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.reasoning.AxiomExtractor;
 import de.ukon.liger.semantics.GlueSemantics;
+import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.VariableHandler;
@@ -235,9 +236,10 @@ public class LigerController {
     @PostMapping(value = "/parse_uploaded_structure", produces = "application/json", consumes = "application/json")
     public LigerRuleAnnotation parseUploadedStructure(@RequestBody LigerStructureUploadRequest request) throws IOException {
         LinguisticStructure fs = parseUploadedLinguisticStructure(request);
+        List<LigerGraphComponent> graphElements = buildUploadedGraphElements(fs);
         return new LigerRuleAnnotation(
                 fs.text,
-                new LigerWebGraph(fs.constraints, fs.annotation),
+                new LigerWebGraph(graphElements),
                 new LinkedHashSet<>(),
                 "",
                 fs.annotation.size(),
@@ -249,6 +251,9 @@ public class LigerController {
     @PostMapping(value = "/query_uploaded_structure", produces = "application/json", consumes = "application/json")
     public Map<String, String> queryUploadedStructure(@RequestBody LigerStructureQueryRequest request) throws IOException {
         LinguisticStructure fs = parseUploadedLinguisticStructure(new LigerStructureUploadRequest(request.content, request.format, request.id));
+        fs.constraints = fs.constraints.stream()
+                .filter(constraint -> !"LABEL".equals(constraint.getRelationLabel()))
+                .collect(Collectors.toList());
 
         QueryParser qp = new QueryParser(fs);
         qp.generateQuery(request.query);
@@ -284,6 +289,83 @@ public class LigerController {
         }
 
         return ls;
+    }
+
+    private List<LigerGraphComponent> buildUploadedGraphElements(LinguisticStructure fs) {
+        LinkedHashMap<String, LigerGraphComponent> nodes = new LinkedHashMap<>();
+        List<LigerGraphComponent> edges = new ArrayList<>();
+        Map<String, String> labelsByNode = new LinkedHashMap<>();
+
+        List<GraphConstraint> allConstraints = new ArrayList<>();
+        allConstraints.addAll(fs.constraints);
+        allConstraints.addAll(fs.annotation);
+
+        for (GraphConstraint constraint : allConstraints) {
+            if ("LABEL".equals(constraint.getRelationLabel())) {
+                labelsByNode.put(constraint.getFsNode(), String.valueOf(constraint.getFsValue()));
+            }
+        }
+
+        for (Map.Entry<String, String> entry : labelsByNode.entrySet()) {
+            String nodeId = entry.getKey();
+            String label = entry.getValue();
+            nodes.putIfAbsent(nodeId, new LigerWebNode(nodeId, inferNodeType(label), label));
+        }
+
+        for (GraphConstraint constraint : allConstraints) {
+            if ("LABEL".equals(constraint.getRelationLabel())) {
+                continue;
+            }
+
+            String sourceNode = constraint.getFsNode();
+            String targetNode = String.valueOf(constraint.getFsValue());
+            String sourceLabel = labelsByNode.getOrDefault(sourceNode, sourceNode);
+            String targetLabel = labelsByNode.getOrDefault(targetNode, targetNode);
+
+            if (sourceNode != null && !sourceNode.isBlank()) {
+                nodes.putIfAbsent(sourceNode, new LigerWebNode(sourceNode, inferNodeType(sourceLabel), sourceLabel));
+            }
+            if (targetNode != null && !targetNode.isBlank()) {
+                nodes.putIfAbsent(targetNode, new LigerWebNode(targetNode, inferNodeType(targetLabel), targetLabel));
+            }
+
+            edges.add(new LigerWebEdge(
+                    "edge-" + edges.size(),
+                    sourceNode,
+                    targetNode,
+                    constraint.getRelationLabel(),
+                    "edge"
+            ));
+        }
+
+        List<LigerGraphComponent> graphElements = new ArrayList<>();
+        graphElements.addAll(nodes.values());
+        graphElements.addAll(edges);
+        return graphElements;
+    }
+
+    private String inferNodeType(String nodeId) {
+        if (nodeId == null || nodeId.isBlank()) {
+            return "value";
+        }
+
+        if ("s0".equals(nodeId)) {
+            return "root";
+        }
+
+        if (nodeId.matches("s\\d+[a-z]*")) {
+            return "state";
+        }
+
+        if (nodeId.matches("[a-zA-Z]+\\d+")) {
+            return "referent";
+        }
+
+        if (nodeId.contains(":")) {
+            return "condition";
+        }
+
+        return "value";
     }
 
 

@@ -31,10 +31,12 @@ public class LigerWebNode extends LigerGraphComponent {
             }
      */
 
+    /*
     public LigerWebNode(String id, String type) {
         HashMap<String, Object> data = new HashMap<>();
         data.put("id", id);
         data.put("node_type", type);
+        data.put("label", id);
 
         this.data = data;
     }
@@ -44,16 +46,43 @@ public class LigerWebNode extends LigerGraphComponent {
         HashMap<String,Object> data = new HashMap<>();
         data.put("id",id);
         data.put("node_type",type);
+        data.put("label", id);
         data.put("avp",avp);
 
         this.data = data;
     }
+
+     */
+
+    public LigerWebNode(String id, String type, String label)
+    {
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("id", id);
+        data.put("node_type", type);
+        data.put("label", label);
+
+        this.data = data;
+    }
+
+    public LigerWebNode(String id, String type, String label, HashMap<String, String> avp)
+    {
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("id", id);
+        data.put("node_type", type);
+        data.put("label", label);
+        data.put("avp", avp);
+
+        this.data = data;
+    }
+
+    /*
 
     public LigerWebNode(String id, String type, HashMap<String, String> avp, String projection)
     {
         HashMap<String,Object> data = new HashMap<>();
         data.put("id",id);
         data.put("node_type",type);
+        data.put("label", id);
         data.put("avp",avp);
         data.put("projection",projection);
 
@@ -73,4 +102,6 @@ public class LigerWebNode extends LigerGraphComponent {
         this.data = data;
 
     }
+
+     */
 }
