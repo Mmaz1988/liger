@@ -41,10 +41,6 @@ public class LigerWebGraph {
     }
 
 
-    public LigerWebGraph(LinguisticStructure s)
-    {
-        this.graphElements = extractGraph(s);
-    }
 
     public LigerWebGraph(List<GraphConstraint> syntax, List<GraphConstraint> annotation)
     {
@@ -89,59 +85,6 @@ public class LigerWebGraph {
         this.semantics = semantics;
     }
 
-    public List<LigerGraphComponent> extractGraph(LinguisticStructure s)
-    {
-        LinkedHashMap<Integer, HashMap<String,String>> nodes = new LinkedHashMap<>();
-        List<LigerWebEdge> edges = new ArrayList<>();
-
-        for (int i = 0; i < s.constraints.size(); i++)
-        {
-            int rel = 0;
-            GraphConstraint g = s.constraints.get(i);
-            Integer fsNode = Integer.parseInt(g.getFsNode());
-
-            if (!nodes.containsKey(fsNode))
-            {
-                nodes.put(fsNode,new HashMap<>());
-            }
-
-            if (HelperMethods.isInteger(g.getFsValue())
-            ) {
-                if (!nodes.containsKey(fsNode))
-                {
-                    nodes.put(fsNode,new HashMap<>());
-                }
-                //TestNode(String id, String source, String target, String label, String type)
-                edges.add(new LigerWebEdge("rid" + g.getFsNode() + rel + g.getFsValue().toString(),
-                        g.getFsNode(),g.getFsValue().toString(),
-                        g.getRelationLabel(),"edge"));
-
-            } else
-            {
-                nodes.get(fsNode).put(g.getRelationLabel(),g.getFsValue().toString());
-            }
-
-        }
-
-        List<LigerWebNode> testNodes = new ArrayList<>();
-
-        for (Integer key : nodes.keySet())
-        {
-            if (!nodes.get(key).keySet().isEmpty()) {
-                testNodes.add(new LigerWebNode(key.toString(), "input", nodes.get(key)));
-            } else
-            {
-                testNodes.add(new LigerWebNode(key.toString(),"input"));
-            }
-        }
-
-        List<LigerGraphComponent> output = new ArrayList<>();
-        output.addAll(testNodes);
-        output.addAll(edges);
-        return output;
-    }
-
-
     public HashMap<String,List<LigerGraphComponent>> extractGraph2(List<GraphConstraint> input, String type)
     {
         LinkedHashMap<String, HashMap<String,String>> nodes = new LinkedHashMap<>();
@@ -159,14 +102,21 @@ public class LigerWebGraph {
             {
                 nodes.put(fsNode,new HashMap<>());
 
-                if (g.getProj() != null && g.getProj().equals("c"))
+                if (g.getProj() != null)
                 {
                     nodes.get(fsNode).put("projection",g.getProj());
                 }
             } else {
-                if (g.getProj() != null && g.getProj().equals("c") && !nodes.get(fsNode).containsKey("projection"))
+                if (g.getProj() != null && !nodes.get(fsNode).containsKey("projection"))
                 {
                     nodes.get(fsNode).put("projection",g.getProj());
+                } else {
+                    String proj = nodes.get(fsNode).get("projection");
+                    if (proj.equals("g")||
+                             g.getProj().equals("g"))
+                    {
+                        nodes.get(fsNode).put("projection","g");
+                    }
                 }
             }
 
@@ -175,7 +125,26 @@ public class LigerWebGraph {
                 if (!nodes.containsKey(g.getFsValue().toString()))
                 {
                     nodes.put(g.getFsValue().toString(),new HashMap<>());
+                    if (g.getProj() != null)
+                    {
+                        nodes.get(g.getFsValue().toString()).put("projection",g.getProj());
+                    }
+                } else {
+                    if (g.getProj() != null &&  !nodes.get(g.getFsValue().toString()).containsKey("projection"))
+                    {
+                        nodes.get(g.getFsValue().toString()).put("projection",g.getProj());
+                    } else {
+                        //This may crash when a constraint does not have a projection but targets existing nodes, because
+                        //existing nodes may not have projections either. However, this presupposes existance of nodes with projections
+                        String proj = nodes.get(g.getFsValue().toString()).get("projection");
+                        if (proj.equals("g")||
+                                g.getProj().equals("g"))
+                        {
+                            nodes.get(g.getFsValue().toString()).put("projection","g");
+                        }
+                    }
                 }
+
                 //TestNode(String id, String source, String target, String label, String type)
                 edges.add(new LigerWebEdge("rid" + g.getFsNode() + rel + g.getFsValue().toString(),
                         g.getFsNode(),g.getFsValue().toString(),
@@ -209,6 +178,11 @@ public class LigerWebGraph {
                 if (((HashMap<String, String>) lwn.data.get("avp")).containsKey("projection")) {
                     if (((HashMap<String, String>) lwn.data.get("avp")).get("projection").equals("c")) {
                         lwn.data.put("node_type", "cnode");
+                        ((HashMap<String, String>) lwn.data.get("avp")).remove("projection");
+                        counter++;
+                    } else
+                    if (((HashMap<String, String>) lwn.data.get("avp")).get("projection").equals("g")) {
+                        lwn.data.put("node_type", "gnode");
                         ((HashMap<String, String>) lwn.data.get("avp")).remove("projection");
                         counter++;
                     }

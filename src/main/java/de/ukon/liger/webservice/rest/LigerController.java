@@ -24,6 +24,8 @@ package de.ukon.liger.webservice.rest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.ukon.liger.analysis.RuleParser.Rule;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
+import de.ukon.liger.analysis.QueryParser.QueryParser;
+import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.reasoning.AxiomExtractor;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.LinguisticStructure;
@@ -227,6 +229,61 @@ public class LigerController {
         return new LigerRuleAnnotation(lg,
                 appliedRules.get(appliedRules.keySet().stream().findFirst().get()),
                 String.join("\n",semString), axioms);
+    }
+
+    @CrossOrigin
+    @PostMapping(value = "/parse_uploaded_structure", produces = "application/json", consumes = "application/json")
+    public LigerRuleAnnotation parseUploadedStructure(@RequestBody LigerStructureUploadRequest request) throws IOException {
+        LinguisticStructure fs = parseUploadedLinguisticStructure(request);
+        return new LigerRuleAnnotation(
+                fs.text,
+                new LigerWebGraph(fs.constraints, fs.annotation),
+                new LinkedHashSet<>(),
+                "",
+                fs.annotation.size(),
+                new ArrayList<>()
+        );
+    }
+
+    @CrossOrigin
+    @PostMapping(value = "/query_uploaded_structure", produces = "application/json", consumes = "application/json")
+    public Map<String, String> queryUploadedStructure(@RequestBody LigerStructureQueryRequest request) throws IOException {
+        LinguisticStructure fs = parseUploadedLinguisticStructure(new LigerStructureUploadRequest(request.content, request.format, request.id));
+
+        QueryParser qp = new QueryParser(fs);
+        qp.generateQuery(request.query);
+
+        QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+        Map<String, String> success = new HashMap<>();
+        success.put("success", qpr.isSuccess.toString());
+
+        return success;
+    }
+
+    private LinguisticStructure parseUploadedLinguisticStructure(LigerStructureUploadRequest request) throws IOException {
+        String format = request.format == null ? "json" : request.format.trim().toLowerCase(Locale.ROOT);
+        String id = (request.id == null || request.id.isBlank()) ? "uploaded" : request.id;
+
+        if ("prolog".equals(format) || "pl".equals(format)) {
+            XLEoperator parser = new XLEoperator(new VariableHandler());
+            return parser.fsString2Java(request.content, id).values().stream().findFirst()
+                    .orElseThrow(() -> new IOException("Could not parse uploaded prolog structure."));
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        LinkedHashMap lsmap = mapper.readValue(request.content, LinkedHashMap.class);
+        LinguisticStructure ls = LinguisticStructure.parseFromJson(lsmap);
+
+        if (ls.local_id == null || ls.local_id.isBlank()) {
+            ls.local_id = id;
+        }
+
+        if (ls.cp == null) {
+            ls.cp = new de.ukon.liger.packing.ChoiceSpace();
+        }
+
+        return ls;
     }
 
 
