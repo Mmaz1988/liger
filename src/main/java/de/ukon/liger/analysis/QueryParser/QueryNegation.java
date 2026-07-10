@@ -21,7 +21,32 @@
 
 package de.ukon.liger.analysis.QueryParser;
 
+import de.ukon.liger.syntax.GraphConstraint;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+
 public class QueryNegation extends QueryExpression {
+
+    private final String negatedQuery;
+    private final LinkedList<QueryExpression> negatedQueryList;
+
+    public QueryNegation(String negatedQuery, LinkedList<QueryExpression> negatedQueryList,
+                         HashMap<Integer, GraphConstraint> fsIndices, QueryParser parser) {
+        this.negatedQuery = negatedQuery;
+        this.negatedQueryList = negatedQueryList;
+        setFsIndices(fsIndices);
+        setParser(parser);
+    }
+
+    public String getNegatedQuery() {
+        return negatedQuery;
+    }
+
+    public LinkedList<QueryExpression> getNegatedQueryList() {
+        return negatedQueryList;
+    }
+
     @Override
     public void calculateSolutions() {
 

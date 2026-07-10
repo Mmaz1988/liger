@@ -37,6 +37,15 @@ public class Uncertainty extends QueryExpression {
       setParser(qp);
     }
 
+    public Uncertainty(String query, Boolean insideOut, HashMap<Integer,GraphConstraint> fsIndices,
+                       QueryParser qp, TemplateRegistry templateRegistry)
+    {
+      this(query, insideOut, fsIndices, qp);
+      if (templateRegistry != null) {
+          setParser(qp);
+      }
+    }
+
 
     @Override
     public void calculateSolutions()

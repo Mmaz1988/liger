@@ -39,6 +39,16 @@ public class UncertaintyExpression extends QueryExpression {
     private List<String> gf = Arrays.asList("OBL", "OBJ", "SUBJ", "COMP", "XCOMP", "OBJ-TH", "XCOMP-PRED");
     private Set<ChoiceVar> choices = new HashSet<>();
 
+    private static class PathAtom {
+        private final Set<String> labels;
+        private final boolean star;
+
+        private PathAtom(Set<String> labels, boolean star) {
+            this.labels = labels;
+            this.star = star;
+        }
+    }
+
     public UncertaintyExpression(QueryExpression left, Uncertainty middle, QueryExpression right) {
 
         setNodeVar(left.getNodeVar());
@@ -56,6 +66,7 @@ public class UncertaintyExpression extends QueryExpression {
     public void calculateSolutions() {
 
         HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+        List<String> searchQueries = getExpandedQueries();
 
 
         for (Set<SolutionKey> key : left.getSolution().keySet()) {
@@ -71,55 +82,57 @@ public class UncertaintyExpression extends QueryExpression {
 
             HashMap<Integer, GraphConstraint> uncertainty = new HashMap<>();
 
-            if (!middle.insideOut) {
-                uncertainty = searchUncertainty(boundIndices);
-            } else {
-                uncertainty = searchInsideOutUncertainty(boundIndices);
-            }
-
-            if (!uncertainty.keySet().isEmpty()) {
-
-
-                Set<String> usedKeys = new HashSet<>();
-
-                for (Integer key3 : uncertainty.keySet()) {
-                    if (right.getFsIndices().containsKey(key3)) {
-                        usedKeys.add(right.getFsIndices().get(key3).getFsNode());
-                    }
+            for (String searchQuery : searchQueries) {
+                if (!middle.insideOut) {
+                    uncertainty = searchUncertainty(searchQuery, boundIndices);
+                } else {
+                    uncertainty = searchInsideOutUncertainty(searchQuery, boundIndices);
                 }
 
-                HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
-                        mapUsedKeys(usedKeys, uncertainty, right.getNodeVar());
+                if (!uncertainty.keySet().isEmpty()) {
 
-                right.setSolution(out2);
 
-                for (Set<SolutionKey> key2 : out2.keySet()) {
+                    Set<String> usedKeys = new HashSet<>();
 
-                    HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
-
-                    for (String key3 : left.getSolution().get(key).keySet()) {
-                        binding.put(key3, left.getSolution().get(key).get(key3));
-
+                    for (Integer key3 : uncertainty.keySet()) {
+                        if (right.getFsIndices().containsKey(key3)) {
+                            usedKeys.add(right.getFsIndices().get(key3).getFsNode());
+                        }
                     }
 
-                    binding.put(right.getNodeVar(), out2.get(key2).get(right.getNodeVar()));
+                    HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
+                            mapUsedKeys(usedKeys, uncertainty, right.getNodeVar());
+
+                    right.setSolution(out2);
+
+                    for (Set<SolutionKey> key2 : out2.keySet()) {
+
+                        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
+
+                        for (String key3 : left.getSolution().get(key).keySet()) {
+                            binding.put(key3, left.getSolution().get(key).get(key3));
+
+                        }
+
+                        binding.put(right.getNodeVar(), out2.get(key2).get(right.getNodeVar()));
 
 
-                    Set<SolutionKey> newKey = new HashSet<>();
-                    newKey.addAll(key);
-                    newKey.addAll(key2);
+                        Set<SolutionKey> newKey = new HashSet<>();
+                        newKey.addAll(key);
+                        newKey.addAll(key2);
 
-                    out.put(newKey, binding);
+                        out.put(newKey, binding);
 
-                    //Update fsIndices
+                        //Update fsIndices
 
-                    for (String bkey2 : binding.get(right.getNodeVar()).keySet()) {
-                        getFsIndices().putAll(binding.get(right.getNodeVar()).get(bkey2));
+                        for (String bkey2 : binding.get(right.getNodeVar()).keySet()) {
+                            getFsIndices().putAll(binding.get(right.getNodeVar()).get(bkey2));
+                        }
+
+
                     }
-
 
                 }
-
             }
         }
 
@@ -128,20 +141,63 @@ public class UncertaintyExpression extends QueryExpression {
         //  getParser().fsNodeBindings = out;
     }
 
+    private List<String> getExpandedQueries() {
+        return Collections.singletonList(middle.getQuery());
+    }
+
+    private List<PathAtom> parsePathQuery(String query) {
+        List<PathAtom> out = new ArrayList<>();
+        TemplateRegistry registry = middle.getParser() != null ? middle.getParser().getTemplateRegistry() : null;
+
+        for (String rawSegment : query.split(">")) {
+            String segment = rawSegment.trim();
+            boolean star = segment.endsWith("*");
+            if (star) {
+                segment = segment.substring(0, segment.length() - 1).trim();
+            }
+
+            Set<String> labels = new LinkedHashSet<>();
+            if (segment.startsWith("@")) {
+                String templateName = segment.substring(1).trim();
+                if (registry == null) {
+                    throw new IllegalArgumentException("Template registry required for path template: " + segment);
+                }
+                QueryTemplate template = registry.getTemplate(templateName);
+                if (template == null) {
+                    throw new IllegalArgumentException("Unknown template: " + templateName);
+                }
+                for (List<String> alternative : template.getAlternatives()) {
+                    if (alternative.size() != 1) {
+                        throw new IllegalArgumentException("Path templates must expand to one label: " + templateName);
+                    }
+                    labels.add(alternative.get(0));
+                }
+            } else {
+                labels.add(segment);
+            }
+
+            out.add(new PathAtom(labels, star));
+        }
+
+        return out;
+    }
+
 
     public HashMap<Integer, GraphConstraint> searchUncertainty(HashMap<Integer, GraphConstraint> in) {
+        return searchUncertainty(parsePathQuery(middle.getQuery()), in);
+    }
 
-        Deque<String> search = new LinkedList<String>(Arrays.asList(middle.getQuery().split(">")));
-        Pattern starPattern = Pattern.compile("(.*)\\*");
+    public HashMap<Integer, GraphConstraint> searchUncertainty(String searchQuery, HashMap<Integer, GraphConstraint> in) {
+        return searchUncertainty(parsePathQuery(searchQuery), in);
+    }
+
+    private HashMap<Integer, GraphConstraint> searchUncertainty(List<PathAtom> search, HashMap<Integer, GraphConstraint> in) {
 
         HashMap<Integer, GraphConstraint> result = new HashMap<>();
 
         List<Integer> boundVariables = new ArrayList<>();
 
-        for (String element : search) {
-
-
-            Matcher starMatcher = starPattern.matcher(element);
+        for (PathAtom atom : search) {
 
             if (result.keySet().isEmpty()) {
                 result = in;
@@ -151,8 +207,8 @@ public class UncertaintyExpression extends QueryExpression {
 
             for (Integer key : result.keySet()) {
 
-                if (starMatcher.matches()) {
-                    if (result.get(key).getRelationLabel().equals(starMatcher.group(1))) {
+                if (atom.star) {
+                    if (atom.labels.contains(result.get(key).getRelationLabel())) {
 
                         boundVariables.add(key);
 
@@ -178,7 +234,7 @@ public class UncertaintyExpression extends QueryExpression {
 
                         while (foundString) {
 
-                            keys.removeIf(next -> !right.getFsIndices().get(next).getRelationLabel().equals(starMatcher.group(1)));
+                            keys.removeIf(next -> !atom.labels.contains(right.getFsIndices().get(next).getRelationLabel()));
 
                             if (!keys.isEmpty()) {
                                 List<Integer> newKeys = new ArrayList<>();
@@ -206,9 +262,9 @@ public class UncertaintyExpression extends QueryExpression {
 
 
                     }
-                } else if (result.get(key).getRelationLabel().equals(element)) {
+                } else if (atom.labels.contains(result.get(key).getRelationLabel())) {
 
-                    if (search.getFirst().equals(element)) {
+                    if (search.get(0) == atom) {
                         boundVariables.add(key);
                     }
 
@@ -249,9 +305,14 @@ public class UncertaintyExpression extends QueryExpression {
     }
 
     public HashMap<Integer, GraphConstraint> searchInsideOutUncertainty(HashMap<Integer, GraphConstraint> in) {
+        return searchInsideOutUncertainty(parsePathQuery(middle.getQuery()), in);
+    }
 
-        List<String> search = new LinkedList<String>(Arrays.asList(middle.getQuery().split(">")));
-        Pattern starPattern = Pattern.compile("(.*)\\*");
+    public HashMap<Integer, GraphConstraint> searchInsideOutUncertainty(String searchQuery, HashMap<Integer, GraphConstraint> in) {
+        return searchInsideOutUncertainty(parsePathQuery(searchQuery), in);
+    }
+
+    private HashMap<Integer, GraphConstraint> searchInsideOutUncertainty(List<PathAtom> search, HashMap<Integer, GraphConstraint> in) {
 
 
         HashMap<Integer, GraphConstraint> result = new HashMap<>();
@@ -261,8 +322,7 @@ public class UncertaintyExpression extends QueryExpression {
 
         for (int i = 0; i < search.size(); i++) {
 
-            String element = search.get(i);
-            Matcher starMatcher = starPattern.matcher(element);
+            PathAtom atom = search.get(i);
 
             if (result.keySet().isEmpty()) {
                 result = inverseFsIndices;
@@ -272,10 +332,10 @@ public class UncertaintyExpression extends QueryExpression {
 
             for (Integer key : result.keySet()) {
 
-                if (starMatcher.matches()) {
-                    if (result.get(key).getRelationLabel().equals(starMatcher.group(1))
-                        || starMatcher.group(1).equals("%") ||
-                        (starMatcher.group(1).equals("GF") && gf.contains(result.get(key).getRelationLabel())))
+                if (atom.star) {
+                    if (atom.labels.contains(result.get(key).getRelationLabel())
+                        || atom.labels.contains("%") ||
+                        (atom.labels.contains("GF") && gf.contains(result.get(key).getRelationLabel())))
                         {
 
 
@@ -292,7 +352,7 @@ public class UncertaintyExpression extends QueryExpression {
                         for (Integer key2 : right.getFsIndices().keySet()) {
                             if (result.get(key).getFsNode().equals(right.getFsIndices().get(key2).getFsNode())) {
                                 keys.add(key2);
-                                if (starMatcher.group(1).equals("%")) {
+                                if (atom.labels.contains("%")) {
                                     unspecRelation.add(right.getFsIndices().get(key).getRelationLabel());
                                 }
                             }
@@ -310,14 +370,14 @@ public class UncertaintyExpression extends QueryExpression {
                         while (foundString) {
 
 
-                            if (starMatcher.group(1).equals("%"))
+                            if (atom.labels.contains("%"))
                             {
                                 keys.removeIf(next -> !unspecRelation.contains(right.getFsIndices().get(next).getRelationLabel()));
-                            } else if (starMatcher.group(1).equals("GF"))
+                            } else if (atom.labels.contains("GF"))
                             {
                                 keys.removeIf(next -> !gf.contains(right.getFsIndices().get(next).getRelationLabel()));
                             } else {
-                                keys.removeIf(next -> !right.getFsIndices().get(next).getRelationLabel().equals(starMatcher.group(1)));
+                                keys.removeIf(next -> !atom.labels.contains(right.getFsIndices().get(next).getRelationLabel()));
                             }
 
 
@@ -350,7 +410,7 @@ public class UncertaintyExpression extends QueryExpression {
 
 
                     }
-                } else if (result.get(key).getRelationLabel().equals(element)) {
+                } else if (atom.labels.contains(result.get(key).getRelationLabel())) {
                     HashMap<Integer, GraphConstraint> newResult = new HashMap<>();
 
                     if (i != search.size() - 1) {
@@ -367,7 +427,7 @@ public class UncertaintyExpression extends QueryExpression {
                         }
                     }
                     currentResult.putAll(newResult);
-                } else if (element.equals("%")) {
+                } else if (atom.labels.contains("%")) {
                     HashMap<Integer, GraphConstraint> newResult = new HashMap<>();
 
                     for (Integer key2 : right.getFsIndices().keySet()) {
@@ -379,7 +439,7 @@ public class UncertaintyExpression extends QueryExpression {
                         currentResult.putAll(newResult);
                     }
 
-                } else if (element.equals("GF")) {
+                } else if (atom.labels.contains("GF")) {
                     HashMap<Integer, GraphConstraint> newResult = new HashMap<>();
 
                     for (Integer key2 : right.getFsIndices().keySet()) {

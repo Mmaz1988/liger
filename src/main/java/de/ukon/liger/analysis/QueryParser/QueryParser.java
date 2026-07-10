@@ -44,6 +44,7 @@ public class QueryParser {
     public HashMap<Set<SolutionKey>, HashMap<String,String>> fsValueBindings = new HashMap<>();
     private final static Logger LOGGER = LoggerFactory.getLogger(QueryParser.class);
     public ChoiceSpace cp;
+    private TemplateRegistry templateRegistry;
 
 
     //TODO why are the values of the result hashmap empty?
@@ -72,6 +73,12 @@ public class QueryParser {
         this.cp = fs.cp;
         generateQuery(query);
 
+    }
+
+    public QueryParser(String query, LinguisticStructure fs, TemplateRegistry templateRegistry)
+    {
+        this(query, fs);
+        this.templateRegistry = templateRegistry;
     }
 
     public QueryParser(LinguisticStructure fs)
@@ -174,7 +181,12 @@ public class QueryParser {
                         insideOut = true;
                     }
 
-                    queryList.add(i,new Uncertainty(uM.group(2),insideOut,getFsIndices(),this));
+                    queryList.add(i,new Uncertainty(uM.group(2),insideOut,getFsIndices(),this, templateRegistry));
+                }
+                else if (isNegationToken(deque.get(i))) {
+                    String innerQuery = extractWrappedQuery(deque.get(i));
+                    LinkedList<QueryExpression> innerQueryList = generateQueryList(new LinkedList<>(tokenizeQuery(innerQuery)));
+                    queryList.add(i, new QueryNegation(innerQuery, innerQueryList, getFsIndices(), this));
                 }
                 else if (isAttribute(deque.get(i), getFsIndices())) {
                     queryList.add(i, new Attribute(deque.get(i), getFsIndices(), this));
@@ -271,7 +283,8 @@ public class QueryParser {
                         }
 
                         if (current instanceof Attribute && (previous instanceof Node ||
-                                previous instanceof NodeExpression || previous instanceof UncertaintyExpression)) {
+                                previous instanceof NodeExpression || previous instanceof UncertaintyExpression ||
+                                previous instanceof NegationExpression)) {
 
                             AttributeExpression ae = new AttributeExpression(previous, (Attribute) current);
                             it.add(ae);
@@ -281,19 +294,22 @@ public class QueryParser {
                         } else if (current instanceof Node && (previous instanceof AttributeExpression
                                 || previous instanceof Attribute
                                 || previous instanceof UncertaintyExpression
-                                || previous instanceof ConjointExpression)) {
+                                || previous instanceof ConjointExpression
+                                || previous instanceof NegationExpression)) {
                             NodeExpression ne = new NodeExpression(previous, (Node) current);
                             it.add(ne);
                             result = ne.getSolution();
 
                         } else if (current instanceof Uncertainty && // next instanceof FsNode&&
-                                (previous instanceof Node || previous instanceof NodeExpression)) {
+                                (previous instanceof Node || previous instanceof NodeExpression ||
+                                        previous instanceof NegationExpression)) {
                             UncertaintyExpression ue = new UncertaintyExpression(previous, (Uncertainty) current, next);
 
                             it.add(ue);
                             result = ue.getSolution();
                         } else if (current instanceof Value && (previous instanceof AttributeExpression ||
-                                previous instanceof Attribute || previous instanceof UncertaintyExpression)) {
+                                previous instanceof Attribute || previous instanceof UncertaintyExpression ||
+                                previous instanceof NegationExpression)) {
                             ValueExpression ve = new ValueExpression(previous, (Value) current);
                             it.add(ve);
                             result = ve.getSolution();
@@ -301,6 +317,14 @@ public class QueryParser {
                             ConjointExpression oe = new ConjointExpression(previous);
                             it.add(oe);
                             result = oe.getSolution();
+                        } else if (current instanceof QueryNegation && previous == null) {
+                            NegationExpression ne = new NegationExpression(null, (QueryNegation) current);
+                            it.add(ne);
+                            result = ne.getSolution();
+                        } else if (current instanceof QueryNegation) {
+                            NegationExpression ne = new NegationExpression(previous, (QueryNegation) current);
+                            it.add(ne);
+                            result = ne.getSolution();
                         } else if (current instanceof Value && previous instanceof ConjointExpression) {
 
                             current.setFsIndices(previous.getFsIndices());
@@ -328,7 +352,14 @@ public class QueryParser {
                     } else {
 
                         previous = it.next();
-                        result = previous.getSolution();
+                        if (previous instanceof QueryNegation) {
+                            NegationExpression ne = new NegationExpression(null, (QueryNegation) previous);
+                            it.add(ne);
+                            previous = ne;
+                            result = ne.getSolution();
+                        } else {
+                            result = previous.getSolution();
+                        }
                         continue;
                     }
                 } catch (Exception e) {
@@ -384,9 +415,102 @@ public class QueryParser {
 
     public void generateQuery(String query)
     {
-        Deque<String> search = new LinkedList<String>(Arrays.asList(query.split("\\s+")));
+        Deque<String> search = new LinkedList<>(tokenizeQuery(query));
 
         this.queryList = generateQueryList(search);
+    }
+
+    public List<QueryParserResult> parseQueryWithTemplates(String query)
+    {
+        if (templateRegistry == null || templateRegistry.getTemplates().isEmpty()) {
+            generateQuery(query);
+            return Collections.singletonList(parseQuery(getQueryList()));
+        }
+
+        List<List<String>> expandedQueries = TemplateExpander.expandQuery(query, templateRegistry);
+        List<QueryParserResult> results = new ArrayList<>();
+
+        for (List<String> expandedQuery : expandedQueries) {
+            LinkedList<String> tokens = new LinkedList<>(expandedQuery);
+            LinkedList<QueryExpression> expandedQueryList = generateQueryList(tokens);
+            results.add(parseQuery(expandedQueryList));
+        }
+
+        return results;
+    }
+
+    public static List<String> tokenizeQuery(String query) {
+        List<String> tokens = new ArrayList<>();
+
+        if (query == null || query.isBlank()) {
+            return tokens;
+        }
+
+        StringBuilder current = new StringBuilder();
+        int parenDepth = 0;
+        boolean inQuote = false;
+        char quoteChar = 0;
+
+        for (int i = 0; i < query.length(); i++) {
+            char c = query.charAt(i);
+
+            if (inQuote) {
+                current.append(c);
+                if (c == quoteChar) {
+                    inQuote = false;
+                }
+                continue;
+            }
+
+            if (c == '\'' || c == '"') {
+                inQuote = true;
+                quoteChar = c;
+                current.append(c);
+                continue;
+            }
+
+            if (Character.isWhitespace(c) && parenDepth == 0) {
+                if (!current.isEmpty()) {
+                    tokens.add(current.toString());
+                    current.setLength(0);
+                }
+                continue;
+            }
+
+            if (c == '&' && parenDepth == 0) {
+                if (!current.isEmpty()) {
+                    tokens.add(current.toString());
+                    current.setLength(0);
+                }
+                tokens.add("&");
+                continue;
+            }
+
+            if (c == '(') {
+                parenDepth++;
+            } else if (c == ')') {
+                parenDepth = Math.max(0, parenDepth - 1);
+            }
+
+            current.append(c);
+        }
+
+        if (!current.isEmpty()) {
+            tokens.add(current.toString());
+        }
+
+        return tokens;
+    }
+
+    private boolean isNegationToken(String token) {
+        return token.startsWith("-(") && token.endsWith(")");
+    }
+
+    private String extractWrappedQuery(String token) {
+        if (token.length() < 3) {
+            return "";
+        }
+        return token.substring(2, token.length() - 1).trim();
     }
 
     public LinkedList<QueryExpression> getQueryList() {
@@ -419,6 +543,10 @@ public class QueryParser {
 
     public void setUsedKeys(Set<String> usedKeys) {
         this.usedKeys = usedKeys;
+    }
+
+    public TemplateRegistry getTemplateRegistry() {
+        return templateRegistry;
     }
 
 }
