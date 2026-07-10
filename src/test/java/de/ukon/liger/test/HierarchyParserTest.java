@@ -64,7 +64,7 @@ public class HierarchyParserTest {
         HierarchyRegistry registry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
 
         for (String key : fs.keySet()) {
-            QueryParser qp = new QueryParser("superior(GF,#b,#d) & #a SUBJ #b & #c OBL #d", fs.get(key), registry);
+            QueryParser qp = new QueryParser("superior(GF,#b,#d) & #a SUBJ #b & #a OBL #d", fs.get(key), registry);
             QueryParserResult result = qp.parseQuery(qp.getQueryList());
 
             assertTrue(result.isSuccess);
@@ -78,10 +78,10 @@ public class HierarchyParserTest {
         HierarchyRegistry registry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
 
         for (String key : fs.keySet()) {
-            QueryParser baseline = new QueryParser("#a SUBJ #b & #c OBL #d", fs.get(key), registry);
-            QueryParserResult baselineResult = baseline.parseQuery(baseline.getQueryList());
+          //  QueryParser baseline = new QueryParser("#a SUBJ #b & #a OBL #d", fs.get(key), registry);
+          //  QueryParserResult baselineResult = baseline.parseQuery(baseline.getQueryList());
 
-            QueryParser qp = new QueryParser("#a SUBJ #b & #c OBL #d & superior(GF,#b,#d)", fs.get(key), registry);
+            QueryParser qp = new QueryParser("#a SUBJ #b & #a OBL #d & superior(GF,#b,#d)", fs.get(key), registry);
             QueryParserResult result = qp.parseQuery(qp.getQueryList());
 
             assertTrue(result.isSuccess);
@@ -108,7 +108,7 @@ public class HierarchyParserTest {
         HierarchyRegistry registry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
 
         for (String key : fs.keySet()) {
-            QueryParser qp = new QueryParser("#a SUBJ #b & #c OBL #d & superior(GF,#d,#b)", fs.get(key), registry);
+            QueryParser qp = new QueryParser("#a SUBJ #b & #a OBL #d & superior(GF,#d,#b)", fs.get(key), registry);
             QueryParserResult result = qp.parseQuery(qp.getQueryList());
 
             assertTrue(result.result.isEmpty());
@@ -225,6 +225,10 @@ public class HierarchyParserTest {
             QueryParser falseParser = new QueryParser("#a SUBJ #b & -(#a SUBJ #b)", fs.get(key));
             QueryParserResult falseResult = falseParser.parseQuery(falseParser.getQueryList());
             assertTrue(falseResult.result.isEmpty());
+
+            QueryParser falseParser1 = new QueryParser("#a SUBJ #b & -(#a OBL)", fs.get(key));
+            QueryParserResult falseResult1 = falseParser1.parseQuery(falseParser.getQueryList());
+            assertTrue(falseResult1.result.isEmpty());
         }
     }
 
