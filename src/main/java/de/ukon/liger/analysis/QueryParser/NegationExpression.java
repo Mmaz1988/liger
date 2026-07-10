@@ -31,12 +31,15 @@ public class NegationExpression extends QueryExpression {
         HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
 
         HashMap<Set<SolutionKey>, HashMap<String, String>> previousBindings = copyValueBindings(getParser().fsValueBindings);
+        java.util.List<Superior> previousSuperiorConstraints = new java.util.ArrayList<>(getParser().getSuperiorConstraints());
 
         QueryParserResult negatedResult;
         try {
+            getParser().setSuperiorConstraints(new java.util.ArrayList<>());
             negatedResult = getParser().parseQuery(right.getNegatedQueryList());
         } finally {
             getParser().fsValueBindings = previousBindings;
+            getParser().setSuperiorConstraints(previousSuperiorConstraints);
         }
 
         try {
@@ -62,6 +65,7 @@ public class NegationExpression extends QueryExpression {
             }
         } finally {
             getParser().fsValueBindings = previousBindings;
+            getParser().setSuperiorConstraints(previousSuperiorConstraints);
         }
 
         setSolution(out);

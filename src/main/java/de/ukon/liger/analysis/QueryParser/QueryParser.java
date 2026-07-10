@@ -45,6 +45,8 @@ public class QueryParser {
     private final static Logger LOGGER = LoggerFactory.getLogger(QueryParser.class);
     public ChoiceSpace cp;
     private TemplateRegistry templateRegistry;
+    private HierarchyRegistry hierarchyRegistry;
+    private List<Superior> superiorConstraints = new ArrayList<>();
 
 
     //TODO why are the values of the result hashmap empty?
@@ -79,6 +81,23 @@ public class QueryParser {
     {
         this(query, fs);
         this.templateRegistry = templateRegistry;
+        generateQuery(query);
+    }
+
+    public QueryParser(String query, LinguisticStructure fs, HierarchyRegistry hierarchyRegistry)
+    {
+        this(query, fs);
+        this.hierarchyRegistry = hierarchyRegistry;
+        generateQuery(query);
+    }
+
+    public QueryParser(String query, LinguisticStructure fs, TemplateRegistry templateRegistry,
+                       HierarchyRegistry hierarchyRegistry)
+    {
+        this(query, fs);
+        this.templateRegistry = templateRegistry;
+        this.hierarchyRegistry = hierarchyRegistry;
+        generateQuery(query);
     }
 
     public QueryParser(LinguisticStructure fs)
@@ -136,9 +155,9 @@ public class QueryParser {
         HashMap<String, Node> usedFsNodes = new HashMap<String, Node>();
 
         for (int i = 0; i < queryDeque.size(); i++) {
-
-            Matcher fsM =  HelperMethods.fsNodePattern.matcher(deque.get(i));
-            Matcher uM = HelperMethods.uncertaintyPattern.matcher(deque.get(i));
+            String currentToken = deque.get(i);
+            Matcher fsM =  HelperMethods.fsNodePattern.matcher(currentToken);
+            Matcher uM = HelperMethods.uncertaintyPattern.matcher(currentToken);
 
             try {
                 if (fsM.matches()) {
@@ -149,17 +168,17 @@ public class QueryParser {
                             if (!usedFsNodes.containsKey(fsM.group(1))) {
                                 //if the first symbol of fsm.group(1) is * set boolean to true
                                 boolean constant = false;
-                                if (deque.get(i).charAt(0) == '*') {
+                            if (currentToken.charAt(0) == '*') {
                                     constant = true;
                                 }
 
-                                Node newNode = new Node(deque.get(i), fsM.group(1), getFsIndices(), constant, this);
+                                Node newNode = new Node(currentToken, fsM.group(1), getFsIndices(), constant, this);
                                 usedFsNodes.put(fsM.group(1),newNode);
-                                queryList.add(i, newNode);
+                                queryList.add(newNode);
                             }
                             else
                                 {
-                                    queryList.add(i,usedFsNodes.get(fsM.group(1)));
+                                    queryList.add(usedFsNodes.get(fsM.group(1)));
                                 }
 
                         } else {
@@ -181,20 +200,22 @@ public class QueryParser {
                         insideOut = true;
                     }
 
-                    queryList.add(i,new Uncertainty(uM.group(2),insideOut,getFsIndices(),this, templateRegistry));
+                    queryList.add(new Uncertainty(uM.group(2),insideOut,getFsIndices(),this, templateRegistry));
                 }
-                else if (isNegationToken(deque.get(i))) {
-                    String innerQuery = extractWrappedQuery(deque.get(i));
+                else if (isNegationToken(currentToken)) {
+                    String innerQuery = extractWrappedQuery(currentToken);
                     LinkedList<QueryExpression> innerQueryList = generateQueryList(new LinkedList<>(tokenizeQuery(innerQuery)));
-                    queryList.add(i, new QueryNegation(innerQuery, innerQueryList, getFsIndices(), this));
+                    queryList.add(new QueryNegation(innerQuery, innerQueryList, getFsIndices(), this));
                 }
-                else if (isAttribute(deque.get(i), getFsIndices())) {
-                    queryList.add(i, new Attribute(deque.get(i), getFsIndices(), this));
-                } else if (HelperMethods.isValue(deque.get(i), getFsIndices())) {
+                else if (isAttribute(currentToken, getFsIndices())) {
+                    queryList.add(new Attribute(currentToken, getFsIndices(), this));
+                } else if (isSuperiorToken(currentToken)) {
+                    queryList.add(new Superior(currentToken, getFsIndices(), this));
+                } else if (HelperMethods.isValue(currentToken, getFsIndices())) {
                     Boolean var = false;
                     Boolean strip = false;
 
-                    String query = deque.get(i);
+                    String query = currentToken;
 
                     //if value is wrapped in quotes, strip the quotes
                     //e.g. "value" or 'value'
@@ -205,7 +226,7 @@ public class QueryParser {
                         query = quoteMatcher.group(1);
                     }
 
-                    Matcher sm = HelperMethods.stripPattern.matcher(deque.get(i));
+                    Matcher sm = HelperMethods.stripPattern.matcher(currentToken);
                     if (sm.find())
                     {
                         query = sm.group(2);
@@ -218,17 +239,17 @@ public class QueryParser {
                         var = true;
                     }
 
-                    queryList.add(i, new Value(query, getFsIndices(),var,strip, this));
-                } else if (deque.get(i).equals("\u0026")) {
-                    queryList.add(i, new Conjunction("\u0026"));
+                    queryList.add(new Value(query, getFsIndices(),var,strip, this));
+                } else if (currentToken.equals("\u0026")) {
+                    queryList.add(new Conjunction("\u0026"));
 
-                } else if (deque.get(i).equals("=="))
+                } else if (currentToken.equals("=="))
                 {
-                    queryList.add(i,new Equality(true,this));
+                    queryList.add(new Equality(true,this));
                 }
-                else if (deque.get(i).equals("!="))
+                else if (currentToken.equals("!="))
                 {
-                    queryList.add(i,new Equality(false, this ));
+                    queryList.add(new Equality(false, this ));
                 }
                 else
                     {
@@ -250,10 +271,23 @@ public class QueryParser {
 
     public QueryParserResult parseQuery(LinkedList<QueryExpression> queryList)
     {
-
         if (!queryList.isEmpty()) {
 
-            ListIterator<QueryExpression> it = queryList.listIterator();
+            List<QueryExpression> structuralQuery = new ArrayList<>();
+            this.superiorConstraints = new ArrayList<>();
+
+            for (QueryExpression expression : queryList) {
+                if (expression instanceof Superior) {
+                    addSuperiorConstraint((Superior) expression);
+                    continue;
+                }
+
+                structuralQuery.add(expression);
+            }
+
+            LinkedList<QueryExpression> parsedQueryList = new LinkedList<>(structuralQuery);
+
+            ListIterator<QueryExpression> it = parsedQueryList.listIterator();
 
             HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> result = new HashMap<>();
 
@@ -330,11 +364,11 @@ public class QueryParser {
                             current.setFsIndices(previous.getFsIndices());
                             current.setSolution(previous.getSolution());
                             //  it.next();
-                    } else if (current instanceof End)
-                    {
-                        EndExpression ee = new EndExpression(previous);
-                        result = ee.getSolution();
-                    }
+                        } else if (current instanceof End)
+                        {
+                            EndExpression ee = new EndExpression(previous);
+                            result = ee.getSolution();
+                        }
                         else if (previous instanceof Value && current instanceof Equality && next instanceof Value) {
                             EqualityExpression ee =
                                     new EqualityExpression((Value) previous, (Equality) current, (Value) next);
@@ -381,6 +415,9 @@ public class QueryParser {
                 }
 
             }
+            if (!superiorConstraints.isEmpty()) {
+                result = applySuperiorConstraints(result);
+            }
             return new QueryParserResult(result,fsValueBindings);
         }
         return new QueryParserResult(new HashMap<>(),new HashMap<>());
@@ -410,11 +447,13 @@ public class QueryParser {
         this.fsValueBindings = new HashMap<>();
         this.queryList = null;
         this.query = null;
+        this.superiorConstraints = new ArrayList<>();
     }
 
 
     public void generateQuery(String query)
     {
+        superiorConstraints = new ArrayList<>();
         Deque<String> search = new LinkedList<>(tokenizeQuery(query));
 
         this.queryList = generateQueryList(search);
@@ -547,6 +586,93 @@ public class QueryParser {
 
     public TemplateRegistry getTemplateRegistry() {
         return templateRegistry;
+    }
+
+    public HierarchyRegistry getHierarchyRegistry() {
+        return hierarchyRegistry;
+    }
+
+    public void addSuperiorConstraint(Superior superior) {
+        superiorConstraints.add(superior);
+    }
+
+    public List<Superior> getSuperiorConstraints() {
+        return superiorConstraints;
+    }
+
+    public void setSuperiorConstraints(List<Superior> superiorConstraints) {
+        this.superiorConstraints = superiorConstraints;
+    }
+
+    private HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> applySuperiorConstraints(
+            HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> result) {
+
+        if (superiorConstraints.isEmpty() || result.isEmpty()) {
+            return result;
+        }
+
+        HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> filtered = new HashMap<>();
+
+        for (Set<SolutionKey> solutionKey : result.keySet()) {
+            boolean valid = true;
+            for (Superior superior : superiorConstraints) {
+                String superiorRef = resolveBindingReference(solutionKey, superior.getSuperiorVar());
+                String inferiorRef = resolveBindingReference(solutionKey, superior.getInferiorVar());
+
+                if (superiorRef == null || inferiorRef == null) {
+                    throw new IllegalArgumentException(
+                            "superior(" + superior.getHierarchyName() + "," + superior.getSuperiorVar() + "," + superior.getInferiorVar() + ") requires bound variables");
+                }
+
+                String superiorLabel = resolveHierarchyLabel(superior.getHierarchyName(), superiorRef);
+                String inferiorLabel = resolveHierarchyLabel(superior.getHierarchyName(), inferiorRef);
+
+                if (superiorLabel == null || inferiorLabel == null) {
+                    throw new IllegalArgumentException(
+                            "superior(" + superior.getHierarchyName() + "," + superior.getSuperiorVar() + "," + superior.getInferiorVar() + ") references nodes that are not present in the hierarchy");
+                }
+
+                if (!hierarchyRegistry.isSuperior(superior.getHierarchyName(), superiorLabel, inferiorLabel)) {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if (valid) {
+                filtered.put(solutionKey, result.get(solutionKey));
+            }
+        }
+
+        return filtered;
+    }
+
+    private String resolveBindingReference(Set<SolutionKey> solutionKey, String variable) {
+        String normalizedVariable = variable.startsWith("#") ? variable.substring(1) : variable;
+        for (SolutionKey key : solutionKey) {
+            if (normalizedVariable.equals(key.variable) || variable.equals(key.variable)) {
+                return key.reference;
+            }
+        }
+        return null;
+    }
+
+    private String resolveHierarchyLabel(String hierarchyName, String nodeRef) {
+        if (hierarchyRegistry == null || !hierarchyRegistry.contains(hierarchyName)) {
+            return null;
+        }
+
+        for (Integer key : fsIndices.keySet()) {
+            GraphConstraint constraint = fsIndices.get(key);
+            if (nodeRef.equals(constraint.getFsValue()) && hierarchyRegistry.getHierarchy(hierarchyName).contains(constraint.getRelationLabel())) {
+                return constraint.getRelationLabel();
+            }
+        }
+
+        return null;
+    }
+
+    private boolean isSuperiorToken(String token) {
+        return token.startsWith("superior(") && token.endsWith(")");
     }
 
 }
