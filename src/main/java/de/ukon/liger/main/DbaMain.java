@@ -318,7 +318,7 @@ public class DbaMain {
             {
                 semantics = sem.returnMultiStageMeaningConstructors(fs);
             } else {
-                semantics = sem.returnMeaningConstructors(fs,settings.prolog,false);
+                semantics = sem.returnMeaningConstructors(fs,settings.prolog,false,true);
             }
 
 
@@ -499,7 +499,6 @@ public class DbaMain {
     }
 
 }
-
 
 
 

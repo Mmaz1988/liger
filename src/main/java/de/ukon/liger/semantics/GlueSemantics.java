@@ -56,6 +56,10 @@ public class GlueSemantics {
     multistage proving. XLE+Glue options should be mutually exlusive
      */
     public String returnMeaningConstructors(LinguisticStructure fs, boolean prolog, boolean multistage) {
+        return returnMeaningConstructors(fs, prolog, multistage, false);
+    }
+
+    public String returnMeaningConstructors(LinguisticStructure fs, boolean prolog, boolean multistage, boolean emitSourceIndex) {
 
         //Unpacked Semantics corresponds to the information that comes from LiGER
         HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
@@ -77,6 +81,10 @@ public class GlueSemantics {
                                 Pattern pattern = Pattern.compile("'(.*?)'");
                                 currentMC = pattern.matcher(currentMC)
                                         .replaceAll(m -> "'" + m.group(1).toLowerCase() + "'");
+
+                                if (emitSourceIndex && c.getFsNode() != null && !c.getFsNode().isBlank()) {
+                                    currentMC = "[" + c.getFsNode() + "] " + currentMC;
+                                }
 
                                 unpackedSem.get(c.getReading()).add(currentMC);
                             }
@@ -407,7 +415,7 @@ public class GlueSemantics {
                         if (!disjunctiveSem.get(i).containsKey(key)) {
                             disjunctiveSem.get(i).put(key, new ArrayList<>());
                         }
-                        disjunctiveSem.get(i).get(key).add(testMap.get(key));
+                        disjunctiveSem.get(i).get(key).add(prefixSourceIndex(i, testMap.get(key)));
                     }
               //  String mc = parseMCfromProlog(i, ls);
              //   unpackedSem.get(glueIndices.get(i)).add(mc);
@@ -480,7 +488,18 @@ public class GlueSemantics {
                       */
                  }
             }
-            return unpackedSem2;
+        return unpackedSem2;
+    }
+
+    private String prefixSourceIndex(String sourceIndex, String mc) {
+        if (mc == null || mc.isBlank() || sourceIndex == null || sourceIndex.isBlank()) {
+            return mc;
+        }
+        String trimmed = mc.trim();
+        if (trimmed.startsWith("[" + sourceIndex + "]")) {
+            return trimmed;
+        }
+        return "[" + sourceIndex + "] " + trimmed;
     }
 
 

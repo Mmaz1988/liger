@@ -142,7 +142,7 @@ public class LigerController {
                 appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
             }
             appliedRules.put(fs.local_id, appliedLigerRules);
-            semString.add(sem.returnMeaningConstructors(fs, !starter.isGlue, false));
+            semString.add(sem.returnMeaningConstructors(fs, !starter.isGlue, false, true));
 
 
             //Extract axioms
@@ -211,7 +211,7 @@ public class LigerController {
                 appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
             }
             appliedRules.put(fs.local_id, appliedLigerRules);
-            semString.add(sem.returnMeaningConstructors(fs, false, false));
+            semString.add(sem.returnMeaningConstructors(fs, false, false, true));
 
 
             //Extract axioms
@@ -579,7 +579,7 @@ public class LigerController {
                             .filter(x -> !axioms.contains(x)).collect(Collectors.toList()));
                 }
 
-                semString.add(sem.returnMeaningConstructors(fs, !starter.isGlue, false));
+                semString.add(sem.returnMeaningConstructors(fs, !starter.isGlue, false, true));
                 addedAnnotations = addedAnnotations + fs.annotation.size();
             }
             String currentSemString = String.join("\n", semString);
@@ -769,7 +769,7 @@ public class LigerController {
                     appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
                 }
 
-                semString.add(sem.returnMeaningConstructors(fs, false, false));
+                semString.add(sem.returnMeaningConstructors(fs, false, false, true));
                 addedAnnotations = addedAnnotations + fs.annotation.size();
             }
             String currentSemString = String.join("\n", semString);
