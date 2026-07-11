@@ -25,6 +25,10 @@ import de.ukon.liger.analysis.LinguisticDictionary;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.QueryParser.SolutionKey;
+import de.ukon.liger.analysis.QueryParser.HierarchyParser;
+import de.ukon.liger.analysis.QueryParser.HierarchyRegistry;
+import de.ukon.liger.analysis.QueryParser.TemplateParser;
+import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
@@ -54,6 +58,8 @@ public class RuleParser {
     private Boolean replace;
     private Set<String> usedKeys = new HashSet<>();
     private Set<Set<String>> usedReadings = new HashSet<>();
+    private TemplateRegistry templateRegistry = new TemplateRegistry();
+    private HierarchyRegistry hierarchyRegistry = new HierarchyRegistry();
     public LinguisticDictionary dict = new LinguisticDictionary();
     private final static Logger LOGGER = LoggerFactory.getLogger(RuleParser.class);
 
@@ -135,7 +141,7 @@ public class RuleParser {
 
     public void addAnnotation2(LinguisticStructure fs) {
         resetRuleParser();
-        QueryParser qp = new QueryParser(fs);
+        QueryParser qp = new QueryParser(fs, templateRegistry, hierarchyRegistry);
 
         for (Integer key : qp.getFsIndices().keySet()) {
             usedKeys.add(qp.getFsIndices().get(key).getFsNode());
@@ -154,10 +160,13 @@ public class RuleParser {
 
             qp.resetParser();
             qp.generateQuery(r.getLeft());
-            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+            QueryParserResult qpr = templateRegistry != null && !templateRegistry.getTemplates().isEmpty()
+                    ? qp.parseQueryWithTemplates(r.getLeft()).stream().filter(result -> result.isSuccess).findFirst()
+                    .orElse(new QueryParserResult(new HashMap<>(), new HashMap<>()))
+                    : qp.parseQuery(qp.getQueryList());
 
-            if  (qpr.isSuccess && !r.getRight().equals("0"));
-            {
+            if (qpr.isSuccess && !r.getRight().equals("0")) {
+
                 List<String> search = r.splitGoal();
 
                 try {
@@ -614,6 +623,7 @@ public class RuleParser {
         List<Rule> out = new ArrayList<>();
 
         if (fileString != null && fileString.length() > 0) {
+            fileString = stripEmbeddedDefinitions(fileString);
 
             StringBuilder left = new StringBuilder();
             StringBuilder right = new StringBuilder();
@@ -813,6 +823,65 @@ public class RuleParser {
 
     public void setAppliedRules(LinkedHashSet<Rule> appliedRules) {
         this.appliedRules = appliedRules;
+    }
+
+    public TemplateRegistry getTemplateRegistry() {
+        return templateRegistry;
+    }
+
+    public HierarchyRegistry getHierarchyRegistry() {
+        return hierarchyRegistry;
+    }
+
+    private boolean isTemplateDefinitionLine(String trimmed) {
+        return !trimmed.startsWith("//")
+                && trimmed.contains(":=")
+                && !trimmed.contains("::=")
+                && !trimmed.contains("==>")
+                && !trimmed.contains("=->")
+                && !trimmed.contains("+->");
+    }
+
+    private boolean isHierarchyDefinitionLine(String trimmed) {
+        return !trimmed.startsWith("//") && trimmed.contains("::=");
+    }
+
+    private String stripEmbeddedDefinitions(String fileString) {
+        TemplateRegistry parsedTemplates = new TemplateRegistry();
+        HierarchyRegistry parsedHierarchies = new HierarchyRegistry();
+
+        StringBuilder templateDefinitions = new StringBuilder();
+        StringBuilder hierarchyDefinitions = new StringBuilder();
+        StringBuilder sanitized = new StringBuilder();
+
+        String[] lines = fileString.split("\\R", -1);
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            String trimmed = line.trim();
+
+            if (isHierarchyDefinitionLine(trimmed)) {
+                hierarchyDefinitions.append(trimmed).append(' ');
+            } else if (isTemplateDefinitionLine(trimmed)) {
+                templateDefinitions.append(trimmed).append(' ');
+            } else {
+                sanitized.append(line);
+            }
+
+            if (i < lines.length - 1) {
+                sanitized.append('\n');
+            }
+        }
+
+        if (!templateDefinitions.isEmpty()) {
+            parsedTemplates = new TemplateParser().parse(templateDefinitions.toString());
+        }
+        if (!hierarchyDefinitions.isEmpty()) {
+            parsedHierarchies = new HierarchyParser().parse(hierarchyDefinitions.toString());
+        }
+
+        this.templateRegistry = parsedTemplates;
+        this.hierarchyRegistry = parsedHierarchies;
+        return sanitized.toString();
     }
 }
 

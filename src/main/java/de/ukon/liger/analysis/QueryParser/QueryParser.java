@@ -122,6 +122,13 @@ public class QueryParser {
         this.cp = fs.cp;
     }
 
+    public QueryParser(LinguisticStructure fs, TemplateRegistry templateRegistry, HierarchyRegistry hierarchyRegistry)
+    {
+        this(fs);
+        this.templateRegistry = templateRegistry;
+        this.hierarchyRegistry = hierarchyRegistry;
+    }
+
 /*
 
     public QueryParser(String query, HashMap<Integer,GraphConstraint> fsIndices)

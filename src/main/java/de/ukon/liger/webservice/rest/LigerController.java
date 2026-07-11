@@ -25,7 +25,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.ukon.liger.analysis.RuleParser.Rule;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
+import de.ukon.liger.analysis.QueryParser.HierarchyParser;
+import de.ukon.liger.analysis.QueryParser.HierarchyRegistry;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
+import de.ukon.liger.analysis.QueryParser.TemplateParser;
+import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
 import de.ukon.liger.reasoning.AxiomExtractor;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
@@ -236,10 +240,9 @@ public class LigerController {
     @PostMapping(value = "/parse_uploaded_structure", produces = "application/json", consumes = "application/json")
     public LigerRuleAnnotation parseUploadedStructure(@RequestBody LigerStructureUploadRequest request) throws IOException {
         LinguisticStructure fs = parseUploadedLinguisticStructure(request);
-        List<LigerGraphComponent> graphElements = buildUploadedGraphElements(fs);
         return new LigerRuleAnnotation(
                 fs.text,
-                new LigerWebGraph(graphElements),
+                new LigerWebGraph(fs.constraints, fs.annotation),
                 new LinkedHashSet<>(),
                 "",
                 fs.annotation.size(),
@@ -255,16 +258,76 @@ public class LigerController {
                 .filter(constraint -> !"LABEL".equals(constraint.getRelationLabel()))
                 .collect(Collectors.toList());
 
-        QueryParser qp = new QueryParser(fs);
-        qp.generateQuery(request.query);
+        QueryRequestBundle queryBundle = stripEmbeddedQueryDefinitions(request.query);
+        QueryParser qp = new QueryParser(
+                queryBundle.query(),
+                fs,
+                queryBundle.templateRegistry(),
+                queryBundle.hierarchyRegistry());
 
-        QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+        List<QueryParserResult> results = qp.parseQueryWithTemplates(queryBundle.query());
+        boolean matched = results.stream().anyMatch(result -> result.isSuccess);
 
         Map<String, String> success = new HashMap<>();
-        success.put("success", qpr.isSuccess.toString());
+        success.put("success", Boolean.toString(matched));
 
         return success;
     }
+
+    private QueryRequestBundle stripEmbeddedQueryDefinitions(String query) {
+        TemplateRegistry templateRegistry = new TemplateRegistry();
+        HierarchyRegistry hierarchyRegistry = new HierarchyRegistry();
+
+        if (query == null || query.isBlank()) {
+            return new QueryRequestBundle("", templateRegistry, hierarchyRegistry);
+        }
+
+        StringBuilder templateDefinitions = new StringBuilder();
+        StringBuilder hierarchyDefinitions = new StringBuilder();
+        StringBuilder sanitized = new StringBuilder();
+
+        String[] lines = query.split("\\R", -1);
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            String trimmed = line.trim();
+
+            if (isHierarchyDefinitionLine(trimmed)) {
+                hierarchyDefinitions.append(trimmed).append(' ');
+            } else if (isTemplateDefinitionLine(trimmed)) {
+                templateDefinitions.append(trimmed).append(' ');
+            } else {
+                sanitized.append(line);
+            }
+
+            if (i < lines.length - 1) {
+                sanitized.append('\n');
+            }
+        }
+
+        if (!templateDefinitions.isEmpty()) {
+            templateRegistry = new TemplateParser().parse(templateDefinitions.toString());
+        }
+        if (!hierarchyDefinitions.isEmpty()) {
+            hierarchyRegistry = new HierarchyParser().parse(hierarchyDefinitions.toString());
+        }
+
+        return new QueryRequestBundle(sanitized.toString().trim(), templateRegistry, hierarchyRegistry);
+    }
+
+    private boolean isTemplateDefinitionLine(String trimmed) {
+        return !trimmed.startsWith("//")
+                && trimmed.contains(":=")
+                && !trimmed.contains("::=")
+                && !trimmed.contains("==>")
+                && !trimmed.contains("=->")
+                && !trimmed.contains("+->");
+    }
+
+    private boolean isHierarchyDefinitionLine(String trimmed) {
+        return !trimmed.startsWith("//") && trimmed.contains("::=");
+    }
+
+    private record QueryRequestBundle(String query, TemplateRegistry templateRegistry, HierarchyRegistry hierarchyRegistry) {}
 
     private LinguisticStructure parseUploadedLinguisticStructure(LigerStructureUploadRequest request) throws IOException {
         String format = request.format == null ? "json" : request.format.trim().toLowerCase(Locale.ROOT);
