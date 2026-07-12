@@ -142,7 +142,9 @@ public class UncertaintyExpression extends QueryExpression {
     }
 
     private List<String> getExpandedQueries() {
-        return Collections.singletonList(middle.getQuery());
+        TemplateRegistry registry = middle.getParser() != null ? middle.getParser().getTemplateRegistry() : null;
+        String query = middle.getQuery() == null ? "" : middle.getQuery().trim();
+        return Collections.singletonList(query);
     }
 
     private List<PathAtom> parsePathQuery(String query) {
@@ -215,7 +217,7 @@ public class UncertaintyExpression extends QueryExpression {
                         boolean foundString = true;
 
                         List<Integer> keys = new ArrayList<>();
-                        List<Integer> allKeys = new ArrayList<>();
+                        List<Integer> matchingKeys = new ArrayList<>();
 
                         for (Integer key2 : right.getFsIndices().keySet()) {
                             if (result.get(key).getFsValue().equals(right.getFsIndices().get(key2).getFsNode())) {
@@ -223,20 +225,12 @@ public class UncertaintyExpression extends QueryExpression {
                             }
                         }
 
-                        allKeys.addAll(keys);
-
-                        //Keys is the first result of LABEL* it contains references to relevant graph constraints for further iterations
-
-                        // List<Integer> finalKeys = keys;
-                        //  result.keySet().removeIf(resultKey -> !finalKeys.contains(resultKey));
-                        //keys.removeIf(resultKey -> !result.keySet().contains(resultKey)
-
-
                         while (foundString) {
 
                             keys.removeIf(next -> !atom.labels.contains(right.getFsIndices().get(next).getRelationLabel()));
 
                             if (!keys.isEmpty()) {
+                                matchingKeys.addAll(keys);
                                 List<Integer> newKeys = new ArrayList<>();
 
                                 //if (left.getFsIndices().get(key).getFsValue().equals(right.getFsIndices().get(key2).getFsNode()))
@@ -247,7 +241,6 @@ public class UncertaintyExpression extends QueryExpression {
                                         }
                                     }
                                 }
-                                allKeys.addAll(newKeys);
                                 keys = newKeys;
                             } else {
                                 foundString = false;
@@ -255,7 +248,11 @@ public class UncertaintyExpression extends QueryExpression {
                         }
 
                         HashMap<Integer, GraphConstraint> newResult = new HashMap<>(right.getFsIndices());
-                        newResult.keySet().removeIf(r -> !allKeys.contains(r));
+                        for (Integer r : new ArrayList<>(newResult.keySet())) {
+                            if (!matchingKeys.contains(r)) {
+                                newResult.remove(r);
+                            }
+                        }
 
                         currentResult.putAll(newResult);
                         // result = newResult;
@@ -345,7 +342,7 @@ public class UncertaintyExpression extends QueryExpression {
                         boolean foundString = true;
 
                         List<Integer> keys = new ArrayList<>();
-                        List<Integer> allKeys = new ArrayList<>();
+                        List<Integer> matchingKeys = new ArrayList<>();
 
                         Set<String> unspecRelation = new HashSet<>();
 
@@ -357,16 +354,6 @@ public class UncertaintyExpression extends QueryExpression {
                                 }
                             }
                         }
-
-                        allKeys.addAll(keys);
-
-                        //Keys is the first result of LABEL* it contains references to relevant graph constraints for further iterations
-
-                        // List<Integer> finalKeys = keys;
-                        //  result.keySet().removeIf(resultKey -> !finalKeys.contains(resultKey));
-                        //keys.removeIf(resultKey -> !result.keySet().contains(resultKey)
-
-
                         while (foundString) {
 
 
@@ -385,6 +372,7 @@ public class UncertaintyExpression extends QueryExpression {
 
 
                             if (!keys.isEmpty()) {
+                                matchingKeys.addAll(keys);
                                 List<Integer> newKeys = new ArrayList<>();
 
                                 //if (left.getFsIndices().get(key).getFsValue().equals(right.getFsIndices().get(key2).getFsNode()))
@@ -395,7 +383,6 @@ public class UncertaintyExpression extends QueryExpression {
                                         }
                                     }
                                 }
-                                allKeys.addAll(newKeys);
                                 keys = newKeys;
                             } else {
                                 foundString = false;
@@ -403,7 +390,11 @@ public class UncertaintyExpression extends QueryExpression {
                         }
 
                         HashMap<Integer, GraphConstraint> newResult = new HashMap<>(right.getFsIndices());
-                        newResult.keySet().removeIf(r -> !allKeys.contains(r));
+                        for (Integer r : new ArrayList<>(newResult.keySet())) {
+                            if (!matchingKeys.contains(r)) {
+                                newResult.remove(r);
+                            }
+                        }
 
                         currentResult.putAll(newResult);
                         // result = newResult;

@@ -28,6 +28,7 @@ import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.HierarchyParser;
 import de.ukon.liger.analysis.QueryParser.HierarchyRegistry;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
+import de.ukon.liger.analysis.QueryParser.SolutionKey;
 import de.ukon.liger.analysis.QueryParser.TemplateParser;
 import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
 import de.ukon.liger.reasoning.AxiomExtractor;
@@ -252,7 +253,7 @@ public class LigerController {
 
     @CrossOrigin
     @PostMapping(value = "/query_uploaded_structure", produces = "application/json", consumes = "application/json")
-    public Map<String, String> queryUploadedStructure(@RequestBody LigerStructureQueryRequest request) throws IOException {
+    public LigerStructureQueryResponse queryUploadedStructure(@RequestBody LigerStructureQueryRequest request) throws IOException {
         LinguisticStructure fs = parseUploadedLinguisticStructure(new LigerStructureUploadRequest(request.content, request.format, request.id));
         fs.constraints = fs.constraints.stream()
                 .filter(constraint -> !"LABEL".equals(constraint.getRelationLabel()))
@@ -266,13 +267,65 @@ public class LigerController {
                 queryBundle.hierarchyRegistry());
 
         List<QueryParserResult> results = qp.parseQueryWithTemplates(queryBundle.query());
-        boolean matched = results.stream().anyMatch(result -> result.isSuccess);
 
-        Map<String, String> success = new HashMap<>();
-        success.put("success", Boolean.toString(matched));
+        QueryMatchSummary matchSummary = summarizeQueryMatches(results);
+        LigerWebGraph graph = new LigerWebGraph(fs.constraints, fs.annotation);
+        highlightQueryMatches(graph, matchSummary.nodeIds());
 
-        return success;
+        return new LigerStructureQueryResponse(Boolean.toString(matchSummary.matchCount() > 0), matchSummary.matchCount(), graph);
     }
+
+    private QueryMatchSummary summarizeQueryMatches(List<QueryParserResult> results) {
+        LinkedHashMap<String, Set<SolutionKey>> uniqueSolutions = new LinkedHashMap<>();
+        Set<String> nodeIds = new LinkedHashSet<>();
+
+        for (QueryParserResult result : results) {
+            if (!Boolean.TRUE.equals(result.isSuccess)) {
+                continue;
+            }
+
+            for (Map.Entry<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> entry : result.result.entrySet()) {
+                String signature = solutionSignature(entry.getKey());
+                if (uniqueSolutions.containsKey(signature)) {
+                    continue;
+                }
+
+                uniqueSolutions.put(signature, entry.getKey());
+                collectHighlightIds(entry.getKey(), nodeIds);
+            }
+        }
+
+        return new QueryMatchSummary(uniqueSolutions.size(), nodeIds);
+    }
+
+    private void collectHighlightIds(Set<SolutionKey> solutionKeys,
+                                     Set<String> nodeIds) {
+        for (SolutionKey solutionKey : solutionKeys) {
+            nodeIds.add(solutionKey.reference);
+        }
+    }
+
+    private void highlightQueryMatches(LigerWebGraph graph, Set<String> nodeIds) {
+        for (LigerGraphComponent component : graph.graphElements) {
+            if (component.data == null) {
+                continue;
+            }
+
+            Object id = component.data.get("id");
+            if (id != null && nodeIds.contains(String.valueOf(id))) {
+                component.data.put("query_selector", "query-match");
+            }
+        }
+    }
+
+    private String solutionSignature(Set<SolutionKey> solutionKeys) {
+        return solutionKeys.stream()
+                .map(key -> key.variable + "=" + key.reference)
+                .sorted()
+                .collect(Collectors.joining("|"));
+    }
+
+    private record QueryMatchSummary(int matchCount, Set<String> nodeIds) {}
 
     private QueryRequestBundle stripEmbeddedQueryDefinitions(String query) {
         TemplateRegistry templateRegistry = new TemplateRegistry();

@@ -64,11 +64,8 @@ public abstract class QueryExpression {
         {
             for (Integer key2 : fsIndices.keySet())
             {
-
-                if (HelperMethods.isInteger(fsIndices.get(key2).getFsValue())) {
-                    if (Integer.parseInt((String) fsIndices.get(key2).getFsValue()) == (Integer.parseInt(key))) {
-                        out.put(key2, fsIndices.get(key2));
-                    }
+                if (key.equals(String.valueOf(fsIndices.get(key2).getFsValue()))) {
+                    out.put(key2, fsIndices.get(key2));
                 }
             }
         }
