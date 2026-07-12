@@ -14,7 +14,7 @@ public class QueryParserNegationTest {
 
     @Test
     void testNegationBlocksCompatibleEmbedding() {
-        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
 
         for (String key : fs.keySet()) {
             QueryParser qp = new QueryParser("#g TNS-ASP #h & -(#h PERF '-_')", fs.get(key));
@@ -26,7 +26,7 @@ public class QueryParserNegationTest {
 
     @Test
     void testLeadingNegationSucceedsWithoutMatches() {
-        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
 
         for (String key : fs.keySet()) {
             QueryParser qp = new QueryParser("-(#g MOOD 'subjunctive')", fs.get(key));

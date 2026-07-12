@@ -41,12 +41,18 @@ public class UncertaintyExpression extends QueryExpression {
 
     private static class PathAtom {
         private final Set<String> labels;
-        private final boolean star;
+        private final Quantifier quantifier;
 
-        private PathAtom(Set<String> labels, boolean star) {
+        private PathAtom(Set<String> labels, Quantifier quantifier) {
             this.labels = labels;
-            this.star = star;
+            this.quantifier = quantifier;
         }
+    }
+
+    private enum Quantifier {
+        EXACT,
+        ONE_OR_MORE,
+        ZERO_OR_MORE
     }
 
     public UncertaintyExpression(QueryExpression left, Uncertainty middle, QueryExpression right) {
@@ -83,6 +89,38 @@ public class UncertaintyExpression extends QueryExpression {
             HashMap<Integer, GraphConstraint> uncertainty = new HashMap<>();
 
             for (String searchQuery : searchQueries) {
+                if (searchQuery.isBlank()) {
+                    Set<String> usedKeys = new HashSet<>();
+                    usedKeys.add(nodeRef);
+
+                    HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
+                            mapUsedKeys(usedKeys, uncertainty, right.getNodeVar());
+
+                    right.setSolution(out2);
+
+                    for (Set<SolutionKey> key2 : out2.keySet()) {
+                        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
+
+                        for (String key3 : left.getSolution().get(key).keySet()) {
+                            binding.put(key3, left.getSolution().get(key).get(key3));
+                        }
+
+                        binding.put(right.getNodeVar(), out2.get(key2).get(right.getNodeVar()));
+
+                        Set<SolutionKey> newKey = new HashSet<>();
+                        newKey.addAll(key);
+                        newKey.addAll(key2);
+
+                        out.put(newKey, binding);
+
+                        for (String bkey2 : binding.get(right.getNodeVar()).keySet()) {
+                            getFsIndices().putAll(binding.get(right.getNodeVar()).get(bkey2));
+                        }
+                    }
+
+                    continue;
+                }
+
                 if (!middle.insideOut) {
                     uncertainty = searchUncertainty(searchQuery, boundIndices);
                 } else {
@@ -142,20 +180,38 @@ public class UncertaintyExpression extends QueryExpression {
     }
 
     private List<String> getExpandedQueries() {
-        TemplateRegistry registry = middle.getParser() != null ? middle.getParser().getTemplateRegistry() : null;
         String query = middle.getQuery() == null ? "" : middle.getQuery().trim();
-        return Collections.singletonList(query);
+        if (query.isBlank()) {
+            return Collections.singletonList("");
+        }
+
+        TemplateRegistry registry = middle.getParser() != null ? middle.getParser().getTemplateRegistry() : null;
+        int maxRepeat = Math.min(4, Math.max(1, middle.getFsIndices().size()));
+
+        List<PathAtom> atoms = parsePathQuery(query, registry);
+        List<String> expanded = new ArrayList<>();
+        expandPathQueries(atoms, 0, new ArrayList<>(), maxRepeat, expanded);
+
+        return new ArrayList<>(new LinkedHashSet<>(expanded));
     }
 
     private List<PathAtom> parsePathQuery(String query) {
-        List<PathAtom> out = new ArrayList<>();
         TemplateRegistry registry = middle.getParser() != null ? middle.getParser().getTemplateRegistry() : null;
+        return parsePathQuery(query, registry);
+    }
+
+    private List<PathAtom> parsePathQuery(String query, TemplateRegistry registry) {
+        List<PathAtom> out = new ArrayList<>();
 
         for (String rawSegment : query.split(">")) {
             String segment = rawSegment.trim();
-            boolean star = segment.endsWith("*");
-            if (star) {
+            Quantifier quantifier = Quantifier.EXACT;
+            if (segment.endsWith("*")) {
                 segment = segment.substring(0, segment.length() - 1).trim();
+                quantifier = Quantifier.ZERO_OR_MORE;
+            } else if (segment.endsWith("+")) {
+                segment = segment.substring(0, segment.length() - 1).trim();
+                quantifier = Quantifier.ONE_OR_MORE;
             }
 
             Set<String> labels = new LinkedHashSet<>();
@@ -178,10 +234,49 @@ public class UncertaintyExpression extends QueryExpression {
                 labels.add(segment);
             }
 
-            out.add(new PathAtom(labels, star));
+            out.add(new PathAtom(labels, quantifier));
         }
 
         return out;
+    }
+
+    private void expandPathQueries(List<PathAtom> atoms, int index, List<String> prefix, int maxRepeat, List<String> out) {
+        if (index >= atoms.size()) {
+            out.add(String.join(">", prefix));
+            return;
+        }
+
+        PathAtom atom = atoms.get(index);
+        int minRepeat = atom.quantifier == Quantifier.ZERO_OR_MORE ? 0 : 1;
+        int max = atom.quantifier == Quantifier.EXACT ? 1 : maxRepeat;
+
+        for (int repeat = minRepeat; repeat <= max; repeat++) {
+            if (repeat == 0) {
+                expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
+                continue;
+            }
+
+            expandLabelCombinations(new ArrayList<>(atom.labels), repeat, new ArrayList<>(), combination -> {
+                prefix.addAll(combination);
+                expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
+                for (int i = 0; i < combination.size(); i++) {
+                    prefix.remove(prefix.size() - 1);
+                }
+            });
+        }
+    }
+
+    private void expandLabelCombinations(List<String> labels, int repeat, List<String> current, java.util.function.Consumer<List<String>> consumer) {
+        if (current.size() == repeat) {
+            consumer.accept(new ArrayList<>(current));
+            return;
+        }
+
+        for (String label : labels) {
+            current.add(label);
+            expandLabelCombinations(labels, repeat, current, consumer);
+            current.remove(current.size() - 1);
+        }
     }
 
 
@@ -209,7 +304,7 @@ public class UncertaintyExpression extends QueryExpression {
 
             for (Integer key : result.keySet()) {
 
-                if (atom.star) {
+                if (atom.quantifier != Quantifier.EXACT) {
                     if (atom.labels.contains(result.get(key).getRelationLabel())) {
 
                         boundVariables.add(key);
@@ -329,7 +424,7 @@ public class UncertaintyExpression extends QueryExpression {
 
             for (Integer key : result.keySet()) {
 
-                if (atom.star) {
+                if (atom.quantifier != Quantifier.EXACT) {
                     if (atom.labels.contains(result.get(key).getRelationLabel())
                         || atom.labels.contains("%") ||
                         (atom.labels.contains("GF") && gf.contains(result.get(key).getRelationLabel())))

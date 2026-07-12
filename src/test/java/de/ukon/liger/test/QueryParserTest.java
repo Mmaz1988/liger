@@ -1,0 +1,151 @@
+package de.ukon.liger.test;
+
+import de.ukon.liger.analysis.QueryParser.HierarchyParser;
+import de.ukon.liger.analysis.QueryParser.HierarchyRegistry;
+import de.ukon.liger.analysis.QueryParser.QueryParser;
+import de.ukon.liger.analysis.QueryParser.QueryParserResult;
+import de.ukon.liger.analysis.QueryParser.TemplateParser;
+import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
+import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.syntax.LinguisticStructure;
+import de.ukon.liger.syntax.xle.XLEoperator;
+import de.ukon.liger.utilities.PathVariables;
+import de.ukon.liger.utilities.VariableHandler;
+import org.junit.jupiter.api.Test;
+
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class QueryParserTest {
+
+    public LinkedHashMap<String, LinguisticStructure> loadFs(String fileName) {
+        PathVariables.initializePathVariables();
+        VariableHandler vh = new VariableHandler();
+        XLEoperator xle = new XLEoperator(vh);
+        return xle.fs2Java(Paths.get(PathVariables.testPath, fileName).toString());
+    }
+
+    @Test
+    void testQueryParser() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS1.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g TENSE 'past' & #h PERF '-_'", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+            assertEquals(4, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParser5() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS2.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g !(COMP*>TNS-ASP) #h", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+            assertEquals(6, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParserHybrid() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("hybrid_glue_test.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#a TNS-ASP #b & #a s:: #c SIT #d & #c TEMP-REF #e", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+            assertEquals(2, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testInsideOutObjOnS18() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testDirS18.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#a ^(OBJ) #b", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            List<String> normalized = normalizeResult(qpr);
+            assertEquals(2, normalized.size());
+            assertEquals(List.of(
+                    "0|1::[[1]] #1 CASE 'acc';[[1]] #1 GEND 'masc';[[1]] #1 NTYPE #2;[[1]] #1 NUM 'sg';[[1]] #1 PERS '3';[[1]] #1 PRED semform('Bertie',2,[],[]);[[1]] #1 end int(17);[[1]] #1 start int(11)",
+                    "3|4::[[1]] #4 CASE 'acc';[[1]] #4 GEND 'masc';[[1]] #4 NTYPE 'pron';[[1]] #4 NUM 'sg';[[1]] #4 PERS '3';[[1]] #4 PRED semform('pro',4,[],[]);[[1]] #4 PRON-TYPE 'reflexive';[[1]] #4 end int(31);[[1]] #4 start int(24)"
+            ), normalized);
+        }
+    }
+
+    @Test
+    void testInsideOutObjPlusOnS18() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testDirS18.pl");
+        TemplateRegistry templateRegistry = new TemplateParser().parse("GF := SUBJ | OBJ | OBL .");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#a ^(@GF+) #b", fs.get(key), templateRegistry);
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            List<String> normalized = normalizeResult(qpr);
+            assertEquals(5, normalized.size());
+        }
+    }
+
+    @Test
+    void testInsideOutObjStarAndAttributeOnS18() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testDirS18.pl");
+        TemplateRegistry templateRegistry = new TemplateParser().parse("GF := SUBJ | OBJ | OBL .");
+        HierarchyRegistry hierarchyRegistry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser(
+                    "#a ^(@GF*) #b ^(@GF) #c & #c !(@GF) #d & superior(GF,#d,#b) & #a PRON-TYPE",
+                    fs.get(key),
+                    templateRegistry,
+                    hierarchyRegistry);
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            List<String> normalized = normalizeResult(qpr);
+            assertEquals(2, normalized.size());
+        }
+    }
+
+    private List<String> normalizeResult(QueryParserResult qpr) {
+        List<String> out = new ArrayList<>();
+
+        for (Set<?> solutionKey : qpr.result.keySet()) {
+            out.add(normalizeSolution(solutionKey, qpr.result.get(solutionKey)));
+        }
+
+        out.sort(String::compareTo);
+        return out;
+    }
+
+    private String normalizeSolution(Set<?> solutionKey, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding) {
+        List<String> refs = new ArrayList<>();
+
+        for (Object entry : solutionKey) {
+            de.ukon.liger.analysis.QueryParser.SolutionKey sk = (de.ukon.liger.analysis.QueryParser.SolutionKey) entry;
+            refs.add(sk.reference);
+        }
+
+        refs.sort(String::compareTo);
+
+        List<String> constraints = new ArrayList<>();
+        for (HashMap<String, HashMap<Integer, GraphConstraint>> variableBinding : binding.values()) {
+            for (HashMap<Integer, GraphConstraint> referenceBinding : variableBinding.values()) {
+                for (GraphConstraint constraint : referenceBinding.values()) {
+                    constraints.add(constraint.toString());
+                }
+            }
+        }
+
+        constraints.sort(String::compareTo);
+        return String.join("|", refs) + "::" + String.join(";", constraints);
+    }
+}

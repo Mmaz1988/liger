@@ -7,13 +7,9 @@ import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.QueryParser.TemplateParser;
 import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
 import de.ukon.liger.syntax.LinguisticStructure;
-import de.ukon.liger.syntax.xle.XLEoperator;
-import de.ukon.liger.utilities.PathVariables;
-import de.ukon.liger.utilities.VariableHandler;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Disabled;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -43,7 +39,7 @@ public class HierarchyParserTest {
     @Test
     @Disabled("Temporarily disabled while investigating conjunct ordering for superior()")
     void testSuperiorEnumeratesPairsOnS17() {
-        LinkedHashMap<String, LinguisticStructure> fs = loadS17();
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testDirS17.pl");
         HierarchyRegistry registry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
 
         for (String key : fs.keySet()) {
@@ -60,7 +56,7 @@ public class HierarchyParserTest {
 
     @Test
     void testSuperiorFiltersInLargerQuery() {
-        LinkedHashMap<String, LinguisticStructure> fs = loadS17();
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testDirS17.pl");
         HierarchyRegistry registry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
 
         for (String key : fs.keySet()) {
@@ -74,7 +70,7 @@ public class HierarchyParserTest {
 
     @Test
     void testSuperiorAfterBoundGFsMatches() {
-        LinkedHashMap<String, LinguisticStructure> fs = loadS17();
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testDirS17.pl");
         HierarchyRegistry registry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
 
         for (String key : fs.keySet()) {
@@ -91,7 +87,7 @@ public class HierarchyParserTest {
 
     @Test
     void testSuperiorRejectsInverseOrder() {
-        LinkedHashMap<String, LinguisticStructure> fs = loadS17();
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testDirS17.pl");
         HierarchyRegistry registry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
 
         for (String key : fs.keySet()) {
@@ -104,7 +100,7 @@ public class HierarchyParserTest {
 
     @Test
     void testSuperiorAfterBoundGFsRejectsInverseOrder() {
-        LinkedHashMap<String, LinguisticStructure> fs = loadS17();
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testDirS17.pl");
         HierarchyRegistry registry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
 
         for (String key : fs.keySet()) {
@@ -117,7 +113,7 @@ public class HierarchyParserTest {
 
     @Test
     void testSuperiorFailsWhenVariablesMissing() {
-        LinkedHashMap<String, LinguisticStructure> fs = loadS17();
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testDirS17.pl");
         HierarchyRegistry registry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
 
         for (String key : fs.keySet()) {
@@ -129,7 +125,7 @@ public class HierarchyParserTest {
 
     @Test
     void testMegaFeatureCombination() {
-        LinkedHashMap<String, LinguisticStructure> fs = loadS17();
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testDirS17.pl");
         HierarchyRegistry hierarchyRegistry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
         TemplateRegistry templateRegistry = new TemplateParser().parse(
                 "MEGA() := #a SUBJ #b & #c OBL #d & superior(GF,#b,#d) & -(#a OBL #b) .");
@@ -150,7 +146,7 @@ public class HierarchyParserTest {
 
     @Test
     void testSuperiorInsideTemplateMatchesInline() {
-        LinkedHashMap<String, LinguisticStructure> fs = loadS17();
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testDirS17.pl");
         HierarchyRegistry hierarchyRegistry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
         TemplateRegistry templateRegistry = new TemplateParser().parse(
                 "SUPERIORQUERY() := #a SUBJ #b & #c OBL #d & superior(GF,#b,#d) .");
@@ -176,7 +172,7 @@ public class HierarchyParserTest {
     @Test
     @Disabled("Nested superior inside negation still needs parser follow-up")
     void testSuperiorInsideNegationTrueAndFalse() {
-        LinkedHashMap<String, LinguisticStructure> fs = loadS17();
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testDirS17.pl");
         HierarchyRegistry registry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
         TemplateRegistry templateRegistry = new TemplateParser().parse(
                 "SUPNEGTRUE() := -(#a SUBJ #b & #c OBL #d & superior(GF,#d,#b)) . " +
@@ -195,7 +191,7 @@ public class HierarchyParserTest {
 
     @Test
     void testNegationInsideTemplateMatchesInline() {
-        LinkedHashMap<String, LinguisticStructure> fs = loadS17();
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testDirS17.pl");
         TemplateRegistry templateRegistry = new TemplateParser().parse(
                 "NOOBL() := -(#a OBL #b) .");
 
@@ -215,7 +211,7 @@ public class HierarchyParserTest {
 
     @Test
     void testNegationTrueAndFalse() {
-        LinkedHashMap<String, LinguisticStructure> fs = loadS17();
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testDirS17.pl");
 
         for (String key : fs.keySet()) {
             QueryParser trueParser = new QueryParser("#a SUBJ #b & -(#a OBL #b)", fs.get(key));
@@ -230,13 +226,6 @@ public class HierarchyParserTest {
             QueryParserResult falseResult1 = falseParser1.parseQuery(falseParser.getQueryList());
             assertTrue(falseResult1.result.isEmpty());
         }
-    }
-
-    private LinkedHashMap<String, LinguisticStructure> loadS17() {
-        PathVariables.initializePathVariables();
-        VariableHandler vh = new VariableHandler();
-        XLEoperator xle = new XLEoperator(vh);
-        return xle.fs2Java(Paths.get(PathVariables.testPath, "testDirS17.pl").toString());
     }
 
     private boolean resultContainsRelationPair(QueryParserResult result, String firstLabel, String secondLabel) {

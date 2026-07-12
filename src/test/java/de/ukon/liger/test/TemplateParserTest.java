@@ -6,12 +6,8 @@ import de.ukon.liger.analysis.QueryParser.TemplateExpander;
 import de.ukon.liger.analysis.QueryParser.TemplateParser;
 import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
 import de.ukon.liger.syntax.LinguisticStructure;
-import de.ukon.liger.syntax.xle.XLEoperator;
-import de.ukon.liger.utilities.PathVariables;
-import de.ukon.liger.utilities.VariableHandler;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ArrayList;
@@ -26,7 +22,7 @@ public class TemplateParserTest {
 
     @Test
     void testTemplateExpansionWithArguments() {
-        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
         TemplateRegistry registry = new TemplateParser().parse("feature-match(#node,#attr,#value) := #node #attr #value .");
 
         for (String key : fs.keySet()) {
@@ -41,7 +37,7 @@ public class TemplateParserTest {
 
     @Test
     void testTemplateExpansionBranchesOverLabelDisjunction() {
-        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
         TemplateRegistry registry = new TemplateParser().parse("feature-label() := TENSE | PERF .");
 
         for (String key : fs.keySet()) {
@@ -66,7 +62,7 @@ public class TemplateParserTest {
 
     @Test
     void testTemplateExpansionRejectsUnknownTemplate() {
-        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
         TemplateRegistry registry = new TemplateParser().parse("feature-label() := TENSE | PERF .");
 
         for (String key : fs.keySet()) {
@@ -78,7 +74,7 @@ public class TemplateParserTest {
 
     @Test
     void testTemplateExpansionRejectsArityMismatch() {
-        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
         TemplateRegistry registry = new TemplateParser().parse("feature-match(#node,#attr,#value) := #node #attr #value .");
 
         for (String key : fs.keySet()) {
@@ -105,7 +101,7 @@ public class TemplateParserTest {
 
     @Test
     void testTemplateQueryMatchesInlineQuery() {
-        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
         TemplateRegistry registry = new TemplateParser().parse(
                 "TAM(#g,#h) := #g TNS-ASP #h TENSE 'past' .");
 
@@ -123,7 +119,7 @@ public class TemplateParserTest {
 
     @Test
     void testTemplateQueryMatchesInlineQueryInsideLargerQuery() {
-        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
         TemplateRegistry registry = new TemplateParser().parse(
                 "TAM(#g,#h) := #g TNS-ASP #h TENSE 'past' .");
 
@@ -141,7 +137,7 @@ public class TemplateParserTest {
 
     @Test
     void testTemplateQueryMatchesInlineQueryInsideLargerQuery2() {
-        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs(0);
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
         TemplateRegistry registry = new TemplateParser().parse(
                 "TAM(#g,#h) := #g TNS-ASP #h TENSE 'past' .");
 
@@ -159,7 +155,7 @@ public class TemplateParserTest {
 
     @Test
     void testTemplateInsideUncertaintyMatchesManualExpansion() {
-        LinkedHashMap<String, LinguisticStructure> fs = loadS16();
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testDirS16.pl");
         TemplateRegistry registry = new TemplateParser().parse(
                 "GF := COMP | XCOMP .");
 
@@ -185,7 +181,7 @@ public class TemplateParserTest {
 
     @Test
     void testTemplateInsideUncertaintyAcceptsMixedRepeatedLabels() {
-        LinkedHashMap<String, LinguisticStructure> fs = loadS16();
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testDirS16.pl");
         TemplateRegistry registry = new TemplateParser().parse(
                 "GF := COMP | XCOMP .");
 
@@ -196,13 +192,6 @@ public class TemplateParserTest {
             List<String> actual = normalizeResult(templateResult);
             assertTrue(actual.stream().anyMatch(s -> s.contains("XCOMP") && s.contains("COMP") && s.contains("SUBJ")));
         }
-    }
-
-    private LinkedHashMap<String, LinguisticStructure> loadS16() {
-        PathVariables.initializePathVariables();
-        VariableHandler vh = new VariableHandler();
-        XLEoperator xle = new XLEoperator(vh);
-        return xle.fs2Java(Paths.get(PathVariables.testPath, "testDirS16.pl").toString());
     }
 
     private List<String> normalizeResult(QueryParserResult qpr) {
