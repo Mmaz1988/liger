@@ -272,11 +272,11 @@ public class LigerController {
         LigerWebGraph graph = new LigerWebGraph(fs.constraints, fs.annotation);
         highlightQueryMatches(graph, matchSummary.nodeIds());
 
-        return new LigerStructureQueryResponse(Boolean.toString(matchSummary.matchCount() > 0), matchSummary.matchCount(), graph);
+        return new LigerStructureQueryResponse(Boolean.toString(matchSummary.matchCount() > 0), matchSummary.matchCount(), graph, matchSummary.solutions());
     }
 
     private QueryMatchSummary summarizeQueryMatches(List<QueryParserResult> results) {
-        LinkedHashMap<String, Set<SolutionKey>> uniqueSolutions = new LinkedHashMap<>();
+        LinkedHashMap<String, LigerQuerySolution> uniqueSolutions = new LinkedHashMap<>();
         Set<String> nodeIds = new LinkedHashSet<>();
 
         for (QueryParserResult result : results) {
@@ -290,12 +290,37 @@ public class LigerController {
                     continue;
                 }
 
-                uniqueSolutions.put(signature, entry.getKey());
+                uniqueSolutions.put(signature, buildSolutionView(signature, entry.getValue()));
                 collectHighlightIds(entry.getKey(), nodeIds);
             }
         }
 
-        return new QueryMatchSummary(uniqueSolutions.size(), nodeIds);
+        return new QueryMatchSummary(uniqueSolutions.size(), nodeIds, new ArrayList<>(uniqueSolutions.values()));
+    }
+
+    private LigerQuerySolution buildSolutionView(String signature,
+                                                 HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding) {
+        LinkedHashMap<String, LinkedHashMap<String, List<String>>> variableMap = new LinkedHashMap<>();
+
+        for (Map.Entry<String, HashMap<String, HashMap<Integer, GraphConstraint>>> variableEntry : binding.entrySet()) {
+            LinkedHashMap<String, List<String>> nodeMap = new LinkedHashMap<>();
+
+            for (Map.Entry<String, HashMap<Integer, GraphConstraint>> referenceEntry : variableEntry.getValue().entrySet()) {
+                List<String> constraints = referenceEntry.getValue().values().stream()
+                        .map(this::constraintSummary)
+                        .sorted()
+                        .collect(Collectors.toList());
+                nodeMap.put(referenceEntry.getKey(), constraints);
+            }
+
+            variableMap.put(variableEntry.getKey(), nodeMap);
+        }
+
+        return new LigerQuerySolution(signature, variableMap);
+    }
+
+    private String constraintSummary(GraphConstraint constraint) {
+        return constraint.getRelationLabel() + "=" + constraint.getFsValue();
     }
 
     private void collectHighlightIds(Set<SolutionKey> solutionKeys,
@@ -325,7 +350,7 @@ public class LigerController {
                 .collect(Collectors.joining("|"));
     }
 
-    private record QueryMatchSummary(int matchCount, Set<String> nodeIds) {}
+    private record QueryMatchSummary(int matchCount, Set<String> nodeIds, List<LigerQuerySolution> solutions) {}
 
     private QueryRequestBundle stripEmbeddedQueryDefinitions(String query) {
         TemplateRegistry templateRegistry = new TemplateRegistry();

@@ -277,6 +277,24 @@ public class QueryParserTest {
         }
     }
 
+    @Test
+    void testInsideOutObjStarWithOffPathConstraintOnS19() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testDirS19.pl");
+        TemplateRegistry templateRegistry = new TemplateParser().parse("GF := SUBJ | OBJ | OBL | COMP .");
+        HierarchyRegistry hierarchyRegistry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL > COMP .");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser(
+                    "#a ^(@GF+:~(->SUBJ)) #b ^(@GF) #c & #c !(@GF) #d & superior(GF,#d,#b)",
+                    fs.get(key),
+                    templateRegistry,
+                    hierarchyRegistry);
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(2, qpr.result.keySet().size());
+        }
+    }
+
     private List<String> normalizeResult(QueryParserResult qpr) {
         List<String> out = new ArrayList<>();
 

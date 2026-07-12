@@ -70,12 +70,45 @@ public class UncertaintyQuantifierTest {
         }
     }
 
+    @Test
+    void testOffPathNegatedAttributeBlocksCurrentTargetNode() {
+        LinguisticStructure fs = buildOffPathStructure();
+
+        QueryParser qp = new QueryParser("#a !(OBJ:~(-> SUBJ)) #b", fs);
+        QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+        assertEquals(1, qpr.result.size());
+    }
+
+    @Test
+    void testOffPathAttributeValueMatchesCurrentTargetNode() {
+        LinguisticStructure fs = buildOffPathStructure();
+
+        QueryParser qp = new QueryParser("#a !(OBJ:(-> SUBJ +)) #b", fs);
+        QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+        assertEquals(1, qpr.result.size());
+    }
+
     private LinguisticStructure buildSingleNodeStructure() {
         Set<ChoiceVar> reading = new HashSet<>();
         reading.add(new ChoiceVar("1"));
 
         List<GraphConstraint> constraints = new ArrayList<>();
         constraints.add(new GraphConstraint(reading, 0, "PRON-TYPE", "'reflexive'"));
+
+        return new LinguisticStructure("test", "test", constraints);
+    }
+
+    private LinguisticStructure buildOffPathStructure() {
+        Set<ChoiceVar> reading = new HashSet<>();
+        reading.add(new ChoiceVar("1"));
+
+        List<GraphConstraint> constraints = new ArrayList<>();
+        constraints.add(new GraphConstraint(reading, 0, "OBJ", "1"));
+        constraints.add(new GraphConstraint(reading, 1, "SUBJ", "+"));
+        constraints.add(new GraphConstraint(reading, 0, "OBJ", "2"));
+        constraints.add(new GraphConstraint(reading, 2, "CASE", "'nom'"));
 
         return new LinguisticStructure("test", "test", constraints);
     }

@@ -41,13 +41,58 @@ public class UncertaintyExpression extends QueryExpression {
     private List<String> gf = Arrays.asList("OBL", "OBJ", "SUBJ", "COMP", "XCOMP", "OBJ-TH", "XCOMP-PRED");
     private Set<ChoiceVar> choices = new HashSet<>();
 
+    private enum OffPathDirection {
+        TO_VALUE,
+        TO_ORIGIN
+    }
+
     private static class PathAtom {
         private final Set<String> labels;
         private final Quantifier quantifier;
+        private final List<OffPathConstraint> offPathConstraints;
 
-        private PathAtom(Set<String> labels, Quantifier quantifier) {
+        private PathAtom(Set<String> labels, Quantifier quantifier, List<OffPathConstraint> offPathConstraints) {
             this.labels = labels;
             this.quantifier = quantifier;
+            this.offPathConstraints = offPathConstraints;
+        }
+
+        private String render(String label) {
+            StringBuilder out = new StringBuilder(label);
+            for (OffPathConstraint constraint : offPathConstraints) {
+                out.append(":").append(constraint.render());
+            }
+            return out.toString();
+        }
+    }
+
+    private static class OffPathConstraint {
+        private final boolean negated;
+        private final OffPathDirection direction;
+        private final String attribute;
+        private final String value;
+
+        private OffPathConstraint(boolean negated, OffPathDirection direction, String attribute, String value) {
+            this.negated = negated;
+            this.direction = direction;
+            this.attribute = attribute;
+            this.value = value;
+        }
+
+        private String render() {
+            StringBuilder out = new StringBuilder();
+            if (negated) {
+                out.append("~");
+            }
+            out.append("(");
+            out.append(direction == OffPathDirection.TO_VALUE ? "->" : "<-");
+            out.append(" ");
+            out.append(attribute);
+            if (value != null && !value.isBlank()) {
+                out.append(" ").append(value);
+            }
+            out.append(")");
+            return out.toString();
         }
     }
 
@@ -246,7 +291,9 @@ public class UncertaintyExpression extends QueryExpression {
             }
 
             expandLabelCombinations(new ArrayList<>(atom.labels), repeat, new ArrayList<>(), combination -> {
-                prefix.addAll(combination);
+                for (String label : combination) {
+                    prefix.add(atom.render(label));
+                }
                 expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
                 for (int i = 0; i < combination.size(); i++) {
                     prefix.remove(prefix.size() - 1);
@@ -276,22 +323,24 @@ public class UncertaintyExpression extends QueryExpression {
     private List<PathAtom> parsePathQuery(String query, TemplateRegistry registry) {
         List<PathAtom> out = new ArrayList<>();
 
-        for (String rawSegment : query.split(">")) {
+        for (String rawSegment : splitTopLevel(query, '>')) {
             String segment = rawSegment.trim();
+            List<String> segmentParts = splitSegmentAndOffPaths(segment);
+            String basePart = segmentParts.get(0).trim();
             Quantifier quantifier = Quantifier.EXACT;
-            if (segment.endsWith("*")) {
-                segment = segment.substring(0, segment.length() - 1).trim();
+            if (basePart.endsWith("*")) {
+                basePart = basePart.substring(0, basePart.length() - 1).trim();
                 quantifier = Quantifier.ZERO_OR_MORE;
-            } else if (segment.endsWith("+")) {
-                segment = segment.substring(0, segment.length() - 1).trim();
+            } else if (basePart.endsWith("+")) {
+                basePart = basePart.substring(0, basePart.length() - 1).trim();
                 quantifier = Quantifier.ONE_OR_MORE;
             }
 
             Set<String> labels = new LinkedHashSet<>();
-            if (segment.startsWith("@")) {
-                String templateName = segment.substring(1).trim();
+            if (basePart.startsWith("@")) {
+                String templateName = basePart.substring(1).trim();
                 if (registry == null) {
-                    throw new IllegalArgumentException("Template registry required for path template: " + segment);
+                    throw new IllegalArgumentException("Template registry required for path template: " + basePart);
                 }
                 QueryTemplate template = registry.getTemplate(templateName);
                 if (template == null) {
@@ -304,13 +353,233 @@ public class UncertaintyExpression extends QueryExpression {
                     labels.add(alternative.get(0));
                 }
             } else {
-                labels.add(segment);
+                labels.add(basePart);
             }
 
-            out.add(new PathAtom(labels, quantifier));
+            List<OffPathConstraint> offPathConstraints = new ArrayList<>();
+            for (int i = 1; i < segmentParts.size(); i++) {
+                String offPath = segmentParts.get(i).trim();
+                if (!offPath.isBlank()) {
+                    offPathConstraints.add(parseOffPathConstraint(offPath));
+                }
+            }
+
+            out.add(new PathAtom(labels, quantifier, offPathConstraints));
         }
 
         return out;
+    }
+
+    private List<String> splitSegmentAndOffPaths(String segment) {
+        List<String> out = new ArrayList<>();
+        if (segment == null || segment.isBlank()) {
+            return out;
+        }
+
+        StringBuilder current = new StringBuilder();
+        int parenDepth = 0;
+        boolean inQuote = false;
+        char quoteChar = 0;
+
+        for (int i = 0; i < segment.length(); i++) {
+            char c = segment.charAt(i);
+
+            if (inQuote) {
+                current.append(c);
+                if (c == quoteChar) {
+                    inQuote = false;
+                }
+                continue;
+            }
+
+            if (c == '\'' || c == '"') {
+                inQuote = true;
+                quoteChar = c;
+                current.append(c);
+                continue;
+            }
+
+            if (c == '(') {
+                parenDepth++;
+            } else if (c == ')') {
+                parenDepth = Math.max(0, parenDepth - 1);
+            }
+
+            if (c == ':' && parenDepth == 0 && startsOffPathClause(segment, i + 1)) {
+                out.add(current.toString());
+                current.setLength(0);
+                continue;
+            }
+
+            current.append(c);
+        }
+
+        out.add(current.toString());
+        return out;
+    }
+
+    private boolean startsOffPathClause(String segment, int index) {
+        int i = index;
+        while (i < segment.length() && Character.isWhitespace(segment.charAt(i))) {
+            i++;
+        }
+
+        if (i >= segment.length()) {
+            return false;
+        }
+
+        if (segment.charAt(i) == '~') {
+            i++;
+            while (i < segment.length() && Character.isWhitespace(segment.charAt(i))) {
+                i++;
+            }
+        }
+
+        return i < segment.length() && segment.charAt(i) == '(';
+    }
+
+    private List<String> splitTopLevel(String input, char delimiter) {
+        List<String> out = new ArrayList<>();
+        if (input == null || input.isBlank()) {
+            return out;
+        }
+
+        StringBuilder current = new StringBuilder();
+        int parenDepth = 0;
+        boolean inQuote = false;
+        char quoteChar = 0;
+
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+
+            if (inQuote) {
+                current.append(c);
+                if (c == quoteChar) {
+                    inQuote = false;
+                }
+                continue;
+            }
+
+            if (c == '\'' || c == '"') {
+                inQuote = true;
+                quoteChar = c;
+                current.append(c);
+                continue;
+            }
+
+            if (c == '(') {
+                parenDepth++;
+            } else if (c == ')') {
+                parenDepth = Math.max(0, parenDepth - 1);
+            }
+
+            if (c == delimiter && parenDepth == 0) {
+                out.add(current.toString());
+                current.setLength(0);
+                continue;
+            }
+
+            current.append(c);
+        }
+
+        out.add(current.toString());
+        return out;
+    }
+
+    private OffPathConstraint parseOffPathConstraint(String offPath) {
+        String clause = offPath.trim();
+        boolean negated = false;
+        if (clause.startsWith("~")) {
+            negated = true;
+            clause = clause.substring(1).trim();
+        }
+
+        if (clause.startsWith("(") && clause.endsWith(")")) {
+            clause = clause.substring(1, clause.length() - 1).trim();
+        }
+
+        OffPathDirection direction;
+        if (clause.startsWith("->")) {
+            direction = OffPathDirection.TO_VALUE;
+            clause = clause.substring(2).trim();
+        } else if (clause.startsWith("<-")) {
+            direction = OffPathDirection.TO_ORIGIN;
+            clause = clause.substring(2).trim();
+        } else {
+            throw new IllegalArgumentException("Invalid off-path constraint: " + offPath);
+        }
+
+        List<String> tokens = QueryParser.tokenizeQuery(clause);
+        if (tokens.isEmpty()) {
+            throw new IllegalArgumentException("Invalid off-path constraint: " + offPath);
+        }
+
+        String attribute = tokens.get(0);
+        String value = null;
+        if (tokens.size() > 1) {
+            int valueStart = 1;
+            if ("=".equals(tokens.get(1))) {
+                valueStart = 2;
+            }
+            if (valueStart < tokens.size()) {
+                value = String.join(" ", tokens.subList(valueStart, tokens.size()));
+            }
+        }
+
+        return new OffPathConstraint(negated, direction, attribute, value);
+    }
+
+    private boolean matchesOffPathConstraints(PathAtom atom,
+                                              GraphConstraint current,
+                                              HashMap<Integer, GraphConstraint> graph,
+                                              boolean insideOut) {
+        for (OffPathConstraint constraint : atom.offPathConstraints) {
+            String nodeRef;
+            if (constraint.direction == OffPathDirection.TO_VALUE) {
+                nodeRef = String.valueOf(insideOut ? current.getFsNode() : current.getFsValue());
+            } else {
+                nodeRef = String.valueOf(insideOut ? current.getFsValue() : current.getFsNode());
+            }
+            boolean matches = nodeMatchesConstraint(nodeRef, constraint, graph);
+            if (constraint.negated ? matches : !matches) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean nodeMatchesConstraint(String nodeRef, OffPathConstraint constraint, HashMap<Integer, GraphConstraint> graph) {
+        for (GraphConstraint gc : graph.values()) {
+            if (!nodeRef.equals(gc.getFsNode())) {
+                continue;
+            }
+            if (!constraint.attribute.equals(gc.getRelationLabel())) {
+                continue;
+            }
+
+            if (constraint.value == null || constraint.value.isBlank()) {
+                return true;
+            }
+
+            if (normalizeComparableValue(String.valueOf(gc.getFsValue())).equals(normalizeComparableValue(constraint.value))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private String normalizeComparableValue(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        String normalized = HelperMethods.stripValeue2(value.trim());
+        if ((normalized.startsWith("'") && normalized.endsWith("'")) ||
+                (normalized.startsWith("\"") && normalized.endsWith("\""))) {
+            normalized = normalized.substring(1, normalized.length() - 1);
+        }
+        return normalized;
     }
 
     public HashMap<Integer, GraphConstraint> searchUncertainty(HashMap<Integer, GraphConstraint> in) {
@@ -339,10 +608,15 @@ public class UncertaintyExpression extends QueryExpression {
 
                 if (atom.quantifier != Quantifier.EXACT) {
                     if (atom.quantifier == Quantifier.ZERO_OR_MORE) {
-                        currentResult.put(key, result.get(key));
+                        if (matchesOffPathConstraints(atom, result.get(key), right.getFsIndices(), false)) {
+                            currentResult.put(key, result.get(key));
+                        }
                     }
 
                     if (atom.labels.contains(result.get(key).getRelationLabel())) {
+                        if (!matchesOffPathConstraints(atom, result.get(key), right.getFsIndices(), false)) {
+                            continue;
+                        }
 
                         boundVariables.add(key);
 
@@ -395,6 +669,9 @@ public class UncertaintyExpression extends QueryExpression {
 
                     }
                 } else if (atom.labels.contains(result.get(key).getRelationLabel())) {
+                    if (!matchesOffPathConstraints(atom, result.get(key), right.getFsIndices(), false)) {
+                        continue;
+                    }
 
                     if (search.get(0) == atom) {
                         boundVariables.add(key);
@@ -471,13 +748,19 @@ public class UncertaintyExpression extends QueryExpression {
 
                 if (atom.quantifier != Quantifier.EXACT) {
                     if (atom.quantifier == Quantifier.ZERO_OR_MORE) {
-                        currentResult.put(key, result.get(key));
+                        if (matchesOffPathConstraints(atom, result.get(key), right.getFsIndices(), true)) {
+                            currentResult.put(key, result.get(key));
+                        }
                     }
 
                     if (atom.labels.contains(result.get(key).getRelationLabel())
                         || atom.labels.contains("%") ||
                         (atom.labels.contains("GF") && gf.contains(result.get(key).getRelationLabel())))
                         {
+
+                        if (!matchesOffPathConstraints(atom, result.get(key), right.getFsIndices(), true)) {
+                            continue;
+                        }
 
 
                         //TODO
@@ -549,6 +832,10 @@ public class UncertaintyExpression extends QueryExpression {
 
                     }
                 } else if (atom.labels.contains(result.get(key).getRelationLabel())) {
+                    if (!matchesOffPathConstraints(atom, result.get(key), right.getFsIndices(), true)) {
+                        continue;
+                    }
+
                     HashMap<Integer, GraphConstraint> newResult = new HashMap<>();
 
                     if (i != search.size() - 1) {
