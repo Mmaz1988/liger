@@ -31,6 +31,8 @@ import java.util.regex.Pattern;
 
 public class UncertaintyExpression extends QueryExpression {
 
+    private static final int MAX_UNCERTAINTY_REPEAT = 16;
+
     public String uncertaintyExpression;
 
     private QueryExpression left;
@@ -127,6 +129,38 @@ public class UncertaintyExpression extends QueryExpression {
                     uncertainty = searchInsideOutUncertainty(searchQuery, boundIndices);
                 }
 
+                if (uncertainty.isEmpty() && allowsZeroLength(searchQuery)) {
+                    Set<String> usedKeys = new HashSet<>();
+                    usedKeys.add(nodeRef);
+
+                    HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
+                            mapUsedKeys(usedKeys, uncertainty, right.getNodeVar());
+
+                    right.setSolution(out2);
+
+                    for (Set<SolutionKey> key2 : out2.keySet()) {
+                        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
+
+                        for (String key3 : left.getSolution().get(key).keySet()) {
+                            binding.put(key3, left.getSolution().get(key).get(key3));
+                        }
+
+                        binding.put(right.getNodeVar(), out2.get(key2).get(right.getNodeVar()));
+
+                        Set<SolutionKey> newKey = new HashSet<>();
+                        newKey.addAll(key);
+                        newKey.addAll(key2);
+
+                        out.put(newKey, binding);
+
+                        for (String bkey2 : binding.get(right.getNodeVar()).keySet()) {
+                            getFsIndices().putAll(binding.get(right.getNodeVar()).get(bkey2));
+                        }
+                    }
+
+                    continue;
+                }
+
                 if (!uncertainty.keySet().isEmpty()) {
 
 
@@ -195,6 +229,45 @@ public class UncertaintyExpression extends QueryExpression {
         return new ArrayList<>(new LinkedHashSet<>(expanded));
     }
 
+    private void expandPathQueries(List<PathAtom> atoms, int index, List<String> prefix, int maxRepeat, List<String> out) {
+        if (index >= atoms.size()) {
+            out.add(String.join(">", prefix));
+            return;
+        }
+
+        PathAtom atom = atoms.get(index);
+        int minRepeat = atom.quantifier == Quantifier.ZERO_OR_MORE ? 0 : 1;
+        int max = atom.quantifier == Quantifier.EXACT ? 1 : maxRepeat;
+
+        for (int repeat = minRepeat; repeat <= max; repeat++) {
+            if (repeat == 0) {
+                expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
+                continue;
+            }
+
+            expandLabelCombinations(new ArrayList<>(atom.labels), repeat, new ArrayList<>(), combination -> {
+                prefix.addAll(combination);
+                expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
+                for (int i = 0; i < combination.size(); i++) {
+                    prefix.remove(prefix.size() - 1);
+                }
+            });
+        }
+    }
+
+    private void expandLabelCombinations(List<String> labels, int repeat, List<String> current, java.util.function.Consumer<List<String>> consumer) {
+        if (current.size() == repeat) {
+            consumer.accept(new ArrayList<>(current));
+            return;
+        }
+
+        for (String label : labels) {
+            current.add(label);
+            expandLabelCombinations(labels, repeat, current, consumer);
+            current.remove(current.size() - 1);
+        }
+    }
+
     private List<PathAtom> parsePathQuery(String query) {
         TemplateRegistry registry = middle.getParser() != null ? middle.getParser().getTemplateRegistry() : null;
         return parsePathQuery(query, registry);
@@ -240,46 +313,6 @@ public class UncertaintyExpression extends QueryExpression {
         return out;
     }
 
-    private void expandPathQueries(List<PathAtom> atoms, int index, List<String> prefix, int maxRepeat, List<String> out) {
-        if (index >= atoms.size()) {
-            out.add(String.join(">", prefix));
-            return;
-        }
-
-        PathAtom atom = atoms.get(index);
-        int minRepeat = atom.quantifier == Quantifier.ZERO_OR_MORE ? 0 : 1;
-        int max = atom.quantifier == Quantifier.EXACT ? 1 : maxRepeat;
-
-        for (int repeat = minRepeat; repeat <= max; repeat++) {
-            if (repeat == 0) {
-                expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
-                continue;
-            }
-
-            expandLabelCombinations(new ArrayList<>(atom.labels), repeat, new ArrayList<>(), combination -> {
-                prefix.addAll(combination);
-                expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
-                for (int i = 0; i < combination.size(); i++) {
-                    prefix.remove(prefix.size() - 1);
-                }
-            });
-        }
-    }
-
-    private void expandLabelCombinations(List<String> labels, int repeat, List<String> current, java.util.function.Consumer<List<String>> consumer) {
-        if (current.size() == repeat) {
-            consumer.accept(new ArrayList<>(current));
-            return;
-        }
-
-        for (String label : labels) {
-            current.add(label);
-            expandLabelCombinations(labels, repeat, current, consumer);
-            current.remove(current.size() - 1);
-        }
-    }
-
-
     public HashMap<Integer, GraphConstraint> searchUncertainty(HashMap<Integer, GraphConstraint> in) {
         return searchUncertainty(parsePathQuery(middle.getQuery()), in);
     }
@@ -305,11 +338,16 @@ public class UncertaintyExpression extends QueryExpression {
             for (Integer key : result.keySet()) {
 
                 if (atom.quantifier != Quantifier.EXACT) {
+                    if (atom.quantifier == Quantifier.ZERO_OR_MORE) {
+                        currentResult.put(key, result.get(key));
+                    }
+
                     if (atom.labels.contains(result.get(key).getRelationLabel())) {
 
                         boundVariables.add(key);
 
                         boolean foundString = true;
+                        int repeatCount = 0;
 
                         List<Integer> keys = new ArrayList<>();
                         List<Integer> matchingKeys = new ArrayList<>();
@@ -320,7 +358,7 @@ public class UncertaintyExpression extends QueryExpression {
                             }
                         }
 
-                        while (foundString) {
+                        while (foundString && repeatCount < MAX_UNCERTAINTY_REPEAT) {
 
                             keys.removeIf(next -> !atom.labels.contains(right.getFsIndices().get(next).getRelationLabel()));
 
@@ -340,6 +378,8 @@ public class UncertaintyExpression extends QueryExpression {
                             } else {
                                 foundString = false;
                             }
+
+                            repeatCount++;
                         }
 
                         HashMap<Integer, GraphConstraint> newResult = new HashMap<>(right.getFsIndices());
@@ -404,6 +444,11 @@ public class UncertaintyExpression extends QueryExpression {
         return searchInsideOutUncertainty(parsePathQuery(searchQuery), in);
     }
 
+    private boolean allowsZeroLength(String searchQuery) {
+        List<PathAtom> atoms = parsePathQuery(searchQuery);
+        return !atoms.isEmpty() && atoms.stream().allMatch(atom -> atom.quantifier == Quantifier.ZERO_OR_MORE);
+    }
+
     private HashMap<Integer, GraphConstraint> searchInsideOutUncertainty(List<PathAtom> search, HashMap<Integer, GraphConstraint> in) {
 
 
@@ -425,6 +470,10 @@ public class UncertaintyExpression extends QueryExpression {
             for (Integer key : result.keySet()) {
 
                 if (atom.quantifier != Quantifier.EXACT) {
+                    if (atom.quantifier == Quantifier.ZERO_OR_MORE) {
+                        currentResult.put(key, result.get(key));
+                    }
+
                     if (atom.labels.contains(result.get(key).getRelationLabel())
                         || atom.labels.contains("%") ||
                         (atom.labels.contains("GF") && gf.contains(result.get(key).getRelationLabel())))
@@ -435,6 +484,7 @@ public class UncertaintyExpression extends QueryExpression {
                         //  boundVariables.add(key);
 
                         boolean foundString = true;
+                        int repeatCount = 0;
 
                         List<Integer> keys = new ArrayList<>();
                         List<Integer> matchingKeys = new ArrayList<>();
@@ -449,7 +499,7 @@ public class UncertaintyExpression extends QueryExpression {
                                 }
                             }
                         }
-                        while (foundString) {
+                        while (foundString && repeatCount < MAX_UNCERTAINTY_REPEAT) {
 
 
                             if (atom.labels.contains("%"))
@@ -482,6 +532,8 @@ public class UncertaintyExpression extends QueryExpression {
                             } else {
                                 foundString = false;
                             }
+
+                            repeatCount++;
                         }
 
                         HashMap<Integer, GraphConstraint> newResult = new HashMap<>(right.getFsIndices());

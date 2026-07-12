@@ -55,6 +55,150 @@ public class QueryParserTest {
     }
 
     @Test
+    void testQueryParsera() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS2.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("SUBJ #a", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(3, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParser2() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS2.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g TENSE 'past' & #g TENSE 'past'", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(3, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParser3() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS1.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g TENSE 'past' & #h PERF '-_' & #j SUBJ #i", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(12, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParser4a() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS1.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g TNS-ASP #h TENSE 'past' & #h PERF '-_'", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(2, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParser4b() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS2.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g TNS-ASP #h TENSE 'past' & #h PERF '-_' & #h MOOD 'indicative'", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(3, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParser4c() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS1.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g TNS-ASP #h TENSE 'past' & #h PERF '-_' & #h MOOD 'indicative'", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(2, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParser9() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS3.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g TENSE %g", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(2, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParser10() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS1.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g TENSE %g & #h TENSE %g", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(4, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParser11() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS3.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g TENSE %g & #h TENSE %h", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(4, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParser12() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS3.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g TENSE %g & %g != 'past' & #h PERF '-_'", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(2, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParser13() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS3.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g PRED %g & strip(%g) == 'John' & #h PERF '-_'", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(2, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParser17() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS15.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("*011 !(cproj>g::>GLUE>in_set) #s", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertTrue(qpr.isSuccess && qpr.result.size() == 1);
+        }
+    }
+
+    @Test
     void testQueryParserHybrid() {
         LinkedHashMap<String, LinguisticStructure> fs = loadFs("hybrid_glue_test.pl");
 
@@ -112,6 +256,24 @@ public class QueryParserTest {
 
             List<String> normalized = normalizeResult(qpr);
             assertEquals(2, normalized.size());
+        }
+    }
+
+    @Test
+    void testInsideOutObjStarOnS18MatchesFiveSolutions() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testDirS18.pl");
+        TemplateRegistry templateRegistry = new TemplateParser().parse("GF := SUBJ | OBJ | OBL .");
+        HierarchyRegistry hierarchyRegistry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser(
+                    "#a ^(@GF*) #b ^(@GF) #c & #c !(@GF) #d & superior(GF,#d,#b)",
+                    fs.get(key),
+                    templateRegistry,
+                    hierarchyRegistry);
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(5, qpr.result.keySet().size());
         }
     }
 

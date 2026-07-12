@@ -37,4 +37,28 @@ public class QueryParserNegationTest {
             assertTrue(qpr.result.keySet().stream().findAny().get().isEmpty());
         }
     }
+
+    @Test
+    void testQueryParser6() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS2.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g !(SUBJ) #h CASE 'nom'", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(4, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParser7() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS2.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g !(SUBJ>NTYPE) #h", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(4, qpr.result.keySet().size());
+        }
+    }
 }

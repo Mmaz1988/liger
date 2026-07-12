@@ -9,10 +9,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class UncertaintyQuantifierTest {
 
@@ -42,6 +44,30 @@ public class UncertaintyQuantifierTest {
 
         assertEquals(1, starResult.result.size());
         assertEquals(0, plusResult.result.size());
+    }
+
+    @Test
+    void testQueryParser14() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS8.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#g ^(SUBJ) #h", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertEquals(2, qpr.result.keySet().size());
+        }
+    }
+
+    @Test
+    void testQueryParser16() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("*0 TNS-ASP #f TENSE 'past'", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertTrue(qpr.isSuccess && qpr.result.size() == 1);
+        }
     }
 
     private LinguisticStructure buildSingleNodeStructure() {
