@@ -124,18 +124,22 @@ public class UncertaintyExpression extends QueryExpression {
 
         for (Set<SolutionKey> key : left.getSolution().keySet()) {
             String nodeVar = left.getNodeVar();
-            String nodeRef = left.getSolution().get(key).get(nodeVar).keySet().stream().findAny().get();
-            HashMap<Integer, GraphConstraint> boundIndices = new HashMap<>();
-
-            for (Integer key2 : middle.getFsIndices().keySet()) {
-                if (middle.getFsIndices().get(key2).getFsNode().equals(nodeRef)) {
-                    boundIndices.put(key2, middle.getFsIndices().get(key2));
-                }
+            if (left.getSolution().get(key).get(nodeVar) == null || left.getSolution().get(key).get(nodeVar).isEmpty()) {
+                continue;
             }
 
-            HashMap<Integer, GraphConstraint> uncertainty = new HashMap<>();
+            for (String nodeRef : left.getSolution().get(key).get(nodeVar).keySet()) {
+                HashMap<Integer, GraphConstraint> boundIndices = new HashMap<>();
 
-            for (String searchQuery : searchQueries) {
+                for (Integer key2 : middle.getFsIndices().keySet()) {
+                    if (middle.getFsIndices().get(key2).getFsNode().equals(nodeRef)) {
+                        boundIndices.put(key2, middle.getFsIndices().get(key2));
+                    }
+                }
+
+                HashMap<Integer, GraphConstraint> uncertainty = new HashMap<>();
+
+                for (String searchQuery : searchQueries) {
                 if (searchQuery.isBlank()) {
                     Set<String> usedKeys = new HashSet<>();
                     usedKeys.add(nodeRef);
@@ -160,9 +164,6 @@ public class UncertaintyExpression extends QueryExpression {
 
                         out.put(newKey, binding);
 
-                        for (String bkey2 : binding.get(right.getNodeVar()).keySet()) {
-                            getFsIndices().putAll(binding.get(right.getNodeVar()).get(bkey2));
-                        }
                     }
 
                     continue;
@@ -198,9 +199,6 @@ public class UncertaintyExpression extends QueryExpression {
 
                         out.put(newKey, binding);
 
-                        for (String bkey2 : binding.get(right.getNodeVar()).keySet()) {
-                            getFsIndices().putAll(binding.get(right.getNodeVar()).get(bkey2));
-                        }
                     }
 
                     continue;
@@ -240,17 +238,12 @@ public class UncertaintyExpression extends QueryExpression {
 
                         out.put(newKey, binding);
 
-                        //Update fsIndices
-
-                        for (String bkey2 : binding.get(right.getNodeVar()).keySet()) {
-                            getFsIndices().putAll(binding.get(right.getNodeVar()).get(bkey2));
-                        }
-
-
                     }
 
                 }
             }
+        }
+
         }
 
         setConjoinedSolutions(left.getConjoinedSolutions());
@@ -286,7 +279,13 @@ public class UncertaintyExpression extends QueryExpression {
 
         for (int repeat = minRepeat; repeat <= max; repeat++) {
             if (repeat == 0) {
-                expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
+                if (atom.offPathConstraints.isEmpty()) {
+                    expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
+                } else {
+                    prefix.add(atom.render(""));
+                    expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
+                    prefix.remove(prefix.size() - 1);
+                }
                 continue;
             }
 
@@ -548,6 +547,16 @@ public class UncertaintyExpression extends QueryExpression {
         return true;
     }
 
+    private boolean isZeroLengthAtom(PathAtom atom) {
+        return atom.labels.size() == 1 && atom.labels.contains("");
+    }
+
+    private boolean matchesLabel(PathAtom atom, GraphConstraint current) {
+        return atom.labels.contains(current.getRelationLabel())
+                || atom.labels.contains("%")
+                || (atom.labels.contains("GF") && gf.contains(current.getRelationLabel()));
+    }
+
     private boolean nodeMatchesConstraint(String nodeRef, OffPathConstraint constraint, HashMap<Integer, GraphConstraint> graph) {
         for (GraphConstraint gc : graph.values()) {
             if (!nodeRef.equals(gc.getFsNode())) {
@@ -567,6 +576,42 @@ public class UncertaintyExpression extends QueryExpression {
         }
 
         return false;
+    }
+
+    private boolean nodeMatchesOffPathConstraints(String nodeRef,
+                                                  PathAtom atom,
+                                                  HashMap<Integer, GraphConstraint> graph) {
+        for (OffPathConstraint constraint : atom.offPathConstraints) {
+            boolean matches = false;
+
+            for (GraphConstraint gc : graph.values()) {
+                String candidateNode = constraint.direction == OffPathDirection.TO_VALUE
+                        ? String.valueOf(gc.getFsNode())
+                        : String.valueOf(gc.getFsValue());
+                if (!nodeRef.equals(candidateNode)) {
+                    continue;
+                }
+                if (!constraint.attribute.equals(gc.getRelationLabel())) {
+                    continue;
+                }
+
+                if (constraint.value == null || constraint.value.isBlank()) {
+                    matches = true;
+                    break;
+                }
+
+                if (normalizeComparableValue(String.valueOf(gc.getFsValue())).equals(normalizeComparableValue(constraint.value))) {
+                    matches = true;
+                    break;
+                }
+            }
+
+            if (constraint.negated ? matches : !matches) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private String normalizeComparableValue(String value) {
@@ -605,6 +650,13 @@ public class UncertaintyExpression extends QueryExpression {
             HashMap<Integer, GraphConstraint> currentResult = new HashMap<>();
 
             for (Integer key : result.keySet()) {
+
+                if (isZeroLengthAtom(atom)) {
+                    if (nodeMatchesOffPathConstraints(String.valueOf(result.get(key).getFsNode()), atom, right.getFsIndices())) {
+                        currentResult.put(key, result.get(key));
+                    }
+                    continue;
+                }
 
                 if (atom.quantifier != Quantifier.EXACT) {
                     if (atom.quantifier == Quantifier.ZERO_OR_MORE) {
@@ -727,175 +779,76 @@ public class UncertaintyExpression extends QueryExpression {
     }
 
     private HashMap<Integer, GraphConstraint> searchInsideOutUncertainty(List<PathAtom> search, HashMap<Integer, GraphConstraint> in) {
+        Set<String> startNodes = new LinkedHashSet<>();
+        for (GraphConstraint constraint : in.values()) {
+            startNodes.add(String.valueOf(constraint.getFsNode()));
+        }
 
-
+        Set<String> endpointNodes = evaluateInsideOutPath(startNodes, search, right.getFsIndices());
         HashMap<Integer, GraphConstraint> result = new HashMap<>();
 
-        HashMap<Integer, GraphConstraint> inverseFsIndices = calculateInsideOutIndices(in, middle.getFsIndices());
-
-
-        for (int i = 0; i < search.size(); i++) {
-
-            PathAtom atom = search.get(i);
-
-            if (result.keySet().isEmpty()) {
-                result = inverseFsIndices;
+        for (Integer key : right.getFsIndices().keySet()) {
+            GraphConstraint constraint = right.getFsIndices().get(key);
+            if (endpointNodes.contains(constraint.getFsNode())) {
+                result.put(key, constraint);
             }
+        }
 
-            HashMap<Integer, GraphConstraint> currentResult = new HashMap<>();
+        for (Integer key : result.keySet()) {
+            choices.addAll(result.get(key).getReading());
+        }
 
-            for (Integer key : result.keySet()) {
+        return result;
+    }
 
-                if (atom.quantifier != Quantifier.EXACT) {
-                    if (atom.quantifier == Quantifier.ZERO_OR_MORE) {
-                        if (matchesOffPathConstraints(atom, result.get(key), right.getFsIndices(), true)) {
-                            currentResult.put(key, result.get(key));
-                        }
+    private Set<String> evaluateInsideOutPath(Set<String> startNodes,
+                                              List<PathAtom> atoms,
+                                              HashMap<Integer, GraphConstraint> graph) {
+        Set<String> currentNodes = new LinkedHashSet<>(startNodes);
+
+        for (PathAtom atom : atoms) {
+            Set<String> nextNodes = new LinkedHashSet<>();
+
+            if (isZeroLengthAtom(atom)) {
+                for (String node : currentNodes) {
+                    if (nodeMatchesOffPathConstraints(node, atom, graph)) {
+                        nextNodes.add(node);
                     }
-
-                    if (atom.labels.contains(result.get(key).getRelationLabel())
-                        || atom.labels.contains("%") ||
-                        (atom.labels.contains("GF") && gf.contains(result.get(key).getRelationLabel())))
-                        {
-
-                        if (!matchesOffPathConstraints(atom, result.get(key), right.getFsIndices(), true)) {
+                }
+            } else {
+                for (String node : currentNodes) {
+                    for (GraphConstraint edge : graph.values()) {
+                        if (!String.valueOf(edge.getFsValue()).equals(node)) {
+                            continue;
+                        }
+                        if (!labelMatches(atom, edge)) {
                             continue;
                         }
 
-
-                        //TODO
-                        //  boundVariables.add(key);
-
-                        boolean foundString = true;
-                        int repeatCount = 0;
-
-                        List<Integer> keys = new ArrayList<>();
-                        List<Integer> matchingKeys = new ArrayList<>();
-
-                        Set<String> unspecRelation = new HashSet<>();
-
-                        for (Integer key2 : right.getFsIndices().keySet()) {
-                            if (result.get(key).getFsNode().equals(right.getFsIndices().get(key2).getFsNode())) {
-                                keys.add(key2);
-                                if (atom.labels.contains("%")) {
-                                    unspecRelation.add(right.getFsIndices().get(key).getRelationLabel());
-                                }
-                            }
+                        String parentNode = String.valueOf(edge.getFsNode());
+                        if (nodeMatchesOffPathConstraints(parentNode, atom, graph)) {
+                            nextNodes.add(parentNode);
                         }
-                        while (foundString && repeatCount < MAX_UNCERTAINTY_REPEAT) {
-
-
-                            if (atom.labels.contains("%"))
-                            {
-                                keys.removeIf(next -> !unspecRelation.contains(right.getFsIndices().get(next).getRelationLabel()));
-                            } else if (atom.labels.contains("GF"))
-                            {
-                                keys.removeIf(next -> !gf.contains(right.getFsIndices().get(next).getRelationLabel()));
-                            } else {
-                                keys.removeIf(next -> !atom.labels.contains(right.getFsIndices().get(next).getRelationLabel()));
-                            }
-
-
-                     //       keys.removeIf(next -> !right.getFsIndices().get(next).getRelationLabel().equals(starMatcher.group(1)));
-
-
-                            if (!keys.isEmpty()) {
-                                matchingKeys.addAll(keys);
-                                List<Integer> newKeys = new ArrayList<>();
-
-                                //if (left.getFsIndices().get(key).getFsValue().equals(right.getFsIndices().get(key2).getFsNode()))
-                                for (Integer key3 : keys) {
-                                    for (Integer key4 : right.getFsIndices().keySet()) {
-                                        if (right.getFsIndices().get(key3).getFsNode().equals(right.getFsIndices().get(key4).getFsValue())) {
-                                            newKeys.add(key4);
-                                        }
-                                    }
-                                }
-                                keys = newKeys;
-                            } else {
-                                foundString = false;
-                            }
-
-                            repeatCount++;
-                        }
-
-                        HashMap<Integer, GraphConstraint> newResult = new HashMap<>(right.getFsIndices());
-                        for (Integer r : new ArrayList<>(newResult.keySet())) {
-                            if (!matchingKeys.contains(r)) {
-                                newResult.remove(r);
-                            }
-                        }
-
-                        currentResult.putAll(newResult);
-                        // result = newResult;
-
-
-                    }
-                } else if (atom.labels.contains(result.get(key).getRelationLabel())) {
-                    if (!matchesOffPathConstraints(atom, result.get(key), right.getFsIndices(), true)) {
-                        continue;
-                    }
-
-                    HashMap<Integer, GraphConstraint> newResult = new HashMap<>();
-
-                    if (i != search.size() - 1) {
-                        for (Integer key2 : right.getFsIndices().keySet()) {
-                            if (result.get(key).getFsNode().equals(right.getFsIndices().get(key2).getFsValue())) {
-                                newResult.put(key2, right.getFsIndices().get(key2));
-                            }
-                        }
-                    } else {
-                        for (Integer key2 : right.getFsIndices().keySet()) {
-                            if (result.get(key).getFsNode().equals(right.getFsIndices().get(key2).getFsNode())) {
-                                newResult.put(key2, right.getFsIndices().get(key2));
-                            }
-                        }
-                    }
-                    currentResult.putAll(newResult);
-                } else if (atom.labels.contains("%")) {
-                    HashMap<Integer, GraphConstraint> newResult = new HashMap<>();
-
-                    for (Integer key2 : right.getFsIndices().keySet()) {
-                        if (result.get(key).getFsNode().equals(right.getFsIndices().get(key2).getFsNode())) {
-
-                            newResult.put(key2, right.getFsIndices().get(key2));
-
-                        }
-                        currentResult.putAll(newResult);
-                    }
-
-                } else if (atom.labels.contains("GF")) {
-                    HashMap<Integer, GraphConstraint> newResult = new HashMap<>();
-
-                    for (Integer key2 : right.getFsIndices().keySet()) {
-                        if (gf.contains(result.get(key).getRelationLabel()) &&
-                                result.get(key).getFsNode().equals(right.getFsIndices().get(key2).getFsNode())) {
-
-                            newResult.put(key2, right.getFsIndices().get(key2));
-
-                        }
-                        currentResult.putAll(newResult);
                     }
                 }
             }
 
-            for (Integer key : currentResult.keySet())
-            {
-                choices.addAll(currentResult.get(key).getReading());
+            currentNodes = nextNodes;
+            if (currentNodes.isEmpty()) {
+                break;
             }
+        }
 
-            if (currentResult.isEmpty()) {
-                        return currentResult;
-                    } else {
-                        result = currentResult;
-                    }
-                }
+        return currentNodes;
+    }
 
-
-
-            return result;
-
-
-
+    private boolean labelMatches(PathAtom atom, GraphConstraint edge) {
+        if (atom.labels.contains(edge.getRelationLabel())) {
+            return true;
+        }
+        if (atom.labels.contains("GF")) {
+            return gf.contains(edge.getRelationLabel());
+        }
+        return atom.labels.contains("%");
     }
 }

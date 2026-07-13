@@ -124,42 +124,42 @@ public class NodeExpression extends QueryExpression {
                 Set<SolutionKey> key = it.next();
 
                 String nodeVar = right.getNodeVar();
-                String nodeRef = rightSolution.get(key).get(nodeVar).keySet().stream().findAny().get();
-                //          HashMap<Integer, GraphConstraint> boundIndices = rightSolution.get(key).get(nodeVar).get(nodeRef);
+                for (String nodeRef : rightSolution.get(key).get(nodeVar).keySet()) {
 
+                    if (left.getNodeVar() != null) {
 
-                if (left.getNodeVar() != null) {
+                        for (Set<SolutionKey> key2 : left.getSolution().keySet()) {
+                            for (String nodeRef2 : leftSolution.get(key2).get(left.getNodeVar()).keySet()) {
+                                for (Integer key3 : leftSolution.get(key2).get(left.getNodeVar()).get(nodeRef2).keySet()) {
+                                    if (leftSolution.get(key2).get(left.getNodeVar()).get(nodeRef2).get(key3).getFsValue().equals(nodeRef) &&
+                                    leftSolution.get(key2).get(left.getNodeVar()).get(nodeRef2).get(key3).getRelationLabel().equals(left.getQuery())) {
+                                        if (checkSolutionCompatibility(key, key2)) {
+                                            Set<SolutionKey> newKey = new HashSet<>();
+                                            newKey.addAll(key);
+                                            newKey.addAll(key2);
 
-                    for (Set<SolutionKey> key2 : left.getSolution().keySet()) {
-                        String nodeRef2 = leftSolution.get(key2).get(left.getNodeVar()).keySet().stream().findAny().get();
-                        for (Integer key3 : leftSolution.get(key2).get(left.getNodeVar()).get(nodeRef2).keySet()) {
-                            if (leftSolution.get(key2).get(left.getNodeVar()).get(nodeRef2).get(key3).getFsValue().equals(nodeRef) &&
-                            leftSolution.get(key2).get(left.getNodeVar()).get(nodeRef2).get(key3).getRelationLabel().equals(left.getQuery())) {
-                                if (checkSolutionCompatibility(key, key2)) {
-                                    Set<SolutionKey> newKey = new HashSet<>();
-                                    newKey.addAll(key);
-                                    newKey.addAll(key2);
+                                            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
 
-                                    HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
+                                            binding.putAll(rightSolution.get(key));
+                                            binding.putAll(leftSolution.get(key2));
 
-                                    binding.putAll(rightSolution.get(key));
-                                    binding.putAll(leftSolution.get(key2));
+                                            solution.put(newKey, binding);
 
-                                    solution.put(newKey, binding);
+                                        }
 
+                                    }
                                 }
-
                             }
                         }
-                    }
-                } else {
-                    for (Integer key2 : left.getFsIndices().keySet()) {
-                        if (left.getFsIndices().get(key2).getFsValue().equals(nodeRef)) {
-                            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
+                    } else {
+                        for (Integer key2 : left.getFsIndices().keySet()) {
+                            if (left.getFsIndices().get(key2).getFsValue().equals(nodeRef)) {
+                                HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
 
-                            binding.putAll(rightSolution.get(key));
-                            solution.put(key, binding);
+                                binding.putAll(rightSolution.get(key));
+                                solution.put(key, binding);
 
+                            }
                         }
                     }
                 }
