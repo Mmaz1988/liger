@@ -25,6 +25,7 @@ public class CStructureTraverser {
 
     public HashMap<String, Set<String>> associatedMCs = new HashMap<>();
     public HashMap<String, Set<String>> associatedMCs2 = new HashMap<>();
+    public List<String> orderedMCNodes = new ArrayList<>();
 
     public HashMap<String,Set<String>> glueTree = new HashMap<>();
     public HashMap<String, HashSet<String>> glueTree2;
@@ -160,6 +161,22 @@ public class CStructureTraverser {
             if (currentCproj != null) {
                 McContainer mcs = findMCNodes(currentCproj, fs);
                 if (mcs != null) {
+                    List<String> sortedMcNodes = mcs.mcNodes.stream()
+                            .sorted((a, b) -> {
+                                try {
+                                    return Integer.compare(Integer.parseInt(a), Integer.parseInt(b));
+                                } catch (NumberFormatException e) {
+                                    return a.compareTo(b);
+                                }
+                            })
+                            .toList();
+
+                    for (String mcNode : sortedMcNodes) {
+                        if (!orderedMCNodes.contains(mcNode)) {
+                            orderedMCNodes.add(mcNode);
+                        }
+                    }
+
                     if (!associatedMCs2.containsKey(anchor)) {
                         associatedMCs2.put(anchor, new HashSet<>());
                     }

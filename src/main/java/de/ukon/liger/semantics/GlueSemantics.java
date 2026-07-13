@@ -290,6 +290,7 @@ public class GlueSemantics {
     public String returnMultiStageMeaningConstructors(LinguisticStructure fs)
     {
         try {
+            annotateSyntheticMcIndices(fs);
 
             GraphConstraint rootNode = null;
 
@@ -369,57 +370,52 @@ public class GlueSemantics {
     }
 
     public Map<Set<ChoiceVar>, Set<String>> translateMeaningConstructors(LinguisticStructure fs) {
+        annotateSyntheticMcIndices(fs);
 
         Map<String, Map<Set<ChoiceVar>, List<String>>> disjunctiveSem = new LinkedHashMap<>();
         List<GraphConstraint> ls = new ArrayList<>(fs.returnFullGraph());
-      //   HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
+        Map<String, Set<ChoiceVar>> mcReadings = collectMcReadings(ls);
+        List<String> orderedMcNodes = orderedMcNodes(fs, mcReadings.keySet());
+
         Map<String, Set<ChoiceVar>> glueIndices = new LinkedHashMap<>();
+        for (String mcNode : orderedMcNodes) {
+            if (mcReadings.containsKey(mcNode)) {
+                glueIndices.put(mcNode, mcReadings.get(mcNode));
+            }
+        }
 
-            for (GraphConstraint c : ls) {
-                if (c.getRelationLabel().equals("GLUE")) {
-                    if (HelperMethods.isInteger(c.getFsValue())) {
-                        Set<GraphConstraint> glueSetElements = ls.stream().filter(c2 -> Integer.parseInt(c2.getFsNode()) ==
-                                Integer.parseInt((String) c.getFsValue())).collect(Collectors.toSet());
-
-                        for (GraphConstraint c3 : glueSetElements) {
-                            if (c3.getRelationLabel().equals("in_set")) {
-                                glueIndices.put((String) c3.getFsValue(), c3.getReading());
-                            }
-                            /*
-                            if (!unpackedSem.containsKey(c3.getReading())) {
-                                unpackedSem.put(c.getReading(), new ArrayList<>());
-                            }
-                             */
-                        }
-                    }
+        if (glueIndices.size() != mcReadings.size()) {
+            List<String> fallback = new ArrayList<>(mcReadings.keySet());
+            fallback.sort((a, b) -> {
+                try {
+                    return Integer.compare(Integer.parseInt(a), Integer.parseInt(b));
+                } catch (NumberFormatException e) {
+                    return a.compareTo(b);
                 }
+            });
+
+            for (String mcNode : fallback) {
+                glueIndices.putIfAbsent(mcNode, mcReadings.get(mcNode));
+            }
+        }
+
+        int syntheticIndex = 1;
+        for (String mcNode : glueIndices.keySet()) {
+            HashMap<Set<ChoiceVar>, String> testMap = parseMCfromPackedProlog(mcNode, ls);
+
+            if (!disjunctiveSem.containsKey(mcNode)) {
+                disjunctiveSem.put(mcNode, new LinkedHashMap<>());
             }
 
-            // sort in ascending order and keep that order stable
-            glueIndices = glueIndices.entrySet().stream()
-                    .sorted(Comparator.comparingInt(e -> Integer.parseInt(e.getKey())))
-                    .collect(Collectors.toMap(
-                            Map.Entry::getKey,
-                            Map.Entry::getValue,
-                            (a, b) -> a,
-                            LinkedHashMap::new));
-
-            for (String i : glueIndices.keySet()) {
-                HashMap<Set<ChoiceVar>,String> testMap = parseMCfromPackedProlog(i, ls);
-
-                if (!disjunctiveSem.containsKey(i))
-                {
-                    disjunctiveSem.put(i,new LinkedHashMap<>());
+            for (Set<ChoiceVar> key : testMap.keySet()) {
+                if (!disjunctiveSem.get(mcNode).containsKey(key)) {
+                    disjunctiveSem.get(mcNode).put(key, new ArrayList<>());
                 }
-                    for (Set<ChoiceVar> key : testMap.keySet()) {
-                        if (!disjunctiveSem.get(i).containsKey(key)) {
-                            disjunctiveSem.get(i).put(key, new ArrayList<>());
-                        }
-                        disjunctiveSem.get(i).get(key).add(prefixSourceIndex(i, testMap.get(key)));
-                    }
-              //  String mc = parseMCfromProlog(i, ls);
-             //   unpackedSem.get(glueIndices.get(i)).add(mc);
+                disjunctiveSem.get(mcNode).get(key).add(prefixSourceIndex(String.valueOf(syntheticIndex), testMap.get(key)));
             }
+
+            syntheticIndex++;
+        }
 
             Map<Set<ChoiceVar>, Set<String>> unpackedSem2 = new LinkedHashMap<>();
             Set<ChoiceVar> defaultReading = Collections.singleton(new ChoiceVar());
@@ -487,8 +483,141 @@ public class GlueSemantics {
                      }
                       */
                  }
-            }
+        }
         return unpackedSem2;
+    }
+
+    public void annotateSyntheticMcIndices(LinguisticStructure fs) {
+        if (!(fs instanceof Fstructure) || fs == null) {
+            return;
+        }
+
+        Map<String, Set<ChoiceVar>> mcReadings = collectMcReadings(fs.returnFullGraph());
+        if (mcReadings.isEmpty()) {
+            return;
+        }
+
+        List<String> orderedMcNodes = orderedMcNodes((Fstructure) fs, mcReadings.keySet());
+        if (orderedMcNodes.isEmpty()) {
+            orderedMcNodes = new ArrayList<>(mcReadings.keySet());
+            orderedMcNodes.sort((a, b) -> {
+                try {
+                    return Integer.compare(Integer.parseInt(a), Integer.parseInt(b));
+                } catch (NumberFormatException e) {
+                    return a.compareTo(b);
+                }
+            });
+        }
+
+        if (fs.constraints == null) {
+            fs.constraints = new ArrayList<>();
+        }
+
+        fs.constraints.removeIf(c -> "SYN-ID".equals(c.getRelationLabel()));
+
+        int index = 1;
+        for (String mcNode : orderedMcNodes) {
+            Set<ChoiceVar> reading = mcReadings.get(mcNode);
+            if (reading == null) {
+                continue;
+            }
+
+            GraphConstraint indexConstraint = new GraphConstraint();
+            indexConstraint.setFsNode(mcNode);
+            indexConstraint.setRelationLabel("SYN-ID");
+            indexConstraint.setFsValue(String.valueOf(index));
+            indexConstraint.setReading(new LinkedHashSet<>(reading));
+            fs.constraints.add(indexConstraint);
+            index++;
+        }
+    }
+
+    private Map<String, Set<ChoiceVar>> collectMcReadings(List<GraphConstraint> constraints) {
+        Map<String, Set<ChoiceVar>> mcReadings = new LinkedHashMap<>();
+
+        for (GraphConstraint c : constraints) {
+            if ("in_set".equals(c.getRelationLabel()) && c.getFsValue() != null) {
+                mcReadings.computeIfAbsent(c.getFsValue().toString(), key -> new LinkedHashSet<>()).addAll(c.getReading());
+            }
+        }
+
+        return mcReadings;
+    }
+
+    private List<String> orderedMcNodes(Fstructure fs, Set<String> fallbackNodes) {
+        if (fs == null || fs.cStructureFacts == null || fs.cStructureFacts.isEmpty()) {
+            return fallbackOrderedMcNodes(fallbackNodes);
+        }
+
+        Optional<GraphConstraint> rootNode = fs.cStructureFacts.stream().filter(GraphConstraint::isRoot).findFirst();
+        if (rootNode.isEmpty()) {
+            return fallbackOrderedMcNodes(fallbackNodes);
+        }
+
+        try {
+            LinkedHashMap<String, Object> cstr = fs.builtCstructureTree(rootNode.get().getFsNode());
+            CStructureTraverser ctr = new CStructureTraverser(rootNode.get().getFsNode(), fs);
+            ctr.traverseCstructure2(cstr, null);
+
+            List<String> orderedAnchors = ctr.associatedMCs2.keySet().stream()
+                    .sorted((a, b) -> {
+                        if ("root".equals(a)) {
+                            return "root".equals(b) ? 0 : -1;
+                        }
+                        if ("root".equals(b)) {
+                            return 1;
+                        }
+
+                        try {
+                            return Integer.compare(Integer.parseInt(a), Integer.parseInt(b));
+                        } catch (NumberFormatException e) {
+                            return a.compareTo(b);
+                        }
+                    })
+                    .collect(Collectors.toList());
+
+            List<String> ordered = new ArrayList<>();
+            for (String anchor : orderedAnchors) {
+                List<String> anchorMcNodes = ctr.associatedMCs2.getOrDefault(anchor, Collections.emptySet()).stream()
+                        .filter(fallbackNodes::contains)
+                        .sorted((a, b) -> {
+                            try {
+                                return Integer.compare(Integer.parseInt(a), Integer.parseInt(b));
+                            } catch (NumberFormatException e) {
+                                return a.compareTo(b);
+                            }
+                        })
+                        .collect(Collectors.toList());
+                ordered.addAll(anchorMcNodes);
+            }
+
+            if (!ordered.isEmpty()) {
+                return ordered;
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to derive syntactic MC ordering, falling back to source order.", e);
+        }
+
+        return fallbackOrderedMcNodes(fallbackNodes);
+    }
+
+    private List<String> orderedMcNodes(LinguisticStructure fs, Set<String> fallbackNodes) {
+        if (fs instanceof Fstructure fstructure) {
+            return orderedMcNodes(fstructure, fallbackNodes);
+        }
+        return fallbackOrderedMcNodes(fallbackNodes);
+    }
+
+    private List<String> fallbackOrderedMcNodes(Set<String> fallbackNodes) {
+        List<String> ordered = new ArrayList<>(fallbackNodes);
+        ordered.sort((a, b) -> {
+            try {
+                return Integer.compare(Integer.parseInt(a), Integer.parseInt(b));
+            } catch (NumberFormatException e) {
+                return a.compareTo(b);
+            }
+        });
+        return ordered;
     }
 
     private String prefixSourceIndex(String sourceIndex, String mc) {

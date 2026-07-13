@@ -77,7 +77,7 @@ public class LigerController {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/parse_xle", produces = "application/json", consumes = "application/json")
-    public LigerRuleAnnotation parseXLE(@RequestBody LigerRequest request) throws IOException {
+    public LigerSolutionAnnotationResponse parseXLE(@RequestBody LigerRequest request) throws IOException {
 
         //    System.out.println(request.sentence);
         //   System.out.println(request.ruleString);
@@ -91,20 +91,26 @@ public class LigerController {
 
        // System.out.println(fs.getSubstructures("GLUE"));
 
-        LigerWebGraph lg = null;
-
         GlueSemantics sem = new GlueSemantics();
-        List<String> semString = new ArrayList<>();
+        List<LigerSolutionAnnotation> solutions = new ArrayList<>();
 
-        for (LinguisticStructure fs : fsList) {
+        for (int i = 0; i < fsList.size(); i++) {
+            LinguisticStructure fs = fsList.get(i);
             LOGGER.fine(fs.constraints.toString());
-            lg = new LigerWebGraph(fs.constraints,fs.annotation);
-            semString.add(sem.returnMultiStageMeaningConstructors(fs));
+            sem.annotateSyntheticMcIndices(fs);
+            String semString = sem.returnMultiStageMeaningConstructors(fs);
+            solutions.add(new LigerSolutionAnnotation(
+                    solutionKeyFor(fs, i),
+                    new LigerWebGraph(fs.constraints, fs.annotation),
+                    new LinkedHashSet<>(),
+                    semString,
+                    countMeaningConstructorSets(semString),
+                    new ArrayList<>()
+            ));
         }
 
-        //TODO fix treatment of axioms
         LOGGER.info("Finished LiGER annotation. Returning results...");
-        return new LigerRuleAnnotation(lg,null,String.join("\n",semString), new ArrayList<>());
+        return new LigerSolutionAnnotationResponse(request.sentence, solutions);
     }
 
 
@@ -113,7 +119,7 @@ public class LigerController {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rules_xle", produces = "application/json", consumes = "application/json")
-    public LigerRuleAnnotation applyRuleRequestXLE2(@RequestBody LigerRequest request) throws IOException {
+    public LigerSolutionAnnotationResponse applyRuleRequestXLE2(@RequestBody LigerRequest request) throws IOException {
 
         //    System.out.println(request.sentence);
         //   System.out.println(request.ruleString);
@@ -129,25 +135,22 @@ public class LigerController {
         RuleParser rp = new RuleParser(fsList, request.ruleString);
 
         GlueSemantics sem = new GlueSemantics();
-        List<String> semString = new ArrayList<>();
-        LigerWebGraph lg = null;
-        List<String> axioms = null;
+        List<LigerSolutionAnnotation> solutions = new ArrayList<>();
 
-        LinkedHashMap<String,LinkedHashSet<LigerRule>> appliedRules = new LinkedHashMap<>();
-
-        for (LinguisticStructure fs : fsList) {
+        for (int i = 0; i < fsList.size(); i++) {
+            LinguisticStructure fs = fsList.get(i);
             LinkedHashSet<LigerRule> appliedLigerRules = new LinkedHashSet<>();
 
             rp.addAnnotation2(fs);
+            sem.annotateSyntheticMcIndices(fs);
 
-            lg = new LigerWebGraph(fs.constraints, fs.annotation);
+            LigerWebGraph lg = new LigerWebGraph(fs.constraints, fs.annotation);
 
 
             for (Rule r : rp.getAppliedRules()) {
                 appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
             }
-            appliedRules.put(fs.local_id, appliedLigerRules);
-            semString.add(sem.returnMeaningConstructors(fs, !starter.isGlue, false, true));
+            String currentSemString = sem.returnMeaningConstructors(fs, !starter.isGlue, false, true);
 
 
             //Extract axioms
@@ -158,14 +161,20 @@ public class LigerController {
                 logicType = request.logicType;
             }
 
-            axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(fs, logicType);
+            List<String> axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(fs, logicType);
 
+            solutions.add(new LigerSolutionAnnotation(
+                    solutionKeyFor(fs, i),
+                    lg,
+                    appliedLigerRules,
+                    currentSemString,
+                    countMeaningConstructorSets(currentSemString),
+                    axioms
+            ));
         }
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
-        return new LigerRuleAnnotation(lg,
-                                    appliedRules.get(appliedRules.keySet().stream().findFirst().get()),
-                                    String.join("\n",semString), axioms);
+        return new LigerSolutionAnnotationResponse(request.sentence, solutions);
     }
 
 
@@ -208,6 +217,7 @@ public class LigerController {
             LinkedHashSet<LigerRule> appliedLigerRules = new LinkedHashSet<>();
 
             rp.addAnnotation2(fs);
+            sem.annotateSyntheticMcIndices(fs);
 
             lg = new LigerWebGraph(fs.constraints, fs.annotation);
 
@@ -233,8 +243,43 @@ public class LigerController {
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
         return new LigerRuleAnnotation(lg,
-                appliedRules.get(appliedRules.keySet().stream().findFirst().get()),
-                String.join("\n",semString), axioms);
+                appliedRules.values().stream().findFirst().orElseGet(LinkedHashSet::new),
+                String.join("\n", semString), axioms);
+    }
+
+    private String solutionKeyFor(LinguisticStructure fs, int index) {
+        if (fs != null && fs.local_id != null && !fs.local_id.isBlank()) {
+            return fs.local_id;
+        }
+
+        return "solution-" + (index + 1);
+    }
+
+    private int countMeaningConstructorSets(String meaningConstructors) {
+        if (meaningConstructors == null || meaningConstructors.isBlank()) {
+            return 0;
+        }
+
+        int count = 0;
+        int depth = 0;
+
+        for (String line : meaningConstructors.split("\\R")) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("//")) {
+                continue;
+            }
+
+            if ("{".equals(trimmed)) {
+                if (depth == 0) {
+                    count++;
+                }
+                depth++;
+            } else if ("}".equals(trimmed)) {
+                depth = Math.max(0, depth - 1);
+            }
+        }
+
+        return count;
     }
 
     @CrossOrigin
@@ -701,6 +746,7 @@ public class LigerController {
                 }
 
                 // rp.addAnnotation2(fs);
+                sem.annotateSyntheticMcIndices(fs);
 
                 for (Rule r : rp.getAppliedRules()) {
                     appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
