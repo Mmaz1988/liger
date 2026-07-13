@@ -578,7 +578,8 @@ GLUE   BASIC   TEMPLATES (1.0)
    GLUE-MEANING(TypedRES M) = 
 	  (TypedRES MEANING) = M.
 
-   NOSCOPE(G) = (G NOSCOPE) = +.  
+    NOSCOPE(G) = (G NOSCOPE) = +.  
+    INSITU(G) = (G INSITU) = +.
 
    QUANT-SCOPE(UP NAME) =
 	  NAME = s::({SUBJ | OBJ | OBJ2 | COMP | OBL-TO | OBL-AG | OBL}+ ^).
@@ -618,4 +619,3 @@ MULTISTAGE   BASIC   TEMPLATES (1.0)
 
 
 ----
-

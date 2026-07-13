@@ -118,16 +118,18 @@ public class GlueSemanticsParser {
         //split at :
         String[] parts = mc.split(" :\\s+");
 
+        String[] llandparams = parts[1].split("\\|\\|");
+
+        String params = null;
+
+        if (llandparams.length == 2)
+        {
+            params = llandparams[1];
+        }
+
+        validateExclusiveFlags(params);
+
         try {
-
-            String[] llandparams = parts[1].split("\\|\\|");
-
-            String params = null;
-
-            if (llandparams.length == 2)
-            {
-                params = llandparams[1];
-            }
 
             String[] ll = llp.linearLogic2AVM(llandparams[0].trim());
             String prologLL = ll[1];
@@ -147,9 +149,10 @@ public class GlueSemanticsParser {
                     param = param.trim();
                     switch (param) {
                         case "noscope":
-
-                            String noscope = "@(NOSCOPE " + ll[0] + ")";
-                          paramStrings.add(noscope);
+                            paramStrings.add("@(NOSCOPE " + ll[0] + ")");
+                            break;
+                        case "insitu":
+                            paramStrings.add("@(INSITU " + ll[0] + ")");
                             break;
                         case ("widescope"):
                             //TODO
@@ -178,6 +181,28 @@ public class GlueSemanticsParser {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private void validateExclusiveFlags(String params) {
+        if (params == null) {
+            return;
+        }
+
+        boolean noscope = false;
+        boolean insitu = false;
+
+        for (String param : params.trim().split(",")) {
+            String normalized = param.trim();
+            if ("noscope".equals(normalized)) {
+                noscope = true;
+            } else if ("insitu".equals(normalized)) {
+                insitu = true;
+            }
+        }
+
+        if (noscope && insitu) {
+            throw new IllegalArgumentException("noscope and insitu are mutually exclusive");
+        }
     }
 
 

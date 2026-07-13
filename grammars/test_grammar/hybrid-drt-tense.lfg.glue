@@ -810,6 +810,7 @@ GLUE   BASIC   TEMPLATES (1.0)
 	  (R MEANING) = M.
 
   NOSCOPE(G) = (G NOSCOPE) = +.  
+  INSITU(G) = (G INSITU) = +.
 
    NAME-SCOPE(UP NAME) =
    %name = ({SUBJ | OBJ | OBJ2 | XCOMP | OBL-TO | OBL-AG | OBL | ADJUNCT}+ ^)
@@ -896,4 +897,3 @@ GLUE   BASIC   TEMPLATES (1.0)
 
 
 ----
-

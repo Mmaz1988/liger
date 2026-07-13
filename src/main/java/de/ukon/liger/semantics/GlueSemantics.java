@@ -657,15 +657,26 @@ public class GlueSemantics {
             //TODO ? possibly remove constraints that have already been covered?
         }
 
-        // For parameters like noscope
+        // For parameters like noscope / insitu
         List<String> params = new ArrayList<>();
 
         List<GraphConstraint> noscopeConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("NOSCOPE")).collect(Collectors.toList());
         noscopeConstraint = noscopeConstraint.stream().filter(c -> c.getReading().equals(Collections.singleton(new ChoiceVar()))).collect(Collectors.toList());
+        List<GraphConstraint> insituConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("INSITU")).collect(Collectors.toList());
+        insituConstraint = insituConstraint.stream().filter(c -> c.getReading().equals(Collections.singleton(new ChoiceVar()))).collect(Collectors.toList());
+
+        if (!noscopeConstraint.isEmpty() && !insituConstraint.isEmpty()) {
+            throw new IllegalStateException("noscope and insitu are mutually exclusive");
+        }
 
         if (!noscopeConstraint.isEmpty())
         {
             params.add("noscope");
+        }
+
+        if (!insituConstraint.isEmpty())
+        {
+            params.add("insitu");
         }
 
         List<GraphConstraint> resourceConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("RESOURCE")).collect(Collectors.toList());
@@ -686,12 +697,19 @@ public class GlueSemantics {
             }
             resource = (String) resourceConstraint.stream().findAny().get().getFsValue();
 
+            String paramString = "";
+
+            if (!params.isEmpty())
+            {
+                paramString = " || " + params.stream().collect(Collectors.joining(", "));
+            }
+
 
             if (meaning.equals(""))
             {
-                return resource + "_" + type;
+                return resource + "_" + type + paramString;
             } else {
-                return meaning + " : " + resource + "_" + type;
+                return meaning + " : " + resource + "_" + type + paramString;
             }
         } else {
             //resource is non-atomic
@@ -798,14 +816,24 @@ public class GlueSemantics {
             //TODO ? possibly remove constraints that have already been covered?
         }
 
-        // For parameters like noscope
+        // For parameters like noscope / insitu
         List<String> params = new ArrayList<>();
 
         List<GraphConstraint> noscopeConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("NOSCOPE")).collect(Collectors.toList());
+        List<GraphConstraint> insituConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("INSITU")).collect(Collectors.toList());
+
+        if (!noscopeConstraint.isEmpty() && !insituConstraint.isEmpty()) {
+            throw new IllegalStateException("noscope and insitu are mutually exclusive");
+        }
 
         if (!noscopeConstraint.isEmpty())
         {
             params.add("noscope");
+        }
+
+        if (!insituConstraint.isEmpty())
+        {
+            params.add("insitu");
         }
 
         List<GraphConstraint> resourceConstraints = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("RESOURCE")).collect(Collectors.toList());
@@ -830,6 +858,11 @@ public class GlueSemantics {
                         type = type.substring(1, type.length() - 1);
                         currentTypeStrings.put(typeConstraint.getReading(), type);
                     }
+                }
+
+                String paramString = "";
+                if (!params.isEmpty()) {
+                    paramString = " || " + params.stream().collect(Collectors.joining(", "));
                 }
 
                 for (Set<ChoiceVar> choice : relevantChoices)
@@ -863,10 +896,10 @@ public class GlueSemantics {
                     }
 
                     if (meaning == null) {
-                        unpackedMeaningConstructors.put(choice, resource + "_" + type);
+                        unpackedMeaningConstructors.put(choice, resource + "_" + type + paramString);
 
                     } else {
-                        unpackedMeaningConstructors.put(choice, meaning + " : " + resource + "_" + type);
+                        unpackedMeaningConstructors.put(choice, meaning + " : " + resource + "_" + type + paramString);
                     }
                 }
 
