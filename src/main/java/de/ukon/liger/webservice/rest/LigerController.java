@@ -300,9 +300,6 @@ public class LigerController {
     @PostMapping(value = "/query_uploaded_structure", produces = "application/json", consumes = "application/json")
     public LigerStructureQueryResponse queryUploadedStructure(@RequestBody LigerStructureQueryRequest request) throws IOException {
         LinguisticStructure fs = parseUploadedLinguisticStructure(new LigerStructureUploadRequest(request.content, request.format, request.id));
-        fs.constraints = fs.constraints.stream()
-                .filter(constraint -> !"LABEL".equals(constraint.getRelationLabel()))
-                .collect(Collectors.toList());
 
         QueryRequestBundle queryBundle = stripEmbeddedQueryDefinitions(request.query);
         QueryParser qp = new QueryParser(
@@ -318,6 +315,17 @@ public class LigerController {
         highlightQueryMatches(graph, matchSummary.nodeIds());
 
         return new LigerStructureQueryResponse(Boolean.toString(matchSummary.matchCount() > 0), matchSummary.matchCount(), graph, matchSummary.solutions());
+    }
+
+    @CrossOrigin
+    @PostMapping(value = "/merge_uploaded_structures", produces = "application/json", consumes = "application/json")
+    public LigerMergeResponse mergeUploadedStructures(@RequestBody LigerStructureMergeRequest request) {
+        LinguisticStructure syntax = request.syntaxGraph != null
+                ? LigerGraphTranslator.translate(request.syntaxGraph)
+                : parseStructureMap(request.syntax);
+        LinguisticStructure drs = parseStructureMap(request.drs);
+        LinguisticStructure merged = LinguisticStructureMerger.merge(syntax, drs);
+        return new LigerMergeResponse(new LigerWebGraph(buildUploadedGraphElements(merged)));
     }
 
     private QueryMatchSummary summarizeQueryMatches(List<QueryParserResult> results) {
@@ -477,51 +485,74 @@ public class LigerController {
         return ls;
     }
 
+    private LinguisticStructure parseStructureMap(LinkedHashMap<String, Object> json) {
+        if (json == null) {
+            return null;
+        }
+
+        LinguisticStructure structure = LinguisticStructure.parseFromJson(json);
+        if (structure.local_id == null || structure.local_id.isBlank()) {
+            structure.local_id = "uploaded";
+        }
+        if (structure.cp == null) {
+            structure.cp = new de.ukon.liger.packing.ChoiceSpace();
+        }
+        return structure;
+    }
+
     private List<LigerGraphComponent> buildUploadedGraphElements(LinguisticStructure fs) {
         LinkedHashMap<String, LigerGraphComponent> nodes = new LinkedHashMap<>();
         List<LigerGraphComponent> edges = new ArrayList<>();
-        Map<String, String> labelsByNode = new LinkedHashMap<>();
+        Map<String, String> projectionByNode = new LinkedHashMap<>();
+        Map<String, String> nodeTypeByNode = new LinkedHashMap<>();
+        Map<String, LinkedHashMap<String, String>> avpByNode = new LinkedHashMap<>();
+        Set<String> allNodeIds = new LinkedHashSet<>();
 
         List<GraphConstraint> allConstraints = new ArrayList<>();
         allConstraints.addAll(fs.constraints);
         allConstraints.addAll(fs.annotation);
 
         for (GraphConstraint constraint : allConstraints) {
-            if ("LABEL".equals(constraint.getRelationLabel())) {
-                labelsByNode.put(constraint.getFsNode(), String.valueOf(constraint.getFsValue()));
+            String sourceNode = constraint.getFsNode();
+            String sourceProjection = constraint.getProj();
+            if (sourceNode != null && !sourceNode.isBlank()) {
+                projectionByNode.putIfAbsent(sourceNode, sourceProjection);
+                allNodeIds.add(sourceNode);
             }
-        }
 
-        for (Map.Entry<String, String> entry : labelsByNode.entrySet()) {
-            String nodeId = entry.getKey();
-            String label = entry.getValue();
-            nodes.putIfAbsent(nodeId, new LigerWebNode(nodeId, inferNodeType(label), label));
-        }
-
-        for (GraphConstraint constraint : allConstraints) {
-            if ("LABEL".equals(constraint.getRelationLabel())) {
+            if ("NODE_TYPE".equals(constraint.getRelationLabel())) {
+                nodeTypeByNode.put(sourceNode, String.valueOf(constraint.getFsValue()));
                 continue;
             }
 
-            String sourceNode = constraint.getFsNode();
-            String targetNode = String.valueOf(constraint.getFsValue());
-            String sourceLabel = labelsByNode.getOrDefault(sourceNode, sourceNode);
-            String targetLabel = labelsByNode.getOrDefault(targetNode, targetNode);
+            String relationLabel = constraint.getRelationLabel();
+            String relationValue = String.valueOf(constraint.getFsValue());
 
-            if (sourceNode != null && !sourceNode.isBlank()) {
-                nodes.putIfAbsent(sourceNode, new LigerWebNode(sourceNode, inferNodeType(sourceLabel), sourceLabel));
-            }
-            if (targetNode != null && !targetNode.isBlank()) {
-                nodes.putIfAbsent(targetNode, new LigerWebNode(targetNode, inferNodeType(targetLabel), targetLabel));
-            }
+            if (de.ukon.liger.utilities.HelperMethods.isInteger(constraint.getFsValue())) {
+                String targetRaw = relationValue;
+                String targetProjection = projectionByNode.get(targetRaw);
 
-            edges.add(new LigerWebEdge(
-                    "edge-" + edges.size(),
-                    sourceNode,
-                    targetNode,
-                    constraint.getRelationLabel(),
-                    "edge"
-            ));
+                allNodeIds.add(targetRaw);
+                nodes.putIfAbsent(sourceNode, createNode(sourceNode, sourceProjection, nodeTypeByNode.get(sourceNode), avpByNode.get(sourceNode)));
+                nodes.putIfAbsent(targetRaw, createNode(targetRaw, targetProjection, nodeTypeByNode.get(targetRaw), avpByNode.get(targetRaw)));
+
+                edges.add(new LigerWebEdge(
+                        "edge-" + edges.size(),
+                        sourceNode,
+                        targetRaw,
+                        relationLabel,
+                        "edge"
+                ));
+            } else {
+                avpByNode.computeIfAbsent(sourceNode, k -> new LinkedHashMap<>())
+                        .put(relationLabel, relationValue);
+                nodes.putIfAbsent(sourceNode, createNode(sourceNode, sourceProjection, nodeTypeByNode.get(sourceNode), avpByNode.get(sourceNode)));
+            }
+        }
+
+        for (String nodeId : allNodeIds) {
+            String projection = projectionByNode.get(nodeId);
+            nodes.put(nodeId, createNode(nodeId, projection, nodeTypeByNode.get(nodeId), avpByNode.get(nodeId)));
         }
 
         List<LigerGraphComponent> graphElements = new ArrayList<>();
@@ -530,28 +561,27 @@ public class LigerController {
         return graphElements;
     }
 
-    private String inferNodeType(String nodeId) {
-        if (nodeId == null || nodeId.isBlank()) {
-            return "value";
+    private LigerWebNode createNode(String nodeId, String projection, String nodeType, Map<String, String> avp) {
+        String resolvedNodeType = nodeType;
+        String label = resolveNodeLabel(nodeId, nodeType, avp);
+        if (avp != null && !avp.isEmpty()) {
+            return new LigerWebNode(nodeId, resolvedNodeType, label, new HashMap<>(avp));
         }
+        return new LigerWebNode(nodeId, resolvedNodeType, label);
+    }
 
-        if ("s0".equals(nodeId)) {
-            return "root";
+    private String resolveNodeLabel(String nodeId, String nodeType, Map<String, String> avp) {
+        if (nodeType != null) {
+            if (nodeType.equals("input") || nodeType.equals("cnode") || nodeType.equals("gnode") || nodeType.equals("annotation") || nodeType.equals("rule")) {
+                if (avp != null) {
+                    String name = avp.get("NAME");
+                    if (name != null && !name.isBlank()) {
+                        return name;
+                    }
+                }
+            }
         }
-
-        if (nodeId.matches("s\\d+[a-z]*")) {
-            return "state";
-        }
-
-        if (nodeId.matches("[a-zA-Z]+\\d+")) {
-            return "referent";
-        }
-
-        if (nodeId.contains(":")) {
-            return "condition";
-        }
-
-        return "value";
+        return nodeId;
     }
 
 

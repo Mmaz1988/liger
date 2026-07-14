@@ -32,6 +32,10 @@ public class LigerWebGraph {
 
     public List<LigerGraphComponent> graphElements;
     public String semantics;
+
+    public LigerWebGraph() {
+    }
+
     public LigerWebGraph(List<LigerGraphComponent> graphElements) {
         this.graphElements = graphElements;
     }

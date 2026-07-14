@@ -23,17 +23,23 @@ package de.ukon.liger.syntax;
 
 import de.ukon.liger.packing.ChoiceSpace;
 import de.ukon.liger.utilities.HelperMethods;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class LinguisticStructure {
 
+    @JsonAlias("id")
     public String local_id;
     public String text;
     public List<GraphConstraint> constraints;
+    @JsonAlias("choiceSpace")
     public ChoiceSpace cp;
 
+    @JsonAlias("annotations")
     public List<GraphConstraint> annotation = new ArrayList<>();
 
 
