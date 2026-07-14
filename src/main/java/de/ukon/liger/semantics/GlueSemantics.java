@@ -525,7 +525,7 @@ public class GlueSemantics {
             GraphConstraint indexConstraint = new GraphConstraint();
             indexConstraint.setFsNode(mcNode);
             indexConstraint.setRelationLabel("SYN-ID");
-            indexConstraint.setFsValue(String.valueOf(index));
+            indexConstraint.setFsValue("i" + index);
             indexConstraint.setReading(new LinkedHashSet<>(reading));
             fs.constraints.add(indexConstraint);
             index++;
