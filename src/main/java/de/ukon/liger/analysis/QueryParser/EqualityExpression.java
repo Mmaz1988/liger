@@ -96,7 +96,7 @@ public class EqualityExpression extends QueryExpression {
                     if (key.containsAll(key2))
                     {
                         //TODO ambiguity?
-                        leftString = getParser().fsValueBindings.get(key2).get(right.getQuery());
+                        rightString = getParser().fsValueBindings.get(key2).get(right.getQuery());
                         break;
                     }
                 }

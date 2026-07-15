@@ -325,7 +325,7 @@ public class LigerController {
                 : parseStructureMap(request.syntax);
         LinguisticStructure drs = parseStructureMap(request.drs);
         LinguisticStructure merged = LinguisticStructureMerger.merge(syntax, drs);
-        return new LigerMergeResponse(new LigerWebGraph(buildUploadedGraphElements(merged)));
+        return new LigerMergeResponse(new LigerWebGraph(buildUploadedGraphElements(merged)), merged.toJson());
     }
 
     private QueryMatchSummary summarizeQueryMatches(List<QueryParserResult> results) {

@@ -46,8 +46,12 @@ public class ChoiceSpace {
     {
         LinkedHashMap<String,Object> jsonMap = new LinkedHashMap<>();
 
-        jsonMap.put("rootChoice",this.rootChoice.stream().map(ChoiceVar::toJson).collect(Collectors.toList()));
-        jsonMap.put("choiceNodes",this.choiceNodes.stream().map(ChoiceNode::toJson).collect(Collectors.toList()));
+        List<ChoiceVar> rootChoice = this.rootChoice == null ? new ArrayList<>() : new ArrayList<>(this.rootChoice);
+        List<ChoiceNode> choiceNodes = this.choiceNodes == null ? new ArrayList<>() : this.choiceNodes;
+        List<String> allVariables = this.allVariables == null ? new ArrayList<>() : this.allVariables;
+
+        jsonMap.put("rootChoice", rootChoice.stream().map(ChoiceVar::toJson).collect(Collectors.toList()));
+        jsonMap.put("choiceNodes", choiceNodes.stream().map(ChoiceNode::toJson).collect(Collectors.toList()));
 
         List<List<LinkedHashMap>> cs = new ArrayList<>();
 
