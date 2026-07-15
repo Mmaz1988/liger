@@ -21,9 +21,8 @@
 
 package de.ukon.liger.webservice.rest.dtos;
 
-import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.GraphConstraint;
-import de.ukon.liger.utilities.HelperMethods;
+import de.ukon.liger.syntax.LinguisticStructure;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,15 +43,14 @@ public class LigerWebGraph {
         this.semantics = semantics;
     }
 
-    public LigerWebGraph(LinguisticStructure s)
-    {
-        this.graphElements = extractGraph(s);
+    public LigerWebGraph(LinguisticStructure s) {
+        this(safeConstraints(s == null ? null : s.constraints), safeConstraints(s == null ? null : s.annotation));
     }
 
     public LigerWebGraph(List<GraphConstraint> syntax, List<GraphConstraint> annotation)
     {
-        HashMap<String,List<LigerGraphComponent>> synMap = extractGraph2(syntax,"input");
-        HashMap<String,List<LigerGraphComponent>> annMap = extractGraph2(annotation, "annotation");
+        Map<String,List<LigerGraphComponent>> synMap = extractGraph2(syntax,"input");
+        Map<String,List<LigerGraphComponent>> annMap = extractGraph2(annotation, "annotation");
 
         List<LigerGraphComponent> nodes = new ArrayList<>();
         nodes.addAll(synMap.get("nodes"));
@@ -72,8 +70,8 @@ public class LigerWebGraph {
 
     public LigerWebGraph(List<GraphConstraint> syntax, List<GraphConstraint> annotation, String semantics)
     {
-        HashMap<String,List<LigerGraphComponent>> synMap = extractGraph2(syntax,"input");
-        HashMap<String,List<LigerGraphComponent>> annMap = extractGraph2(annotation, "annotation");
+        Map<String,List<LigerGraphComponent>> synMap = extractGraph2(syntax,"input");
+        Map<String,List<LigerGraphComponent>> annMap = extractGraph2(annotation, "annotation");
 
         List<LigerGraphComponent> nodes = new ArrayList<>();
         nodes.addAll(synMap.get("nodes"));
@@ -92,69 +90,20 @@ public class LigerWebGraph {
         this.semantics = semantics;
     }
 
-    public List<LigerGraphComponent> extractGraph(LinguisticStructure s)
+    public Map<String,List<LigerGraphComponent>> extractGraph2(List<GraphConstraint> input, String type)
     {
-        LinkedHashMap<Integer, HashMap<String,String>> nodes = new LinkedHashMap<>();
-        List<LigerWebEdge> edges = new ArrayList<>();
-
-        for (int i = 0; i < s.constraints.size(); i++)
-        {
-            int rel = 0;
-            GraphConstraint g = s.constraints.get(i);
-            Integer fsNode = Integer.parseInt(g.getFsNode());
-
-            if (!nodes.containsKey(fsNode))
-            {
-                nodes.put(fsNode,new HashMap<>());
-            }
-
-            if (HelperMethods.isInteger(g.getFsValue())
-            ) {
-                if (!nodes.containsKey(fsNode))
-                {
-                    nodes.put(fsNode,new HashMap<>());
-                }
-                //TestNode(String id, String source, String target, String label, String type)
-                edges.add(new LigerWebEdge("rid" + g.getFsNode() + rel + g.getFsValue().toString(),
-                        g.getFsNode(),g.getFsValue().toString(),
-                        g.getRelationLabel(),"edge"));
-
-            } else
-            {
-                nodes.get(fsNode).put(g.getRelationLabel(),g.getFsValue().toString());
-            }
-
+        if (input == null) {
+            Map<String, List<LigerGraphComponent>> output = new LinkedHashMap<>();
+            output.put("nodes", new ArrayList<>());
+            output.put("edges", new ArrayList<>());
+            return output;
         }
 
-        List<LigerWebNode> testNodes = new ArrayList<>();
-
-        for (Integer key : nodes.keySet())
-        {
-            if (!nodes.get(key).keySet().isEmpty()) {
-                testNodes.add(new LigerWebNode(key.toString(), "input", key.toString(), nodes.get(key)));
-            } else
-            {
-                testNodes.add(new LigerWebNode(key.toString(),"input", key.toString()));
-            }
-        }
-
-        List<LigerGraphComponent> output = new ArrayList<>();
-        output.addAll(testNodes);
-        output.addAll(edges);
-        return output;
-    }
-
-
-    public HashMap<String,List<LigerGraphComponent>> extractGraph2(List<GraphConstraint> input, String type)
-    {
         LinkedHashMap<String, HashMap<String,String>> nodes = new LinkedHashMap<>();
         List<LigerGraphComponent> edges = new ArrayList<>();
 
-        List<GraphConstraint> cstr = input.stream().filter(x -> x.getProj() != null && x.getProj().equals("c")).collect(Collectors.toList());
-
         for (int i = 0; i < input.size(); i++)
         {
-            int rel = 0;
             GraphConstraint g = input.get(i);
             String fsNode = g.getFsNode();
 
@@ -182,7 +131,7 @@ public class LigerWebGraph {
             if ("SYN-ID".equals(g.getRelationLabel())) {
                 nodes.get(fsNode).put("SYN-ID", g.getFsValue().toString());
 
-            } else if (HelperMethods.isInteger(g.getFsValue())
+            } else if (isIntegerValue(g.getFsValue())
             ) {
                 if (!nodes.containsKey(g.getFsValue().toString()))
                 {
@@ -204,7 +153,7 @@ public class LigerWebGraph {
                     }
                 }
                 //TestNode(String id, String source, String target, String label, String type)
-                edges.add(new LigerWebEdge("rid" + g.getFsNode() + rel + g.getFsValue().toString(),
+                edges.add(new LigerWebEdge("rid" + g.getFsNode() + g.getFsValue().toString(),
                         g.getFsNode(),g.getFsValue().toString(),
                         g.getRelationLabel(),"edge"));
 
@@ -256,12 +205,29 @@ public class LigerWebGraph {
 
         System.out.println("Modified " + counter + " nodes");
 
-        HashMap<String,List<LigerGraphComponent>> output = new HashMap<>();
+        Map<String,List<LigerGraphComponent>> output = new LinkedHashMap<>();
         output.put("nodes",testNodes);
         output.put("edges",edges);
 
 
         return output;
+    }
+
+    private static List<GraphConstraint> safeConstraints(List<GraphConstraint> constraints) {
+        return constraints == null ? Collections.emptyList() : constraints;
+    }
+
+    private static boolean isIntegerValue(Object value) {
+        if (value == null) {
+            return false;
+        }
+
+        try {
+            Integer.parseInt(String.valueOf(value));
+            return true;
+        } catch (NumberFormatException ex) {
+            return false;
+        }
     }
 
 }

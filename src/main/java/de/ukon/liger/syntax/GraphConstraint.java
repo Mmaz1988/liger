@@ -129,6 +129,9 @@ public class GraphConstraint implements Serializable {
         constraintProperties.put("sourceNode",this.nodeIdentifier);
         constraintProperties.put("relationLabel",this.relationLabel);
         constraintProperties.put("targetNode",this.fsValue);
+        if (this.proj != null) {
+            constraintProperties.put("proj", this.proj);
+        }
         if (this.projection != null) {
             this.projection = true;
             constraintProperties.put("projection", this.projection.toString());
@@ -142,8 +145,18 @@ public class GraphConstraint implements Serializable {
 
     public static GraphConstraint parseJson(LinkedHashMap<String,Object> input) {
         GraphConstraint g = new GraphConstraint();
+        if (input.containsKey("proj")) {
+            g.setProj(String.valueOf(input.get("proj")));
+            g.projection = true;
+        }
         if (input.containsKey("projection")) {
-            g.projection = Boolean.parseBoolean((String) input.get("projection"));
+            String projection = String.valueOf(input.get("projection"));
+            if ("true".equalsIgnoreCase(projection) || "false".equalsIgnoreCase(projection)) {
+                g.projection = Boolean.parseBoolean(projection);
+            } else if (g.getProj() == null) {
+                g.setProj(projection);
+                g.projection = true;
+            }
         }
 
         Set<ChoiceVar> choiceVars = new HashSet<>();
@@ -268,4 +281,3 @@ public class GraphConstraint implements Serializable {
     }
 
 }
-

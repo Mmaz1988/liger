@@ -51,101 +51,26 @@ public class EqualityExpression extends QueryExpression {
 
         for (Set<SolutionKey> key : left.getSolution().keySet())
         {
-            String leftString = "";
-            String rightString = "";
+            String leftString = resolveValue(key, left);
+            String rightString = resolveValue(key, right);
 
-            if (left.var)
+            if (leftString == null || rightString == null)
             {
-                for (Set<SolutionKey> key2 : getParser().fsValueBindings.keySet())
-                {
-                    if (key.containsAll(key2))
-                    {
-                        //TODO ambiguity?
-                        leftString = getParser().fsValueBindings.get(key2).get(left.getQuery());
-                        if (leftString != null)
-                        {
-                            break;
-                        } else
-                        {
-                            leftString = "";
-                        }
-
-                    }
-                }
-
-                /*
-                if (getParser().fsValueBindings.get(key).containsKey(left.getQuery()))
-                {
-                    leftString = getParser().fsValueBindings.get(key).get(left.getQuery());
-                }
-                 */
-
-                if (left.strip)
-                {
-                    leftString = HelperMethods.stripValue(leftString);
-                }
-            } else
-            {
-                leftString = left.getQuery();
+                continue;
             }
 
-            if (right.var)
+            if (middle.equal)
             {
-                for (Set<SolutionKey> key2 : getParser().fsValueBindings.keySet())
+                if (leftString.equals(rightString))
                 {
-                    if (key.containsAll(key2))
-                    {
-                        //TODO ambiguity?
-                        rightString = getParser().fsValueBindings.get(key2).get(right.getQuery());
-                        break;
-                    }
+                    out.put(key,left.getSolution().get(key));
                 }
-                /*
-                if (getParser().fsValueBindings.get(key).containsKey(right.getQuery()))
-                {
-                    rightString = getParser().fsValueBindings.get(key).get(right.getQuery());
-                }
-                 */
-
-                if (right.strip)
-                {
-                    rightString = HelperMethods.stripValue(rightString);
-                }
-
-            } else
-            {
-                rightString = right.getQuery();
             }
-
-            if (!rightString.equals("") && !leftString.equals(""))
+            else
             {
-               Matcher m1 = HelperMethods.valueStringPattern.matcher(rightString);
-               Matcher m2 = HelperMethods.valueStringPattern.matcher(leftString);
-
-               if (m1.find())
-               {
-                   rightString = m1.group(1);
-               }
-
-               if (m2.find())
-               {
-                   leftString = m2.group(1);
-               }
-
-
-                if (middle.equal)
+                if (!leftString.equals(rightString))
                 {
-                 if (leftString.equals(rightString))
-                 {
-                     out.put(key,left.getSolution().get(key));
-                 }
-                }
-                else
-                {
-                    if (!leftString.equals(rightString))
-                    {
-                        out.put(key,left.getSolution().get(key));
-                    }
+                    out.put(key,left.getSolution().get(key));
                 }
             }
 
@@ -156,5 +81,64 @@ public class EqualityExpression extends QueryExpression {
         setConjoinedSolutions(left.getConjoinedSolutions());
         setSolution(out);
   //      getParser().fsNodeBindings = out;
+    }
+
+    private String resolveValue(Set<SolutionKey> solutionKey, Value value)
+    {
+        String resolved;
+
+        if (value.var)
+        {
+            resolved = lookupBinding(solutionKey, value.getQuery());
+        }
+        else
+        {
+            resolved = value.getQuery();
+        }
+
+        if (resolved == null)
+        {
+            return null;
+        }
+
+        if (value.strip)
+        {
+            resolved = HelperMethods.stripValue(resolved);
+        }
+
+        Matcher matcher = HelperMethods.valueStringPattern.matcher(resolved);
+        if (matcher.matches())
+        {
+            resolved = matcher.group(1);
+        }
+
+        return resolved;
+    }
+
+    private String lookupBinding(Set<SolutionKey> solutionKey, String valueVar)
+    {
+        HashMap<String, String> exactMatch = getParser().fsValueBindings.get(solutionKey);
+        if (exactMatch != null && exactMatch.containsKey(valueVar))
+        {
+            return exactMatch.get(valueVar);
+        }
+
+        String bestMatch = null;
+        int bestSize = -1;
+
+        for (Set<SolutionKey> candidate : getParser().fsValueBindings.keySet())
+        {
+            if (solutionKey.containsAll(candidate) && candidate.size() > bestSize)
+            {
+                HashMap<String, String> bindings = getParser().fsValueBindings.get(candidate);
+                if (bindings != null && bindings.containsKey(valueVar))
+                {
+                    bestMatch = bindings.get(valueVar);
+                    bestSize = candidate.size();
+                }
+            }
+        }
+
+        return bestMatch;
     }
 }

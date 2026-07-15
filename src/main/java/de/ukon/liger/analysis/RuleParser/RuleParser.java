@@ -552,14 +552,9 @@ public class RuleParser {
 
         StringBuffer sb2 = new StringBuffer();
         while (matcher2.find()) {
-            for (Set<SolutionKey> key : qpr.valueBindings.keySet()) {
-                if (solutionKey.containsAll(key)) {
-                    if (qpr.valueBindings.get(key).containsKey(matcher2.group(1))) {
-                        String key2 = qpr.valueBindings.get(key).get(matcher2.group(1));
-                        matcher2.appendReplacement(sb2, key2);
-                        break;
-                    }
-                }
+            String key2 = lookupValueBinding(solutionKey, matcher2.group(1), qpr.valueBindings);
+            if (key2 != null) {
+                matcher2.appendReplacement(sb2, key2);
             }
         }
 
@@ -605,6 +600,30 @@ public class RuleParser {
 
         usedKeys.add(Integer.toString(i));
         return Integer.toString(i);
+    }
+
+    private String lookupValueBinding(Set<SolutionKey> solutionKey,
+                                      String valueVar,
+                                      HashMap<Set<SolutionKey>, HashMap<String, String>> valueBindings) {
+        HashMap<String, String> exactMatch = valueBindings.get(solutionKey);
+        if (exactMatch != null && exactMatch.containsKey(valueVar)) {
+            return exactMatch.get(valueVar);
+        }
+
+        String bestMatch = null;
+        int bestSize = -1;
+
+        for (Set<SolutionKey> key : valueBindings.keySet()) {
+            if (solutionKey.containsAll(key) && key.size() > bestSize) {
+                HashMap<String, String> bindings = valueBindings.get(key);
+                if (bindings != null && bindings.containsKey(valueVar)) {
+                    bestMatch = bindings.get(valueVar);
+                    bestSize = key.size();
+                }
+            }
+        }
+
+        return bestMatch;
     }
 
     public Boolean getReplace() {

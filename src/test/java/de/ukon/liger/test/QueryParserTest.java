@@ -11,8 +11,10 @@ import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -184,6 +186,20 @@ public class QueryParserTest {
 
             assertEquals(2, qpr.result.keySet().size());
         }
+    }
+
+    @Test
+    void testQueryParserValueEqualityOnMergedGraph() throws Exception {
+        Path mergedGraph = Paths.get("merged-graph.json");
+        LinkedHashMap<String, Object> json = new ObjectMapper().readValue(mergedGraph.toFile(), LinkedHashMap.class);
+        LinguisticStructure fs = LinguisticStructure.parseFromJson(json);
+
+        QueryParser qp = new QueryParser("#a SYN-ID %a & #b SRC %b & %a == %b", fs);
+        QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+        assertTrue(qpr.isSuccess);
+        assertEquals(4, qpr.result.keySet().size());
+        assertEquals(8, qpr.valueBindings.keySet().size());
     }
 
     @Test
