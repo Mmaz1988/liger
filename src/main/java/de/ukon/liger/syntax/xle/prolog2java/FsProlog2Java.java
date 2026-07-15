@@ -784,7 +784,90 @@ public class FsProlog2Java {
             LOGGER.warn("Potentially not all constraints have been parsed correctly." +
                     "Missing " + missing + " constraints.");
         }
+        appendNodeTypeConstraints(graphConstraints);
         return graphConstraints;
+    }
+
+    private static void appendNodeTypeConstraints(List<GraphConstraint> graphConstraints) {
+        Map<String, String> nodeTypes = new LinkedHashMap<>();
+        Map<String, Set<ChoiceVar>> readings = new LinkedHashMap<>();
+        Set<String> explicitNodeTypes = new HashSet<>();
+
+        for (GraphConstraint constraint : graphConstraints) {
+            if (constraint == null || constraint.getFsNode() == null) {
+                continue;
+            }
+
+            String sourceNode = constraint.getFsNode();
+            readings.putIfAbsent(sourceNode, constraint.getReading());
+
+            if ("NODE_TYPE".equals(constraint.getRelationLabel())) {
+                explicitNodeTypes.add(sourceNode);
+                String nodeType = normalizeNodeType(String.valueOf(constraint.getFsValue()));
+                if (nodeType != null) {
+                    nodeTypes.put(sourceNode, nodeType);
+                }
+                continue;
+            }
+
+            String nodeType = normalizeNodeType(constraint.getProj());
+            if (nodeType != null) {
+                nodeTypes.merge(sourceNode, nodeType, FsProlog2Java::preferNodeType);
+            }
+        }
+
+        List<GraphConstraint> nodeTypeConstraints = new ArrayList<>();
+        for (Map.Entry<String, String> entry : nodeTypes.entrySet()) {
+            if (explicitNodeTypes.contains(entry.getKey()) || entry.getValue() == null) {
+                continue;
+            }
+
+            try {
+                Integer sourceNode = Integer.parseInt(entry.getKey());
+                Set<ChoiceVar> reading = readings.get(entry.getKey());
+                if (reading == null || reading.isEmpty()) {
+                    reading = new LinkedHashSet<>();
+                    reading.add(new ChoiceVar("1"));
+                }
+                nodeTypeConstraints.add(new GraphConstraint(reading, sourceNode, "NODE_TYPE", entry.getValue(), false));
+            } catch (NumberFormatException ignored) {
+                LOGGER.warn("Could not derive NODE_TYPE for non-numeric source node {}", entry.getKey());
+            }
+        }
+
+        graphConstraints.addAll(nodeTypeConstraints);
+    }
+
+    private static String preferNodeType(String existing, String candidate) {
+        if (existing == null || existing.isBlank()) {
+            return candidate;
+        }
+        if (candidate == null || candidate.isBlank()) {
+            return existing;
+        }
+        if ("gnode".equals(existing) || "gnode".equals(candidate)) {
+            return "gnode";
+        }
+        if ("input".equals(existing) || "input".equals(candidate)) {
+            return "input";
+        }
+        if ("cnode".equals(existing) || "cnode".equals(candidate)) {
+            return "cnode";
+        }
+        return existing;
+    }
+
+    private static String normalizeNodeType(String proj) {
+        if (proj == null || proj.isBlank()) {
+            return null;
+        }
+
+        return switch (proj) {
+            case "c" -> "cnode";
+            case "g" -> "gnode";
+            case "f" -> "input";
+            default -> proj.toLowerCase(Locale.ROOT);
+        };
     }
 
     public static List<GraphConstraint> fsHash2List(
@@ -851,6 +934,7 @@ public class FsProlog2Java {
             }
         }
 
+        appendNodeTypeConstraints(out);
         return out;
     }
 

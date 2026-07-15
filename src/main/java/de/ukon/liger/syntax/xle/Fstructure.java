@@ -50,8 +50,8 @@ public class Fstructure extends LinguisticStructure {
             this.packed = false;
         }
 
-        this.fstructureFacts = fsFacts.stream().filter(x -> x.getProj().equals("f")).collect(Collectors.toList());
-        this.cStructureFacts = fsFacts.stream().filter(x -> x.getProj().equals("c")).collect(Collectors.toList());
+        this.fstructureFacts = fsFacts.stream().filter(x -> "f".equals(x.getProj())).collect(Collectors.toList());
+        this.cStructureFacts = fsFacts.stream().filter(x -> "c".equals(x.getProj())).collect(Collectors.toList());
     }
 
     public String writeToProlog(Boolean annotated){

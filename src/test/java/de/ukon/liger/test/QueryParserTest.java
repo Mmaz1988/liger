@@ -199,7 +199,7 @@ public class QueryParserTest {
 
         assertTrue(qpr.isSuccess);
         assertEquals(4, qpr.result.keySet().size());
-        assertEquals(8, qpr.valueBindings.keySet().size());
+        assertEquals(4, qpr.valueBindings.keySet().size());
     }
 
     @Test

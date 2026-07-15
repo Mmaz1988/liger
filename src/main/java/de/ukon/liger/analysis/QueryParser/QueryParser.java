@@ -425,7 +425,16 @@ public class QueryParser {
             if (!superiorConstraints.isEmpty()) {
                 result = applySuperiorConstraints(result);
             }
-            return new QueryParserResult(result,fsValueBindings);
+
+            HashMap<Set<SolutionKey>, HashMap<String, String>> filteredValueBindings = new HashMap<>();
+            for (Set<SolutionKey> key : result.keySet()) {
+                HashMap<String, String> bindings = fsValueBindings.get(key);
+                if (bindings != null) {
+                    filteredValueBindings.put(key, new HashMap<>(bindings));
+                }
+            }
+
+            return new QueryParserResult(result, filteredValueBindings);
         }
         return new QueryParserResult(new HashMap<>(),new HashMap<>());
     }
