@@ -101,45 +101,53 @@ public class LigerWebGraph {
 
         LinkedHashMap<String, HashMap<String,String>> nodes = new LinkedHashMap<>();
         List<LigerGraphComponent> edges = new ArrayList<>();
-        Map<String, String> nodeTypes = new LinkedHashMap<>();
-        Map<String, String> projectedNodeTypes = new LinkedHashMap<>();
 
         for (int i = 0; i < input.size(); i++)
         {
             GraphConstraint g = input.get(i);
             String fsNode = g.getFsNode();
 
-            if (fsNode == null || fsNode.isBlank()) {
-                continue;
-            }
+            if (!nodes.containsKey(fsNode))
+            {
+                nodes.put(fsNode,new HashMap<>());
 
-            nodes.putIfAbsent(fsNode, new HashMap<>());
-
-            if ("NODE_TYPE".equals(g.getRelationLabel())) {
-                String nodeType = normalizeNodeType(g.getFsValue());
-                if (nodeType != null && !nodeType.isBlank()) {
-                    nodeTypes.put(fsNode, nodeType);
+                if (g.getProj() != null)
+                {
+                    nodes.get(fsNode).put("projection",g.getProj());
                 }
-                continue;
-            }
-
-            if (g.getProj() != null) {
-                nodes.get(fsNode).put("projection", g.getProj());
-                String projectedNodeType = normalizeNodeType(g.getProj());
-                if (projectedNodeType != null) {
-                    projectedNodeTypes.merge(fsNode, projectedNodeType, LigerWebGraph::preferNodeType);
+            } else {
+                if (g.getProj() != null && !nodes.get(fsNode).containsKey("projection"))
+                {
+                    nodes.get(fsNode).put("projection",g.getProj());
+                } else if (nodes.get(fsNode).containsKey("projection")) {
+                    String proj = nodes.get(fsNode).get("projection");
+                    if ("g".equals(proj) || "g".equals(g.getProj()))
+                    {
+                        nodes.get(fsNode).put("projection","g");
+                    }
                 }
             }
 
-            if ("SYN-ID".equals(g.getRelationLabel())) {
-                nodes.get(fsNode).put("SYN-ID", g.getFsValue().toString());
-
-            } else if (isIntegerValue(g.getFsValue())
+            if (isIntegerValue(g.getFsValue())
             ) {
-                String target = g.getFsValue().toString();
-                nodes.putIfAbsent(target, new HashMap<>());
-                if (g.getProj() != null && !nodes.get(target).containsKey("projection")) {
-                    nodes.get(target).put("projection", g.getProj());
+                if (!nodes.containsKey(g.getFsValue().toString()))
+                {
+                    nodes.put(g.getFsValue().toString(),new HashMap<>());
+                    if (g.getProj() != null)
+                    {
+                        nodes.get(g.getFsValue().toString()).put("projection",g.getProj());
+                    }
+                } else {
+                    if (g.getProj() != null &&  !nodes.get(g.getFsValue().toString()).containsKey("projection"))
+                    {
+                        nodes.get(g.getFsValue().toString()).put("projection",g.getProj());
+                    } else if (nodes.get(g.getFsValue().toString()).containsKey("projection")) {
+                        String proj = nodes.get(g.getFsValue().toString()).get("projection");
+                        if ("g".equals(proj) || "g".equals(g.getProj()))
+                        {
+                            nodes.get(g.getFsValue().toString()).put("projection","g");
+                        }
+                    }
                 }
                 edges.add(new LigerWebEdge("rid" + g.getFsNode() + g.getFsValue().toString(),
                         g.getFsNode(),g.getFsValue().toString(),
@@ -150,28 +158,61 @@ public class LigerWebGraph {
                 nodes.get(fsNode).put(g.getRelationLabel(),g.getFsValue().toString());
             }
 
+            if ("NODE_TYPE".equals(g.getRelationLabel())) {
+                String nodeType = normalizeNodeType(g.getFsValue());
+                if (nodeType != null && !nodeType.isBlank()) {
+
+                    if (!nodes.containsKey(g.getFsValue().toString())) {
+                        nodes.put(g.getFsValue().toString(), new HashMap<>());
+                        nodes.get(g.getFsValue().toString()).put("node_type",nodeType);
+                    }
+                    if (!nodes.get(g.getFsValue().toString()).containsKey("node_type")) {
+                        nodes.get(g.getFsValue().toString()).put("node_type",nodeType);
+                    }
+                }
+            }
         }
 
         List<LigerGraphComponent> testNodes = new ArrayList<>();
 
+        int counter = 0;
+
         for (String key : nodes.keySet())
         {
-            HashMap<String, String> avp = nodes.get(key);
-            String resolvedNodeType = nodeTypes.get(key);
-            if (resolvedNodeType == null) {
-                resolvedNodeType = projectedNodeTypes.get(key);
-            }
-            if (resolvedNodeType == null) {
-                resolvedNodeType = type;
+            LigerWebNode lwn = null;
+
+            if (!nodes.get(key).keySet().isEmpty()) {
+                lwn = new LigerWebNode(key, type, key, nodes.get(key));
+            } else
+            {
+                lwn = new LigerWebNode(key,type,key);
             }
 
-            if (!avp.keySet().isEmpty()) {
-                testNodes.add(new LigerWebNode(key, resolvedNodeType, key, avp));
-            } else {
-                testNodes.add(new LigerWebNode(key, resolvedNodeType, key));
+
+            if (lwn.data.containsKey("avp")) {
+            if (!((HashMap<String, String>) lwn.data.get("avp")).keySet().isEmpty()) {
+                if (((HashMap<String, String>) lwn.data.get("avp")).containsKey("projection")) {
+                    if (((HashMap<String, String>) lwn.data.get("avp")).get("projection").equals("c")) {
+                        lwn.data.put("node_type", "cnode");
+                        ((HashMap<String, String>) lwn.data.get("avp")).remove("projection");
+                        counter++;
+                    } else
+                    if (((HashMap<String, String>) lwn.data.get("avp")).get("projection").equals("g")) {
+                        lwn.data.put("node_type", "gnode");
+                        ((HashMap<String, String>) lwn.data.get("avp")).remove("projection");
+                        counter++;
+                    }
+                }
             }
+        }
+
+
+
+            testNodes.add(lwn);
 
         }
+
+        System.out.println("Modified " + counter + " nodes");
 
         Map<String,List<LigerGraphComponent>> output = new LinkedHashMap<>();
         output.put("nodes",testNodes);
@@ -208,31 +249,13 @@ public class LigerWebGraph {
             return null;
         }
 
-        return switch (nodeType.toLowerCase(Locale.ROOT)) {
+        return switch (nodeType.toLowerCase()) {
             case "c" -> "cnode";
             case "g" -> "gnode";
             case "f" -> "input";
-            default -> nodeType.toLowerCase(Locale.ROOT);
+            
+            default -> nodeType.toLowerCase();
         };
-    }
-
-    private static String preferNodeType(String existing, String candidate) {
-        if (existing == null || existing.isBlank()) {
-            return candidate;
-        }
-        if (candidate == null || candidate.isBlank()) {
-            return existing;
-        }
-        if ("gnode".equals(existing) || "gnode".equals(candidate)) {
-            return "gnode";
-        }
-        if ("input".equals(existing) || "input".equals(candidate)) {
-            return "input";
-        }
-        if ("cnode".equals(existing) || "cnode".equals(candidate)) {
-            return "cnode";
-        }
-        return existing;
     }
 
 }
