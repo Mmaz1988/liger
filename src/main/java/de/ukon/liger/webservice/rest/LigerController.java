@@ -40,10 +40,12 @@ import de.ukon.liger.utilities.VariableHandler;
 import de.ukon.liger.utilities.XLEStarter;
 import de.ukon.liger.webservice.rest.dtos.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -102,6 +104,7 @@ public class LigerController {
             solutions.add(new LigerSolutionAnnotation(
                     solutionKeyFor(fs, i),
                     new LigerWebGraph(fs.constraints, fs.annotation),
+                    fs.toJson(),
                     new LinkedHashSet<>(),
                     semString,
                     countMeaningConstructorSets(semString),
@@ -166,6 +169,7 @@ public class LigerController {
             solutions.add(new LigerSolutionAnnotation(
                     solutionKeyFor(fs, i),
                     lg,
+                    fs.toJson(),
                     appliedLigerRules,
                     currentSemString,
                     countMeaningConstructorSets(currentSemString),
@@ -284,24 +288,49 @@ public class LigerController {
 
     @CrossOrigin
     @PostMapping(value = "/parse_uploaded_structure", produces = "application/json", consumes = "application/json")
-    public LigerRuleAnnotation parseUploadedStructure(@RequestBody LigerStructureUploadRequest request) throws IOException {
-        LinguisticStructure fs = parseUploadedLinguisticStructure(request);
-        return new LigerRuleAnnotation(
-                fs.text,
-                new LigerWebGraph(fs.constraints, fs.annotation),
-                new LinkedHashSet<>(),
-                "",
-                fs.annotation.size(),
-                new ArrayList<>()
-        );
+    public LigerRuleAnnotation parseUploadedStructure(@RequestBody LigerStructureUploadRequest request) {
+        try {
+            return renderUploadedStructure(request);
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+    }
+
+    @CrossOrigin
+    @PostMapping(value = "/render_graph", produces = "application/json", consumes = "application/json")
+    public LigerRuleAnnotation renderGraph(@RequestBody LigerStructureUploadRequest request) {
+        try {
+            return renderUploadedStructure(request);
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+    }
+
+    @CrossOrigin
+    @PostMapping(value = "/apply_rules_uploaded_structure", produces = "application/json", consumes = "application/json")
+    public LigerRuleAnnotation applyRulesUploadedStructure(@RequestBody LigerStructureRuleRequest request) {
+        try {
+            return applyRulesToUploadedStructure(request);
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
     }
 
     @CrossOrigin
     @PostMapping(value = "/query_uploaded_structure", produces = "application/json", consumes = "application/json")
-    public LigerStructureQueryResponse queryUploadedStructure(@RequestBody LigerStructureQueryRequest request) throws IOException {
-        LinguisticStructure fs = parseUploadedLinguisticStructure(new LigerStructureUploadRequest(request.content, request.format, request.id));
+    public LigerStructureQueryResponse queryUploadedStructure(@RequestBody LigerStructureQueryRequest request) {
+        LinguisticStructure fs;
+        try {
+            fs = parseUploadedLinguisticStructure(new LigerStructureUploadRequest(request.content, request.format, request.id));
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
 
         QueryRequestBundle queryBundle = stripEmbeddedQueryDefinitions(request.query);
+        LOGGER.info("Graph inspector query request: templateCount="
+                + queryBundle.templateRegistry().getTemplates().size()
+                + ", hierarchyCount=" + queryBundle.hierarchyRegistry().getHierarchies().size()
+                + ", sanitizedQuery='" + queryBundle.query() + "'");
         QueryParser qp = new QueryParser(
                 queryBundle.query(),
                 fs,
@@ -309,6 +338,7 @@ public class LigerController {
                 queryBundle.hierarchyRegistry());
 
         List<QueryParserResult> results = qp.parseQueryWithTemplates(queryBundle.query());
+        LOGGER.info("Graph inspector query parse completed: resultCount=" + results.size());
 
         QueryMatchSummary matchSummary = summarizeQueryMatches(results);
         LigerWebGraph graph = new LigerWebGraph(fs.constraints, fs.annotation);
@@ -320,12 +350,10 @@ public class LigerController {
     @CrossOrigin
     @PostMapping(value = "/merge_uploaded_structures", produces = "application/json", consumes = "application/json")
     public LigerMergeResponse mergeUploadedStructures(@RequestBody LigerStructureMergeRequest request) {
-        LinguisticStructure syntax = request.syntaxGraph != null
-                ? LigerGraphTranslator.translate(request.syntaxGraph)
-                : parseStructureMap(request.syntax);
+        LinguisticStructure syntax = parseStructureMap(request.syntax);
         LinguisticStructure drs = parseStructureMap(request.drs);
         LinguisticStructure merged = LinguisticStructureMerger.merge(syntax, drs);
-        return new LigerMergeResponse(new LigerWebGraph(buildUploadedGraphElements(merged)), merged.toJson());
+        return new LigerMergeResponse(new LigerWebGraph(merged.constraints, merged.annotation),merged.toJson());
     }
 
     private QueryMatchSummary summarizeQueryMatches(List<QueryParserResult> results) {
@@ -426,6 +454,8 @@ public class LigerController {
                 hierarchyDefinitions.append(trimmed).append(' ');
             } else if (isTemplateDefinitionLine(trimmed)) {
                 templateDefinitions.append(trimmed).append(' ');
+            } else if (trimmed.startsWith("//")) {
+                continue;
             } else {
                 sanitized.append(line);
             }
@@ -442,6 +472,8 @@ public class LigerController {
             hierarchyRegistry = new HierarchyParser().parse(hierarchyDefinitions.toString());
         }
 
+        LOGGER.info("Stripped embedded query definitions: templateDefs='" + templateDefinitions + "', hierarchyDefs='"
+                + hierarchyDefinitions + "', sanitized='" + sanitized.toString().trim() + "'");
         return new QueryRequestBundle(sanitized.toString().trim(), templateRegistry, hierarchyRegistry);
     }
 
@@ -471,18 +503,67 @@ public class LigerController {
         }
 
         ObjectMapper mapper = new ObjectMapper();
-        LinkedHashMap lsmap = mapper.readValue(request.content, LinkedHashMap.class);
-        LinguisticStructure ls = LinguisticStructure.parseFromJson(lsmap);
+        try {
+            LinkedHashMap lsmap = mapper.readValue(request.content, LinkedHashMap.class);
+            if (lsmap.containsKey("graphElements")) {
+                throw new IOException("Graph-only JSON is not supported. Upload a LinguisticStructure JSON instead.");
+            }
 
-        if (ls.local_id == null || ls.local_id.isBlank()) {
-            ls.local_id = id;
+            LinguisticStructure ls = LinguisticStructure.parseFromJson(lsmap);
+
+            if (ls.local_id == null || ls.local_id.isBlank()) {
+                ls.local_id = id;
+            }
+
+            if (ls.cp == null) {
+                ls.cp = new de.ukon.liger.packing.ChoiceSpace();
+            }
+
+            return ls;
+        } catch (Exception e) {
+            if (e instanceof IOException ioException) {
+                throw ioException;
+            }
+            throw new IOException("Invalid LinguisticStructure JSON. Expected id, text, constraints, annotations, and choiceSpace.", e);
+        }
+    }
+
+    private LigerRuleAnnotation renderUploadedStructure(LigerStructureUploadRequest request) throws IOException {
+        LinguisticStructure fs = parseUploadedLinguisticStructure(request);
+        return new LigerRuleAnnotation(
+                fs.text,
+                new LigerWebGraph(fs.constraints, fs.annotation),
+                new LinkedHashSet<>(),
+                "",
+                fs.annotation.size(),
+                new ArrayList<>(),
+                fs.toJson()
+        );
+    }
+
+    private LigerRuleAnnotation applyRulesToUploadedStructure(LigerStructureRuleRequest request) throws IOException {
+        LinguisticStructure fs = parseUploadedLinguisticStructure(
+                new LigerStructureUploadRequest(request.content, request.format, request.id)
+        );
+
+        List<LinguisticStructure> fsList = new ArrayList<>();
+        fsList.add(fs);
+
+        RuleParser rp = new RuleParser(fsList, request.ruleString == null ? "" : request.ruleString);
+        rp.addAnnotation2(fs);
+
+        LinkedHashSet<LigerRule> appliedRules = new LinkedHashSet<>();
+        for (Rule r : rp.getAppliedRules()) {
+            appliedRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
         }
 
-        if (ls.cp == null) {
-            ls.cp = new de.ukon.liger.packing.ChoiceSpace();
-        }
-
-        return ls;
+        LigerRuleAnnotation response = new LigerRuleAnnotation(
+                new LigerWebGraph(fs.constraints, fs.annotation),
+                appliedRules,
+                fs.toJson()
+        );
+        response.sentence = fs.text;
+        return response;
     }
 
     private LinguisticStructure parseStructureMap(LinkedHashMap<String, Object> json) {

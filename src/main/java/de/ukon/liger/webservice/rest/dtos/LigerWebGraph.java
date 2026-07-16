@@ -100,6 +100,7 @@ public class LigerWebGraph {
         }
 
         LinkedHashMap<String, HashMap<String,String>> nodes = new LinkedHashMap<>();
+        Map<String, String> nodeTypes = new HashMap<>();
         List<LigerGraphComponent> edges = new ArrayList<>();
 
         for (int i = 0; i < input.size(); i++)
@@ -161,14 +162,7 @@ public class LigerWebGraph {
             if ("NODE_TYPE".equals(g.getRelationLabel())) {
                 String nodeType = normalizeNodeType(g.getFsValue());
                 if (nodeType != null && !nodeType.isBlank()) {
-
-                    if (!nodes.containsKey(g.getFsValue().toString())) {
-                        nodes.put(g.getFsValue().toString(), new HashMap<>());
-                        nodes.get(g.getFsValue().toString()).put("node_type",nodeType);
-                    }
-                    if (!nodes.get(g.getFsValue().toString()).containsKey("node_type")) {
-                        nodes.get(g.getFsValue().toString()).put("node_type",nodeType);
-                    }
+                    nodeTypes.putIfAbsent(g.getFsNode(), nodeType);
                 }
             }
         }
@@ -205,6 +199,10 @@ public class LigerWebGraph {
                 }
             }
         }
+
+            if (nodeTypes.containsKey(key)) {
+                lwn.data.put("node_type", nodeTypes.get(key));
+            }
 
 
 

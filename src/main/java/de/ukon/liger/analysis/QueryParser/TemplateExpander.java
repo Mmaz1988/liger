@@ -6,8 +6,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TemplateExpander {
+
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(TemplateExpander.class);
 
     public static List<List<String>> expandQuery(String query, TemplateRegistry registry) {
         List<List<String>> seeds = new ArrayList<>();
@@ -60,6 +64,7 @@ public class TemplateExpander {
 
         for (List<String> alternative : template.getAlternatives()) {
             List<String> instantiated = instantiate(alternative, substitution);
+            LOGGER.info("Expanded template invocation @" + invocation.name() + " with args=" + invocation.arguments() + " -> " + instantiated);
             List<String> nextTokens = new ArrayList<>(instantiated);
             nextTokens.addAll(rest);
             expandTokens(nextTokens, registry, new ArrayList<>(prefix), out);
@@ -149,9 +154,19 @@ public class TemplateExpander {
     private static List<String> instantiate(List<String> tokens, Map<String, String> substitution) {
         List<String> out = new ArrayList<>();
         for (String token : tokens) {
-            out.add(substitution.getOrDefault(token, token));
+            out.add(substituteToken(token, substitution));
         }
         return out;
+    }
+
+    private static String substituteToken(String token, Map<String, String> substitution) {
+        String result = token;
+        for (Map.Entry<String, String> entry : substitution.entrySet()) {
+            String parameter = entry.getKey();
+            String value = entry.getValue();
+            result = result.replaceAll("(?<![A-Za-z0-9_])" + Pattern.quote(parameter) + "(?![A-Za-z0-9_])", Matcher.quoteReplacement(value));
+        }
+        return result;
     }
 
     private record TemplateInvocation(String name, List<String> arguments, String suffix) {

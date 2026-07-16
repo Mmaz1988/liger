@@ -882,6 +882,8 @@ public class RuleParser {
                 hierarchyDefinitions.append(trimmed).append(' ');
             } else if (isTemplateDefinitionLine(trimmed)) {
                 templateDefinitions.append(trimmed).append(' ');
+            } else if (trimmed.startsWith("//")) {
+                continue;
             } else {
                 sanitized.append(line);
             }

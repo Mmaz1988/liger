@@ -482,7 +482,15 @@ public class QueryParser {
             return Collections.singletonList(parseQuery(getQueryList()));
         }
 
+        boolean hasTemplateInvocation = tokenizeQuery(query).stream().anyMatch(token -> token != null && token.startsWith("@"));
+        if (!hasTemplateInvocation) {
+            LOGGER.info("Template registry present, but query contains no template invocation. Skipping expansion for query='" + query + "'");
+            generateQuery(query);
+            return Collections.singletonList(parseQuery(getQueryList()));
+        }
+
         List<List<String>> expandedQueries = TemplateExpander.expandQuery(query, templateRegistry);
+        LOGGER.info("Expanding query against template registry: originalQuery='" + query + "', expansionCount=" + expandedQueries.size());
         List<QueryParserResult> results = new ArrayList<>();
 
         for (List<String> expandedQuery : expandedQueries) {

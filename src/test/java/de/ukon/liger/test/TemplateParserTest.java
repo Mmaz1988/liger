@@ -194,6 +194,18 @@ public class TemplateParserTest {
         }
     }
 
+    @Test
+    void testTemplateExpansionSubstitutesParametersInsideCompoundTokens() {
+        TemplateRegistry registry = new TemplateParser().parse(
+                "REFL-BIND(#f,#h) := #f ^(@GF*:~(->SUBJ)) #i ^(@GF) #j !(@GF) #h & superior(GF,#h,#j) .");
+
+        List<List<String>> expansions = TemplateExpander.expandQuery("@REFL-BIND(#b,#c)", registry);
+
+        assertEquals(1, expansions.size());
+        assertTrue(expansions.get(0).stream().anyMatch(token -> token.contains("superior(GF,#c,#j)")));
+        assertTrue(expansions.get(0).stream().noneMatch(token -> token.contains("#h")));
+    }
+
     private List<String> normalizeResult(QueryParserResult qpr) {
         List<String> out = new ArrayList<>();
 

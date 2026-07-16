@@ -31,6 +31,10 @@ public class HierarchyRegistry {
         return hierarchies.containsKey(name);
     }
 
+    public Map<String, List<String>> getHierarchies() {
+        return Collections.unmodifiableMap(hierarchies);
+    }
+
     public List<String[]> getSuperiorPairs(String name) {
         List<String> order = getHierarchy(name);
         if (order.size() < 2) {
