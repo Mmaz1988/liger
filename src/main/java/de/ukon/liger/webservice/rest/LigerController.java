@@ -530,7 +530,7 @@ public class LigerController {
 
     private LigerRuleAnnotation renderUploadedStructure(LigerStructureUploadRequest request) throws IOException {
         LinguisticStructure fs = parseUploadedLinguisticStructure(request);
-        return new LigerRuleAnnotation(
+        LigerRuleAnnotation response = new LigerRuleAnnotation(
                 fs.text,
                 new LigerWebGraph(fs.constraints, fs.annotation),
                 new LinkedHashSet<>(),
@@ -539,6 +539,8 @@ public class LigerController {
                 new ArrayList<>(),
                 fs.toJson()
         );
+        response.highlightedNodeIds = collectHighlightedNodeIds(fs);
+        return response;
     }
 
     private LigerRuleAnnotation applyRulesToUploadedStructure(LigerStructureRuleRequest request) throws IOException {
@@ -563,7 +565,37 @@ public class LigerController {
                 fs.toJson()
         );
         response.sentence = fs.text;
+        response.highlightedNodeIds = collectHighlightedNodeIds(fs);
         return response;
+    }
+
+    private LinkedHashSet<String> collectHighlightedNodeIds(LinguisticStructure fs) {
+        LinkedHashSet<String> highlightedNodeIds = new LinkedHashSet<>();
+
+        if (fs == null || fs.annotation == null) {
+            return highlightedNodeIds;
+        }
+
+        for (GraphConstraint constraint : fs.annotation) {
+            if (constraint == null) {
+                continue;
+            }
+
+            String sourceNode = constraint.getFsNode();
+            if (sourceNode != null && !sourceNode.isBlank()) {
+                highlightedNodeIds.add(sourceNode);
+            }
+
+            Object value = constraint.getFsValue();
+            if (value != null) {
+                String targetNode = String.valueOf(value);
+                if (de.ukon.liger.utilities.HelperMethods.isInteger(targetNode)) {
+                    highlightedNodeIds.add(targetNode);
+                }
+            }
+        }
+
+        return highlightedNodeIds;
     }
 
     private LinguisticStructure parseStructureMap(LinkedHashMap<String, Object> json) {

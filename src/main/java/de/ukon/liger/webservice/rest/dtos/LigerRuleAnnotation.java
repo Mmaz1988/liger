@@ -14,6 +14,8 @@ public class LigerRuleAnnotation {
 
     public LinkedHashSet<LigerRule> appliedRules;
 
+    public LinkedHashSet<String> highlightedNodeIds;
+
     public String meaningConstructors;
 
     public int numberOfMCsets;
@@ -24,6 +26,7 @@ public class LigerRuleAnnotation {
     {
         this.graph = graph;
         this.appliedRules = appliedRules;
+        this.highlightedNodeIds = new LinkedHashSet<>();
     }
 
     public LigerRuleAnnotation(LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules, LinkedHashMap<String, Object> structureJson)
@@ -31,6 +34,7 @@ public class LigerRuleAnnotation {
         this.graph = graph;
         this.appliedRules = appliedRules;
         this.structureJson = structureJson;
+        this.highlightedNodeIds = new LinkedHashSet<>();
     }
 
     public LigerRuleAnnotation(LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules, String meaningConstructors, List<String> axioms)
@@ -39,6 +43,7 @@ public class LigerRuleAnnotation {
         this.appliedRules = appliedRules;
         this.meaningConstructors = meaningConstructors;
         this.axioms = axioms;
+        this.highlightedNodeIds = new LinkedHashSet<>();
     }
 
     public LigerRuleAnnotation(String sentence, LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules, String meaningConstructors, int numberOfMCsets, List<String> axioms)
@@ -49,6 +54,7 @@ public class LigerRuleAnnotation {
         this.meaningConstructors = meaningConstructors;
         this.numberOfMCsets = numberOfMCsets;
         this.axioms = axioms;
+        this.highlightedNodeIds = new LinkedHashSet<>();
     }
 
     public LigerRuleAnnotation(String sentence, LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules, String meaningConstructors, int numberOfMCsets, List<String> axioms, LinkedHashMap<String, Object> structureJson)
@@ -60,5 +66,6 @@ public class LigerRuleAnnotation {
         this.numberOfMCsets = numberOfMCsets;
         this.axioms = axioms;
         this.structureJson = structureJson;
+        this.highlightedNodeIds = new LinkedHashSet<>();
     }
 }

@@ -12,6 +12,8 @@ import de.ukon.liger.utilities.PathVariables;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -127,6 +129,24 @@ public class RuleParserFileIntegrationTest {
         rp.addAnnotation2(fs.get(key));
 
         assertEquals(2, fs.get(key).annotation.size());
+    }
+
+    @Test
+    void testMultilineTemplateDefinitionIsPreserved() throws Exception {
+        Path tempFile = Files.createTempFile("liger-multiline-template", ".txt");
+        Files.writeString(tempFile,
+                "// HIERARCHIES\n" +
+                "GF ::= SUBJ > OBJ > OBL .\n\n" +
+                "// TEMPLATES\n" +
+                "GF := SUBJ | OBJ | OBL .\n" +
+                "REFL-BIND(#f,#h) := #f PRON-TYPE 'refl' & @MCN-PATH(#f,#i) &\n" +
+                "                    #i ^(@GF) #j !(@GF) #h & superior(GF,#h,#i) .\n\n" +
+                "@REFL-BIND(#a,#b) ==> #a TEST #b.\n");
+
+        RuleParser ruleParser = new RuleParser(tempFile.toFile());
+
+        assertTrue(ruleParser.getTemplateRegistry().getTemplates().containsKey("REFL-BIND"));
+        assertEquals(1, ruleParser.getRules().size());
     }
 
 }

@@ -872,20 +872,58 @@ public class RuleParser {
         StringBuilder templateDefinitions = new StringBuilder();
         StringBuilder hierarchyDefinitions = new StringBuilder();
         StringBuilder sanitized = new StringBuilder();
+        StringBuilder pendingDefinition = new StringBuilder();
+
+        enum DefinitionType {
+            NONE,
+            TEMPLATE,
+            HIERARCHY
+        }
+
+        DefinitionType pendingType = DefinitionType.NONE;
 
         String[] lines = fileString.split("\\R", -1);
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i];
             String trimmed = line.trim();
 
-            if (isHierarchyDefinitionLine(trimmed)) {
-                hierarchyDefinitions.append(trimmed).append(' ');
-            } else if (isTemplateDefinitionLine(trimmed)) {
-                templateDefinitions.append(trimmed).append(' ');
-            } else if (trimmed.startsWith("//")) {
-                continue;
+            if (pendingType != DefinitionType.NONE) {
+                if (!trimmed.startsWith("//") && !trimmed.isEmpty()) {
+                    if (pendingDefinition.length() > 0) {
+                        pendingDefinition.append(' ');
+                    }
+                    pendingDefinition.append(trimmed);
+                }
+
+                if (trimmed.endsWith(".")) {
+                    if (pendingType == DefinitionType.TEMPLATE) {
+                        templateDefinitions.append(pendingDefinition).append(' ');
+                    } else if (pendingType == DefinitionType.HIERARCHY) {
+                        hierarchyDefinitions.append(pendingDefinition).append(' ');
+                    }
+                    pendingDefinition.setLength(0);
+                    pendingType = DefinitionType.NONE;
+                }
             } else {
-                sanitized.append(line);
+                if (isHierarchyDefinitionLine(trimmed)) {
+                    pendingType = DefinitionType.HIERARCHY;
+                    pendingDefinition.append(trimmed);
+                    if (trimmed.endsWith(".")) {
+                        hierarchyDefinitions.append(pendingDefinition).append(' ');
+                        pendingDefinition.setLength(0);
+                        pendingType = DefinitionType.NONE;
+                    }
+                } else if (isTemplateDefinitionLine(trimmed)) {
+                    pendingType = DefinitionType.TEMPLATE;
+                    pendingDefinition.append(trimmed);
+                    if (trimmed.endsWith(".")) {
+                        templateDefinitions.append(pendingDefinition).append(' ');
+                        pendingDefinition.setLength(0);
+                        pendingType = DefinitionType.NONE;
+                    }
+                } else if (!trimmed.startsWith("//")) {
+                    sanitized.append(line);
+                }
             }
 
             if (i < lines.length - 1) {
