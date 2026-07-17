@@ -104,7 +104,7 @@ public class RuleParserFileIntegrationTest {
 
         rp.addAnnotation2(fslist.get(0));
 
-        assertEquals(14, fslist.get(0).annotation.size());
+        assertEquals(13, fslist.get(0).annotation.size());
     }
 
     @Test

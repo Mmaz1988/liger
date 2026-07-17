@@ -203,6 +203,33 @@ public class QueryParserTest {
     }
 
     @Test
+    void testInlineAndTemplateQueryOnMergedGraphReturnSameTwoSolutions() throws Exception {
+        Path mergedGraph = Paths.get("merged-graph.json");
+        LinkedHashMap<String, Object> json = new ObjectMapper().readValue(mergedGraph.toFile(), LinkedHashMap.class);
+        LinguisticStructure fs = LinguisticStructure.parseFromJson(json);
+
+        TemplateRegistry templateRegistry = new TemplateParser().parse(
+                "GF := SUBJ | OBJ | OBL . " +
+                "MCN-PATH(#a,#b) := #a ^(@GF*:~(->SUBJ)) #b . " +
+                "REFL-BIND(#f,#h) := @MCN-PATH(#f,#i) & #i ^(@GF) #j !(@GF) #h & superior(GF,#h,#i) .");
+        HierarchyRegistry hierarchyRegistry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
+
+        String templateQuery = "#a ant #a & #a SYNSEM #b & @REFL-BIND(#b,#c)";
+        String inlineQuery = "#a ant #a & #a SYNSEM #b & #b ^(@GF*:~(->SUBJ)) #d ^(@GF) #e !(@GF) #c & superior(GF,#c,#d)";
+
+        QueryParser templateParser = new QueryParser(templateQuery, fs, templateRegistry, hierarchyRegistry);
+        QueryParserResult templateResult = templateParser.parseQueryWithTemplates(templateQuery).get(0);
+
+        QueryParser inlineParser = new QueryParser(inlineQuery, fs, templateRegistry, hierarchyRegistry);
+        QueryParserResult inlineResult = inlineParser.parseQuery(inlineParser.getQueryList());
+
+        assertTrue(templateResult.isSuccess);
+        assertEquals(2, templateResult.result.keySet().size());
+        assertEquals(2, inlineResult.result.keySet().size());
+        assertEquals(normalizeResult(inlineResult), normalizeResult(templateResult));
+    }
+
+    @Test
     void testQueryParser17() {
         LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS15.pl");
 

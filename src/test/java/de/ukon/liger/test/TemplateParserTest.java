@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -202,8 +203,22 @@ public class TemplateParserTest {
         List<List<String>> expansions = TemplateExpander.expandQuery("@REFL-BIND(#b,#c)", registry);
 
         assertEquals(1, expansions.size());
-        assertTrue(expansions.get(0).stream().anyMatch(token -> token.contains("superior(GF,#c,#j)")));
+        assertTrue(expansions.get(0).stream().anyMatch(token -> token.contains("superior(GF,#c,#")));
         assertTrue(expansions.get(0).stream().noneMatch(token -> token.contains("#h")));
+    }
+
+    @Test
+    void testTemplateInternalVariablesAreAlphaRenamed() {
+        TemplateRegistry registry = new TemplateParser().parse(
+                "TMPL(#a,#b) := #a LINK #x LINK1 #b .");
+
+        List<List<String>> expansions = TemplateExpander.expandQuery("#x COMP #a SUBJ #b & @TMPL(#a,#b)", registry);
+
+        assertEquals(1, expansions.size());
+        String expanded = String.join(" ", expansions.get(0));
+        assertTrue(expanded.contains("#x COMP #a SUBJ #b"));
+        assertTrue(expanded.contains("LINK1 #b"));
+        assertFalse(expanded.contains("LINK #x LINK1"));
     }
 
     private List<String> normalizeResult(QueryParserResult qpr) {

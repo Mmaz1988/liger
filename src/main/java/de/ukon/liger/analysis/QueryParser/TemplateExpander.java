@@ -1,17 +1,20 @@
 package de.ukon.liger.analysis.QueryParser;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TemplateExpander {
 
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(TemplateExpander.class);
+    private static final Pattern FS_VAR_PATTERN = Pattern.compile("([#*])(\\w+)");
 
     public static List<List<String>> expandQuery(String query, TemplateRegistry registry) {
         List<List<String>> seeds = new ArrayList<>();
@@ -19,7 +22,7 @@ public class TemplateExpander {
 
         List<List<String>> expanded = new ArrayList<>();
         for (List<String> seed : seeds) {
-            expandTokens(seed, registry, new ArrayList<>(), expanded);
+            expandTokens(seed, registry, new ArrayList<>(), expanded, collectFsNodeNames(seed), new AtomicInteger(0));
         }
         return expanded;
     }
@@ -31,7 +34,8 @@ public class TemplateExpander {
     }
 
     private static void expandTokens(List<String> tokens, TemplateRegistry registry,
-                                     List<String> prefix, List<List<String>> out) {
+                                     List<String> prefix, List<List<String>> out,
+                                     Set<String> usedVars, AtomicInteger freshVarCounter) {
         if (tokens.isEmpty()) {
             out.add(new ArrayList<>(prefix));
             return;
@@ -43,7 +47,9 @@ public class TemplateExpander {
         TemplateInvocation invocation = TemplateInvocation.parse(token);
         if (invocation == null) {
             prefix.add(token);
-            expandTokens(rest, registry, prefix, out);
+            Set<String> nextUsedVars = new LinkedHashSet<>(usedVars);
+            nextUsedVars.addAll(collectFsNodeNames(List.of(token)));
+            expandTokens(rest, registry, prefix, out, nextUsedVars, freshVarCounter);
             prefix.remove(prefix.size() - 1);
             return;
         }
@@ -63,12 +69,123 @@ public class TemplateExpander {
         }
 
         for (List<String> alternative : template.getAlternatives()) {
-            List<String> instantiated = instantiate(alternative, substitution);
+            List<String> renamedAlternative = alphaRenameTemplateBody(alternative, template.getParameters(), usedVars, freshVarCounter);
+            List<String> instantiated = instantiate(renamedAlternative, template.getParameters(), substitution);
             LOGGER.info("Expanded template invocation @" + invocation.name() + " with args=" + invocation.arguments() + " -> " + instantiated);
             List<String> nextTokens = new ArrayList<>(instantiated);
             nextTokens.addAll(rest);
-            expandTokens(nextTokens, registry, new ArrayList<>(prefix), out);
+            Set<String> nextUsedVars = new LinkedHashSet<>(usedVars);
+            nextUsedVars.addAll(collectFsNodeNames(instantiated));
+            expandTokens(nextTokens, registry, new ArrayList<>(prefix), out, nextUsedVars, freshVarCounter);
         }
+    }
+
+    private static List<String> alphaRenameTemplateBody(List<String> tokens,
+                                                        List<String> parameters,
+                                                        Set<String> usedVars,
+                                                        AtomicInteger freshVarCounter) {
+        Map<String, String> renames = new LinkedHashMap<>();
+        List<String> out = new ArrayList<>();
+
+        for (String token : tokens) {
+            TemplateInvocation invocation = TemplateInvocation.parse(token);
+            if (invocation != null) {
+                out.add(renameTemplateInvocation(token, parameters, usedVars, renames, freshVarCounter, invocation));
+            } else {
+                out.add(renameTemplateVariables(token, parameters, usedVars, renames, freshVarCounter));
+            }
+        }
+
+        return out;
+    }
+
+    private static String renameTemplateInvocation(String originalToken,
+                                                   List<String> parameters,
+                                                   Set<String> usedVars,
+                                                   Map<String, String> renames,
+                                                   AtomicInteger freshVarCounter,
+                                                   TemplateInvocation invocation) {
+        if (invocation.arguments().isEmpty()) {
+            return originalToken;
+        }
+
+        List<String> renamedArgs = new ArrayList<>();
+        for (String arg : invocation.arguments()) {
+            renamedArgs.add(renameTemplateVariables(arg, parameters, usedVars, renames, freshVarCounter));
+        }
+
+        StringBuilder out = new StringBuilder("@");
+        out.append(invocation.name()).append("(");
+        out.append(String.join(",", renamedArgs));
+        out.append(")");
+        out.append(invocation.suffix());
+        return out.toString();
+    }
+
+    private static String renameTemplateVariables(String token,
+                                                  List<String> parameters,
+                                                  Set<String> usedVars,
+                                                  Map<String, String> renames,
+                                                  AtomicInteger freshVarCounter) {
+        Matcher matcher = FS_VAR_PATTERN.matcher(token);
+        StringBuffer buffer = new StringBuffer();
+
+        while (matcher.find()) {
+            String prefix = matcher.group(1);
+            String variable = matcher.group(2);
+
+            if (parameters.contains(prefix + variable)) {
+                matcher.appendReplacement(buffer, Matcher.quoteReplacement(prefix + variable));
+                continue;
+            }
+
+            String renamed = renames.get(variable);
+            if (renamed == null) {
+                renamed = freshFsNodeName(usedVars, freshVarCounter);
+                renames.put(variable, renamed);
+            }
+
+            matcher.appendReplacement(buffer, Matcher.quoteReplacement(prefix + renamed));
+        }
+
+        matcher.appendTail(buffer);
+        return buffer.toString();
+    }
+
+    private static String freshFsNodeName(Set<String> usedVars, AtomicInteger freshVarCounter) {
+        de.ukon.liger.utilities.VariableHandler variableHandler = new de.ukon.liger.utilities.VariableHandler();
+        HashMap<de.ukon.liger.utilities.VariableHandler.variableType, List<String>> reserved = variableHandler.getReservedVariables();
+        HashMap<de.ukon.liger.utilities.VariableHandler.variableType, List<String>> seeded = new HashMap<>();
+
+        for (Map.Entry<de.ukon.liger.utilities.VariableHandler.variableType, List<String>> entry : reserved.entrySet()) {
+            seeded.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        }
+        seeded.put(de.ukon.liger.utilities.VariableHandler.variableType.FS_NODE, new ArrayList<>(usedVars));
+        variableHandler.setUsedVariables(seeded);
+
+        String candidate;
+        do {
+            candidate = variableHandler.returnNewVar(de.ukon.liger.utilities.VariableHandler.variableType.FS_NODE,
+                    freshVarCounter.getAndIncrement());
+        } while (candidate != null && usedVars.contains(candidate));
+
+        if (candidate == null) {
+            throw new IllegalStateException("Failed to generate a fresh fs node variable");
+        }
+
+        usedVars.add(candidate);
+        return candidate;
+    }
+
+    private static Set<String> collectFsNodeNames(List<String> tokens) {
+        Set<String> out = new LinkedHashSet<>();
+        for (String token : tokens) {
+            Matcher matcher = FS_VAR_PATTERN.matcher(token);
+            while (matcher.find()) {
+                out.add(matcher.group(2));
+            }
+        }
+        return out;
     }
 
     private static void expandPathSegments(List<String> segments, TemplateRegistry registry, int index,
@@ -151,20 +268,32 @@ public class TemplateExpander {
         return segments;
     }
 
-    private static List<String> instantiate(List<String> tokens, Map<String, String> substitution) {
+    private static List<String> instantiate(List<String> tokens, List<String> parameterOrder, Map<String, String> substitution) {
         List<String> out = new ArrayList<>();
         for (String token : tokens) {
-            out.add(substituteToken(token, substitution));
+            out.add(substituteToken(token, parameterOrder, substitution));
         }
         return out;
     }
 
-    private static String substituteToken(String token, Map<String, String> substitution) {
+    private static String substituteToken(String token, List<String> parameterOrder, Map<String, String> substitution) {
         String result = token;
-        for (Map.Entry<String, String> entry : substitution.entrySet()) {
-            String parameter = entry.getKey();
-            String value = entry.getValue();
-            result = result.replaceAll("(?<![A-Za-z0-9_])" + Pattern.quote(parameter) + "(?![A-Za-z0-9_])", Matcher.quoteReplacement(value));
+        Map<String, String> placeholders = new LinkedHashMap<>();
+
+        for (int i = 0; i < parameterOrder.size(); i++) {
+            String parameter = parameterOrder.get(i);
+            String placeholder = "__LIGER_TPL_" + i + "__";
+            placeholders.put(parameter, placeholder);
+            result = result.replaceAll("(?<![A-Za-z0-9_])" + Pattern.quote(parameter) + "(?![A-Za-z0-9_])",
+                    Matcher.quoteReplacement(placeholder));
+        }
+
+        for (String parameter : parameterOrder) {
+            String placeholder = placeholders.get(parameter);
+            String value = substitution.get(parameter);
+            if (placeholder != null && value != null) {
+                result = result.replace(placeholder, value);
+            }
         }
         return result;
     }
