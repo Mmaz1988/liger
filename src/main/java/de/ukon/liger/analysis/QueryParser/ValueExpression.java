@@ -22,6 +22,7 @@
 package de.ukon.liger.analysis.QueryParser;
 
 import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.utilities.HelperMethods;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,13 +69,37 @@ public class ValueExpression extends QueryExpression {
             while (it.hasNext()) {
                 Set<SolutionKey> key = it.next();
 
-                String nodeVar = left.getNodeVar();
-                String nodeRef = out.get(key).get(nodeVar).keySet().stream().findAny().get();
-                HashMap<Integer, GraphConstraint> boundIndices =  out.get(key).get(nodeVar).get(nodeRef);
+            String nodeVar = left.getNodeVar();
+            String nodeRef = out.get(key).get(nodeVar).keySet().stream().findAny().get();
+            HashMap<Integer, GraphConstraint> boundIndices =  out.get(key).get(nodeVar).get(nodeRef);
 
-                HashMap<Integer,GraphConstraint> matchingIndices = new HashMap<>();
+            HashMap<Integer,GraphConstraint> matchingIndices = new HashMap<>();
+            HashSet<Integer> nonBoundIndices = new HashSet<>();
 
-                if (right.var)
+            if (right.idRef)
+            {
+                Integer expectedId = ValueResolver.resolveId(this, key, right);
+                if (expectedId == null) {
+                    it.remove();
+                    continue;
+                }
+                for (Integer key2 : boundIndices.keySet()) {
+                    if (boundIndices.get(key2).getRelationLabel().equals(left.getQuery())) {
+                        String fsValue = (String) boundIndices.get(key2).getFsValue();
+                        if ((fsValue.startsWith("'") && fsValue.endsWith("'")) ||
+                                (fsValue.startsWith("\"") && fsValue.endsWith("\""))) {
+                            fsValue = fsValue.substring(1, fsValue.length() - 1);
+                        }
+
+                        if (HelperMethods.isInteger(fsValue) && Integer.parseInt(fsValue) == expectedId) {
+                            matchingIndices.put(key2, boundIndices.get(key2));
+                        } else {
+                            nonBoundIndices.add(key2);
+                        }
+                    }
+                }
+            }
+            else if (right.var)
                 {
                         if (!newValueBindings.containsKey(key))
                         {
@@ -89,61 +114,64 @@ public class ValueExpression extends QueryExpression {
                                     newValueBindings.get(key).putAll(getParser().fsValueBindings.get(key2));
                                 }
                             }
-                        }
-                        }
+                    }
 
-                HashSet<Integer> nonBoundIndices = new HashSet<>();
+                    for (Integer key2 : boundIndices.keySet()) {
+                        if (boundIndices.get(key2).getRelationLabel().equals(left.getQuery())) {
+                            String varMatch;
+                            if (!newValueBindings.get(key).containsKey(right.getQuery())) {
+                                newValueBindings.get(key).put(right.getQuery(),
+                                        (String) boundIndices.get(key2).getFsValue());
 
-                for (Integer key2 : boundIndices.keySet()) {
-                if (boundIndices.get(key2).getRelationLabel().equals(left.getQuery())) {
+                                String fsValue = (String) boundIndices.get(key2).getFsValue();
+                                if ((fsValue.startsWith("'") && fsValue.endsWith("'")) ||
+                                        (fsValue.startsWith("\"") && fsValue.endsWith("\""))) {
+                                    fsValue = fsValue.substring(1, fsValue.length() - 1);
+                                }
 
-                    String varMatch;
-                    if (right.var) {
-                        if (!newValueBindings.get(key).containsKey(right.getQuery())) {
-                            newValueBindings.get(key).put(right.getQuery(),
-                                    (String) boundIndices.get(key2).getFsValue());
+                                varMatch = fsValue;
+
+                            } else {
+                                varMatch = newValueBindings.get(key).get(right.getQuery());
+                                if ((varMatch.startsWith("'") && varMatch.endsWith("'")) ||
+                                        (varMatch.startsWith("\"") && varMatch.endsWith("\""))) {
+                                    varMatch = varMatch.substring(1, varMatch.length() - 1);
+                                }
+                            }
 
                             String fsValue = (String) boundIndices.get(key2).getFsValue();
-                            //If wrapped in single or double quotes, remove them
                             if ((fsValue.startsWith("'") && fsValue.endsWith("'")) ||
                                     (fsValue.startsWith("\"") && fsValue.endsWith("\""))) {
                                 fsValue = fsValue.substring(1, fsValue.length() - 1);
                             }
 
-                            varMatch = fsValue;
-
-                        } else {
-                            varMatch = newValueBindings.get(key).get(right.getQuery());
-                            if (varMatch.startsWith("'") && varMatch.endsWith("'") ||
-                                    (varMatch.startsWith("\"") && varMatch.endsWith("\""))) {
-                                varMatch = varMatch.substring(1, varMatch.length() - 1);
+                            if (fsValue.equals(varMatch)) {
+                                matchingIndices.put(key2, boundIndices.get(key2));
+                            } else {
+                                nonBoundIndices.add(key2);
                             }
                         }
                     }
-                        else
-                        {
-                            varMatch = right.getQuery();
-
-                        }
-
-                        String fsValue = (String) boundIndices.get(key2).getFsValue();
-                        //If wrapped in single or double quotes, remove them
-                    if ((fsValue.startsWith("'") && fsValue.endsWith("'")) ||
-                            (fsValue.startsWith("\"") && fsValue.endsWith("\""))) {
-                        fsValue = fsValue.substring(1, fsValue.length() - 1);
-                    }
-
-                        if (fsValue.equals(varMatch)) {
-                            matchingIndices.put(key2, boundIndices.get(key2));
-                        } else if (!right.var)
-                        {
-                            //Delete non-matching values
-                            nonBoundIndices.add(key2);
-                            //boundIndices.remove(key2);
-                        }
-
-
                 }
+                else
+                {
+                    String varMatch = right.getQuery();
+
+                    for (Integer key2 : boundIndices.keySet()) {
+                        if (boundIndices.get(key2).getRelationLabel().equals(left.getQuery())) {
+                            String fsValue = (String) boundIndices.get(key2).getFsValue();
+                            if ((fsValue.startsWith("'") && fsValue.endsWith("'")) ||
+                                    (fsValue.startsWith("\"") && fsValue.endsWith("\""))) {
+                                fsValue = fsValue.substring(1, fsValue.length() - 1);
+                            }
+
+                            if (fsValue.equals(varMatch)) {
+                                matchingIndices.put(key2, boundIndices.get(key2));
+                            } else {
+                                nonBoundIndices.add(key2);
+                            }
+                        }
+                    }
                 }
 
                 boundIndices.keySet().removeAll(nonBoundIndices);
@@ -170,5 +198,3 @@ public class ValueExpression extends QueryExpression {
 
 
 }
-
-

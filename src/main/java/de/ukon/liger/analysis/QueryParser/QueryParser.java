@@ -218,6 +218,20 @@ public class QueryParser {
                     queryList.add(new Attribute(currentToken, getFsIndices(), this));
                 } else if (isSuperiorToken(currentToken)) {
                     queryList.add(new Superior(currentToken, getFsIndices(), this));
+                } else if (currentToken.startsWith("id(")) {
+                    if (!HelperMethods.isIdExpression(currentToken)) {
+                        throw new IllegalStateException("Invalid id() expression: " + currentToken);
+                    }
+
+                    Matcher idMatcher = HelperMethods.idPattern.matcher(currentToken);
+                    if (!idMatcher.matches()) {
+                        throw new IllegalStateException("Invalid id() expression: " + currentToken);
+                    }
+
+                    Value idValue = new Value(currentToken, getFsIndices(), false, false, this);
+                    idValue.setIdRef(true);
+                    idValue.setIdVar(idMatcher.group(1));
+                    queryList.add(idValue);
                 } else if (HelperMethods.isValue(currentToken, getFsIndices())) {
                     Boolean var = false;
                     Boolean strip = false;
@@ -257,6 +271,18 @@ public class QueryParser {
                 else if (currentToken.equals("!="))
                 {
                     queryList.add(new Equality(false, this ));
+                }
+                else if (currentToken.equals("<")) {
+                    queryList.add(new Comparison(Comparison.Operator.LT, this));
+                }
+                else if (currentToken.equals(">")) {
+                    queryList.add(new Comparison(Comparison.Operator.GT, this));
+                }
+                else if (currentToken.equals("<=")) {
+                    queryList.add(new Comparison(Comparison.Operator.LE, this));
+                }
+                else if (currentToken.equals(">=")) {
+                    queryList.add(new Comparison(Comparison.Operator.GE, this));
                 }
                 else
                     {
@@ -381,6 +407,13 @@ public class QueryParser {
                                     new EqualityExpression((Value) previous, (Equality) current, (Value) next);
                             it.add(ee);
                             result = ee.getSolution();
+                            it.next();
+                            it.remove();
+                        }
+                        else if (previous instanceof Value && current instanceof Comparison && next instanceof Value) {
+                            ComparisonExpression ce = new ComparisonExpression((Value) previous, (Comparison) current, (Value) next);
+                            it.add(ce);
+                            result = ce.getSolution();
                             it.next();
                             it.remove();
                         }

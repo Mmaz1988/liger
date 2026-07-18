@@ -38,6 +38,8 @@ public class HelperMethods {
 
     public static Pattern fsNodePattern = Pattern.compile("[#*](\\w+)");
     public static Pattern valueVarPattern = Pattern.compile("(%[a-z])");
+    public static Pattern idPattern = Pattern.compile("id\\((#[a-z])\\)");
+    public static Pattern numericPattern = Pattern.compile("-?\\d+");
     //semform('say',3,[var(11),var(2)],[]))
     public static Pattern predPattern = Pattern.compile("semform\\('(.+)',.+\\)");
     public static Pattern hyphenPattern = Pattern.compile("'(.+)'");
@@ -151,6 +153,7 @@ public class HelperMethods {
         Matcher m = HelperMethods.valueVarPattern.matcher(query);
         Matcher sm = HelperMethods.stripPattern.matcher(query);
         Matcher vm = HelperMethods.valueStringPattern.matcher(query);
+        Matcher idm = HelperMethods.idPattern.matcher(query);
 
         if (m.matches()) {
             return true;
@@ -163,7 +166,27 @@ public class HelperMethods {
         if (vm.matches()) {
             return true;
         }
+
+        if (idm.matches()) {
+            return true;
+        }
+
+        if (numericPattern.matcher(query).matches()) {
+            return true;
+        }
         return false;
+    }
+
+    public static boolean isIdExpression(String query) {
+        return idPattern.matcher(query).matches();
+    }
+
+    public static String extractIdVariable(String query) {
+        Matcher matcher = idPattern.matcher(query);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Invalid id() expression: " + query);
+        }
+        return matcher.group(1);
     }
 
 
@@ -246,5 +269,3 @@ public class HelperMethods {
     }
 
 }
-
-

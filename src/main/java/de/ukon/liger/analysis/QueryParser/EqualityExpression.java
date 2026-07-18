@@ -26,7 +26,6 @@ import de.ukon.liger.utilities.HelperMethods;
 
 import java.util.HashMap;
 import java.util.Set;
-import java.util.regex.Matcher;
 
 public class EqualityExpression extends QueryExpression {
 
@@ -85,17 +84,7 @@ public class EqualityExpression extends QueryExpression {
 
     private String resolveValue(Set<SolutionKey> solutionKey, Value value)
     {
-        String resolved;
-
-        if (value.var)
-        {
-            resolved = lookupBinding(solutionKey, value.getQuery());
-        }
-        else
-        {
-            resolved = value.getQuery();
-        }
-
+        String resolved = ValueResolver.resolve(this, solutionKey, value);
         if (resolved == null)
         {
             return null;
@@ -106,39 +95,6 @@ public class EqualityExpression extends QueryExpression {
             resolved = HelperMethods.stripValue(resolved);
         }
 
-        Matcher matcher = HelperMethods.valueStringPattern.matcher(resolved);
-        if (matcher.matches())
-        {
-            resolved = matcher.group(1);
-        }
-
         return resolved;
-    }
-
-    private String lookupBinding(Set<SolutionKey> solutionKey, String valueVar)
-    {
-        HashMap<String, String> exactMatch = getParser().fsValueBindings.get(solutionKey);
-        if (exactMatch != null && exactMatch.containsKey(valueVar))
-        {
-            return exactMatch.get(valueVar);
-        }
-
-        String bestMatch = null;
-        int bestSize = -1;
-
-        for (Set<SolutionKey> candidate : getParser().fsValueBindings.keySet())
-        {
-            if (solutionKey.containsAll(candidate) && candidate.size() > bestSize)
-            {
-                HashMap<String, String> bindings = getParser().fsValueBindings.get(candidate);
-                if (bindings != null && bindings.containsKey(valueVar))
-                {
-                    bestMatch = bindings.get(valueVar);
-                    bestSize = candidate.size();
-                }
-            }
-        }
-
-        return bestMatch;
     }
 }

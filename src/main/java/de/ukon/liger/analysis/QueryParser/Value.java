@@ -29,11 +29,21 @@ public class Value extends QueryExpression {
 
     public boolean var;
     public boolean strip;
+    public boolean idRef;
+    public String idVar;
 
     public Value(String query, HashMap<Integer, GraphConstraint> fsIndices, Boolean var, Boolean strip, QueryParser parser) {
         super(query, fsIndices,parser);
         this.var = var;
         this.strip = strip;
+    }
+
+    public void setIdRef(boolean idRef) {
+        this.idRef = idRef;
+    }
+
+    public void setIdVar(String idVar) {
+        this.idVar = idVar;
     }
 
 
