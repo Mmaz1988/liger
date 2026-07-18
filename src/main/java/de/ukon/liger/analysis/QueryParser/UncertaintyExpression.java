@@ -279,13 +279,7 @@ public class UncertaintyExpression extends QueryExpression {
 
         for (int repeat = minRepeat; repeat <= max; repeat++) {
             if (repeat == 0) {
-                if (atom.offPathConstraints.isEmpty()) {
-                    expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
-                } else {
-                    prefix.add(atom.render(""));
-                    expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
-                    prefix.remove(prefix.size() - 1);
-                }
+                expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
                 continue;
             }
 
@@ -652,7 +646,7 @@ public class UncertaintyExpression extends QueryExpression {
             for (Integer key : result.keySet()) {
 
                 if (isZeroLengthAtom(atom)) {
-                    if (nodeMatchesOffPathConstraints(String.valueOf(result.get(key).getFsNode()), atom, right.getFsIndices())) {
+                    if (zeroHopAllowed(String.valueOf(result.get(key).getFsNode()), atom, right.getFsIndices(), false)) {
                         currentResult.put(key, result.get(key));
                     }
                     continue;
@@ -811,7 +805,7 @@ public class UncertaintyExpression extends QueryExpression {
 
             if (isZeroLengthAtom(atom)) {
                 for (String node : currentNodes) {
-                    if (nodeMatchesOffPathConstraints(node, atom, graph)) {
+                    if (zeroHopAllowed(node, atom, graph, true)) {
                         nextNodes.add(node);
                     }
                 }
@@ -840,6 +834,23 @@ public class UncertaintyExpression extends QueryExpression {
         }
 
         return currentNodes;
+    }
+
+    private boolean zeroHopAllowed(String nodeRef, PathAtom atom, HashMap<Integer, GraphConstraint> graph, boolean insideOut) {
+        boolean hasCandidate = false;
+        for (GraphConstraint edge : graph.values()) {
+            String edgeAnchor = insideOut ? String.valueOf(edge.getFsValue()) : String.valueOf(edge.getFsNode());
+            if (!nodeRef.equals(edgeAnchor)) {
+                continue;
+            }
+            if (!labelMatches(atom, edge)) {
+                continue;
+            }
+
+            hasCandidate = true;
+        }
+
+        return hasCandidate;
     }
 
     private boolean labelMatches(PathAtom atom, GraphConstraint edge) {

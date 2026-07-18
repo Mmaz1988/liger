@@ -316,7 +316,7 @@ public class QueryParserTest {
                     hierarchyRegistry);
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
-            assertEquals(5, qpr.result.keySet().size());
+            assertEquals(6, qpr.result.keySet().size());
         }
     }
 
@@ -339,7 +339,7 @@ public class QueryParserTest {
     }
 
     @Test
-    void testInsideOutObjStarMatchesFiveSolutionsOnS19WithOffPathConstraint() {
+    void testInsideOutObjStarMatchesSixSolutionsOnS19WithOffPathConstraint() {
         LinkedHashMap<String, LinguisticStructure> fs = loadFs("testDirS19.pl");
         TemplateRegistry templateRegistry = new TemplateParser().parse("GF := SUBJ | OBJ | OBL | COMP .");
         HierarchyRegistry hierarchyRegistry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL > COMP .");
@@ -352,7 +352,7 @@ public class QueryParserTest {
                     hierarchyRegistry);
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
-            assertEquals(5, qpr.result.keySet().size());
+            assertEquals(6, qpr.result.keySet().size());
         }
     }
 
