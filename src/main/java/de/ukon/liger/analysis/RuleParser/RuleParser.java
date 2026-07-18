@@ -54,6 +54,7 @@ public class RuleParser {
 
 
     private LinkedHashSet<Rule> appliedRules = new LinkedHashSet<>();
+    private LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> addedAnnotationsByRule = new LinkedHashMap<>();
     private static Pattern graphPattern = Pattern.compile("(#.+?)\\s+(\\S+)\\s+(.+)");
     private Boolean replace;
     private Set<String> usedKeys = new HashSet<>();
@@ -485,9 +486,15 @@ public class RuleParser {
 
                 LOGGER.debug("Added the following facts:");
                 List<String> addedFacts = new ArrayList<>();
+                LinkedHashSet<GraphConstraint> factsForRule = new LinkedHashSet<>();
                 for (Integer akey : annotation.keySet()) {
-                    fs.annotation.add(annotation.get(akey));
-                    addedFacts.add(annotation.get(akey).toString());
+                    GraphConstraint addedConstraint = annotation.get(akey);
+                    fs.annotation.add(addedConstraint);
+                    factsForRule.add(addedConstraint);
+                    addedFacts.add(addedConstraint.toString());
+                }
+                if (!factsForRule.isEmpty()) {
+                    addedAnnotationsByRule.put(r.getRuleIndex(), factsForRule);
                 }
                 String added = String.join("\n", addedFacts);
                 LOGGER.debug("\n" + added);
@@ -792,6 +799,7 @@ public class RuleParser {
         usedKeys = new HashSet<>();
         usedReadings = new HashSet<>();
         appliedRules = new LinkedHashSet<>();
+        addedAnnotationsByRule = new LinkedHashMap<>();
     }
 
 
@@ -838,6 +846,10 @@ public class RuleParser {
 
     public LinkedHashSet<Rule> getAppliedRules() {
         return this.appliedRules;
+    }
+
+    public LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> getAddedAnnotationsByRule() {
+        return this.addedAnnotationsByRule;
     }
 
     public void setAppliedRules(LinkedHashSet<Rule> appliedRules) {

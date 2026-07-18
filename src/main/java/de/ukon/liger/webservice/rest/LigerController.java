@@ -246,9 +246,11 @@ public class LigerController {
         }
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
-        return new LigerRuleAnnotation(lg,
+        LigerRuleAnnotation response = new LigerRuleAnnotation(lg,
                 appliedRules.values().stream().findFirst().orElseGet(LinkedHashSet::new),
                 String.join("\n", semString), axioms);
+        response.addedAnnotationsByRule = rp.getAddedAnnotationsByRule();
+        return response;
     }
 
     private String solutionKeyFor(LinguisticStructure fs, int index) {
@@ -566,6 +568,7 @@ public class LigerController {
         );
         response.sentence = fs.text;
         response.highlightedNodeIds = collectHighlightedNodeIds(fs);
+        response.addedAnnotationsByRule = rp.getAddedAnnotationsByRule();
         return response;
     }
 
