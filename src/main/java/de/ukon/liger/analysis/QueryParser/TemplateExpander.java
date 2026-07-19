@@ -86,13 +86,20 @@ public class TemplateExpander {
                                                         AtomicInteger freshVarCounter) {
         Map<String, String> renames = new LinkedHashMap<>();
         List<String> out = new ArrayList<>();
+        Set<String> reservedVars = new LinkedHashSet<>(usedVars);
+
+        for (String parameter : parameters) {
+            if (parameter != null && parameter.startsWith("#") && parameter.length() > 1) {
+                reservedVars.add(parameter.substring(1));
+            }
+        }
 
         for (String token : tokens) {
             TemplateInvocation invocation = TemplateInvocation.parse(token);
             if (invocation != null) {
-                out.add(renameTemplateInvocation(token, parameters, usedVars, renames, freshVarCounter, invocation));
+                out.add(renameTemplateInvocation(token, parameters, reservedVars, renames, freshVarCounter, invocation));
             } else {
-                out.add(renameTemplateVariables(token, parameters, usedVars, renames, freshVarCounter));
+                out.add(renameTemplateVariables(token, parameters, reservedVars, renames, freshVarCounter));
             }
         }
 

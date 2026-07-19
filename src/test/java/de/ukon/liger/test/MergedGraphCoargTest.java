@@ -37,4 +37,23 @@ public class MergedGraphCoargTest {
         assertTrue(qpr.isSuccess);
         assertEquals(6, qpr.result.keySet().size());
     }
+
+    @Test
+    void testCoargQueryMatchesMergedGraphWithDifferentArguments() throws Exception {
+        Path mergedGraph = Paths.get("merged-graph.json");
+        LinkedHashMap<String, Object> json = new ObjectMapper().readValue(mergedGraph.toFile(), LinkedHashMap.class);
+        LinguisticStructure fs = LinguisticStructure.parseFromJson(json);
+
+        TemplateRegistry templateRegistry = new TemplateParser().parse(
+                "GF := SUBJ | OBJ | OBL . " +
+                "COARG-PATH(#a,#b,#c) := #a ^(@GF*:~(->PRED)) #b ^(@GF) #c . " +
+                "COARG(#a,#b) := @COARG-PATH(#a,#r,#s) & #s !(@GF) #b & id(#r) != id(#b) .");
+        HierarchyRegistry hierarchyRegistry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBJ2 > OBL .");
+
+        QueryParser qp = new QueryParser("@COARG(#c,#d)", fs, templateRegistry, hierarchyRegistry);
+        QueryParserResult qpr = qp.parseQueryWithTemplates("@COARG(#c,#d)").get(0);
+
+        assertTrue(qpr.isSuccess);
+        assertEquals(6, qpr.result.keySet().size());
+    }
 }
