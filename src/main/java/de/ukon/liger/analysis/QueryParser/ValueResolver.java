@@ -15,7 +15,7 @@ final class ValueResolver {
     private ValueResolver() {
     }
 
-    static String resolve(QueryExpression context, Set<SolutionKey> solutionKey, Value value) {
+    static String resolve(QueryExpression context, Solution solutionKey, Value value) {
         if (value.idRef) {
             return resolveIdReference(context, solutionKey, value.idVar);
         }
@@ -46,9 +46,21 @@ final class ValueResolver {
         return Integer.compare(leftId.number, rightId.number);
     }
 
-    private static String resolveIdReference(QueryExpression context, Set<SolutionKey> solutionKey, String variable) {
-        if (variable == null || !(variable.matches("#[a-z]") || variable.matches("%[a-z]"))) {
-            throw new IllegalArgumentException("id() requires a variable reference of the form #[a-z] or %[a-z]: " + variable);
+    private static String resolveIdReference(QueryExpression context, Solution solutionKey, String variable) {
+        if (variable == null) {
+            throw new IllegalArgumentException("id() requires a variable reference: null");
+        }
+
+        if (variable.startsWith("*")) {
+            return variable.substring(1);
+        }
+
+        if (HelperMethods.isInteger(variable)) {
+            return variable;
+        }
+
+        if (!(variable.matches("#[A-Za-z]") || variable.matches("%[A-Za-z]"))) {
+            throw new IllegalArgumentException("id() requires a variable reference of the form #[a-z], %[a-z], or a grounded constant: " + variable);
         }
 
         if (variable.startsWith("#")) {
@@ -64,7 +76,7 @@ final class ValueResolver {
         return lookupBinding(context, solutionKey, variable);
     }
 
-    private static String lookupBinding(QueryExpression context, Set<SolutionKey> solutionKey, String valueVar) {
+    private static String lookupBinding(QueryExpression context, Solution solutionKey, String valueVar) {
         HashMap<String, String> exactMatch = context.getParser().fsValueBindings.get(solutionKey);
         if (exactMatch != null && exactMatch.containsKey(valueVar)) {
             return exactMatch.get(valueVar);
@@ -73,8 +85,8 @@ final class ValueResolver {
         String bestMatch = null;
         int bestSize = -1;
 
-        for (Set<SolutionKey> candidate : context.getParser().fsValueBindings.keySet()) {
-            if (solutionKey.containsAll(candidate) && candidate.size() > bestSize) {
+        for (Solution candidate : context.getParser().fsValueBindings.keySet()) {
+            if (solutionKey.getSolutionKeys().containsAll(candidate.getSolutionKeys()) && candidate.getSolutionKeys().size() > bestSize) {
                 HashMap<String, String> bindings = context.getParser().fsValueBindings.get(candidate);
                 if (bindings != null && bindings.containsKey(valueVar)) {
                     bestMatch = bindings.get(valueVar);

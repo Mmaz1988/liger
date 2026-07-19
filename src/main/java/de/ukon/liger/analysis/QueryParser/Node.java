@@ -63,7 +63,7 @@ public class Node extends QueryExpression {
 public void calculateSolutions()
 {
 
-    HashMap<Set<SolutionKey>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> out = new HashMap<>();
+    HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> out = new HashMap<>();
 
 
     if (constant)
@@ -83,7 +83,7 @@ public void calculateSolutions()
         HashMap<String,HashMap<String,HashMap<Integer,GraphConstraint>>> binding = new HashMap<>();
         binding.put(getNodeVar(),reference);
         SolutionKey key = new SolutionKey(getNodeVar(),getNodeVar());
-        out.put(Collections.singleton(key),binding);
+        out.put(new Solution(Collections.singleton(key)),binding);
         setSolution(out);
         return;
     }
@@ -121,7 +121,7 @@ public void calculateSolutions()
             // String key = getNodeVar()+fs;
             SolutionKey key = new SolutionKey(getNodeVar(),fs);
             binding.put(getNodeVar(),reference);
-            out.put(Collections.singleton(key),binding);
+            out.put(new Solution(Collections.singleton(key)),binding);
         }
 
 

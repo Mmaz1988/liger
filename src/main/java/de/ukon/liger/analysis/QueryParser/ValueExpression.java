@@ -54,20 +54,23 @@ public class ValueExpression extends QueryExpression {
     @Override
     public void calculateSolutions()
     {
-        HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
 
         out.putAll(left.getSolution());
 
         HashMap<Integer,GraphConstraint> fsIndices = new HashMap<>();
 
-        HashMap<Set<SolutionKey>,HashMap<String,String>> newValueBindings = getParser().fsValueBindings;
+        HashMap<Solution,HashMap<String,String>> newValueBindings = getParser().fsValueBindings;
 
-            Iterator<Set<SolutionKey>> it = out.keySet().iterator();
+            Iterator<Solution> it = out.keySet().iterator();
 
 
 
             while (it.hasNext()) {
-                Set<SolutionKey> key = it.next();
+                Solution key = it.next();
+                if (!key.isTruthValue()) {
+                    continue;
+                }
 
             String nodeVar = left.getNodeVar();
             String nodeRef = out.get(key).get(nodeVar).keySet().stream().findAny().get();
@@ -106,11 +109,11 @@ public class ValueExpression extends QueryExpression {
 
                             newValueBindings.put(key,new HashMap<>());
                             //
-                            Iterator<Set<SolutionKey>> it2 = getParser().fsValueBindings.keySet().iterator();
+                            Iterator<Solution> it2 = getParser().fsValueBindings.keySet().iterator();
 
                             while (it2.hasNext()) {
-                                Set<SolutionKey> key2 = it2.next();
-                                if (!(key.equals(key2)) && key.containsAll(key2)) {
+                                Solution key2 = it2.next();
+                                if (!(key.equals(key2)) && key.getSolutionKeys().containsAll(key2.getSolutionKeys())) {
                                     newValueBindings.get(key).putAll(getParser().fsValueBindings.get(key2));
                                 }
                             }

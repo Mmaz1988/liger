@@ -3,7 +3,6 @@ package de.ukon.liger.analysis.QueryParser;
 import de.ukon.liger.syntax.GraphConstraint;
 
 import java.util.HashMap;
-import java.util.Set;
 
 public class SuperiorExpression extends QueryExpression {
 

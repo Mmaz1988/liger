@@ -118,11 +118,14 @@ public class UncertaintyExpression extends QueryExpression {
     @Override
     public void calculateSolutions() {
 
-        HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
         List<String> searchQueries = getExpandedQueries();
 
 
-        for (Set<SolutionKey> key : left.getSolution().keySet()) {
+        for (Solution key : left.getSolution().keySet()) {
+            if (!key.isTruthValue()) {
+                continue;
+            }
             String nodeVar = left.getNodeVar();
             if (left.getSolution().get(key).get(nodeVar) == null || left.getSolution().get(key).get(nodeVar).isEmpty()) {
                 continue;
@@ -144,12 +147,12 @@ public class UncertaintyExpression extends QueryExpression {
                     Set<String> usedKeys = new HashSet<>();
                     usedKeys.add(nodeRef);
 
-                    HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
+                    HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
                             mapUsedKeys(usedKeys, uncertainty, right.getNodeVar());
 
                     right.setSolution(out2);
 
-                    for (Set<SolutionKey> key2 : out2.keySet()) {
+                    for (Solution key2 : out2.keySet()) {
                         HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
 
                         for (String key3 : left.getSolution().get(key).keySet()) {
@@ -158,9 +161,7 @@ public class UncertaintyExpression extends QueryExpression {
 
                         binding.put(right.getNodeVar(), out2.get(key2).get(right.getNodeVar()));
 
-                        Set<SolutionKey> newKey = new HashSet<>();
-                        newKey.addAll(key);
-                        newKey.addAll(key2);
+                        Solution newKey = Solution.merge(key, key2);
 
                         out.put(newKey, binding);
 
@@ -179,12 +180,12 @@ public class UncertaintyExpression extends QueryExpression {
                     Set<String> usedKeys = new HashSet<>();
                     usedKeys.add(nodeRef);
 
-                    HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
+                    HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
                             mapUsedKeys(usedKeys, uncertainty, right.getNodeVar());
 
                     right.setSolution(out2);
 
-                    for (Set<SolutionKey> key2 : out2.keySet()) {
+                    for (Solution key2 : out2.keySet()) {
                         HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
 
                         for (String key3 : left.getSolution().get(key).keySet()) {
@@ -193,9 +194,7 @@ public class UncertaintyExpression extends QueryExpression {
 
                         binding.put(right.getNodeVar(), out2.get(key2).get(right.getNodeVar()));
 
-                        Set<SolutionKey> newKey = new HashSet<>();
-                        newKey.addAll(key);
-                        newKey.addAll(key2);
+                        Solution newKey = Solution.merge(key, key2);
 
                         out.put(newKey, binding);
 
@@ -215,12 +214,12 @@ public class UncertaintyExpression extends QueryExpression {
                         }
                     }
 
-                    HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
+                    HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
                             mapUsedKeys(usedKeys, uncertainty, right.getNodeVar());
 
                     right.setSolution(out2);
 
-                    for (Set<SolutionKey> key2 : out2.keySet()) {
+                    for (Solution key2 : out2.keySet()) {
 
                         HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
 
@@ -232,9 +231,7 @@ public class UncertaintyExpression extends QueryExpression {
                         binding.put(right.getNodeVar(), out2.get(key2).get(right.getNodeVar()));
 
 
-                        Set<SolutionKey> newKey = new HashSet<>();
-                        newKey.addAll(key);
-                        newKey.addAll(key2);
+                        Solution newKey = Solution.merge(key, key2);
 
                         out.put(newKey, binding);
 

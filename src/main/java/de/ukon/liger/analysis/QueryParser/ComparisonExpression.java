@@ -21,9 +21,12 @@ public class ComparisonExpression extends QueryExpression {
 
     @Override
     public void calculateSolutions() {
-        HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
 
-        for (Set<SolutionKey> key : left.getSolution().keySet()) {
+        for (Solution key : left.getSolution().keySet()) {
+            if (!key.isTruthValue()) {
+                continue;
+            }
             String leftValue = resolveComparableValue(key, left);
             String rightValue = resolveComparableValue(key, right);
 
@@ -54,7 +57,7 @@ public class ComparisonExpression extends QueryExpression {
         setSolution(out);
     }
 
-    private String resolveComparableValue(Set<SolutionKey> solutionKey, Value value) {
+    private String resolveComparableValue(Solution solutionKey, Value value) {
         String resolved = ValueResolver.resolve(this, solutionKey, value);
         if (resolved == null) {
             return null;

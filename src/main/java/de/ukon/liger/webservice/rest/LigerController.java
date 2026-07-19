@@ -27,7 +27,9 @@ import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.HierarchyParser;
 import de.ukon.liger.analysis.QueryParser.HierarchyRegistry;
+import de.ukon.liger.analysis.QueryParser.EmbeddedDefinitionExtractor;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
+import de.ukon.liger.analysis.QueryParser.Solution;
 import de.ukon.liger.analysis.QueryParser.SolutionKey;
 import de.ukon.liger.analysis.QueryParser.TemplateParser;
 import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
@@ -367,7 +369,7 @@ public class LigerController {
                 continue;
             }
 
-            for (Map.Entry<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> entry : result.result.entrySet()) {
+            for (Map.Entry<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> entry : result.result.entrySet()) {
                 String signature = solutionSignature(entry.getKey());
                 if (uniqueSolutions.containsKey(signature)) {
                     continue;
@@ -436,60 +438,9 @@ public class LigerController {
     private record QueryMatchSummary(int matchCount, Set<String> nodeIds, List<LigerQuerySolution> solutions) {}
 
     private QueryRequestBundle stripEmbeddedQueryDefinitions(String query) {
-        TemplateRegistry templateRegistry = new TemplateRegistry();
-        HierarchyRegistry hierarchyRegistry = new HierarchyRegistry();
-
-        if (query == null || query.isBlank()) {
-            return new QueryRequestBundle("", templateRegistry, hierarchyRegistry);
-        }
-
-        StringBuilder templateDefinitions = new StringBuilder();
-        StringBuilder hierarchyDefinitions = new StringBuilder();
-        StringBuilder sanitized = new StringBuilder();
-
-        String[] lines = query.split("\\R", -1);
-        for (int i = 0; i < lines.length; i++) {
-            String line = lines[i];
-            String trimmed = line.trim();
-
-            if (isHierarchyDefinitionLine(trimmed)) {
-                hierarchyDefinitions.append(trimmed).append(' ');
-            } else if (isTemplateDefinitionLine(trimmed)) {
-                templateDefinitions.append(trimmed).append(' ');
-            } else if (trimmed.startsWith("//")) {
-                continue;
-            } else {
-                sanitized.append(line);
-            }
-
-            if (i < lines.length - 1) {
-                sanitized.append('\n');
-            }
-        }
-
-        if (!templateDefinitions.isEmpty()) {
-            templateRegistry = new TemplateParser().parse(templateDefinitions.toString());
-        }
-        if (!hierarchyDefinitions.isEmpty()) {
-            hierarchyRegistry = new HierarchyParser().parse(hierarchyDefinitions.toString());
-        }
-
-        LOGGER.info("Stripped embedded query definitions: templateDefs='" + templateDefinitions + "', hierarchyDefs='"
-                + hierarchyDefinitions + "', sanitized='" + sanitized.toString().trim() + "'");
-        return new QueryRequestBundle(sanitized.toString().trim(), templateRegistry, hierarchyRegistry);
-    }
-
-    private boolean isTemplateDefinitionLine(String trimmed) {
-        return !trimmed.startsWith("//")
-                && trimmed.contains(":=")
-                && !trimmed.contains("::=")
-                && !trimmed.contains("==>")
-                && !trimmed.contains("=->")
-                && !trimmed.contains("+->");
-    }
-
-    private boolean isHierarchyDefinitionLine(String trimmed) {
-        return !trimmed.startsWith("//") && trimmed.contains("::=");
+        EmbeddedDefinitionExtractor.Result result = EmbeddedDefinitionExtractor.extract(query);
+        LOGGER.info("Stripped embedded query definitions: sanitized='" + result.query() + "'");
+        return new QueryRequestBundle(result.query(), result.templateRegistry(), result.hierarchyRegistry());
     }
 
     private record QueryRequestBundle(String query, TemplateRegistry templateRegistry, HierarchyRegistry hierarchyRegistry) {}

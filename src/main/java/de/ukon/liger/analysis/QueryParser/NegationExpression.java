@@ -1,122 +1,135 @@
 package de.ukon.liger.analysis.QueryParser;
 
 import de.ukon.liger.syntax.GraphConstraint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class NegationExpression extends QueryExpression {
 
-    private final QueryExpression left;
-    private final QueryNegation right;
+    private static final Logger LOGGER = LoggerFactory.getLogger(NegationExpression.class);
 
-    public NegationExpression(QueryExpression left, QueryNegation right) {
+    private final QueryExpression left;
+    private final QueryNegation current;
+
+    public NegationExpression(QueryExpression left, QueryNegation current) {
         this.left = left;
-        this.right = right;
-        if (left != null) {
-            setParser(left.getParser());
-            setFsIndices(left.getFsIndices());
-            setNodeVar(left.getNodeVar());
-            setConjoinedSolutions(left.getConjoinedSolutions());
-        } else {
-            setParser(right.getParser());
-            setFsIndices(right.getFsIndices());
-        }
+        this.current = current;
+        setParser(current.getParser());
+        setFsIndices(left != null ? left.getFsIndices() : current.getFsIndices());
         calculateSolutions();
     }
 
     @Override
     public void calculateSolutions() {
-        HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
 
-        HashMap<Set<SolutionKey>, HashMap<String, String>> previousBindings = copyValueBindings(getParser().fsValueBindings);
-        java.util.List<Superior> previousSuperiorConstraints = new java.util.ArrayList<>(getParser().getSuperiorConstraints());
-
-        QueryParserResult negatedResult;
-        try {
-            getParser().setSuperiorConstraints(new java.util.ArrayList<>());
-            negatedResult = getParser().parseQuery(right.getNegatedQueryList());
-        } finally {
-            getParser().fsValueBindings = previousBindings;
-            getParser().setSuperiorConstraints(previousSuperiorConstraints);
+        if (left == null) {
+            Solution seed = new Solution();
+            if (!matchesNegatedQuery(seed, new HashMap<>())) {
+                out.put(seed, new HashMap<>());
+            }
+            setSolution(out);
+            setConjoinedSolutions(new java.util.ArrayList<>());
+            return;
         }
 
-        try {
-            if (left == null) {
-                if (negatedResult.result.isEmpty()) {
-                    out.put(new HashSet<>(), new HashMap<>());
-                }
-            } else {
-                for (Set<SolutionKey> key : left.getSolution().keySet()) {
-                    boolean blocked = false;
-
-                    for (Set<SolutionKey> negatedKey : negatedResult.result.keySet()) {
-                        if (areCompatible(key, negatedKey)) {
-                            blocked = true;
-                            break;
-                        }
-                    }
-
-                    if (!blocked) {
-                        out.put(key, left.getSolution().get(key));
-                    }
+        for (Solution key : left.getSolution().keySet()) {
+            if (key.isTruthValue()) {
+                boolean matched = matchesNegatedQuery(key, left.getSolution().get(key));
+                if (matched) {
+                    key.setTruthValue(false);
                 }
             }
-        } finally {
-            getParser().fsValueBindings = previousBindings;
-            getParser().setSuperiorConstraints(previousSuperiorConstraints);
+            if (key.isTruthValue()) {
+                out.put(key, left.getSolution().get(key));
+            }
         }
 
         setSolution(out);
-        if (left != null) {
-            setConjoinedSolutions(left.getConjoinedSolutions());
+        setConjoinedSolutions(left.getConjoinedSolutions());
+    }
+
+    private boolean matchesNegatedQuery(Solution outerKey,
+                                        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> seedBinding) {
+        try {
+            QueryParser parser = getParser();
+            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> seedSolution = new HashMap<>();
+            if (outerKey != null) {
+                seedSolution.put(outerKey.copy(), seedBinding == null ? new HashMap<>() : new HashMap<>(seedBinding));
+            }
+
+            QueryParser nestedParser = new QueryParser(
+                    current.getNegatedQuery(),
+                    parser.getFsIndices() == null ? new HashMap<>() : new HashMap<>(parser.getFsIndices()),
+                    parser.cp,
+                    parser.getTemplateRegistry(),
+                    parser.getHierarchyRegistry());
+
+            Set<String> queryVars = extractQueryVariables(current.getNegatedQuery());
+
+            boolean matched = nestedParser.parseQueryWithTemplates(
+                            current.getNegatedQuery(),
+                            seedSolution.isEmpty() ? null : seedSolution)
+                    .stream()
+                    .flatMap(result -> result.result.keySet().stream())
+                    .anyMatch(innerSolution -> innerSolution.isTruthValue() && matchesSeedBinding(innerSolution, outerKey, queryVars));
+            if (matched) {
+                LOGGER.trace("Negated query matched: {}", current.getNegatedQuery());
+            }
+            return matched;
+        } catch (RuntimeException e) {
+            LOGGER.debug("Negated query evaluation failed for '{}': {}", current.getNegatedQuery(), e.getMessage());
+            return false;
         }
     }
 
-    private boolean areCompatible(Set<SolutionKey> leftKey, Set<SolutionKey> rightKey) {
-        HashMap<String, Set<String>> leftBindings = toBindingMap(leftKey);
-        HashMap<String, Set<String>> rightBindings = toBindingMap(rightKey);
-
-        if (leftBindings.isEmpty() || rightBindings.isEmpty()) {
-            return true;
+    private Set<String> extractQueryVariables(String query) {
+        Set<String> vars = new HashSet<>();
+        if (query == null) {
+            return vars;
         }
 
-        Set<String> commonKeys = new HashSet<>(leftBindings.keySet());
-        commonKeys.retainAll(rightBindings.keySet());
-
-        if (commonKeys.isEmpty()) {
-            return true;
+        Matcher matcher = Pattern.compile("#([A-Za-z][A-Za-z0-9_]*)").matcher(query);
+        while (matcher.find()) {
+            vars.add(matcher.group(1));
         }
 
-        for (String key : commonKeys) {
-            if (!leftBindings.get(key).equals(rightBindings.get(key))) {
+        return vars;
+    }
+
+    private boolean matchesSeedBinding(Solution inner, Solution outer, Set<String> queryVars) {
+        java.util.HashMap<String, String> innerBindings = new java.util.HashMap<>();
+        for (SolutionKey key : inner.getSolutionKeys()) {
+            innerBindings.put(key.variable, key.reference);
+        }
+
+        java.util.HashMap<String, String> outerBindings = new java.util.HashMap<>();
+        for (SolutionKey key : outer.getSolutionKeys()) {
+            outerBindings.put(key.variable, key.reference);
+        }
+
+        boolean comparedAny = false;
+        for (java.util.Map.Entry<String, String> entry : outerBindings.entrySet()) {
+            if (!queryVars.contains(entry.getKey())) {
+                continue;
+            }
+            String innerValue = innerBindings.get(entry.getKey());
+            if (innerValue == null) {
+                continue;
+            }
+            comparedAny = true;
+            if (!innerValue.equals(entry.getValue())) {
                 return false;
             }
         }
 
-        return true;
-    }
-
-    private HashMap<String, Set<String>> toBindingMap(Set<SolutionKey> keySet) {
-        HashMap<String, Set<String>> bindings = new HashMap<>();
-
-        for (SolutionKey key : keySet) {
-            bindings.computeIfAbsent(key.variable, ignored -> new HashSet<>()).add(key.reference);
-        }
-
-        return bindings;
-    }
-
-    private HashMap<Set<SolutionKey>, HashMap<String, String>> copyValueBindings(
-            HashMap<Set<SolutionKey>, HashMap<String, String>> input) {
-
-        HashMap<Set<SolutionKey>, HashMap<String, String>> copy = new HashMap<>();
-
-        for (Set<SolutionKey> key : input.keySet()) {
-            copy.put(key, new HashMap<>(input.get(key)));
-        }
-
-        return copy;
+        return comparedAny;
     }
 }

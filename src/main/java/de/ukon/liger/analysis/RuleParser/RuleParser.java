@@ -24,9 +24,11 @@ package de.ukon.liger.analysis.RuleParser;
 import de.ukon.liger.analysis.LinguisticDictionary;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
+import de.ukon.liger.analysis.QueryParser.Solution;
 import de.ukon.liger.analysis.QueryParser.SolutionKey;
 import de.ukon.liger.analysis.QueryParser.HierarchyParser;
 import de.ukon.liger.analysis.QueryParser.HierarchyRegistry;
+import de.ukon.liger.analysis.QueryParser.EmbeddedDefinitionExtractor;
 import de.ukon.liger.analysis.QueryParser.TemplateParser;
 import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
 import de.ukon.liger.packing.ChoiceVar;
@@ -186,7 +188,7 @@ public class RuleParser {
                             boolean valueMatches = valueMatcher.matches();
 
                             if (nodeMatcher.matches()) {
-                                for (Set<SolutionKey> solutionKey : qpr.result.keySet()) {
+                                for (Solution solutionKey : qpr.result.keySet()) {
 
                                     if (!fixedContext){
                                         context = extractContexts(qpr.result.get(solutionKey), newConstraints);
@@ -415,7 +417,7 @@ public class RuleParser {
             if (r.isRewrite())
             {
                 List<GraphConstraint> removedFacts = new ArrayList<>();
-                for (Set<SolutionKey> solution : qpr.result.keySet())
+                for (Solution solution : qpr.result.keySet())
                 {
                     for (String var : qpr.result.get(solution).keySet())
                     {
@@ -517,12 +519,12 @@ public class RuleParser {
 
 
     // if (qp.getFsVarAssignment().containsKey(nodeMatcher.group(1)))
-    public Boolean variableIsAssigned(QueryParserResult qpr, Set<SolutionKey> solutionKey, String key) {
+    public Boolean variableIsAssigned(QueryParserResult qpr, Solution solutionKey, String key) {
         return qpr.result.get(solutionKey).keySet().contains(key);
     }
 
 
-    public String replaceVars(QueryParserResult qpr, Set<SolutionKey> solutionKey, String value) {
+    public String replaceVars(QueryParserResult qpr, Solution solutionKey, String value) {
         Matcher matcher = HelperMethods.fsNodePattern.matcher(value);
         Pattern lexPattern = Pattern.compile("(lex\\((.*?),(.*?)\\))");
 
@@ -609,9 +611,9 @@ public class RuleParser {
         return Integer.toString(i);
     }
 
-    private String lookupValueBinding(Set<SolutionKey> solutionKey,
+    private String lookupValueBinding(Solution solutionKey,
                                       String valueVar,
-                                      HashMap<Set<SolutionKey>, HashMap<String, String>> valueBindings) {
+                                      HashMap<Solution, HashMap<String, String>> valueBindings) {
         HashMap<String, String> exactMatch = valueBindings.get(solutionKey);
         if (exactMatch != null && exactMatch.containsKey(valueVar)) {
             return exactMatch.get(valueVar);
@@ -620,8 +622,8 @@ public class RuleParser {
         String bestMatch = null;
         int bestSize = -1;
 
-        for (Set<SolutionKey> key : valueBindings.keySet()) {
-            if (solutionKey.containsAll(key) && key.size() > bestSize) {
+        for (Solution key : valueBindings.keySet()) {
+            if (solutionKey.getSolutionKeys().containsAll(key.getSolutionKeys()) && key.getSolutionKeys().size() > bestSize) {
                 HashMap<String, String> bindings = valueBindings.get(key);
                 if (bindings != null && bindings.containsKey(valueVar)) {
                     bestMatch = bindings.get(valueVar);
@@ -878,81 +880,10 @@ public class RuleParser {
     }
 
     private String stripEmbeddedDefinitions(String fileString) {
-        TemplateRegistry parsedTemplates = new TemplateRegistry();
-        HierarchyRegistry parsedHierarchies = new HierarchyRegistry();
-
-        StringBuilder templateDefinitions = new StringBuilder();
-        StringBuilder hierarchyDefinitions = new StringBuilder();
-        StringBuilder sanitized = new StringBuilder();
-        StringBuilder pendingDefinition = new StringBuilder();
-
-        enum DefinitionType {
-            NONE,
-            TEMPLATE,
-            HIERARCHY
-        }
-
-        DefinitionType pendingType = DefinitionType.NONE;
-
-        String[] lines = fileString.split("\\R", -1);
-        for (int i = 0; i < lines.length; i++) {
-            String line = lines[i];
-            String trimmed = line.trim();
-
-            if (pendingType != DefinitionType.NONE) {
-                if (!trimmed.startsWith("//") && !trimmed.isEmpty()) {
-                    if (pendingDefinition.length() > 0) {
-                        pendingDefinition.append(' ');
-                    }
-                    pendingDefinition.append(trimmed);
-                }
-
-                if (trimmed.endsWith(".")) {
-                    if (pendingType == DefinitionType.TEMPLATE) {
-                        templateDefinitions.append(pendingDefinition).append(' ');
-                    } else if (pendingType == DefinitionType.HIERARCHY) {
-                        hierarchyDefinitions.append(pendingDefinition).append(' ');
-                    }
-                    pendingDefinition.setLength(0);
-                    pendingType = DefinitionType.NONE;
-                }
-            } else {
-                if (isHierarchyDefinitionLine(trimmed)) {
-                    pendingType = DefinitionType.HIERARCHY;
-                    pendingDefinition.append(trimmed);
-                    if (trimmed.endsWith(".")) {
-                        hierarchyDefinitions.append(pendingDefinition).append(' ');
-                        pendingDefinition.setLength(0);
-                        pendingType = DefinitionType.NONE;
-                    }
-                } else if (isTemplateDefinitionLine(trimmed)) {
-                    pendingType = DefinitionType.TEMPLATE;
-                    pendingDefinition.append(trimmed);
-                    if (trimmed.endsWith(".")) {
-                        templateDefinitions.append(pendingDefinition).append(' ');
-                        pendingDefinition.setLength(0);
-                        pendingType = DefinitionType.NONE;
-                    }
-                } else if (!trimmed.startsWith("//")) {
-                    sanitized.append(line);
-                }
-            }
-
-            if (i < lines.length - 1) {
-                sanitized.append('\n');
-            }
-        }
-
-        if (!templateDefinitions.isEmpty()) {
-            parsedTemplates = new TemplateParser().parse(templateDefinitions.toString());
-        }
-        if (!hierarchyDefinitions.isEmpty()) {
-            parsedHierarchies = new HierarchyParser().parse(hierarchyDefinitions.toString());
-        }
-
-        this.templateRegistry = parsedTemplates;
-        this.hierarchyRegistry = parsedHierarchies;
-        return sanitized.toString();
+        EmbeddedDefinitionExtractor.Result result = EmbeddedDefinitionExtractor.extract(fileString);
+        this.templateRegistry = result.templateRegistry();
+        this.hierarchyRegistry = result.hierarchyRegistry();
+        return result.query();
     }
 }
 

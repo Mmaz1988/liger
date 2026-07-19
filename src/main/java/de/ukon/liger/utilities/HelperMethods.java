@@ -38,7 +38,7 @@ public class HelperMethods {
 
     public static Pattern fsNodePattern = Pattern.compile("[#*](\\w+)");
     public static Pattern valueVarPattern = Pattern.compile("(%[a-z])");
-    public static Pattern idPattern = Pattern.compile("id\\(([#%][a-z])\\)");
+    public static Pattern idPattern = Pattern.compile("id\\(([#%*][A-Za-z0-9]+)\\)");
     public static Pattern numericPattern = Pattern.compile("-?\\d+");
     //semform('say',3,[var(11),var(2)],[]))
     public static Pattern predPattern = Pattern.compile("semform\\('(.+)',.+\\)");
