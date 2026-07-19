@@ -1,14 +1,23 @@
 package de.ukon.liger.test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import de.ukon.liger.analysis.QueryParser.HierarchyParser;
+import de.ukon.liger.analysis.QueryParser.HierarchyRegistry;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
+import de.ukon.liger.analysis.QueryParser.TemplateParser;
+import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
 import de.ukon.liger.syntax.LinguisticStructure;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class QueryParserNegationTest {
 
