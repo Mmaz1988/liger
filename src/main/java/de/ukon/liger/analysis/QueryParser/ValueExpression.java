@@ -78,7 +78,7 @@ public class ValueExpression extends QueryExpression {
 
             if (right.idRef)
             {
-                Integer expectedId = ValueResolver.resolveId(this, key, right);
+                String expectedId = ValueResolver.resolve(this, key, right);
                 if (expectedId == null) {
                     it.remove();
                     continue;
@@ -91,7 +91,7 @@ public class ValueExpression extends QueryExpression {
                             fsValue = fsValue.substring(1, fsValue.length() - 1);
                         }
 
-                        if (HelperMethods.isInteger(fsValue) && Integer.parseInt(fsValue) == expectedId) {
+                        if (fsValue.equals(expectedId)) {
                             matchingIndices.put(key2, boundIndices.get(key2));
                         } else {
                             nonBoundIndices.add(key2);

@@ -58,17 +58,22 @@ public class EqualityExpression extends QueryExpression {
                 continue;
             }
 
-            if (middle.equal)
-            {
-                if (leftString.equals(rightString))
-                {
+            if (left.idRef || right.idRef) {
+                boolean equals;
+                try {
+                    equals = ValueResolver.compareIds(leftString, rightString) == 0;
+                } catch (IllegalArgumentException e) {
+                    continue;
+                }
+                if ((middle.equal && equals) || (!middle.equal && !equals)) {
+                    out.put(key, left.getSolution().get(key));
+                }
+            } else if (middle.equal) {
+                if (leftString.equals(rightString)) {
                     out.put(key,left.getSolution().get(key));
                 }
-            }
-            else
-            {
-                if (!leftString.equals(rightString))
-                {
+            } else {
+                if (!leftString.equals(rightString)) {
                     out.put(key,left.getSolution().get(key));
                 }
             }

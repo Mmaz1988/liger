@@ -1,7 +1,6 @@
 package de.ukon.liger.analysis.QueryParser;
 
 import de.ukon.liger.syntax.GraphConstraint;
-import de.ukon.liger.utilities.HelperMethods;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -25,18 +24,24 @@ public class ComparisonExpression extends QueryExpression {
         HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
 
         for (Set<SolutionKey> key : left.getSolution().keySet()) {
-            Integer leftValue = resolveNumericValue(key, left);
-            Integer rightValue = resolveNumericValue(key, right);
+            String leftValue = resolveComparableValue(key, left);
+            String rightValue = resolveComparableValue(key, right);
 
             if (leftValue == null || rightValue == null) {
                 continue;
             }
 
+            int comparison;
+            try {
+                comparison = ValueResolver.compareIds(leftValue, rightValue);
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
             boolean matches = switch (middle.operator) {
-                case LT -> leftValue < rightValue;
-                case GT -> leftValue > rightValue;
-                case LE -> leftValue <= rightValue;
-                case GE -> leftValue >= rightValue;
+                case LT -> comparison < 0;
+                case GT -> comparison > 0;
+                case LE -> comparison <= 0;
+                case GE -> comparison >= 0;
             };
 
             if (matches) {
@@ -49,7 +54,7 @@ public class ComparisonExpression extends QueryExpression {
         setSolution(out);
     }
 
-    private Integer resolveNumericValue(Set<SolutionKey> solutionKey, Value value) {
+    private String resolveComparableValue(Set<SolutionKey> solutionKey, Value value) {
         String resolved = ValueResolver.resolve(this, solutionKey, value);
         if (resolved == null) {
             return null;
@@ -60,10 +65,6 @@ public class ComparisonExpression extends QueryExpression {
             resolved = resolved.substring(1, resolved.length() - 1);
         }
 
-        if (!HelperMethods.isInteger(resolved)) {
-            throw new IllegalArgumentException("Comparison values must resolve to integers: " + resolved);
-        }
-
-        return Integer.parseInt(resolved);
+        return resolved;
     }
 }

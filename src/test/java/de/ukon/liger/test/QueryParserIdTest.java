@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -52,11 +53,36 @@ public class QueryParserIdTest {
     }
 
     @Test
+    void testAlphanumericValueIdComparisonUsesSuffixWhenPrefixesMatch() {
+        LinguisticStructure fs = structureWithNumericValues("'i1'", "'i3'");
+
+        QueryParser qp = new QueryParser("#f NUMBER %a & #g NUMBER %b & id(%a) < id(%b)", fs);
+        QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+        assertTrue(qpr.isSuccess);
+        assertEquals(1, qpr.result.keySet().size());
+    }
+
+    @Test
+    void testAlphanumericValueIdComparisonRejectsDifferentPrefixes() {
+        LinguisticStructure fs = structureWithNumericValues("'i1'", "'x3'");
+
+        QueryParser qp = new QueryParser("#f NUMBER %a & #g NUMBER %b & id(%a) < id(%b)", fs);
+        QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+        assertFalse(qpr.isSuccess);
+        assertEquals(0, qpr.result.keySet().size());
+    }
+
+    @Test
     void testIdRejectsNonVariableArguments() {
         LinguisticStructure fs = structureWithValues("'1'");
 
         assertThrows(IllegalStateException.class, () -> new QueryParser("id(1)", fs));
-        assertThrows(IllegalStateException.class, () -> new QueryParser("id(%x)", fs));
+
+        QueryParser qp = new QueryParser("id(%x)", fs);
+        QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+        assertEquals(0, qpr.result.keySet().size());
     }
 
     private LinguisticStructure structureWithValues(String numberValue) {

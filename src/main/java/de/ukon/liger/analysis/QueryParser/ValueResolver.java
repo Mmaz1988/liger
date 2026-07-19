@@ -4,23 +4,20 @@ import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.utilities.HelperMethods;
 
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.Set;
 
 final class ValueResolver {
+
+    private static final Pattern ALPHANUMERIC_ID = Pattern.compile("([a-z]+)(\\d+)");
 
     private ValueResolver() {
     }
 
     static String resolve(QueryExpression context, Set<SolutionKey> solutionKey, Value value) {
         if (value.idRef) {
-            String reference = resolveNodeReference(solutionKey, value.idVar);
-            if (reference == null) {
-                return null;
-            }
-            if (!HelperMethods.isInteger(reference)) {
-                throw new IllegalArgumentException("id(" + value.idVar + ") must resolve to a numeric node id");
-            }
-            return reference;
+            return resolveIdReference(context, solutionKey, value.idVar);
         }
 
         if (value.var) {
@@ -30,29 +27,41 @@ final class ValueResolver {
         return value.getQuery();
     }
 
-    static Integer resolveId(QueryExpression context, Set<SolutionKey> solutionKey, Value value) {
-        String resolved = resolve(context, solutionKey, value);
-        if (resolved == null) {
-            return null;
+    static int compareIds(String left, String right) {
+        IdValue leftId = parseId(left);
+        IdValue rightId = parseId(right);
+
+        if (leftId.numeric && rightId.numeric) {
+            return Integer.compare(leftId.number, rightId.number);
         }
-        if (!HelperMethods.isInteger(resolved)) {
-            throw new IllegalArgumentException("Comparison values must resolve to integers: " + resolved);
+
+        if (leftId.numeric != rightId.numeric) {
+            throw new IllegalArgumentException("Cannot compare mixed id formats: " + left + " vs " + right);
         }
-        return Integer.parseInt(resolved);
+
+        if (!leftId.prefix.equals(rightId.prefix)) {
+            throw new IllegalArgumentException("Cannot compare ids with different prefixes: " + left + " vs " + right);
+        }
+
+        return Integer.compare(leftId.number, rightId.number);
     }
 
-    private static String resolveNodeReference(Set<SolutionKey> solutionKey, String variable) {
-        if (variable == null || !variable.matches("#[a-z]")) {
-            throw new IllegalArgumentException("id() requires a variable reference of the form #[a-z]: " + variable);
+    private static String resolveIdReference(QueryExpression context, Set<SolutionKey> solutionKey, String variable) {
+        if (variable == null || !(variable.matches("#[a-z]") || variable.matches("%[a-z]"))) {
+            throw new IllegalArgumentException("id() requires a variable reference of the form #[a-z] or %[a-z]: " + variable);
         }
 
-        String normalized = variable.substring(1);
-        for (SolutionKey key : solutionKey) {
-            if (normalized.equals(key.variable)) {
-                return key.reference;
+        if (variable.startsWith("#")) {
+            String normalized = variable.substring(1);
+            for (SolutionKey key : solutionKey) {
+                if (normalized.equals(key.variable)) {
+                    return key.reference;
+                }
             }
+            return null;
         }
-        return null;
+
+        return lookupBinding(context, solutionKey, variable);
     }
 
     private static String lookupBinding(QueryExpression context, Set<SolutionKey> solutionKey, String valueVar) {
@@ -75,5 +84,34 @@ final class ValueResolver {
         }
 
         return bestMatch;
+    }
+
+    private static IdValue parseId(String value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Cannot compare null id values");
+        }
+
+        if (HelperMethods.isInteger(value)) {
+            return new IdValue(true, "", Integer.parseInt(value));
+        }
+
+        Matcher matcher = ALPHANUMERIC_ID.matcher(value);
+        if (matcher.matches()) {
+            return new IdValue(false, matcher.group(1), Integer.parseInt(matcher.group(2)));
+        }
+
+        throw new IllegalArgumentException("Unsupported id format: " + value);
+    }
+
+    static final class IdValue {
+        final boolean numeric;
+        final String prefix;
+        final int number;
+
+        IdValue(boolean numeric, String prefix, int number) {
+            this.numeric = numeric;
+            this.prefix = prefix;
+            this.number = number;
+        }
     }
 }
