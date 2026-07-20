@@ -153,6 +153,11 @@ public class UncertaintyExpression extends QueryExpression {
                     right.setSolution(out2);
 
                     for (Solution key2 : out2.keySet()) {
+                        if (!isCompatibleNodeBinding(left.getSolution().get(key),
+                                out2.get(key2), right.getNodeVar())) {
+                            continue;
+                        }
+
                         HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
 
                         for (String key3 : left.getSolution().get(key).keySet()) {
@@ -186,6 +191,11 @@ public class UncertaintyExpression extends QueryExpression {
                     right.setSolution(out2);
 
                     for (Solution key2 : out2.keySet()) {
+                        if (!isCompatibleNodeBinding(left.getSolution().get(key),
+                                out2.get(key2), right.getNodeVar())) {
+                            continue;
+                        }
+
                         HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
 
                         for (String key3 : left.getSolution().get(key).keySet()) {
@@ -220,6 +230,10 @@ public class UncertaintyExpression extends QueryExpression {
                     right.setSolution(out2);
 
                     for (Solution key2 : out2.keySet()) {
+                        if (!isCompatibleNodeBinding(left.getSolution().get(key),
+                                out2.get(key2), right.getNodeVar())) {
+                            continue;
+                        }
 
                         HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
 
@@ -246,6 +260,24 @@ public class UncertaintyExpression extends QueryExpression {
         setConjoinedSolutions(left.getConjoinedSolutions());
         setSolution(out);
         //  getParser().fsNodeBindings = out;
+    }
+
+    private boolean isCompatibleNodeBinding(
+            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> existing,
+            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> candidate,
+            String nodeVar) {
+        if (existing == null || candidate == null || nodeVar == null) {
+            return true;
+        }
+
+        HashMap<String, HashMap<Integer, GraphConstraint>> existingBinding = existing.get(nodeVar);
+        HashMap<String, HashMap<Integer, GraphConstraint>> candidateBinding = candidate.get(nodeVar);
+        if (existingBinding == null || existingBinding.isEmpty()
+                || candidateBinding == null || candidateBinding.isEmpty()) {
+            return true;
+        }
+
+        return existingBinding.keySet().equals(candidateBinding.keySet());
     }
 
     private List<String> getExpandedQueries() {

@@ -221,6 +221,23 @@ public class TemplateParserTest {
         assertFalse(expanded.contains("LINK #x LINK1"));
     }
 
+    @Test
+    void testNestedTemplateRenamingReservesLaterOuterVariables() {
+        TemplateRegistry registry = new TemplateParser().parse(
+                "GF := SUBJ | OBJ | OBL . " +
+                "COARG-PATH(#a,#b,#c) := #a ^(@GF*:~(->PRED)) #b ^(@GF) #c . " +
+                "COARG(#a,#b) := @COARG-PATH(#a,#r,#s) & #s !(@GF) #b & id(#r) != id(#b) .");
+
+        List<List<String>> expansions = TemplateExpander.expandQuery(
+                "#a ant #a & #a SYNSEM #b & #c SYNSEM #d & @COARG(#b,#d) & #a POTENTIAL-ANT #e & #c POTENTIAL-ANT #f",
+                registry);
+
+        assertEquals(1, expansions.size());
+        String expanded = String.join(" ", expansions.get(0));
+        assertFalse(expanded.contains("@COARG-PATH(#b,#c,#e)"));
+        assertFalse(expanded.contains("#e !(@GF) #d"));
+    }
+
     private List<String> normalizeResult(QueryParserResult qpr) {
         List<String> out = new ArrayList<>();
 

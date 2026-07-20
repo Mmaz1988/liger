@@ -11,6 +11,8 @@ import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.utilities.PathVariables;
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,6 +20,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -147,6 +151,55 @@ public class RuleParserFileIntegrationTest {
 
         assertTrue(ruleParser.getTemplateRegistry().getTemplates().containsKey("REFL-BIND"));
         assertEquals(1, ruleParser.getRules().size());
+    }
+
+    @Test
+    void testQuestionRuleLeftSideDoesNotOvermatchMergedGraph7() throws Exception {
+        Path mergedGraph = Paths.get("merged-graph7.json");
+        LinkedHashMap<String, Object> json = new ObjectMapper().readValue(mergedGraph.toFile(), LinkedHashMap.class);
+        LinguisticStructure fs = LinguisticStructure.parseFromJson(json);
+
+        RuleParser ruleParser = new RuleParser(new File("liger-test2.liger"));
+        String leftSide = "#a ant #a & #a SYNSEM #b & #c ant #c & #c SYNSEM #d &\n"
+                + "@DR-PRECEDENCE(#c,#a) & @COARG(#b,#d) & #a POTENTIAL-ANT #e &\n"
+                + "#c POTENTIAL-ANT #f & id(#f) != id(#e)";
+
+        QueryParser qp = new QueryParser(leftSide, fs, ruleParser.getTemplateRegistry(), ruleParser.getHierarchyRegistry());
+        List<QueryParserResult> results = qp.parseQueryWithTemplates(leftSide);
+
+        int matchCount = results.stream().mapToInt(result -> result.result.size()).sum();
+        assertEquals(0, matchCount, () -> "Unexpected matches: " + results.stream()
+                .map(result -> result.result.keySet().stream()
+                        .map(Object::toString)
+                        .collect(Collectors.joining(",", "[", "]")))
+                .collect(Collectors.joining(" | ")));
+    }
+
+    @Test
+    void testQuestionRuleInFileDoesNotFireOnMergedGraph7() throws Exception {
+        Path mergedGraph = Paths.get("merged-graph7.json");
+        LinkedHashMap<String, Object> json = new ObjectMapper().readValue(mergedGraph.toFile(), LinkedHashMap.class);
+        LinguisticStructure fs = LinguisticStructure.parseFromJson(json);
+
+        RuleParser ruleParser = new RuleParser(new File("liger-test2.liger"));
+        LinkedHashSet<LinguisticStructure> input = new LinkedHashSet<>();
+        input.add(fs);
+
+        ruleParser.addAnnotation2(input);
+
+        int offendingRuleIndex = -1;
+        for (int i = 0; i < ruleParser.getRules().size(); i++) {
+            if (ruleParser.getRules().get(i).getRight().contains("POSSIBLE-ANT")
+                    && ruleParser.getRules().get(i).getOperator().equals("?=>")) {
+                offendingRuleIndex = i;
+                break;
+            }
+        }
+
+        assertTrue(offendingRuleIndex >= 0, "Could not locate the question rule");
+        LinkedHashSet<GraphConstraint> annotations = ruleParser.getAddedAnnotationsByRule().get(offendingRuleIndex);
+        assertTrue(annotations == null || annotations.isEmpty(),
+                "Rule fired with annotations: " + annotations);
     }
 
 }

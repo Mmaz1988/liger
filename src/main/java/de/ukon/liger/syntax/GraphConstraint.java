@@ -199,6 +199,25 @@ public class GraphConstraint implements Serializable {
         return g;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof GraphConstraint)) return false;
+        GraphConstraint that = (GraphConstraint) o;
+        return root == that.root
+                && Objects.equals(reading, that.reading)
+                && Objects.equals(nodeIdentifier, that.nodeIdentifier)
+                && Objects.equals(relationLabel, that.relationLabel)
+                && Objects.equals(fsValue, that.fsValue)
+                && Objects.equals(projection, that.projection)
+                && Objects.equals(proj, that.proj);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(reading, nodeIdentifier, relationLabel, fsValue, projection, proj, root);
+    }
+
 
     public String toPrologString(){
 
