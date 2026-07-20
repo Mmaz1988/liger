@@ -351,7 +351,7 @@ public class LigerController {
 
     @CrossOrigin
     @PostMapping(value = "/apply_rules_uploaded_structure", produces = "application/json", consumes = "application/json")
-    public LigerRuleAnnotation applyRulesUploadedStructure(@RequestBody LigerStructureRuleRequest request) {
+    public LigerRuleAnnotationResponse applyRulesUploadedStructure(@RequestBody LigerStructureRuleRequest request) {
         try {
             return applyRulesToUploadedStructure(request);
         } catch (IOException e) {
@@ -535,33 +535,97 @@ public class LigerController {
         return response;
     }
 
-    private LigerRuleAnnotation applyRulesToUploadedStructure(LigerStructureRuleRequest request) throws IOException {
-        LinguisticStructure fs = parseUploadedLinguisticStructure(
+    private LigerRuleAnnotationResponse applyRulesToUploadedStructure(LigerStructureRuleRequest request) throws IOException {
+        List<LinguisticStructure> structures = parseUploadedLinguisticStructures(
                 new LigerStructureUploadRequest(request.content, request.format, request.id)
         );
 
-        List<LinguisticStructure> fsList = new ArrayList<>();
-        fsList.add(fs);
+        List<LigerRuleAnnotation> annotations = new ArrayList<>();
+        StringBuilder sentenceBuilder = new StringBuilder();
 
-        RuleParser rp = new RuleParser(fsList, request.ruleString == null ? "" : request.ruleString);
-        Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Collections.singleton(fs)));
-        LinguisticStructure primary = branches.stream().findFirst().orElse(fs);
+        for (LinguisticStructure fs : structures) {
+            if (fs == null) {
+                continue;
+            }
 
-        LinkedHashSet<LigerRule> appliedRules = new LinkedHashSet<>();
-        for (Rule r : rp.getAppliedRules()) {
-            appliedRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
+            if (fs.text != null && !fs.text.isBlank()) {
+                if (sentenceBuilder.length() > 0) {
+                    sentenceBuilder.append("\n");
+                }
+                sentenceBuilder.append(fs.text);
+            }
+
+            RuleParser rp = new RuleParser(new ArrayList<>(Collections.singletonList(fs)), request.ruleString == null ? "" : request.ruleString);
+            Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Collections.singleton(fs)));
+
+            for (LinguisticStructure branch : branches) {
+                if (branch == null) {
+                    continue;
+                }
+
+                LinkedHashSet<LigerRule> appliedRules = new LinkedHashSet<>();
+                for (Rule r : rp.getAppliedRules()) {
+                    appliedRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
+                }
+
+                LigerRuleAnnotation annotation = new LigerRuleAnnotation(
+                        new LigerWebGraph(branch.constraints, branch.annotation),
+                        appliedRules,
+                        branch.toJson()
+                );
+                annotation.sentence = branch.text;
+                annotation.highlightedNodeIds = collectHighlightedNodeIds(branch);
+                annotation.addedAnnotationsByRule = rp.getAddedAnnotationsByRule();
+                annotations.add(annotation);
+            }
         }
 
-        LigerRuleAnnotation response = new LigerRuleAnnotation(
-                new LigerWebGraph(primary.constraints, primary.annotation),
-                appliedRules,
-                primary.toJson()
-        );
-        response.sentence = primary.text;
-        response.highlightedNodeIds = collectHighlightedNodeIds(primary);
-        response.addedAnnotationsByRule = rp.getAddedAnnotationsByRule();
-        response.structureVariants = toStructureVariants(branches);
-        return response;
+        return new LigerRuleAnnotationResponse(sentenceBuilder.toString(), annotations);
+    }
+
+    private List<LinguisticStructure> parseUploadedLinguisticStructures(LigerStructureUploadRequest request) throws IOException {
+        String format = request.format == null ? "json" : request.format.trim().toLowerCase(Locale.ROOT);
+
+        if ("prolog".equals(format) || "pl".equals(format)) {
+            LinguisticStructure fs = parseUploadedLinguisticStructure(request);
+            return fs == null ? new ArrayList<>() : new ArrayList<>(Collections.singletonList(fs));
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            Object parsed = mapper.readValue(request.content, Object.class);
+            if (parsed instanceof List<?> list) {
+                List<LinguisticStructure> structures = new ArrayList<>();
+                for (Object entry : list) {
+                    if (entry instanceof LinkedHashMap<?, ?> map) {
+                        structures.add(parseStructureMap((LinkedHashMap<String, Object>) map));
+                    }
+                }
+                return structures;
+            }
+
+            if (parsed instanceof LinkedHashMap<?, ?> map) {
+                LinkedHashMap<String, Object> json = (LinkedHashMap<String, Object>) map;
+                if (json.containsKey("structures") && json.get("structures") instanceof List<?> structuresList) {
+                    List<LinguisticStructure> structures = new ArrayList<>();
+                    for (Object entry : structuresList) {
+                        if (entry instanceof LinkedHashMap<?, ?> structureMap) {
+                            structures.add(parseStructureMap((LinkedHashMap<String, Object>) structureMap));
+                        }
+                    }
+                    return structures;
+                }
+
+                return new ArrayList<>(Collections.singletonList(parseStructureMap(json)));
+            }
+
+            throw new IOException("Invalid LinguisticStructure JSON. Expected object, array, or wrapper with structures.");
+        } catch (Exception e) {
+            if (e instanceof IOException ioException) {
+                throw ioException;
+            }
+            throw new IOException("Invalid LinguisticStructure JSON. Expected object, array, or wrapper with structures.", e);
+        }
     }
 
     private LinkedHashSet<String> collectHighlightedNodeIds(LinguisticStructure fs) {
