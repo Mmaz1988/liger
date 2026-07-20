@@ -35,6 +35,34 @@ public class ChoiceNode {
         this.daughterNodes = daughterNodes;
     }
 
+    public ChoiceNode(ChoiceNode other) {
+        this.choiceNode = other == null ? new HashSet<>() : deepCopyChoiceSet(other.choiceNode);
+        this.daughterNodes = other == null ? new HashSet<>() : other.daughterNodes.stream()
+                .map(ChoiceVar::copy)
+                .collect(Collectors.toSet());
+    }
+
+    public ChoiceNode copy() {
+        return new ChoiceNode(this);
+    }
+
+    private Set<Object> deepCopyChoiceSet(Set<Object> input) {
+        Set<Object> out = new HashSet<>();
+        if (input == null) {
+            return out;
+        }
+        for (Object item : input) {
+            if (item instanceof ChoiceVar) {
+                out.add(((ChoiceVar) item).copy());
+            } else if (item instanceof Set) {
+                out.add(deepCopyChoiceSet((Set<Object>) item));
+            } else {
+                out.add(item);
+            }
+        }
+        return out;
+    }
+
 
     public LinkedHashMap<String,Object> toJson()
     {

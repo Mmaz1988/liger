@@ -102,6 +102,26 @@ public class ChoiceSpace {
 
     public  ChoiceSpace() {}
 
+    public ChoiceSpace(ChoiceSpace other) {
+        if (other == null) {
+            return;
+        }
+        this.rootChoice = other.rootChoice == null ? new HashSet<>() : other.rootChoice.stream()
+                .map(ChoiceVar::copy)
+                .collect(Collectors.toSet());
+        this.choiceNodes = other.choiceNodes == null ? new ArrayList<>() : other.choiceNodes.stream()
+                .map(ChoiceNode::copy)
+                .collect(Collectors.toList());
+        this.choices = other.choices == null ? new HashSet<>() : other.choices.stream()
+                .map(choiceSet -> choiceSet.stream().map(ChoiceVar::copy).collect(Collectors.toSet()))
+                .collect(Collectors.toSet());
+        this.allVariables = other.allVariables == null ? new ArrayList<>() : new ArrayList<>(other.allVariables);
+    }
+
+    public ChoiceSpace copy() {
+        return new ChoiceSpace(this);
+    }
+
 
     public static Set<ChoiceVar> parseChoice(String choice)
     {

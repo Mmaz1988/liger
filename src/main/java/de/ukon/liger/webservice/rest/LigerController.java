@@ -146,16 +146,17 @@ public class LigerController {
             LinguisticStructure fs = fsList.get(i);
             LinkedHashSet<LigerRule> appliedLigerRules = new LinkedHashSet<>();
 
-            rp.addAnnotation2(fs);
-            sem.annotateSyntheticMcIndices(fs);
+            Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Collections.singleton(fs)));
+            LinguisticStructure primary = branches.stream().findFirst().orElse(fs);
+            sem.annotateSyntheticMcIndices(primary);
 
-            LigerWebGraph lg = new LigerWebGraph(fs.constraints, fs.annotation);
+            LigerWebGraph lg = new LigerWebGraph(primary.constraints, primary.annotation);
 
 
             for (Rule r : rp.getAppliedRules()) {
                 appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
             }
-            String currentSemString = sem.returnMeaningConstructors(fs, !starter.isGlue, false, true);
+            String currentSemString = sem.returnMeaningConstructors(primary, !starter.isGlue, false, true);
 
 
             //Extract axioms
@@ -166,17 +167,19 @@ public class LigerController {
                 logicType = request.logicType;
             }
 
-            List<String> axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(fs, logicType);
+            List<String> axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(primary, logicType);
 
-            solutions.add(new LigerSolutionAnnotation(
+            LigerSolutionAnnotation solutionAnnotation = new LigerSolutionAnnotation(
                     solutionKeyFor(fs, i),
                     lg,
-                    fs.toJson(),
+                    primary.toJson(),
                     appliedLigerRules,
                     currentSemString,
                     countMeaningConstructorSets(currentSemString),
                     axioms
-            ));
+            );
+            solutionAnnotation.structureVariants = toStructureVariants(branches);
+            solutions.add(solutionAnnotation);
         }
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
@@ -216,23 +219,26 @@ public class LigerController {
         List<String> semString = new ArrayList<>();
         LigerWebGraph lg = null;
         List<String> axioms = null;
+        Set<LinguisticStructure> branches = new LinkedHashSet<>();
+        LinguisticStructure primary = ls;
 
         LinkedHashMap<String,LinkedHashSet<LigerRule>> appliedRules = new LinkedHashMap<>();
 
         for (LinguisticStructure fs : fsList) {
             LinkedHashSet<LigerRule> appliedLigerRules = new LinkedHashSet<>();
 
-            rp.addAnnotation2(fs);
-            sem.annotateSyntheticMcIndices(fs);
+            branches = rp.addAnnotation2(new LinkedHashSet<>(Collections.singleton(fs)));
+            primary = branches.stream().findFirst().orElse(fs);
+            sem.annotateSyntheticMcIndices(primary);
 
-            lg = new LigerWebGraph(fs.constraints, fs.annotation);
+            lg = new LigerWebGraph(primary.constraints, primary.annotation);
 
 
             for (Rule r : rp.getAppliedRules()) {
                 appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
             }
-            appliedRules.put(fs.local_id, appliedLigerRules);
-            semString.add(sem.returnMeaningConstructors(fs, false, false, true));
+            appliedRules.put(primary.local_id, appliedLigerRules);
+            semString.add(sem.returnMeaningConstructors(primary, false, false, true));
 
 
             //Extract axioms
@@ -243,7 +249,7 @@ public class LigerController {
                 logicType = request.logicType;
             }
 
-            axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(fs, logicType);
+            axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(primary, logicType);
 
         }
 
@@ -252,6 +258,9 @@ public class LigerController {
                 appliedRules.values().stream().findFirst().orElseGet(LinkedHashSet::new),
                 String.join("\n", semString), axioms);
         response.addedAnnotationsByRule = rp.getAddedAnnotationsByRule();
+        response.structureJson = primary == null ? ls.toJson() : primary.toJson();
+        response.structureVariants = toStructureVariants(branches);
+        response.structureVariantGraphs = toStructureVariantGraphs(branches);
         return response;
     }
 
@@ -288,6 +297,36 @@ public class LigerController {
         }
 
         return count;
+    }
+
+    private List<LinkedHashMap<String, Object>> toStructureVariants(Set<LinguisticStructure> branches) {
+        List<LinkedHashMap<String, Object>> variants = new ArrayList<>();
+        if (branches == null) {
+            return variants;
+        }
+
+        for (LinguisticStructure structure : branches) {
+            if (structure != null) {
+                variants.add(structure.toJson());
+            }
+        }
+
+        return variants;
+    }
+
+    private List<LigerWebGraph> toStructureVariantGraphs(Set<LinguisticStructure> branches) {
+        List<LigerWebGraph> variants = new ArrayList<>();
+        if (branches == null) {
+            return variants;
+        }
+
+        for (LinguisticStructure structure : branches) {
+            if (structure != null) {
+                variants.add(new LigerWebGraph(structure.constraints, structure.annotation));
+            }
+        }
+
+        return variants;
     }
 
     @CrossOrigin
@@ -505,7 +544,8 @@ public class LigerController {
         fsList.add(fs);
 
         RuleParser rp = new RuleParser(fsList, request.ruleString == null ? "" : request.ruleString);
-        rp.addAnnotation2(fs);
+        Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Collections.singleton(fs)));
+        LinguisticStructure primary = branches.stream().findFirst().orElse(fs);
 
         LinkedHashSet<LigerRule> appliedRules = new LinkedHashSet<>();
         for (Rule r : rp.getAppliedRules()) {
@@ -513,13 +553,14 @@ public class LigerController {
         }
 
         LigerRuleAnnotation response = new LigerRuleAnnotation(
-                new LigerWebGraph(fs.constraints, fs.annotation),
+                new LigerWebGraph(primary.constraints, primary.annotation),
                 appliedRules,
-                fs.toJson()
+                primary.toJson()
         );
-        response.sentence = fs.text;
-        response.highlightedNodeIds = collectHighlightedNodeIds(fs);
+        response.sentence = primary.text;
+        response.highlightedNodeIds = collectHighlightedNodeIds(primary);
         response.addedAnnotationsByRule = rp.getAddedAnnotationsByRule();
+        response.structureVariants = toStructureVariants(branches);
         return response;
     }
 

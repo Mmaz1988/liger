@@ -142,6 +142,201 @@ public class RuleParser {
 
 
 
+    public Set<LinguisticStructure> addAnnotation2(Set<LinguisticStructure> structures) {
+        resetRuleParser();
+
+        LinkedHashSet<LinguisticStructure> active = structures == null
+                ? new LinkedHashSet<>()
+                : new LinkedHashSet<>(structures);
+
+        for (LinguisticStructure structure : active) {
+            seedUsedKeys(structure);
+        }
+
+        for (int k = 0; k < rules.size(); k++) {
+            Rule r = rules.get(k);
+            r.setRuleIndex(k);
+            LinkedHashSet<LinguisticStructure> next = new LinkedHashSet<>();
+            LinkedHashSet<GraphConstraint> ruleAddedAnnotations = new LinkedHashSet<>();
+
+            for (LinguisticStructure structure : active) {
+                QueryParser qp = new QueryParser(structure, templateRegistry, hierarchyRegistry);
+                qp.resetParser();
+                qp.generateQuery(r.getLeft());
+                QueryParserResult qpr = templateRegistry != null && !templateRegistry.getTemplates().isEmpty()
+                        ? qp.parseQueryWithTemplates(r.getLeft()).stream().filter(result -> result.isSuccess).findFirst()
+                        .orElse(new QueryParserResult(new HashMap<>(), new HashMap<>()))
+                        : qp.parseQuery(qp.getQueryList());
+
+                if (!qpr.isSuccess) {
+                    next.add(structure);
+                    continue;
+                }
+
+                this.appliedRules.add(r);
+
+                if (isQuestionRule(r)) {
+                    boolean producedBranch = false;
+                    for (Solution solution : qpr.result.keySet()) {
+                        LinguisticStructure branch = structure.copy();
+                        if (r.isQuestionDelete()) {
+                            removeFactsForSolution(branch, qpr, solution);
+                        } else {
+                            ruleAddedAnnotations.addAll(addFactsForSolution(branch, qpr, solution, r));
+                        }
+                        next.add(branch);
+                        producedBranch = true;
+                    }
+                    if (!producedBranch) {
+                        next.add(structure);
+                    }
+                } else {
+                    RuleParser temp = new RuleParser(new ArrayList<>());
+                    temp.setReplace(this.replace);
+                    temp.templateRegistry = this.templateRegistry;
+                    temp.hierarchyRegistry = this.hierarchyRegistry;
+                    temp.dict = this.dict;
+                    temp.setRules(new ArrayList<>(Collections.singletonList(r)));
+                    temp.addAnnotation2(structure);
+                    r.setRuleIndex(k);
+                    mergeAddedAnnotations(temp.getAddedAnnotationsByRule(), Collections.singletonMap(0, k));
+                    next.add(structure);
+                }
+            }
+
+            if (!ruleAddedAnnotations.isEmpty()) {
+                addedAnnotationsByRule.put(k, ruleAddedAnnotations);
+            }
+
+            active = next;
+        }
+
+        return active;
+    }
+
+    private LinkedHashSet<GraphConstraint> addFactsForSolution(LinguisticStructure branch,
+                                                               QueryParserResult qpr,
+                                                               Solution solution,
+                                                               Rule r) {
+        LinkedHashSet<GraphConstraint> added = new LinkedHashSet<>();
+        if (!qpr.result.containsKey(solution)) {
+            return added;
+        }
+
+        Set<ChoiceVar> context = extractContexts(qpr.result.get(solution), new HashMap<>());
+        List<String> search = r.splitGoal();
+
+        for (String searchString : search) {
+            Matcher graphMatcher = graphPattern.matcher(searchString.trim());
+            if (!graphMatcher.matches()) {
+                continue;
+            }
+
+            Matcher nodeMatcher = HelperMethods.fsNodePattern.matcher(graphMatcher.group(1));
+            Matcher valueMatcher = HelperMethods.fsNodePattern.matcher(graphMatcher.group(3));
+            boolean valueMatches = valueMatcher.matches();
+
+            if (!nodeMatcher.matches()) {
+                continue;
+            }
+
+            String key2 = resolveNodeReference(qpr, solution, nodeMatcher.group(1));
+            String newLabel = graphMatcher.group(2);
+            String newValue;
+
+            if (valueMatches) {
+                newValue = resolveValueReference(qpr, solution, valueMatcher.group(1));
+            } else {
+                newValue = graphMatcher.group(3);
+                if (replace) {
+                    newValue = replaceVars(qpr, solution, newValue);
+                    newLabel = replaceVars(qpr, solution, newLabel);
+                }
+            }
+
+            GraphConstraint c = new GraphConstraint();
+            c.setReading(context);
+            c.setFsNode(key2);
+            c.setRelationLabel(newLabel);
+            c.setFsValue(newValue);
+            branch.annotation.add(c);
+            added.add(c);
+        }
+
+        return added;
+    }
+
+    private void removeFactsForSolution(LinguisticStructure branch, QueryParserResult qpr, Solution solution) {
+        if (!qpr.result.containsKey(solution)) {
+            return;
+        }
+
+        List<GraphConstraint> removedFacts = new ArrayList<>();
+        for (String var : qpr.result.get(solution).keySet()) {
+            for (String index : qpr.result.get(solution).get(var).keySet()) {
+                removedFacts.addAll(qpr.result.get(solution).get(var).get(index).values());
+            }
+        }
+
+        Iterator<GraphConstraint> constraintIterator = branch.constraints.iterator();
+        while (constraintIterator.hasNext()) {
+            GraphConstraint next = constraintIterator.next();
+            for (GraphConstraint c1 : removedFacts) {
+                if (next.equals(c1)) {
+                    constraintIterator.remove();
+                    break;
+                }
+            }
+        }
+    }
+
+    private void mergeAddedAnnotations(LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> source,
+                                       Map<Integer, Integer> tempIndexToOriginalIndex) {
+        for (Map.Entry<Integer, LinkedHashSet<GraphConstraint>> entry : source.entrySet()) {
+            Integer originalIndex = tempIndexToOriginalIndex.getOrDefault(entry.getKey(), entry.getKey());
+            addedAnnotationsByRule.merge(originalIndex, new LinkedHashSet<>(entry.getValue()), (left, right) -> {
+                left.addAll(right);
+                return left;
+            });
+        }
+    }
+
+    private void seedUsedKeys(LinguisticStructure structure) {
+        if (structure == null) {
+            return;
+        }
+
+        if (structure.constraints != null) {
+            for (GraphConstraint constraint : structure.constraints) {
+                usedKeys.add(constraint.getFsNode());
+            }
+        }
+
+        if (structure.annotation != null) {
+            for (GraphConstraint constraint : structure.annotation) {
+                usedKeys.add(constraint.getFsNode());
+            }
+        }
+    }
+
+    private boolean isQuestionRule(Rule r) {
+        return r != null && ("?=>".equals(r.getOperator()) || "?->".equals(r.getOperator()));
+    }
+
+    private String resolveNodeReference(QueryParserResult qpr, Solution solution, String reference) {
+        if (qpr.result.containsKey(solution) && qpr.result.get(solution).containsKey(reference)) {
+            return qpr.result.get(solution).get(reference).keySet().stream().findAny().orElseGet(this::returnUnusedVar);
+        }
+        return returnUnusedVar();
+    }
+
+    private String resolveValueReference(QueryParserResult qpr, Solution solution, String reference) {
+        if (qpr.result.containsKey(solution) && qpr.result.get(solution).containsKey(reference)) {
+            return qpr.result.get(solution).get(reference).keySet().stream().findAny().orElseGet(this::returnUnusedVar);
+        }
+        return returnUnusedVar();
+    }
+
     public void addAnnotation2(LinguisticStructure fs) {
         resetRuleParser();
         QueryParser qp = new QueryParser(fs, templateRegistry, hierarchyRegistry);
@@ -726,18 +921,22 @@ public class RuleParser {
                     }
                 }
 
-                if (c =='=' &&
-                        (fileString.charAt(i + 1) == '=' || fileString.charAt(i + 1) == '-' || fileString.charAt(i + 1) == '+')
+                if ((c =='=' || c == '?') &&
+                        (fileString.charAt(i + 1) == '=' || fileString.charAt(i + 1) == '-')
                         && fileString.charAt(i + 2) == '>')
                 {
                     boolean rewrite = false;
                     boolean branch = false;
-                    if (fileString.charAt(i + 1) == '-')
-                    {
-                      rewrite = true;
-                    } else if (fileString.charAt(i + 1) == '+')
+                    boolean questionDelete = false;
+                    if (c == '?' && fileString.charAt(i + 1) == '=')
                     {
                         branch = true;
+                    } else if (c == '?' && fileString.charAt(i + 1) == '-')
+                    {
+                        questionDelete = true;
+                    } else if (fileString.charAt(i + 1) == '-')
+                    {
+                      rewrite = true;
                     }
                     i = i + 3;
                     c = fileString.charAt(i);
@@ -760,7 +959,7 @@ public class RuleParser {
                     String rightString = right.toString().trim();
                     rightString = rightString.replaceAll("\\s+"," ");
 
-                    Rule r = new Rule(leftString,rightString, rewrite,branch);
+                    Rule r = new Rule(leftString,rightString, rewrite,branch,questionDelete);
                     r.setLineNumber(lineCounter);
                     out.add(r);
 
@@ -872,7 +1071,8 @@ public class RuleParser {
                 && !trimmed.contains("::=")
                 && !trimmed.contains("==>")
                 && !trimmed.contains("=->")
-                && !trimmed.contains("+->");
+                && !trimmed.contains("?=>")
+                && !trimmed.contains("?->");
     }
 
     private boolean isHierarchyDefinitionLine(String trimmed) {

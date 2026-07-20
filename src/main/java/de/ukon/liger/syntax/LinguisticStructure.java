@@ -63,6 +63,28 @@ public class LinguisticStructure {
         this.cp = cp;
     }
 
+    public LinguisticStructure(LinguisticStructure other) {
+        if (other == null) {
+            this.constraints = new ArrayList<>();
+            this.annotation = new ArrayList<>();
+            this.cp = new ChoiceSpace();
+            return;
+        }
+        this.local_id = other.local_id;
+        this.text = other.text;
+        this.constraints = other.constraints == null ? new ArrayList<>() : other.constraints.stream()
+                .map(GraphConstraint::copy)
+                .collect(Collectors.toList());
+        this.annotation = other.annotation == null ? new ArrayList<>() : other.annotation.stream()
+                .map(GraphConstraint::copy)
+                .collect(Collectors.toList());
+        this.cp = other.cp == null ? new ChoiceSpace() : other.cp.copy();
+    }
+
+    public LinguisticStructure copy() {
+        return new LinguisticStructure(this);
+    }
+
     public List<GraphConstraint> returnFullGraph(){
         List<GraphConstraint> allConstraints = new ArrayList<>();
         allConstraints.addAll(this.constraints);

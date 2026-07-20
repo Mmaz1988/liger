@@ -31,15 +31,34 @@ import java.util.regex.Pattern;
 
 public class Rule {
 
+    public enum RuleOperator {
+        ADD("==>"),
+        REWRITE("=->"),
+        FORK_ADD("?=>"),
+        FORK_DELETE("?->");
+
+        private final String symbol;
+
+        RuleOperator(String symbol) {
+            this.symbol = symbol;
+        }
+
+        public String getSymbol() {
+            return symbol;
+        }
+    }
+
 
     private String left;
     private String right;
+    private String operator = "==>";
     private boolean rewrite;
     private  boolean branch;
+    private boolean questionDelete;
 
     private int lineNumber;
     private int ruleIndex;
-    private static Pattern rulePattern = Pattern.compile("(.+)=(=|-|\\+)>(.+)");
+    private static Pattern rulePattern = Pattern.compile("(.+?)(==>|=->|\\?=>|\\?->)(.+)");
 
     public Rule(String rule) {
         generateRule(rule);
@@ -48,18 +67,27 @@ public class Rule {
     public Rule(String rule, boolean rewrite) {
         generateRule(rule);
         this.rewrite = rewrite;
+        if (rewrite) {
+            this.operator = RuleOperator.REWRITE.getSymbol();
+        }
     }
 
     public Rule(String rule, boolean rewrite, boolean branch) {
         generateRule(rule);
         this.rewrite = rewrite;
         this.branch = branch;
+        if (rewrite) {
+            this.operator = RuleOperator.REWRITE.getSymbol();
+        } else if (branch) {
+            this.operator = RuleOperator.FORK_ADD.getSymbol();
+        }
     }
 
     public Rule(String left, String right)
     {
         this.left = left;
         this.right = right;
+        this.operator = RuleOperator.ADD.getSymbol();
     }
 
     public Rule(String left, String right, boolean rewrite)
@@ -67,6 +95,7 @@ public class Rule {
         this.left = left;
         this.right = right;
         this.rewrite = rewrite;
+        this.operator = rewrite ? RuleOperator.REWRITE.getSymbol() : RuleOperator.ADD.getSymbol();
     }
 
     public Rule(String left, String right, boolean rewrite, boolean branch)
@@ -75,6 +104,31 @@ public class Rule {
         this.right = right;
         this.rewrite = rewrite;
         this.branch = branch;
+        if (rewrite) {
+            this.operator = RuleOperator.REWRITE.getSymbol();
+        } else if (branch) {
+            this.operator = RuleOperator.FORK_ADD.getSymbol();
+        } else {
+            this.operator = RuleOperator.ADD.getSymbol();
+        }
+    }
+
+    public Rule(String left, String right, boolean rewrite, boolean branch, boolean questionDelete)
+    {
+        this.left = left;
+        this.right = right;
+        this.rewrite = rewrite;
+        this.branch = branch;
+        this.questionDelete = questionDelete;
+        if (questionDelete) {
+            this.operator = RuleOperator.FORK_DELETE.getSymbol();
+        } else if (rewrite) {
+            this.operator = RuleOperator.REWRITE.getSymbol();
+        } else if (branch) {
+            this.operator = RuleOperator.FORK_ADD.getSymbol();
+        } else {
+            this.operator = RuleOperator.ADD.getSymbol();
+        }
     }
 
 
@@ -84,7 +138,11 @@ public class Rule {
         if (rm.matches())
         {
             this.left = rm.group(1);
+            this.operator = rm.group(2);
             this.right = rm.group(3);
+            this.rewrite = RuleOperator.REWRITE.getSymbol().equals(this.operator);
+            this.branch = RuleOperator.FORK_ADD.getSymbol().equals(this.operator);
+            this.questionDelete = RuleOperator.FORK_DELETE.getSymbol().equals(this.operator);
         }
     }
 
@@ -136,7 +194,7 @@ public class Rule {
 
     @Override
     public String toString() {
-        return   left +  " ==> " +
+        return   left +  " " + operator + " " +
                  right + ".";
     }
 
@@ -146,6 +204,11 @@ public class Rule {
 
     public void setRewrite(boolean rewrite) {
         this.rewrite = rewrite;
+        if (rewrite) {
+            this.operator = RuleOperator.REWRITE.getSymbol();
+        } else if (!this.branch && !this.questionDelete) {
+            this.operator = RuleOperator.ADD.getSymbol();
+        }
     }
 
     public boolean isBranch() {
@@ -154,6 +217,35 @@ public class Rule {
 
     public void setBranch(boolean branch) {
         this.branch = branch;
+        if (branch) {
+            this.operator = RuleOperator.FORK_ADD.getSymbol();
+        } else if (!this.rewrite && !this.questionDelete) {
+            this.operator = RuleOperator.ADD.getSymbol();
+        }
+    }
+
+    public boolean isQuestionDelete() {
+        return questionDelete;
+    }
+
+    public void setQuestionDelete(boolean questionDelete) {
+        this.questionDelete = questionDelete;
+        if (questionDelete) {
+            this.operator = RuleOperator.FORK_DELETE.getSymbol();
+        } else if (!this.rewrite && !this.branch) {
+            this.operator = RuleOperator.ADD.getSymbol();
+        }
+    }
+
+    public String getOperator() {
+        return operator;
+    }
+
+    public void setOperator(String operator) {
+        this.operator = operator;
+        this.rewrite = RuleOperator.REWRITE.getSymbol().equals(operator);
+        this.branch = RuleOperator.FORK_ADD.getSymbol().equals(operator);
+        this.questionDelete = RuleOperator.FORK_DELETE.getSymbol().equals(operator);
     }
 
     public int getLineNumber() {
@@ -177,4 +269,3 @@ public class Rule {
 
 
 }
-

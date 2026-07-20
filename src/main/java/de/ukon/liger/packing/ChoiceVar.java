@@ -37,10 +37,19 @@ public class ChoiceVar {
     public ChoiceVar(String choiceID)
     {
         this.choiceID = choiceID;
-        if (choiceID.equals("1"))
+        if ("1".equals(choiceID))
         {
             this.propValue = true;
         }
+    }
+
+    public ChoiceVar(ChoiceVar other) {
+        this.choiceID = other == null ? "1" : other.choiceID;
+        this.propValue = other == null ? Boolean.TRUE : other.propValue;
+    }
+
+    public ChoiceVar copy() {
+        return new ChoiceVar(this);
     }
 
 

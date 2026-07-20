@@ -46,6 +46,26 @@ public class GraphConstraint implements Serializable {
     public GraphConstraint()
     {this.projection = false;}
 
+    public GraphConstraint(GraphConstraint other) {
+        this();
+        if (other == null) {
+            return;
+        }
+        this.reading = other.reading == null ? new HashSet<>() : other.reading.stream()
+                .map(ChoiceVar::copy)
+                .collect(Collectors.toSet());
+        this.nodeIdentifier = other.nodeIdentifier;
+        this.relationLabel = other.relationLabel;
+        this.fsValue = other.fsValue;
+        this.projection = other.projection;
+        this.proj = other.proj;
+        this.root = other.root;
+    }
+
+    public GraphConstraint copy() {
+        return new GraphConstraint(this);
+    }
+
     public GraphConstraint(Set<ChoiceVar> reading, Integer fsNode, String relationLabel, String fsValue)
     {
         this.reading = reading;
