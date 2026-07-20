@@ -57,6 +57,7 @@ public class RuleParser {
 
     private LinkedHashSet<Rule> appliedRules = new LinkedHashSet<>();
     private LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> addedAnnotationsByRule = new LinkedHashMap<>();
+    private IdentityHashMap<LinguisticStructure, LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>>> addedAnnotationsByStructure = new IdentityHashMap<>();
     private LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> removedAnnotationsByRule = new LinkedHashMap<>();
     private static Pattern graphPattern = Pattern.compile("(#.+?)\\s+(\\S+)\\s+(.+)");
     private Boolean replace;
@@ -183,7 +184,9 @@ public class RuleParser {
                         if (r.isQuestionDelete()) {
                             removeFactsForSolution(branch, qpr, solution);
                         } else {
-                            ruleAddedAnnotations.addAll(addFactsForSolution(branch, qpr, solution, r));
+                            LinkedHashSet<GraphConstraint> added = addFactsForSolution(branch, qpr, solution, r);
+                            ruleAddedAnnotations.addAll(added);
+                            recordAddedAnnotations(branch, k, added);
                         }
                         next.add(branch);
                         producedBranch = true;
@@ -201,6 +204,7 @@ public class RuleParser {
                     temp.addAnnotation2(structure);
                     r.setRuleIndex(k);
                     mergeAddedAnnotations(temp.getAddedAnnotationsByRule(), Collections.singletonMap(0, k));
+                    recordAddedAnnotations(structure, k, temp.getAddedAnnotationsByRule().get(0));
                     next.add(structure);
                 }
             }
@@ -300,6 +304,21 @@ public class RuleParser {
                 return left;
             });
         }
+    }
+
+    private void recordAddedAnnotations(LinguisticStructure structure,
+                                        Integer ruleIndex,
+                                        Collection<GraphConstraint> annotations) {
+        if (structure == null || ruleIndex == null || annotations == null || annotations.isEmpty()) {
+            return;
+        }
+
+        LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> byRule =
+                addedAnnotationsByStructure.computeIfAbsent(structure, ignored -> new LinkedHashMap<>());
+        byRule.merge(ruleIndex, new LinkedHashSet<>(annotations), (left, right) -> {
+            left.addAll(right);
+            return left;
+        });
     }
 
     private void seedUsedKeys(LinguisticStructure structure) {
@@ -696,6 +715,7 @@ public class RuleParser {
                 }
                 if (!factsForRule.isEmpty()) {
                     addedAnnotationsByRule.put(r.getRuleIndex(), factsForRule);
+                    recordAddedAnnotations(fs, r.getRuleIndex(), factsForRule);
                 }
                 String added = String.join("\n", addedFacts);
                 LOGGER.debug("\n" + added);
@@ -1012,6 +1032,7 @@ public class RuleParser {
         usedReadings = new HashSet<>();
         appliedRules = new LinkedHashSet<>();
         addedAnnotationsByRule = new LinkedHashMap<>();
+        addedAnnotationsByStructure = new IdentityHashMap<>();
         removedAnnotationsByRule = new LinkedHashMap<>();
     }
 
@@ -1063,6 +1084,11 @@ public class RuleParser {
 
     public LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> getAddedAnnotationsByRule() {
         return this.addedAnnotationsByRule;
+    }
+
+    public LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> getAddedAnnotationsByRule(LinguisticStructure structure) {
+        LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> annotations = addedAnnotationsByStructure.get(structure);
+        return annotations == null ? new LinkedHashMap<>() : annotations;
     }
 
     public LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> getRemovedAnnotationsByRule() {

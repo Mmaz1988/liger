@@ -257,8 +257,10 @@ public class LigerController {
         LigerRuleAnnotation response = new LigerRuleAnnotation(lg,
                 appliedRules.values().stream().findFirst().orElseGet(LinkedHashSet::new),
                 String.join("\n", semString), axioms);
-        response.addedAnnotationsByRule = rp.getAddedAnnotationsByRule();
-        response.highlightedNodeIds = collectHighlightedNodeIdsFromGroups(rp.getAddedAnnotationsByRule().values());
+        LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> primaryAddedAnnotations =
+                rp.getAddedAnnotationsByRule(primary);
+        response.addedAnnotationsByRule = primaryAddedAnnotations;
+        response.highlightedNodeIds = collectHighlightedNodeIdsFromGroups(primaryAddedAnnotations.values());
         response.structureJson = primary == null ? ls.toJson() : primary.toJson();
         response.structureVariants = toStructureVariants(branches);
         response.structureVariantGraphs = toStructureVariantGraphs(branches);
@@ -575,8 +577,10 @@ public class LigerController {
                         branch.toJson()
                 );
                 annotation.sentence = branch.text;
-                annotation.highlightedNodeIds = collectHighlightedNodeIdsFromGroups(rp.getAddedAnnotationsByRule().values());
-                annotation.addedAnnotationsByRule = rp.getAddedAnnotationsByRule();
+                LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> branchAddedAnnotations =
+                        rp.getAddedAnnotationsByRule(branch);
+                annotation.highlightedNodeIds = collectHighlightedNodeIdsFromGroups(branchAddedAnnotations.values());
+                annotation.addedAnnotationsByRule = branchAddedAnnotations;
                 annotations.add(annotation);
             }
         }

@@ -244,6 +244,21 @@ public class RuleParserTest {
     }
 
     @Test
+    void testAddedFactsAreAssociatedWithTheirBranch() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS2.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.getRules().add(new Rule("#g !(COMP*>TNS-ASP) #h ?=> #g TMP-DOM #h"));
+
+        Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Set.of(structure)));
+
+        assertEquals(6, rp.getAddedAnnotationsByRule().get(0).size());
+        assertTrue(branches.stream().allMatch(branch ->
+                rp.getAddedAnnotationsByRule(branch).get(0).size() == 1));
+    }
+
+    @Test
     void testQuestionDeleteBranchesOnMatches() {
         LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS2.pl");
         LinguisticStructure structure = fs.values().iterator().next();
