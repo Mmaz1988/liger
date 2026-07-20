@@ -61,7 +61,7 @@ public class NegationExpression extends QueryExpression {
             QueryParser parser = getParser();
             HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> seedSolution = new HashMap<>();
             if (outerKey != null) {
-                seedSolution.put(outerKey.copy(), seedBinding == null ? new HashMap<>() : new HashMap<>(seedBinding));
+                seedSolution.put(outerKey.copy(), copyBinding(seedBinding));
             }
 
             QueryParser nestedParser = new QueryParser(
@@ -84,9 +84,27 @@ public class NegationExpression extends QueryExpression {
             }
             return matched;
         } catch (RuntimeException e) {
-            LOGGER.debug("Negated query evaluation failed for '{}': {}", current.getNegatedQuery(), e.getMessage());
-            return false;
+            LOGGER.error("Invalid negated query '{}': {}", current.getNegatedQuery(), e.getMessage(), e);
+            // An evaluation error must not turn negation into a successful match.
+            return true;
         }
+    }
+
+    private HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> copyBinding(
+            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> source) {
+        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> copy = new HashMap<>();
+        if (source == null) {
+            return copy;
+        }
+
+        for (java.util.Map.Entry<String, HashMap<String, HashMap<Integer, GraphConstraint>>> variable : source.entrySet()) {
+            HashMap<String, HashMap<Integer, GraphConstraint>> references = new HashMap<>();
+            for (java.util.Map.Entry<String, HashMap<Integer, GraphConstraint>> reference : variable.getValue().entrySet()) {
+                references.put(reference.getKey(), new HashMap<>(reference.getValue()));
+            }
+            copy.put(variable.getKey(), references);
+        }
+        return copy;
     }
 
     private Set<String> extractQueryVariables(String query) {

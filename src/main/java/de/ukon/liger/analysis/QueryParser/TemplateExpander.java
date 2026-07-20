@@ -15,6 +15,7 @@ public class TemplateExpander {
 
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(TemplateExpander.class);
     private static final Pattern FS_VAR_PATTERN = Pattern.compile("([#*])(\\w+)");
+    private static final Pattern TEMPLATE_RENAME_VAR_PATTERN = Pattern.compile("(#)(\\w+)");
 
     public static List<List<String>> expandQuery(String query, TemplateRegistry registry) {
         List<List<String>> seeds = new ArrayList<>();
@@ -102,7 +103,7 @@ public class TemplateExpander {
         }
 
         for (String token : tokens) {
-            Matcher matcher = FS_VAR_PATTERN.matcher(token);
+            Matcher matcher = TEMPLATE_RENAME_VAR_PATTERN.matcher(token);
             while (matcher.find()) {
                 String prefix = matcher.group(1);
                 String variable = matcher.group(2);
@@ -155,7 +156,7 @@ public class TemplateExpander {
                                                   Set<String> usedVars,
                                                   Map<String, String> renames,
                                                   AtomicInteger freshVarCounter) {
-        Matcher matcher = FS_VAR_PATTERN.matcher(token);
+        Matcher matcher = TEMPLATE_RENAME_VAR_PATTERN.matcher(token);
         StringBuffer buffer = new StringBuffer();
 
         while (matcher.find()) {

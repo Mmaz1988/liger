@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 public class UncertaintyExpression extends QueryExpression {
 
     private static final int MAX_UNCERTAINTY_REPEAT = 16;
+    private static final int MAX_MULTILABEL_UNCERTAINTY_REPEAT = 5;
 
     public String uncertaintyExpression;
 
@@ -287,9 +288,13 @@ public class UncertaintyExpression extends QueryExpression {
         }
 
         TemplateRegistry registry = middle.getParser() != null ? middle.getParser().getTemplateRegistry() : null;
-        int maxRepeat = Math.min(4, Math.max(1, middle.getFsIndices().size()));
+        int maxRepeat = MAX_UNCERTAINTY_REPEAT;
 
         List<PathAtom> atoms = parsePathQuery(query, registry);
+        if (atoms.stream().anyMatch(atom -> atom.labels.size() > 1)) {
+            // Template alternatives expand exponentially with path length.
+            maxRepeat = Math.min(MAX_MULTILABEL_UNCERTAINTY_REPEAT, maxRepeat);
+        }
         List<String> expanded = new ArrayList<>();
         expandPathQueries(atoms, 0, new ArrayList<>(), maxRepeat, expanded);
 

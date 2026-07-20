@@ -309,7 +309,15 @@ public class QueryParser {
                 }
             } catch(IllegalArgumentException e)
             {
-                LOGGER.trace("Element \"" + ((LinkedList<String>) queryDeque).get(i) + "\" not contained in current f-structure." );
+                String invalidToken = ((LinkedList<String>) queryDeque).get(i);
+                if (invalidToken.startsWith("@")) {
+                    // Template-bearing constructors may perform an initial parse
+                    // before their registry is attached.
+                    LOGGER.debug("Deferred template token '{}' at position {}", invalidToken, i);
+                } else {
+                    LOGGER.warn("Query token '{}' at position {} could not be resolved against the current structure",
+                            invalidToken, i);
+                }
                 return new LinkedList<QueryExpression>();
             }
         }
@@ -480,7 +488,7 @@ public class QueryParser {
                         continue;
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Invalid query snytax!", e);
+                    LOGGER.error("Invalid query syntax while evaluating '{}': {}", query, e.getMessage(), e);
                    // e.printStackTrace();
                 }
 
@@ -731,7 +739,12 @@ public class QueryParser {
             if (c == '(') {
                 parenDepth++;
             } else if (c == ')') {
-                parenDepth = Math.max(0, parenDepth - 1);
+                if (parenDepth == 0) {
+                    String message = "Unmatched ')' in query: " + query;
+                    LOGGER.error(message);
+                    throw new IllegalArgumentException(message);
+                }
+                parenDepth--;
             }
 
             current.append(c);
@@ -739,6 +752,17 @@ public class QueryParser {
 
         if (!current.isEmpty()) {
             tokens.add(current.toString());
+        }
+
+        if (inQuote) {
+            String message = "Unterminated quote in query: " + query;
+            LOGGER.error(message);
+            throw new IllegalArgumentException(message);
+        }
+        if (parenDepth != 0) {
+            String message = "Unmatched '(' in query: " + query;
+            LOGGER.error(message);
+            throw new IllegalArgumentException(message);
         }
 
         return tokens;
