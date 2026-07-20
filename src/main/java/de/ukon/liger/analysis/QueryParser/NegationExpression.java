@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -115,7 +114,6 @@ public class NegationExpression extends QueryExpression {
             outerBindings.put(key.variable, key.reference);
         }
 
-        boolean comparedAny = false;
         for (java.util.Map.Entry<String, String> entry : outerBindings.entrySet()) {
             if (!queryVars.contains(entry.getKey())) {
                 continue;
@@ -124,12 +122,11 @@ public class NegationExpression extends QueryExpression {
             if (innerValue == null) {
                 continue;
             }
-            comparedAny = true;
             if (!innerValue.equals(entry.getValue())) {
                 return false;
             }
         }
 
-        return comparedAny;
+        return true;
     }
 }

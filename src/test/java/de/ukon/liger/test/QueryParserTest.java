@@ -316,7 +316,7 @@ public class QueryParserTest {
                     hierarchyRegistry);
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
-            assertEquals(6, qpr.result.keySet().size());
+            assertEquals(5, qpr.result.keySet().size());
         }
     }
 

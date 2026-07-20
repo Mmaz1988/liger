@@ -98,6 +98,11 @@ public class EqualityExpression extends QueryExpression {
             return null;
         }
 
+        if ((resolved.startsWith("'") && resolved.endsWith("'")) ||
+                (resolved.startsWith("\"") && resolved.endsWith("\""))) {
+            resolved = resolved.substring(1, resolved.length() - 1);
+        }
+
         if (value.strip)
         {
             resolved = HelperMethods.stripValue(resolved);

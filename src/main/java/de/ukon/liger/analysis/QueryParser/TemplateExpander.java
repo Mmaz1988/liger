@@ -84,6 +84,10 @@ public class TemplateExpander {
                                                         List<String> parameters,
                                                         Set<String> usedVars,
                                                         AtomicInteger freshVarCounter) {
+        if (parameters.isEmpty()) {
+            return new ArrayList<>(tokens);
+        }
+
         Map<String, String> renames = new LinkedHashMap<>();
         List<String> out = new ArrayList<>();
         Set<String> reservedVars = new LinkedHashSet<>(usedVars);
@@ -91,6 +95,20 @@ public class TemplateExpander {
         for (String parameter : parameters) {
             if (parameter != null && parameter.startsWith("#") && parameter.length() > 1) {
                 reservedVars.add(parameter.substring(1));
+            }
+        }
+
+        for (String token : tokens) {
+            Matcher matcher = FS_VAR_PATTERN.matcher(token);
+            while (matcher.find()) {
+                String prefix = matcher.group(1);
+                String variable = matcher.group(2);
+
+                if (parameters.contains(prefix + variable) || renames.containsKey(variable)) {
+                    continue;
+                }
+
+                renames.put(variable, freshFsNodeName(reservedVars, freshVarCounter));
             }
         }
 

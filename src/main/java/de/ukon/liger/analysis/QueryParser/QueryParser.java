@@ -47,9 +47,6 @@ public class QueryParser {
     private TemplateRegistry templateRegistry;
     private HierarchyRegistry hierarchyRegistry;
     private List<Superior> superiorConstraints = new ArrayList<>();
-    private final Deque<NegationFrame> negationFrames = new ArrayDeque<>();
-
-
     //TODO why are the values of the result hashmap empty?
 
     public QueryParser(String query, LinguisticStructure fs)
@@ -128,95 +125,6 @@ public class QueryParser {
         this(fs);
         this.templateRegistry = templateRegistry;
         this.hierarchyRegistry = hierarchyRegistry;
-    }
-
-    NegationFrame beginNegationScope(String innerQuery,
-                                     HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> currentSolutions) {
-        boolean keepOnMatch = negationFrames.isEmpty() || !negationFrames.peek().keepOnMatch;
-        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> snapshot = deepCopySolutions(currentSolutions);
-        for (Solution solution : snapshot.keySet()) {
-            solution.setTruthValue(keepOnMatch);
-        }
-        NegationFrame frame = new NegationFrame(innerQuery, snapshot, keepOnMatch);
-        negationFrames.push(frame);
-        return frame;
-    }
-
-    HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> endNegationScope(HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> innerResult) {
-        if (negationFrames.isEmpty()) {
-            return innerResult;
-        }
-
-        NegationFrame frame = negationFrames.pop();
-        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> restored = new HashMap<>();
-
-        for (Map.Entry<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> entry : frame.snapshot.entrySet()) {
-            boolean matched = matchesNegatedCandidate(frame.innerQuery, entry.getKey(), entry.getValue(), innerResult);
-            boolean keep = frame.keepOnMatch ? !matched : matched;
-            if (keep) {
-                Solution key = entry.getKey().copy();
-                key.setTruthValue(true);
-                restored.put(key, deepCopyBinding(entry.getValue()));
-            }
-        }
-
-        return restored;
-    }
-
-    private boolean matchesNegatedCandidate(String innerQuery,
-                                            Solution solution,
-                                            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding,
-                                            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> innerResult) {
-        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> seed = new HashMap<>();
-        seed.put(solution.copy(), deepCopyBinding(binding));
-
-        HashMap<Integer, GraphConstraint> fsCopy = deepCopyFsIndices(getFsIndices());
-        QueryParser innerParser = new QueryParser(innerQuery, fsCopy, cp, templateRegistry, hierarchyRegistry);
-        boolean matched = innerParser.parseQueryWithTemplates(innerQuery, seed).stream()
-                .flatMap(result -> result.result.keySet().stream())
-                .anyMatch(Solution::isTruthValue);
-        LOGGER.info("Negation inner match candidate={} matched={}", solution.getSolutionKeys(), matched);
-        return matched;
-    }
-
-    private HashMap<Integer, GraphConstraint> deepCopyFsIndices(HashMap<Integer, GraphConstraint> source) {
-        return source == null ? new HashMap<>() : new HashMap<>(source);
-    }
-
-    private HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> deepCopySolutions(
-            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> source) {
-        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> copy = new HashMap<>();
-        for (Map.Entry<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> entry : source.entrySet()) {
-            copy.put(entry.getKey().copy(), deepCopyBinding(entry.getValue()));
-        }
-        return copy;
-    }
-
-    private HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> deepCopyBinding(
-            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding) {
-        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> copy = new HashMap<>();
-        for (Map.Entry<String, HashMap<String, HashMap<Integer, GraphConstraint>>> entry : binding.entrySet()) {
-            HashMap<String, HashMap<Integer, GraphConstraint>> nodeCopy = new HashMap<>();
-            for (Map.Entry<String, HashMap<Integer, GraphConstraint>> referenceEntry : entry.getValue().entrySet()) {
-                nodeCopy.put(referenceEntry.getKey(), new HashMap<>(referenceEntry.getValue()));
-            }
-            copy.put(entry.getKey(), nodeCopy);
-        }
-        return copy;
-    }
-
-    static final class NegationFrame {
-        final String innerQuery;
-        final HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> snapshot;
-        final boolean keepOnMatch;
-
-        NegationFrame(String innerQuery,
-                      HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> snapshot,
-                      boolean keepOnMatch) {
-            this.innerQuery = innerQuery;
-            this.snapshot = snapshot;
-            this.keepOnMatch = keepOnMatch;
-        }
     }
 
     public QueryParser(String query, HashMap<Integer, GraphConstraint> fsIndices, ChoiceSpace cp,
@@ -479,7 +387,7 @@ public class QueryParser {
 
                         if (current instanceof Attribute && (previous instanceof Node ||
                                 previous instanceof NodeExpression || previous instanceof UncertaintyExpression ||
-                                previous instanceof NegationStartExpression || previous instanceof SeedExpression)) {
+                                previous instanceof SeedExpression)) {
 
                             AttributeExpression ae = new AttributeExpression(previous, (Attribute) current);
                             it.add(ae);
@@ -490,7 +398,6 @@ public class QueryParser {
                                 || previous instanceof Attribute
                                 || previous instanceof UncertaintyExpression
                                 || previous instanceof ConjointExpression
-                                || previous instanceof NegationStartExpression
                                 || previous instanceof SeedExpression)) {
                             NodeExpression ne = new NodeExpression(previous, (Node) current);
                             it.add(ne);
@@ -498,14 +405,14 @@ public class QueryParser {
 
                         } else if (current instanceof Uncertainty && // next instanceof FsNode&&
                                 (previous instanceof Node || previous instanceof NodeExpression ||
-                                        previous instanceof NegationStartExpression || previous instanceof SeedExpression)) {
+                                        previous instanceof SeedExpression)) {
                             UncertaintyExpression ue = new UncertaintyExpression(previous, (Uncertainty) current, next);
 
                             it.add(ue);
                             result = ue.getSolution();
                         } else if (current instanceof Value && (previous instanceof AttributeExpression ||
                                 previous instanceof Attribute || previous instanceof UncertaintyExpression ||
-                                previous instanceof NegationStartExpression || previous instanceof SeedExpression)) {
+                                previous instanceof SeedExpression)) {
                             ValueExpression ve = new ValueExpression(previous, (Value) current);
                             it.add(ve);
                             result = ve.getSolution();
@@ -522,19 +429,6 @@ public class QueryParser {
                             previous = ne;
                             current = null;
                             continue;
-                        } else if (current instanceof NegationStartExpression) {
-                            NegationStartExpression marker = (NegationStartExpression) current;
-                            NegationStartExpression ne = new NegationStartExpression(previous, marker.getInnerQuery(), this);
-                            it.set(ne);
-                            result = ne.getSolution();
-                            previous = ne;
-                            current = null;
-                            continue;
-                        } else if (current instanceof NegationEndExpression) {
-                            NegationEndExpression ne = new NegationEndExpression(previous, this);
-                            it.set(ne);
-                            result = ne.getSolution();
-                            previous = ne;
                         } else if (current instanceof Value && previous instanceof ConjointExpression) {
 
                             current.setFsIndices(previous.getFsIndices());
@@ -571,16 +465,6 @@ public class QueryParser {
                         previous = it.next();
                         if (previous instanceof QueryNegation) {
                             NegationExpression ne = new NegationExpression(null, (QueryNegation) previous);
-                            it.previous();
-                            it.set(ne);
-                            it.next();
-                            previous = ne;
-                            result = ne.getSolution();
-                            continue;
-                        }
-                        if (previous instanceof NegationStartExpression) {
-                            NegationStartExpression marker = (NegationStartExpression) previous;
-                            NegationStartExpression ne = new NegationStartExpression((QueryExpression) null, marker.getInnerQuery(), this);
                             it.previous();
                             it.set(ne);
                             it.next();
