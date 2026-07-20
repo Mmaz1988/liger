@@ -3,6 +3,7 @@ package de.ukon.liger.test;
 import de.ukon.liger.analysis.RuleParser.Rule;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.packing.ChoiceVar;
+import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.xle.Fstructure;
 import de.ukon.liger.syntax.xle.XLEoperator;
@@ -155,6 +156,72 @@ public class RuleParserTest {
         rp.addAnnotation2(fslist.get(0));
 
         assertEquals(420, fslist.get(0).constraints.size());
+    }
+
+    @Test
+    void testRuleParserRewriteDeleteRemovesOnlyMatchedEdges() {
+        GraphConstraint potential = new GraphConstraint(new LinkedHashSet<>(), "1", "POTENTIAL-ANT", "2", "c", false);
+        GraphConstraint possible = new GraphConstraint(new LinkedHashSet<>(), "1", "POSSIBLE-ANT", "2", "c", false);
+
+        LinguisticStructure structure = new LinguisticStructure("test-graph", "test graph", new ArrayList<>());
+        structure.constraints.add(potential.copy());
+        structure.constraints.add(possible.copy());
+        structure.annotation.add(potential.copy());
+        structure.annotation.add(possible.copy());
+
+        ArrayList<LinguisticStructure> fslist = new ArrayList<>();
+        fslist.add(structure);
+
+        RuleParser rp = new RuleParser(fslist);
+        rp.getRules().add(new Rule("#a POTENTIAL-ANT #b =-> 0", true));
+
+        rp.addAnnotation2(structure);
+
+        assertEquals(1, structure.constraints.size());
+        assertEquals(1, structure.annotation.size());
+        assertEquals("POSSIBLE-ANT", structure.constraints.get(0).getRelationLabel());
+        assertEquals("POSSIBLE-ANT", structure.annotation.get(0).getRelationLabel());
+    }
+
+    @Test
+    void testRuleParserRewriteDeleteSupportsEdgeValueAndAttributeValueFilters() {
+        GraphConstraint potential = new GraphConstraint(new LinkedHashSet<>(), "1", "POTENTIAL-ANT", "2", "c", false);
+        GraphConstraint possible = new GraphConstraint(new LinkedHashSet<>(), "1", "POSSIBLE-ANT", "2", "c", false);
+        GraphConstraint tensePast = new GraphConstraint(new LinkedHashSet<>(), "3", "TENSE", "past", "c", false);
+        GraphConstraint tensePres = new GraphConstraint(new LinkedHashSet<>(), "3", "TENSE", "present", "c", false);
+
+        LinguisticStructure edgeStructure = new LinguisticStructure("edge-test", "edge test", new ArrayList<>());
+        edgeStructure.constraints.add(potential.copy());
+        edgeStructure.constraints.add(possible.copy());
+
+        RuleParser edgeParser = new RuleParser(new ArrayList<>(java.util.Collections.singletonList(edgeStructure)));
+        edgeParser.getRules().add(new Rule("edge=POTENTIAL-ANT =-> 0", true));
+        edgeParser.addAnnotation2(edgeStructure);
+
+        assertEquals(1, edgeStructure.constraints.size());
+        assertEquals("POSSIBLE-ANT", edgeStructure.constraints.get(0).getRelationLabel());
+
+        LinguisticStructure valueStructure = new LinguisticStructure("value-test", "value test", new ArrayList<>());
+        valueStructure.constraints.add(tensePast.copy());
+        valueStructure.constraints.add(tensePres.copy());
+
+        RuleParser valueParser = new RuleParser(new ArrayList<>(java.util.Collections.singletonList(valueStructure)));
+        valueParser.getRules().add(new Rule("value=past =-> 0", true));
+        valueParser.addAnnotation2(valueStructure);
+
+        assertEquals(1, valueStructure.constraints.size());
+        assertEquals("present", valueStructure.constraints.get(0).getFsValue());
+
+        LinguisticStructure tenseStructure = new LinguisticStructure("tense-test", "tense test", new ArrayList<>());
+        tenseStructure.constraints.add(tensePast.copy());
+        tenseStructure.constraints.add(tensePres.copy());
+
+        RuleParser tenseParser = new RuleParser(new ArrayList<>(java.util.Collections.singletonList(tenseStructure)));
+        tenseParser.getRules().add(new Rule("TENSE past =-> 0", true));
+        tenseParser.addAnnotation2(tenseStructure);
+
+        assertEquals(1, tenseStructure.constraints.size());
+        assertEquals("present", tenseStructure.constraints.get(0).getFsValue());
     }
 
     @Test

@@ -57,6 +57,7 @@ public class RuleParser {
 
     private LinkedHashSet<Rule> appliedRules = new LinkedHashSet<>();
     private LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> addedAnnotationsByRule = new LinkedHashMap<>();
+    private LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> removedAnnotationsByRule = new LinkedHashMap<>();
     private static Pattern graphPattern = Pattern.compile("(#.+?)\\s+(\\S+)\\s+(.+)");
     private Boolean replace;
     private Set<String> usedKeys = new HashSet<>();
@@ -611,42 +612,45 @@ public class RuleParser {
 
             if (r.isRewrite())
             {
-                List<GraphConstraint> removedFacts = new ArrayList<>();
-                for (Solution solution : qpr.result.keySet())
-                {
-                    for (String var : qpr.result.get(solution).keySet())
-                    {
-                        for (String index : qpr.result.get(solution).get(var).keySet())
-                        {
-                            for (Integer i : qpr.result.get(solution).get(var).get(index).keySet())
-                            {
-                                removedFacts.add(qp.getFsIndices().get(i));
-                             //   usedKeys.remove(qp.getFsIndices().get(i).getFsNode());
-                           //     qp.getFsIndices().remove(i);
+                boolean deleteOnly = r.getRight() != null && "0".equals(r.getRight().trim());
 
+                Set<String> removedFacts = new LinkedHashSet<>();
+                LinkedHashSet<GraphConstraint> removedConstraintSet = new LinkedHashSet<>();
+                if (deleteOnly) {
+                    for (Solution solution : qpr.result.keySet()) {
+                        for (String var : qpr.result.get(solution).keySet()) {
+                            for (String index : qpr.result.get(solution).get(var).keySet()) {
+                                for (Integer i : qpr.result.get(solution).get(var).get(index).keySet()) {
+                                    GraphConstraint candidate = qpr.result.get(solution).get(var).get(index).get(i);
+                                    if (candidate != null) {
+                                        removedFacts.add(edgeKey(candidate));
+                                        removedConstraintSet.add(candidate);
+                                    }
+                                }
                             }
                         }
                     }
                 }
 
-                Iterator<GraphConstraint> constraintIterator = fs.constraints.iterator();
-
-//TODO Find a prettier way to remove
-        while (constraintIterator.hasNext())
-        {
-            GraphConstraint next = constraintIterator.next();
-                    for (GraphConstraint c1 : removedFacts)
-                    {
-                        if (next.equals(c1))
-                        {
-                            constraintIterator.remove();
-                        }
-                    }
+                if (deleteOnly && fs.constraints != null) {
+                    fs.constraints.removeIf(constraint -> removedFacts.contains(edgeKey(constraint)));
+                }
+                if (deleteOnly && fs.annotation != null) {
+                    fs.annotation.removeIf(constraint -> removedFacts.contains(edgeKey(constraint)));
+                }
+                if (deleteOnly) {
+                    qp.getFsIndices().entrySet().removeIf(entry -> removedFacts.contains(edgeKey(entry.getValue())));
                 }
 
-                LOGGER.debug("Removed the following facts:");
-                String removed = String.join("\n",removedFacts.stream().map(Object::toString).collect(Collectors.toList()));
-                LOGGER.debug("\n" + removed);
+                if (deleteOnly && !removedConstraintSet.isEmpty()) {
+                    removedAnnotationsByRule.put(r.getRuleIndex(), removedConstraintSet);
+                }
+
+                if (deleteOnly) {
+                    LOGGER.debug("Removed the following facts:");
+                    String removed = String.join("\n",removedFacts.stream().map(Object::toString).collect(Collectors.toList()));
+                    LOGGER.debug("\n" + removed);
+                }
 
             }
 
@@ -793,6 +797,13 @@ public class RuleParser {
         replacedFsVars = HelperMethods.stripValeue2(replacedFsVars);
 
         return replacedFsVars;
+    }
+
+    private String edgeKey(GraphConstraint constraint) {
+        String reading = constraint.getReading() == null ? "" : constraint.getReading().toString();
+        return String.valueOf(constraint.getFsNode()) + "|" +
+                String.valueOf(constraint.getRelationLabel()) + "|" +
+                String.valueOf(constraint.getFsValue()) + "|" + reading;
     }
 
     public String returnUnusedVar() {
@@ -1001,6 +1012,7 @@ public class RuleParser {
         usedReadings = new HashSet<>();
         appliedRules = new LinkedHashSet<>();
         addedAnnotationsByRule = new LinkedHashMap<>();
+        removedAnnotationsByRule = new LinkedHashMap<>();
     }
 
 
@@ -1051,6 +1063,10 @@ public class RuleParser {
 
     public LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> getAddedAnnotationsByRule() {
         return this.addedAnnotationsByRule;
+    }
+
+    public LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> getRemovedAnnotationsByRule() {
+        return this.removedAnnotationsByRule;
     }
 
     public void setAppliedRules(LinkedHashSet<Rule> appliedRules) {

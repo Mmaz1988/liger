@@ -331,6 +331,10 @@ public class QueryParser {
     public QueryParserResult parseQuery(LinkedList<QueryExpression> queryList,
                                         HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> seedSolution)
     {
+        if (isStandaloneFilterQuery(queryList)) {
+            return parseStandaloneFilterQuery(queryList);
+        }
+
         if (!queryList.isEmpty()) {
 
             List<QueryExpression> structuralQuery = new ArrayList<>();
@@ -511,6 +515,99 @@ public class QueryParser {
         return new QueryParserResult(new HashMap<>(),new HashMap<>());
     }
 
+    private boolean isStandaloneFilterQuery(LinkedList<QueryExpression> queryList) {
+        if (queryList == null || queryList.isEmpty()) {
+            return false;
+        }
+
+        for (QueryExpression expression : queryList) {
+            if (expression instanceof End || expression instanceof Conjunction) {
+                continue;
+            }
+            if (expression instanceof Attribute || expression instanceof Value) {
+                continue;
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    private QueryParserResult parseStandaloneFilterQuery(LinkedList<QueryExpression> queryList) {
+        HashSet<Integer> candidateIndices = new HashSet<>(fsIndices.keySet());
+
+        for (QueryExpression expression : queryList) {
+            if (expression instanceof End || expression instanceof Conjunction) {
+                continue;
+            }
+
+            if (expression instanceof Attribute attribute) {
+                String lookup = normalizeStandaloneAttribute(attribute.getQuery());
+                candidateIndices.removeIf(index -> {
+                    GraphConstraint constraint = fsIndices.get(index);
+                    return constraint == null || !lookup.equals(normalizeStandaloneAttribute(constraint.getRelationLabel()));
+                });
+                continue;
+            }
+
+            if (expression instanceof Value value) {
+                String lookup = normalizeStandaloneValue(value.getQuery());
+                candidateIndices.removeIf(index -> {
+                    GraphConstraint constraint = fsIndices.get(index);
+                    return constraint == null || !lookup.equals(normalizeStandaloneValue(String.valueOf(constraint.getFsValue())));
+                });
+            }
+        }
+
+        if (candidateIndices.isEmpty()) {
+            return new QueryParserResult(new HashMap<>(), new HashMap<>());
+        }
+
+        HashMap<Integer, GraphConstraint> matches = new LinkedHashMap<>();
+        for (Integer index : candidateIndices) {
+            matches.put(index, fsIndices.get(index));
+        }
+
+        HashMap<String, HashMap<Integer, GraphConstraint>> reference = new LinkedHashMap<>();
+        reference.put("__match__", matches);
+
+        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new LinkedHashMap<>();
+        binding.put("__match__", reference);
+
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> result = new LinkedHashMap<>();
+        result.put(new Solution(Collections.singleton(new SolutionKey("__match__", "__match__"))), binding);
+
+        return new QueryParserResult(result, new HashMap<>());
+    }
+
+    private String normalizeStandaloneAttribute(String token) {
+        if (token == null) {
+            return "";
+        }
+
+        String normalized = token.trim();
+        if (normalized.startsWith("edge=")) {
+            normalized = normalized.substring("edge=".length());
+        }
+        return normalized;
+    }
+
+    private String normalizeStandaloneValue(String token) {
+        if (token == null) {
+            return "";
+        }
+
+        String normalized = token.trim();
+        if (normalized.startsWith("value=")) {
+            normalized = normalized.substring("value=".length());
+        }
+        if ((normalized.startsWith("'") && normalized.endsWith("'")) ||
+                (normalized.startsWith("\"") && normalized.endsWith("\""))) {
+            normalized = normalized.substring(1, normalized.length() - 1);
+        }
+        return normalized;
+    }
+
 
 
 
@@ -518,6 +615,10 @@ public class QueryParser {
 
     public boolean isAttribute(String query, HashMap<Integer, GraphConstraint> fsIndices)
     {
+        if (query != null && query.matches("edge=(.+)")) {
+            return true;
+        }
+
         for (Integer key : fsIndices.keySet())
         {
             if (fsIndices.get(key).getRelationLabel().equals(query))

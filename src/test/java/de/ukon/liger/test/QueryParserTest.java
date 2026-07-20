@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,6 +44,30 @@ public class QueryParserTest {
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
             assertEquals(4, qpr.result.keySet().size());
         }
+    }
+
+    @Test
+    void testQueryParserSupportsFilterOnlyQueries() {
+        LinguisticStructure structure = new LinguisticStructure("filter-test", "filter test", new ArrayList<>());
+        structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), "1", "POTENTIAL-ANT", "2", "c", false));
+        structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), "1", "POSSIBLE-ANT", "2", "c", false));
+        structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), "3", "TENSE", "past", "c", false));
+        structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), "3", "TENSE", "present", "c", false));
+
+        QueryParser edgeParser = new QueryParser("edge=POTENTIAL-ANT", structure);
+        QueryParserResult edgeResult = edgeParser.parseQuery(edgeParser.getQueryList());
+        assertTrue(edgeResult.isSuccess);
+        assertEquals(1, edgeResult.result.keySet().size());
+
+        QueryParser valueParser = new QueryParser("value=past", structure);
+        QueryParserResult valueResult = valueParser.parseQuery(valueParser.getQueryList());
+        assertTrue(valueResult.isSuccess);
+        assertEquals(1, valueResult.result.keySet().size());
+
+        QueryParser tenseParser = new QueryParser("TENSE past", structure);
+        QueryParserResult tenseResult = tenseParser.parseQuery(tenseParser.getQueryList());
+        assertTrue(tenseResult.isSuccess);
+        assertEquals(1, tenseResult.result.keySet().size());
     }
 
     @Test

@@ -258,6 +258,7 @@ public class LigerController {
                 appliedRules.values().stream().findFirst().orElseGet(LinkedHashSet::new),
                 String.join("\n", semString), axioms);
         response.addedAnnotationsByRule = rp.getAddedAnnotationsByRule();
+        response.highlightedNodeIds = collectHighlightedNodeIdsFromGroups(rp.getAddedAnnotationsByRule().values());
         response.structureJson = primary == null ? ls.toJson() : primary.toJson();
         response.structureVariants = toStructureVariants(branches);
         response.structureVariantGraphs = toStructureVariantGraphs(branches);
@@ -531,7 +532,7 @@ public class LigerController {
                 new ArrayList<>(),
                 fs.toJson()
         );
-        response.highlightedNodeIds = collectHighlightedNodeIds(fs);
+        response.highlightedNodeIds = collectHighlightedNodeIds(fs.annotation);
         return response;
     }
 
@@ -574,7 +575,7 @@ public class LigerController {
                         branch.toJson()
                 );
                 annotation.sentence = branch.text;
-                annotation.highlightedNodeIds = collectHighlightedNodeIds(branch);
+                annotation.highlightedNodeIds = collectHighlightedNodeIdsFromGroups(rp.getAddedAnnotationsByRule().values());
                 annotation.addedAnnotationsByRule = rp.getAddedAnnotationsByRule();
                 annotations.add(annotation);
             }
@@ -629,13 +630,17 @@ public class LigerController {
     }
 
     private LinkedHashSet<String> collectHighlightedNodeIds(LinguisticStructure fs) {
+        return collectHighlightedNodeIds(fs == null ? null : fs.annotation);
+    }
+
+    private LinkedHashSet<String> collectHighlightedNodeIds(Collection<GraphConstraint> constraints) {
         LinkedHashSet<String> highlightedNodeIds = new LinkedHashSet<>();
 
-        if (fs == null || fs.annotation == null) {
+        if (constraints == null) {
             return highlightedNodeIds;
         }
 
-        for (GraphConstraint constraint : fs.annotation) {
+        for (GraphConstraint constraint : constraints) {
             if (constraint == null) {
                 continue;
             }
@@ -651,6 +656,26 @@ public class LigerController {
                 if (de.ukon.liger.utilities.HelperMethods.isInteger(targetNode)) {
                     highlightedNodeIds.add(targetNode);
                 }
+            }
+        }
+
+        return highlightedNodeIds;
+    }
+
+    @SafeVarargs
+    private final LinkedHashSet<String> collectHighlightedNodeIdsFromGroups(Collection<? extends Collection<GraphConstraint>>... constraintGroups) {
+        LinkedHashSet<String> highlightedNodeIds = new LinkedHashSet<>();
+
+        if (constraintGroups == null) {
+            return highlightedNodeIds;
+        }
+
+        for (Collection<? extends Collection<GraphConstraint>> group : constraintGroups) {
+            if (group == null) {
+                continue;
+            }
+            for (Collection<GraphConstraint> constraints : group) {
+                highlightedNodeIds.addAll(collectHighlightedNodeIds(constraints));
             }
         }
 

@@ -24,6 +24,9 @@ package de.ukon.liger.analysis.QueryParser;
 import de.ukon.liger.syntax.GraphConstraint;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Collections;
 
 public class Attribute extends QueryExpression {
 
@@ -31,15 +34,17 @@ public class Attribute extends QueryExpression {
         super(query, fsIndices,parser);
 
         HashMap<Integer,GraphConstraint> fs = new HashMap<>();
+        String lookup = query != null && query.startsWith("edge=") ? query.substring("edge=".length()) : query;
 
         for (int key : fsIndices.keySet())
         {
-            if (fsIndices.get(key).getRelationLabel().equals(query))
+            if (fsIndices.get(key).getRelationLabel().equals(lookup))
             {
                 fs.put(key,fsIndices.get(key));
             }
         }
         setFsIndices(fs);
+        calculateSolutions();
     }
 
 
@@ -47,9 +52,30 @@ public class Attribute extends QueryExpression {
     @Override
     public void calculateSolutions()
     {
+        String lookup = getQuery() != null && getQuery().startsWith("edge=")
+                ? getQuery().substring("edge=".length())
+                : getQuery();
 
+        HashMap<Integer, GraphConstraint> matching = new HashMap<>();
+        for (Integer key : getFsIndices().keySet()) {
+            if (lookup != null && lookup.equals(getFsIndices().get(key).getRelationLabel())) {
+                matching.put(key, getFsIndices().get(key));
+            }
+        }
+
+        if (!matching.isEmpty()) {
+            setFsIndices(matching);
+
+            HashMap<String, HashMap<Integer, GraphConstraint>> reference = new HashMap<>();
+            reference.put("__match__", matching);
+            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new LinkedHashMap<>();
+            binding.put("__match__", reference);
+
+            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+            out.put(new Solution(Collections.singleton(new SolutionKey("__match__", "__match__"))), binding);
+            setSolution(out);
+        }
     }
 
 
 }
-

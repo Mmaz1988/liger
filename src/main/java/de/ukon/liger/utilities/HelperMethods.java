@@ -144,6 +144,11 @@ public class HelperMethods {
 
 
     public static boolean isValue(String query, HashMap<Integer, GraphConstraint> fsIndices) {
+        Matcher namedValueFilter = Pattern.compile("value=(.+)").matcher(query);
+        if (namedValueFilter.matches()) {
+            return true;
+        }
+
         for (Integer key : fsIndices.keySet()) {
             if (fsIndices.get(key).getFsValue().equals(query)) {
                 return true;

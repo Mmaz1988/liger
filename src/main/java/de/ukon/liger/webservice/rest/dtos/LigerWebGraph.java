@@ -150,7 +150,7 @@ public class LigerWebGraph {
                         }
                     }
                 }
-                edges.add(new LigerWebEdge("rid" + g.getFsNode() + g.getFsValue().toString(),
+                edges.add(new LigerWebEdge("rid" + g.getFsNode() + g.getRelationLabel() + g.getFsValue().toString(),
                         g.getFsNode(),g.getFsValue().toString(),
                         g.getRelationLabel(),"edge"));
 

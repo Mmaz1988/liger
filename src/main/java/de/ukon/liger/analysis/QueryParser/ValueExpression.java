@@ -29,6 +29,9 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class ValueExpression extends QueryExpression {
@@ -55,8 +58,44 @@ public class ValueExpression extends QueryExpression {
     public void calculateSolutions()
     {
         HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
-
         out.putAll(left.getSolution());
+
+        if (left.getNodeVar() == null) {
+            HashMap<Integer, GraphConstraint> matchingIndices = new HashMap<>();
+            String expected = normalizeFilterValue(right.getQuery());
+
+            for (Integer key : left.getFsIndices().keySet()) {
+                GraphConstraint constraint = left.getFsIndices().get(key);
+                if (constraint == null || expected == null || expected.isBlank()) {
+                    continue;
+                }
+
+                String relationLabel = normalizeGraphValue(constraint.getRelationLabel());
+                String value = normalizeGraphValue(String.valueOf(constraint.getFsValue()));
+
+                if (relationLabel.equals(normalizeEdgeFilter(left.getQuery())) || relationLabel.equals(left.getQuery())) {
+                    if (expected.equals(value)) {
+                        matchingIndices.put(key, constraint);
+                    }
+                }
+            }
+
+            if (!matchingIndices.isEmpty()) {
+                HashMap<String, HashMap<Integer, GraphConstraint>> reference = new HashMap<>();
+                reference.put("__match__", matchingIndices);
+
+                HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new LinkedHashMap<>();
+                binding.put("__match__", reference);
+
+                HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> globalOut = new HashMap<>();
+                globalOut.put(new Solution(Collections.singleton(new SolutionKey("__match__", "__match__"))), binding);
+                setSolution(globalOut);
+                setFsIndices(matchingIndices);
+                setConjoinedSolutions(left.getConjoinedSolutions());
+            }
+
+            return;
+        }
 
         HashMap<Integer,GraphConstraint> fsIndices = new HashMap<>();
 
@@ -198,6 +237,42 @@ public class ValueExpression extends QueryExpression {
             }
         }
 
+    private String normalizeFilterValue(String raw) {
+        if (raw == null) {
+            return null;
+        }
 
+        String normalized = raw.trim();
+        if (normalized.startsWith("value=")) {
+            normalized = normalized.substring("value=".length());
+        }
+        if ((normalized.startsWith("'") && normalized.endsWith("'")) ||
+                (normalized.startsWith("\"") && normalized.endsWith("\""))) {
+            normalized = normalized.substring(1, normalized.length() - 1);
+        }
+        return normalized;
+    }
 
+    private String normalizeEdgeFilter(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        if (raw.startsWith("edge=")) {
+            return raw.substring("edge=".length());
+        }
+        return raw;
+    }
+
+    private String normalizeGraphValue(String raw) {
+        if (raw == null) {
+            return null;
+        }
+
+        String normalized = raw.trim();
+        if ((normalized.startsWith("'") && normalized.endsWith("'")) ||
+                (normalized.startsWith("\"") && normalized.endsWith("\""))) {
+            normalized = normalized.substring(1, normalized.length() - 1);
+        }
+        return normalized;
+    }
 }
