@@ -32,7 +32,36 @@ import java.util.regex.Pattern;
 public class UncertaintyExpression extends QueryExpression {
 
     private static final int MAX_UNCERTAINTY_REPEAT = 16;
-    private static final int MAX_MULTILABEL_UNCERTAINTY_REPEAT = 5;
+    private static final int MAX_MULTILABEL_UNCERTAINTY_REPEAT = 4;
+
+    private static final class PathState {
+        private final String node;
+        private final Set<Integer> edges;
+
+        private PathState(String node, Set<Integer> edges) {
+            this.node = node;
+            this.edges = new LinkedHashSet<>(edges);
+        }
+
+        private PathState advance(String nextNode, Integer edge) {
+            Set<Integer> nextEdges = new LinkedHashSet<>(edges);
+            nextEdges.add(edge);
+            return new PathState(nextNode, nextEdges);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (!(other instanceof PathState state)) {
+                return false;
+            }
+            return node.equals(state.node) && edges.equals(state.edges);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(node, edges);
+        }
+    }
 
     public String uncertaintyExpression;
 
@@ -118,144 +147,59 @@ public class UncertaintyExpression extends QueryExpression {
 
     @Override
     public void calculateSolutions() {
-
         HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
-        List<String> searchQueries = getExpandedQueries();
 
-
-        for (Solution key : left.getSolution().keySet()) {
-            if (!key.isTruthValue()) {
+        for (Solution leftKey : left.getSolution().keySet()) {
+            if (!leftKey.isTruthValue()) {
                 continue;
             }
             String nodeVar = left.getNodeVar();
-            if (left.getSolution().get(key).get(nodeVar) == null || left.getSolution().get(key).get(nodeVar).isEmpty()) {
+            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> leftBinding = left.getSolution().get(leftKey);
+            if (leftBinding.get(nodeVar) == null) {
                 continue;
             }
 
-            for (String nodeRef : left.getSolution().get(key).get(nodeVar).keySet()) {
+            for (String nodeRef : leftBinding.get(nodeVar).keySet()) {
                 HashMap<Integer, GraphConstraint> boundIndices = new HashMap<>();
-
-                for (Integer key2 : middle.getFsIndices().keySet()) {
-                    if (middle.getFsIndices().get(key2).getFsNode().equals(nodeRef)) {
-                        boundIndices.put(key2, middle.getFsIndices().get(key2));
+                for (Integer index : middle.getFsIndices().keySet()) {
+                    if (middle.getFsIndices().get(index).getFsNode().equals(nodeRef)) {
+                        boundIndices.put(index, middle.getFsIndices().get(index));
                     }
                 }
 
-                HashMap<Integer, GraphConstraint> uncertainty = new HashMap<>();
+                for (String searchQuery : getExpandedQueries()) {
+                    List<HashMap<Integer, GraphConstraint>> alternatives;
+                    if (searchQuery.isBlank()) {
+                        alternatives = List.of(factsForNodes(Set.of(nodeRef)));
+                    } else if (middle.insideOut) {
+                        alternatives = searchInsideOutAlternatives(searchQuery, boundIndices);
+                    } else {
+                        alternatives = searchAlternatives(searchQuery, boundIndices);
+                    }
 
-                for (String searchQuery : searchQueries) {
-                if (searchQuery.isBlank()) {
-                    Set<String> usedKeys = new HashSet<>();
-                    usedKeys.add(nodeRef);
-
-                    HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
-                            mapUsedKeys(usedKeys, uncertainty, right.getNodeVar());
-
-                    right.setSolution(out2);
-
-                    for (Solution key2 : out2.keySet()) {
-                        if (!isCompatibleNodeBinding(left.getSolution().get(key),
-                                out2.get(key2), right.getNodeVar())) {
+                    for (HashMap<Integer, GraphConstraint> uncertainty : alternatives) {
+                        if (uncertainty.isEmpty()) {
                             continue;
                         }
-
-                        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
-
-                        for (String key3 : left.getSolution().get(key).keySet()) {
-                            binding.put(key3, left.getSolution().get(key).get(key3));
+                        Set<String> usedKeys = new LinkedHashSet<>();
+                        for (Integer index : uncertainty.keySet()) {
+                            if (right.getFsIndices().containsKey(index)) {
+                                usedKeys.add(right.getFsIndices().get(index).getFsNode());
+                            }
                         }
-
-                        binding.put(right.getNodeVar(), out2.get(key2).get(right.getNodeVar()));
-
-                        Solution newKey = Solution.merge(key, key2);
-
-                        out.put(newKey, binding);
-
-                    }
-
-                    continue;
-                }
-
-                if (!middle.insideOut) {
-                    uncertainty = searchUncertainty(searchQuery, boundIndices);
-                } else {
-                    uncertainty = searchInsideOutUncertainty(searchQuery, boundIndices);
-                }
-
-                if (uncertainty.isEmpty() && allowsZeroLength(searchQuery)) {
-                    Set<String> usedKeys = new HashSet<>();
-                    usedKeys.add(nodeRef);
-
-                    HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
-                            mapUsedKeys(usedKeys, uncertainty, right.getNodeVar());
-
-                    right.setSolution(out2);
-
-                    for (Solution key2 : out2.keySet()) {
-                        if (!isCompatibleNodeBinding(left.getSolution().get(key),
-                                out2.get(key2), right.getNodeVar())) {
-                            continue;
-                        }
-
-                        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
-
-                        for (String key3 : left.getSolution().get(key).keySet()) {
-                            binding.put(key3, left.getSolution().get(key).get(key3));
-                        }
-
-                        binding.put(right.getNodeVar(), out2.get(key2).get(right.getNodeVar()));
-
-                        Solution newKey = Solution.merge(key, key2);
-
-                        out.put(newKey, binding);
-
-                    }
-
-                    continue;
-                }
-
-                if (!uncertainty.keySet().isEmpty()) {
-
-
-                    Set<String> usedKeys = new HashSet<>();
-
-                    for (Integer key3 : uncertainty.keySet()) {
-                        if (right.getFsIndices().containsKey(key3)) {
-                            usedKeys.add(right.getFsIndices().get(key3).getFsNode());
+                        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> rightSolutions =
+                                mapUsedKeys(usedKeys, uncertainty, right.getNodeVar());
+                        for (Solution rightKey : rightSolutions.keySet()) {
+                            if (!isCompatibleNodeBinding(leftBinding, rightSolutions.get(rightKey), right.getNodeVar())) {
+                                continue;
+                            }
+                            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>(leftBinding);
+                            binding.put(right.getNodeVar(), rightSolutions.get(rightKey).get(right.getNodeVar()));
+                            out.put(Solution.merge(leftKey, rightKey), binding);
                         }
                     }
-
-                    HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
-                            mapUsedKeys(usedKeys, uncertainty, right.getNodeVar());
-
-                    right.setSolution(out2);
-
-                    for (Solution key2 : out2.keySet()) {
-                        if (!isCompatibleNodeBinding(left.getSolution().get(key),
-                                out2.get(key2), right.getNodeVar())) {
-                            continue;
-                        }
-
-                        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
-
-                        for (String key3 : left.getSolution().get(key).keySet()) {
-                            binding.put(key3, left.getSolution().get(key).get(key3));
-
-                        }
-
-                        binding.put(right.getNodeVar(), out2.get(key2).get(right.getNodeVar()));
-
-
-                        Solution newKey = Solution.merge(key, key2);
-
-                        out.put(newKey, binding);
-
-                    }
-
                 }
             }
-        }
-
         }
 
         setConjoinedSolutions(left.getConjoinedSolutions());
@@ -288,11 +232,15 @@ public class UncertaintyExpression extends QueryExpression {
         }
 
         TemplateRegistry registry = middle.getParser() != null ? middle.getParser().getTemplateRegistry() : null;
-        int maxRepeat = MAX_UNCERTAINTY_REPEAT;
-
         List<PathAtom> atoms = parsePathQuery(query, registry);
+        if (atoms.stream().anyMatch(atom -> atom.quantifier != Quantifier.EXACT)) {
+            List<String> quantified = new ArrayList<>();
+            quantified.add(query);
+            return quantified;
+        }
+
+        int maxRepeat = MAX_UNCERTAINTY_REPEAT;
         if (atoms.stream().anyMatch(atom -> atom.labels.size() > 1)) {
-            // Template alternatives expand exponentially with path length.
             maxRepeat = Math.min(MAX_MULTILABEL_UNCERTAINTY_REPEAT, maxRepeat);
         }
         List<String> expanded = new ArrayList<>();
@@ -664,6 +612,11 @@ public class UncertaintyExpression extends QueryExpression {
     }
 
     private HashMap<Integer, GraphConstraint> searchUncertainty(List<PathAtom> search, HashMap<Integer, GraphConstraint> in) {
+        if (search.size() == 1
+                && search.get(0).quantifier != Quantifier.EXACT
+                && search.get(0).offPathConstraints.isEmpty()) {
+            return searchQuantifiedNormal(search, in);
+        }
 
         HashMap<Integer, GraphConstraint> result = new HashMap<>();
 
@@ -793,6 +746,115 @@ public class UncertaintyExpression extends QueryExpression {
         return result;
     }
 
+    private HashMap<Integer, GraphConstraint> searchQuantifiedNormal(List<PathAtom> search,
+                                                                      HashMap<Integer, GraphConstraint> in) {
+        Set<String> currentNodes = new LinkedHashSet<>();
+        for (GraphConstraint constraint : in.values()) {
+            currentNodes.add(String.valueOf(constraint.getFsNode()));
+        }
+        for (PathAtom atom : search) {
+            Set<String> acceptedNodes = new LinkedHashSet<>();
+            if (atom.quantifier == Quantifier.ZERO_OR_MORE) {
+                acceptedNodes.addAll(currentNodes);
+            }
+
+            Set<String> frontier = currentNodes;
+            int repetitions = atom.quantifier == Quantifier.EXACT ? 1 : MAX_UNCERTAINTY_REPEAT;
+            for (int repetition = 0; repetition < repetitions; repetition++) {
+                Set<String> nextNodes = new LinkedHashSet<>();
+                for (String node : frontier) {
+                    for (GraphConstraint edge : right.getFsIndices().values()) {
+                        if (!node.equals(String.valueOf(edge.getFsNode()))
+                                || !labelMatches(atom, edge)
+                                || !matchesOffPathConstraints(atom, edge, right.getFsIndices(), false)) {
+                            continue;
+                        }
+                        nextNodes.add(String.valueOf(edge.getFsValue()));
+                    }
+                }
+
+                frontier = nextNodes;
+                acceptedNodes.addAll(frontier);
+                if (frontier.isEmpty() || atom.quantifier == Quantifier.EXACT) {
+                    break;
+                }
+            }
+
+            if (acceptedNodes.isEmpty()) {
+                return new HashMap<>();
+            }
+            currentNodes = acceptedNodes;
+        }
+
+        return factsForNodes(currentNodes);
+    }
+
+    private List<HashMap<Integer, GraphConstraint>> searchAlternatives(
+            String query, HashMap<Integer, GraphConstraint> in) {
+        List<PathAtom> atoms = parsePathQuery(query,
+                middle.getParser() == null ? null : middle.getParser().getTemplateRegistry());
+        if (atoms.stream().noneMatch(atom -> atom.quantifier != Quantifier.EXACT)) {
+            return List.of(searchUncertainty(atoms, in));
+        }
+
+        Set<PathState> states = new LinkedHashSet<>();
+        for (GraphConstraint constraint : in.values()) {
+            states.add(new PathState(String.valueOf(constraint.getFsNode()), Set.of()));
+        }
+
+        for (PathAtom atom : atoms) {
+            Set<PathState> accepted = new LinkedHashSet<>();
+            if (atom.quantifier == Quantifier.ZERO_OR_MORE) {
+                accepted.addAll(states);
+            }
+            Set<PathState> frontier = states;
+            int repetitions = atom.quantifier == Quantifier.EXACT ? 1 : MAX_UNCERTAINTY_REPEAT;
+            for (int repetition = 0; repetition < repetitions; repetition++) {
+                Set<PathState> next = new LinkedHashSet<>();
+                for (PathState state : frontier) {
+                    for (Map.Entry<Integer, GraphConstraint> entry : right.getFsIndices().entrySet()) {
+                        GraphConstraint edge = entry.getValue();
+                        if (!state.node.equals(String.valueOf(edge.getFsNode()))
+                                || !labelMatches(atom, edge)
+                                || !matchesOffPathConstraints(atom, edge, right.getFsIndices(), false)) {
+                            continue;
+                        }
+                        next.add(state.advance(String.valueOf(edge.getFsValue()), entry.getKey()));
+                    }
+                }
+                accepted.addAll(next);
+                frontier = next;
+                if (frontier.isEmpty() || atom.quantifier == Quantifier.EXACT) {
+                    break;
+                }
+            }
+            states = accepted;
+            if (states.isEmpty()) {
+                return List.of();
+            }
+        }
+
+        return alternativesForStates(states);
+    }
+
+    private HashMap<Integer, GraphConstraint> factsForNodes(Set<String> nodes) {
+        HashMap<Integer, GraphConstraint> result = new LinkedHashMap<>();
+        for (Map.Entry<Integer, GraphConstraint> entry : right.getFsIndices().entrySet()) {
+            if (nodes.contains(String.valueOf(entry.getValue().getFsNode()))) {
+                result.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return result;
+    }
+
+    private List<HashMap<Integer, GraphConstraint>> alternativesForStates(Set<PathState> states) {
+        Map<String, HashMap<Integer, GraphConstraint>> alternatives = new LinkedHashMap<>();
+        for (PathState state : states) {
+            alternatives.putIfAbsent(state.node, factsForNodes(Set.of(state.node)));
+        }
+        return new ArrayList<>(alternatives.values());
+    }
+
     public HashMap<Integer, GraphConstraint> searchInsideOutUncertainty(HashMap<Integer, GraphConstraint> in) {
         return searchInsideOutUncertainty(parsePathQuery(middle.getQuery()), in);
     }
@@ -807,6 +869,12 @@ public class UncertaintyExpression extends QueryExpression {
     }
 
     private HashMap<Integer, GraphConstraint> searchInsideOutUncertainty(List<PathAtom> search, HashMap<Integer, GraphConstraint> in) {
+        if (search.size() == 1
+                && search.get(0).quantifier != Quantifier.EXACT
+                && search.get(0).offPathConstraints.isEmpty()) {
+            return searchQuantifiedInsideOut(search, in);
+        }
+
         Set<String> startNodes = new LinkedHashSet<>();
         for (GraphConstraint constraint : in.values()) {
             startNodes.add(String.valueOf(constraint.getFsNode()));
@@ -827,6 +895,102 @@ public class UncertaintyExpression extends QueryExpression {
         }
 
         return result;
+    }
+
+    private HashMap<Integer, GraphConstraint> searchQuantifiedInsideOut(List<PathAtom> search,
+                                                                         HashMap<Integer, GraphConstraint> in) {
+        Set<String> currentNodes = new LinkedHashSet<>();
+        for (GraphConstraint constraint : in.values()) {
+            currentNodes.add(String.valueOf(constraint.getFsNode()));
+        }
+        for (PathAtom atom : search) {
+            Set<String> acceptedNodes = new LinkedHashSet<>();
+            if (atom.quantifier == Quantifier.ZERO_OR_MORE) {
+                acceptedNodes.addAll(currentNodes);
+            }
+
+            Set<String> frontier = currentNodes;
+            int repetitions = atom.quantifier == Quantifier.EXACT ? 1 : MAX_UNCERTAINTY_REPEAT;
+            for (int repetition = 0; repetition < repetitions; repetition++) {
+                Set<String> nextNodes = new LinkedHashSet<>();
+                for (String node : frontier) {
+                    for (GraphConstraint edge : right.getFsIndices().values()) {
+                        if (!node.equals(String.valueOf(edge.getFsValue()))
+                                || !labelMatches(atom, edge)) {
+                            continue;
+                        }
+
+                        String parentNode = String.valueOf(edge.getFsNode());
+                        if (nodeMatchesOffPathConstraints(parentNode, atom, right.getFsIndices())) {
+                            nextNodes.add(parentNode);
+                        }
+                    }
+                }
+
+                frontier = nextNodes;
+                acceptedNodes.addAll(frontier);
+                if (frontier.isEmpty() || atom.quantifier == Quantifier.EXACT) {
+                    break;
+                }
+            }
+
+            if (acceptedNodes.isEmpty()) {
+                return new HashMap<>();
+            }
+            currentNodes = acceptedNodes;
+        }
+
+        return factsForNodes(currentNodes);
+    }
+
+    private List<HashMap<Integer, GraphConstraint>> searchInsideOutAlternatives(
+            String query, HashMap<Integer, GraphConstraint> in) {
+        List<PathAtom> atoms = parsePathQuery(query,
+                middle.getParser() == null ? null : middle.getParser().getTemplateRegistry());
+        if (atoms.stream().noneMatch(atom -> atom.quantifier != Quantifier.EXACT)) {
+            return List.of(searchInsideOutUncertainty(atoms, in));
+        }
+
+        Set<PathState> states = new LinkedHashSet<>();
+        for (GraphConstraint constraint : in.values()) {
+            states.add(new PathState(String.valueOf(constraint.getFsNode()), Set.of()));
+        }
+
+        for (PathAtom atom : atoms) {
+            Set<PathState> accepted = new LinkedHashSet<>();
+            if (atom.quantifier == Quantifier.ZERO_OR_MORE) {
+                accepted.addAll(states);
+            }
+            Set<PathState> frontier = states;
+            int repetitions = atom.quantifier == Quantifier.EXACT ? 1 : MAX_UNCERTAINTY_REPEAT;
+            for (int repetition = 0; repetition < repetitions; repetition++) {
+                Set<PathState> next = new LinkedHashSet<>();
+                for (PathState state : frontier) {
+                    for (Map.Entry<Integer, GraphConstraint> entry : right.getFsIndices().entrySet()) {
+                        GraphConstraint edge = entry.getValue();
+                        if (!state.node.equals(String.valueOf(edge.getFsValue()))
+                                || !labelMatches(atom, edge)) {
+                            continue;
+                        }
+                        String parent = String.valueOf(edge.getFsNode());
+                        if (nodeMatchesOffPathConstraints(parent, atom, right.getFsIndices())) {
+                            next.add(state.advance(parent, entry.getKey()));
+                        }
+                    }
+                }
+                accepted.addAll(next);
+                frontier = next;
+                if (frontier.isEmpty() || atom.quantifier == Quantifier.EXACT) {
+                    break;
+                }
+            }
+            states = accepted;
+            if (states.isEmpty()) {
+                return List.of();
+            }
+        }
+
+        return alternativesForStates(states);
     }
 
     private Set<String> evaluateInsideOutPath(Set<String> startNodes,

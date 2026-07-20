@@ -2,6 +2,8 @@ package de.ukon.liger.test;
 
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
+import de.ukon.liger.analysis.QueryParser.TemplateParser;
+import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
@@ -44,6 +46,40 @@ public class UncertaintyQuantifierTest {
 
         assertEquals(1, starResult.result.size());
         assertEquals(0, plusResult.result.size());
+    }
+
+    @Test
+    void testGraphAwareStarTraversesBeyondLegacyExpansionDepth() {
+        LinguisticStructure fs = buildLongChainStructure();
+
+        QueryParser parser = new QueryParser("#a ROOT 'yes' & #a !(LINK*) #b", fs);
+        QueryParserResult result = parser.parseQuery(parser.getQueryList());
+
+        assertEquals(7, result.result.size());
+    }
+
+    @Test
+    void testGraphAwareTemplateStarTraversesOnlyExistingEdges() {
+        LinguisticStructure fs = buildLongChainStructure(true);
+        TemplateRegistry registry = new TemplateParser().parse("GF := LINK | ALT .");
+        String query = "#a ROOT 'yes' & #a !(@GF*) #b";
+
+        QueryParser parser = new QueryParser(query, fs, registry);
+        QueryParserResult result = parser.parseQueryWithTemplates(query).get(0);
+
+        assertEquals(7, result.result.size());
+    }
+
+    @Test
+    void testGraphAwareInsideOutStarTraversesLongChain() {
+        LinguisticStructure fs = buildLongChainStructure(true);
+        TemplateRegistry registry = new TemplateParser().parse("GF := LINK | ALT .");
+        String query = "#a LEAF 'yes' & #a ^(@GF*) #b";
+
+        QueryParser parser = new QueryParser(query, fs, registry);
+        QueryParserResult result = parser.parseQueryWithTemplates(query).get(0);
+
+        assertEquals(7, result.result.size());
     }
 
     @Test
@@ -111,5 +147,24 @@ public class UncertaintyQuantifierTest {
         constraints.add(new GraphConstraint(reading, 2, "CASE", "'nom'"));
 
         return new LinguisticStructure("test", "test", constraints);
+    }
+
+    private LinguisticStructure buildLongChainStructure() {
+        return buildLongChainStructure(false);
+    }
+
+    private LinguisticStructure buildLongChainStructure(boolean alternatives) {
+        Set<ChoiceVar> reading = new HashSet<>();
+        reading.add(new ChoiceVar("1"));
+
+        List<GraphConstraint> constraints = new ArrayList<>();
+        constraints.add(new GraphConstraint(reading, 0, "ROOT", "'yes'"));
+        for (int node = 0; node < 6; node++) {
+            String relation = alternatives && node % 2 == 1 ? "ALT" : "LINK";
+            constraints.add(new GraphConstraint(reading, node, relation, String.valueOf(node + 1)));
+        }
+        constraints.add(new GraphConstraint(reading, 6, "LEAF", "'yes'"));
+
+        return new LinguisticStructure("long-chain", "long chain", constraints);
     }
 }
