@@ -560,37 +560,10 @@ public class GlueSemantics {
             CStructureTraverser ctr = new CStructureTraverser(rootNode.get().getFsNode(), fs);
             ctr.traverseCstructure2(cstr, null);
 
-            List<String> orderedAnchors = ctr.associatedMCs2.keySet().stream()
-                    .sorted((a, b) -> {
-                        if ("root".equals(a)) {
-                            return "root".equals(b) ? 0 : -1;
-                        }
-                        if ("root".equals(b)) {
-                            return 1;
-                        }
-
-                        try {
-                            return Integer.compare(Integer.parseInt(a), Integer.parseInt(b));
-                        } catch (NumberFormatException e) {
-                            return a.compareTo(b);
-                        }
-                    })
+            List<String> ordered = ctr.orderedMCNodes.stream()
+                    .filter(fallbackNodes::contains)
                     .collect(Collectors.toList());
-
-            List<String> ordered = new ArrayList<>();
-            for (String anchor : orderedAnchors) {
-                List<String> anchorMcNodes = ctr.associatedMCs2.getOrDefault(anchor, Collections.emptySet()).stream()
-                        .filter(fallbackNodes::contains)
-                        .sorted((a, b) -> {
-                            try {
-                                return Integer.compare(Integer.parseInt(a), Integer.parseInt(b));
-                            } catch (NumberFormatException e) {
-                                return a.compareTo(b);
-                            }
-                        })
-                        .collect(Collectors.toList());
-                ordered.addAll(anchorMcNodes);
-            }
+            Collections.reverse(ordered);
 
             if (!ordered.isEmpty()) {
                 return ordered;

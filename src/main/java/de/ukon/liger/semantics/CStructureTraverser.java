@@ -193,11 +193,11 @@ public class CStructureTraverser {
                     Object[] keySet = (Object[]) ((LinkedHashMap) cstructure).get(currentRoot);
                     //right nodes first
                     if (keySet[1] != null) {
-                        // Object key = ((LinkedHashMap) keySet[1]).keySet().stream().findAny().get();
                         traverseCstructure2(keySet[1], anchor);
                     }
-                    //  Object key2 = ((LinkedHashMap) keySet[0]).keySet().stream().findAny().get();
-                    traverseCstructure2(keySet[0], anchor);
+                    if (keySet[0] != null) {
+                        traverseCstructure2(keySet[0], anchor);
+                    }
                 }
             }
         }
