@@ -120,7 +120,7 @@ public class GraphConstraint implements Serializable {
         sb.append(" ");
         sb.append(relationLabel);
         sb.append(" ");
-        if(HelperMethods.isInteger(fsValue))
+        if(HelperMethods.isNodeReference(fsValue))
         {
             sb.append("#" + fsValue);
         }
@@ -223,7 +223,7 @@ public class GraphConstraint implements Serializable {
 
         String value = fsValue.toString();
 
-        if (HelperMethods.isInteger(value))
+        if (HelperMethods.isNodeReference(value))
         {
             value = "var(" + value + ")";
         }

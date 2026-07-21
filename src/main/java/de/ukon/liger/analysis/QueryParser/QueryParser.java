@@ -187,7 +187,7 @@ public class QueryParser {
                 if (fsM.matches()) {
                     try {
                         if (getVh().getReservedVariables().get(VariableHandler.variableType.FS_NODE)
-                                .contains(fsM.group(1)) || HelperMethods.isInteger(fsM.group(1)) ) {
+                                 .contains(fsM.group(1)) || HelperMethods.isNodeReference(fsM.group(1)) ) {
 
                             if (!usedFsNodes.containsKey(fsM.group(1))) {
                                 //if the first symbol of fsm.group(1) is * set boolean to true
@@ -890,7 +890,8 @@ public class QueryParser {
 
         for (Integer key : fsIndices.keySet()) {
             GraphConstraint constraint = fsIndices.get(key);
-            if (nodeRef.equals(constraint.getFsValue()) && hierarchyRegistry.getHierarchy(hierarchyName).contains(constraint.getRelationLabel())) {
+            if (HelperMethods.nodeIdsEqual(nodeRef, String.valueOf(constraint.getFsValue()))
+                    && hierarchyRegistry.getHierarchy(hierarchyName).contains(constraint.getRelationLabel())) {
                 return constraint.getRelationLabel();
             }
         }

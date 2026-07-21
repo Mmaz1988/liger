@@ -74,7 +74,7 @@ public void calculateSolutions()
 
         for (Integer key : getFsIndices().keySet())
         {
-            if (getFsIndices().get(key).getFsNode().equals(getNodeVar()))
+            if (HelperMethods.nodeIdsEqual(getFsIndices().get(key).getFsNode(), getNodeVar()))
             {
                 reference.get(getNodeVar()).put(key,getFsIndices().get(key));
             }
@@ -93,9 +93,13 @@ public void calculateSolutions()
     for (Integer key : getFsIndices().keySet())
     {
         usedKeys.add(getFsIndices().get(key).getFsNode());
-        if (HelperMethods.isInteger(getFsIndices().get(key).getFsValue()))
+    }
+    for (Integer key : getFsIndices().keySet())
+    {
+        Object value = getFsIndices().get(key).getFsValue();
+        if (HelperMethods.isNodeReference(value))
         {
-            usedKeys.add(getFsIndices().get(key).getFsValue().toString());
+            usedKeys.add(String.valueOf(value));
         }
     }
 

@@ -162,7 +162,7 @@ public class UncertaintyExpression extends QueryExpression {
             for (String nodeRef : leftBinding.get(nodeVar).keySet()) {
                 HashMap<Integer, GraphConstraint> boundIndices = new HashMap<>();
                 for (Integer index : middle.getFsIndices().keySet()) {
-                    if (middle.getFsIndices().get(index).getFsNode().equals(nodeRef)) {
+                    if (HelperMethods.nodeIdsEqual(middle.getFsIndices().get(index).getFsNode(), nodeRef)) {
                         boundIndices.put(index, middle.getFsIndices().get(index));
                     }
                 }
@@ -535,7 +535,7 @@ public class UncertaintyExpression extends QueryExpression {
 
     private boolean nodeMatchesConstraint(String nodeRef, OffPathConstraint constraint, HashMap<Integer, GraphConstraint> graph) {
         for (GraphConstraint gc : graph.values()) {
-            if (!nodeRef.equals(gc.getFsNode())) {
+            if (!HelperMethods.nodeIdsEqual(nodeRef, gc.getFsNode())) {
                 continue;
             }
             if (!constraint.attribute.equals(gc.getRelationLabel())) {
@@ -660,7 +660,7 @@ public class UncertaintyExpression extends QueryExpression {
                         List<Integer> matchingKeys = new ArrayList<>();
 
                         for (Integer key2 : right.getFsIndices().keySet()) {
-                            if (result.get(key).getFsValue().equals(right.getFsIndices().get(key2).getFsNode())) {
+                            if (HelperMethods.nodeIdsEqual(String.valueOf(result.get(key).getFsValue()), right.getFsIndices().get(key2).getFsNode())) {
                                 keys.add(key2);
                             }
                         }
@@ -713,12 +713,12 @@ public class UncertaintyExpression extends QueryExpression {
                     HashMap<Integer, GraphConstraint> newResult = new HashMap<>();
 
                     for (Integer key2 : right.getFsIndices().keySet()) {
-                        if (result.get(key).getFsValue().equals(right.getFsIndices().get(key2).getFsNode())) {
+                        if (HelperMethods.nodeIdsEqual(String.valueOf(result.get(key).getFsValue()), right.getFsIndices().get(key2).getFsNode())) {
                             newResult.put(key2, right.getFsIndices().get(key2));
                         } else {
 
 
-                            if (!HelperMethods.isInteger(result.get(key).getFsValue())) {
+                            if (!HelperMethods.isNodeReference(result.get(key).getFsValue())) {
                                 newResult.put(key, result.get(key));
                             }
                         }
@@ -764,7 +764,7 @@ public class UncertaintyExpression extends QueryExpression {
                 Set<String> nextNodes = new LinkedHashSet<>();
                 for (String node : frontier) {
                     for (GraphConstraint edge : right.getFsIndices().values()) {
-                        if (!node.equals(String.valueOf(edge.getFsNode()))
+                        if (!HelperMethods.nodeIdsEqual(node, String.valueOf(edge.getFsNode()))
                                 || !labelMatches(atom, edge)
                                 || !matchesOffPathConstraints(atom, edge, right.getFsIndices(), false)) {
                             continue;
@@ -814,7 +814,7 @@ public class UncertaintyExpression extends QueryExpression {
                 for (PathState state : frontier) {
                     for (Map.Entry<Integer, GraphConstraint> entry : right.getFsIndices().entrySet()) {
                         GraphConstraint edge = entry.getValue();
-                        if (!state.node.equals(String.valueOf(edge.getFsNode()))
+                        if (!HelperMethods.nodeIdsEqual(state.node, String.valueOf(edge.getFsNode()))
                                 || !labelMatches(atom, edge)
                                 || !matchesOffPathConstraints(atom, edge, right.getFsIndices(), false)) {
                             continue;
@@ -915,7 +915,7 @@ public class UncertaintyExpression extends QueryExpression {
                 Set<String> nextNodes = new LinkedHashSet<>();
                 for (String node : frontier) {
                     for (GraphConstraint edge : right.getFsIndices().values()) {
-                        if (!node.equals(String.valueOf(edge.getFsValue()))
+                        if (!HelperMethods.nodeIdsEqual(node, String.valueOf(edge.getFsValue()))
                                 || !labelMatches(atom, edge)) {
                             continue;
                         }
@@ -968,7 +968,7 @@ public class UncertaintyExpression extends QueryExpression {
                 for (PathState state : frontier) {
                     for (Map.Entry<Integer, GraphConstraint> entry : right.getFsIndices().entrySet()) {
                         GraphConstraint edge = entry.getValue();
-                        if (!state.node.equals(String.valueOf(edge.getFsValue()))
+                        if (!HelperMethods.nodeIdsEqual(state.node, String.valueOf(edge.getFsValue()))
                                 || !labelMatches(atom, edge)) {
                             continue;
                         }

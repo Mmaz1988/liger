@@ -186,7 +186,7 @@ public class NodeExpression extends QueryExpression {
                 for (Integer key3 : boundIndices.keySet()) {
                     if (left.getFsIndices().containsKey(key3)) {
 
-                        if (HelperMethods.isInteger(left.getFsIndices().get(key3).getFsValue())) {
+                        if (HelperMethods.isNodeReference(left.getFsIndices().get(key3).getFsValue())) {
                             usedKeys.add((String) left.getFsIndices().get(key3).getFsValue());
                         }
                     }

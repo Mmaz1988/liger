@@ -347,7 +347,7 @@ public class RuleParser {
         if (qpr.result.containsKey(solution) && qpr.result.get(solution).containsKey(reference)) {
             return qpr.result.get(solution).get(reference).keySet().stream().findAny().orElseGet(this::returnUnusedVar);
         }
-        return returnUnusedVar();
+        return returnUnusedAnnotationNode();
     }
 
     private String resolveValueReference(QueryParserResult qpr, Solution solution, String reference) {
@@ -443,7 +443,7 @@ public class RuleParser {
 
 
                                             } else {
-                                                String newFsNode = returnUnusedVar();
+                                                 String newFsNode = returnUnusedAnnotationNode();
 
                                                 /*
                                                 if (!newValues.keySet().contains(valueMatcher.group(1))) {
@@ -564,7 +564,7 @@ public class RuleParser {
                                     } else {
 
 
-                                        String key2 = returnUnusedVar();
+                                         String key2 = returnUnusedAnnotationNode();
 
                                         qpr.result.get(solutionKey).put(nodeMatcher.group(1), new HashMap<>());
                                         qpr.result.get(solutionKey).get(nodeMatcher.group(1)).put(key2, new HashMap<>());
@@ -585,7 +585,7 @@ public class RuleParser {
                                                 newConstraints.put(key, c);
                                                 key++;
                                             } else {
-                                                String newFsNode = returnUnusedVar();
+                                                 String newFsNode = returnUnusedAnnotationNode();
 
                                                 GraphConstraint c = new GraphConstraint();
                                                 c.setReading(context);
@@ -835,6 +835,17 @@ public class RuleParser {
 
         usedKeys.add(Integer.toString(i));
         return Integer.toString(i);
+    }
+
+    private String returnUnusedAnnotationNode() {
+        int i = 1;
+        String candidate;
+        do {
+            candidate = "a" + i++;
+        } while (usedKeys.contains(candidate));
+
+        usedKeys.add(candidate);
+        return candidate;
     }
 
     private String lookupValueBinding(Solution solutionKey,

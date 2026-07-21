@@ -37,6 +37,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 
@@ -75,7 +76,7 @@ public class GlueSemantics {
                 //extract from LiGER
                 for (GraphConstraint c : fs.annotation) {
                     if (c.getRelationLabel().equals("GLUE")) {
-                        if (!HelperMethods.isInteger(c.getFsValue())) {
+                        if (!HelperMethods.isNodeReference(c.getFsValue())) {
                             if (unpackedSem.containsKey(c.getReading())) {
                                 String currentMC = c.getFsValue().toString();
                                 Pattern pattern = Pattern.compile("'(.*?)'");
@@ -352,7 +353,7 @@ public class GlueSemantics {
 
                 for (Object string : flattenedGlueTree)
                 {
-                    if (HelperMethods.isInteger(string))
+                    if (HelperMethods.isNodeReference(string))
                     {
                         sb.append(parseMCfromProlog((String) string, fs.returnFullGraph()) + "\n");
                     } else {
@@ -631,6 +632,23 @@ public class GlueSemantics {
         return "[" + sourceIndex + "] " + trimmed;
     }
 
+    private List<GraphConstraint> semanticConstraints(String glueNode, List<GraphConstraint> constraints) {
+        Set<String> sourceNodes = new HashSet<>();
+        sourceNodes.add(glueNode);
+
+        if (glueNode != null) {
+            Matcher matcher = Pattern.compile("([fg])(\\d+)").matcher(glueNode);
+            if (matcher.matches()) {
+                String counterpart = ("g".equals(matcher.group(1)) ? "f" : "g") + matcher.group(2);
+                sourceNodes.add(counterpart);
+            }
+        }
+
+        return constraints.stream()
+                .filter(constraint -> sourceNodes.contains(constraint.getFsNode()))
+                .collect(Collectors.toList());
+    }
+
 
 
     //Extracts a XLE+Glue version 2 mc from Prolog
@@ -639,7 +657,7 @@ public class GlueSemantics {
     {
         String meaning = "";
 
-        List<GraphConstraint> glueConstraints = ls.stream().filter(c -> c.getFsNode().equals(glueNode)).collect(Collectors.toList());
+        List<GraphConstraint> glueConstraints = semanticConstraints(glueNode, ls);
         //Find graph constraint in glueConstraints with label GLUE
 
         List<GraphConstraint> meaningConstraint = glueConstraints.stream().filter(c -> c.getRelationLabel().equals("MEANING")).collect(Collectors.toList());
@@ -784,7 +802,7 @@ public class GlueSemantics {
         Set<ChoiceVar> defaultContext = Collections.singleton(new ChoiceVar());
 
 
-        List<GraphConstraint> glueConstraints = ls.stream().filter(c -> c.getFsNode().equals(glueNode)).collect(Collectors.toList());
+        List<GraphConstraint> glueConstraints = semanticConstraints(glueNode, ls);
         //Find graph constraint in glueConstraints with label GLUE
 
         Set<Set<ChoiceVar>> relevantChoices = glueConstraints.stream().map(GraphConstraint::getReading).collect(Collectors.toSet());

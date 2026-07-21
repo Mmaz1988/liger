@@ -23,11 +23,14 @@ package de.ukon.liger.webservice.rest.dtos;
 
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
+import de.ukon.liger.syntax.NodeIdPolicy;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class LigerWebGraph {
+
+    private static final NodeIdPolicy NODE_ID_POLICY = NodeIdPolicy.legacyCompatibleDefaults();
 
     public List<LigerGraphComponent> graphElements;
     public String semantics;
@@ -129,7 +132,7 @@ public class LigerWebGraph {
                 }
             }
 
-            if (isIntegerValue(g.getFsValue())
+            if (NODE_ID_POLICY.isNodeReference(String.valueOf(g.getFsValue()))
             ) {
                 if (!nodes.containsKey(g.getFsValue().toString()))
                 {
@@ -167,6 +170,8 @@ public class LigerWebGraph {
             }
         }
 
+        nodes.keySet().removeIf(node -> isSemanticTypeNode(node, input, nodes.keySet()));
+
         List<LigerGraphComponent> testNodes = new ArrayList<>();
 
         int counter = 0;
@@ -176,10 +181,12 @@ public class LigerWebGraph {
             LigerWebNode lwn = null;
 
             if (!nodes.get(key).keySet().isEmpty()) {
-                lwn = new LigerWebNode(key, type, key, nodes.get(key));
+                String nodeType = NODE_ID_POLICY.defaultNodeTypeOf(key).orElse(type);
+                lwn = new LigerWebNode(key, nodeType, key, nodes.get(key));
             } else
             {
-                lwn = new LigerWebNode(key,type,key);
+                String nodeType = NODE_ID_POLICY.defaultNodeTypeOf(key).orElse(type);
+                lwn = new LigerWebNode(key,nodeType,key);
             }
 
 
@@ -220,21 +227,23 @@ public class LigerWebGraph {
         return output;
     }
 
-    private static List<GraphConstraint> safeConstraints(List<GraphConstraint> constraints) {
-        return constraints == null ? Collections.emptyList() : constraints;
+    private boolean isSemanticTypeNode(String node, List<GraphConstraint> constraints, Set<String> graphNodes) {
+        if (!node.matches("f\\d+") || !graphNodes.contains("g" + node.substring(1))) {
+            return false;
+        }
+
+        Set<String> labels = constraints.stream()
+                .filter(constraint -> node.equals(constraint.getFsNode()))
+                .map(GraphConstraint::getRelationLabel)
+                .collect(Collectors.toSet());
+
+        return !labels.isEmpty() && labels.stream().allMatch(label ->
+                "TYPE".equals(label) || "MEANING".equals(label)
+                        || "INSITU".equals(label) || "NOSCOPE".equals(label));
     }
 
-    private static boolean isIntegerValue(Object value) {
-        if (value == null) {
-            return false;
-        }
-
-        try {
-            Integer.parseInt(String.valueOf(value));
-            return true;
-        } catch (NumberFormatException ex) {
-            return false;
-        }
+    private static List<GraphConstraint> safeConstraints(List<GraphConstraint> constraints) {
+        return constraints == null ? Collections.emptyList() : constraints;
     }
 
     private static String normalizeNodeType(Object value) {
@@ -251,6 +260,7 @@ public class LigerWebGraph {
             case "c" -> "cnode";
             case "g" -> "gnode";
             case "f" -> "input";
+            case "a" -> "annotation";
             
             default -> nodeType.toLowerCase();
         };

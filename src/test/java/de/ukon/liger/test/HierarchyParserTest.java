@@ -48,9 +48,9 @@ public class HierarchyParserTest {
 
             assertTrue(result.isSuccess);
             Set<String> pairs = extractNodePairs(result, "#a", "#c");
-            assertTrue(pairs.contains("6>1"));
-            assertTrue(pairs.contains("6>3"));
-            assertTrue(pairs.contains("1>3"));
+            assertTrue(pairs.contains("f6>f1"));
+            assertTrue(pairs.contains("f6>f3"));
+            assertTrue(pairs.contains("f1>f3"));
         }
     }
 
@@ -64,7 +64,7 @@ public class HierarchyParserTest {
             QueryParserResult result = qp.parseQuery(qp.getQueryList());
 
             assertTrue(result.isSuccess);
-            assertTrue(extractNodePairs(result, "#b", "#d").contains("6>3"));
+            assertTrue(extractNodePairs(result, "#b", "#d").contains("f6>f3"));
         }
     }
 
@@ -81,7 +81,7 @@ public class HierarchyParserTest {
             QueryParserResult result = qp.parseQuery(qp.getQueryList());
 
             assertTrue(result.isSuccess);
-            assertTrue(extractNodePairs(result, "#b", "#d").contains("6>3"));
+            assertTrue(extractNodePairs(result, "#b", "#d").contains("f6>f3"));
         }
     }
 
@@ -140,7 +140,7 @@ public class HierarchyParserTest {
             QueryParserResult result = qp.parseQueryWithTemplates("@MEGA()").get(0);
 
             assertTrue(result.isSuccess);
-            assertTrue(extractNodePairs(result, "#b", "#d").contains("6>3"));
+            assertTrue(extractNodePairs(result, "#b", "#d").contains("f6>f3"));
         }
     }
 

@@ -99,7 +99,7 @@ public class UncertaintyQuantifierTest {
         LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
 
         for (String key : fs.keySet()) {
-            QueryParser qp = new QueryParser("*0 TNS-ASP #f TENSE 'past'", fs.get(key));
+            QueryParser qp = new QueryParser("*f0 TNS-ASP #f TENSE 'past'", fs.get(key));
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
             assertTrue(qpr.isSuccess && qpr.result.size() == 1);

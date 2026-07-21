@@ -37,6 +37,7 @@ import de.ukon.liger.reasoning.AxiomExtractor;
 import de.ukon.liger.semantics.GlueSemantics;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
+import de.ukon.liger.syntax.NodeIdPolicy;
 import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.VariableHandler;
 import de.ukon.liger.utilities.XLEStarter;
@@ -60,6 +61,8 @@ import java.util.stream.Collectors;
 @CrossOrigin
 @RestController
 public class LigerController {
+
+    private static final NodeIdPolicy NODE_ID_POLICY = NodeIdPolicy.legacyCompatibleDefaults();
     private final static Logger LOGGER = Logger.getLogger(LigerController.class.getName());
 
     @Autowired
@@ -657,7 +660,7 @@ public class LigerController {
             Object value = constraint.getFsValue();
             if (value != null) {
                 String targetNode = String.valueOf(value);
-                if (de.ukon.liger.utilities.HelperMethods.isInteger(targetNode)) {
+                if (de.ukon.liger.utilities.HelperMethods.isNodeReference(targetNode)) {
                     highlightedNodeIds.add(targetNode);
                 }
             }
@@ -729,7 +732,7 @@ public class LigerController {
             String relationLabel = constraint.getRelationLabel();
             String relationValue = String.valueOf(constraint.getFsValue());
 
-            if (de.ukon.liger.utilities.HelperMethods.isInteger(constraint.getFsValue())) {
+            if (NODE_ID_POLICY.isNodeReference(String.valueOf(constraint.getFsValue()))) {
                 String targetRaw = relationValue;
                 String targetProjection = projectionByNode.get(targetRaw);
 

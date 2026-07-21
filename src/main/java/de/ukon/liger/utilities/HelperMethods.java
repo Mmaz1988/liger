@@ -22,6 +22,7 @@
 package de.ukon.liger.utilities;
 
 import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.syntax.NodeIdPolicy;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,10 +31,13 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HelperMethods {
+
+    private static final NodeIdPolicy NODE_ID_POLICY = NodeIdPolicy.legacyCompatibleDefaults();
 
 
     public static Pattern fsNodePattern = Pattern.compile("[#*](\\w+)");
@@ -202,6 +206,24 @@ public class HelperMethods {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public static boolean isNodeReference(Object value) {
+        return value != null && NODE_ID_POLICY.isNodeReference(String.valueOf(value));
+    }
+
+    public static boolean nodeIdsEqual(String left, String right) {
+        if (Objects.equals(left, right)) {
+            return true;
+        }
+        if (left == null || right == null || !isNodeReference(left) || !isNodeReference(right)) {
+            return false;
+        }
+        if (NODE_ID_POLICY.isLegacyNumericId(left) || NODE_ID_POLICY.isLegacyNumericId(right)) {
+            // Legacy graph exports may use zero-padded IDs as distinct nodes.
+            return left.equals(right);
+        }
+        return false;
     }
 
     public static String formatWslString(String winpath) {

@@ -259,7 +259,7 @@ public class QueryParserTest {
         LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS15.pl");
 
         for (String key : fs.keySet()) {
-            QueryParser qp = new QueryParser("*011 !(cproj>g::>GLUE>in_set) #s", fs.get(key));
+            QueryParser qp = new QueryParser("*c11 !(cproj>g::>GLUE>in_set) #s", fs.get(key));
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
             assertTrue(qpr.isSuccess && qpr.result.size() == 1);
@@ -288,8 +288,8 @@ public class QueryParserTest {
             List<String> normalized = normalizeResult(qpr);
             assertEquals(2, normalized.size());
             assertEquals(List.of(
-                    "0|1::[[1]] #1 CASE 'acc';[[1]] #1 GEND 'masc';[[1]] #1 NTYPE #2;[[1]] #1 NUM 'sg';[[1]] #1 PERS '3';[[1]] #1 PRED semform('Bertie',2,[],[]);[[1]] #1 end int(17);[[1]] #1 start int(11)",
-                    "3|4::[[1]] #4 CASE 'acc';[[1]] #4 GEND 'masc';[[1]] #4 NTYPE 'pron';[[1]] #4 NUM 'sg';[[1]] #4 PERS '3';[[1]] #4 PRED semform('pro',4,[],[]);[[1]] #4 PRON-TYPE 'reflexive';[[1]] #4 end int(31);[[1]] #4 start int(24)"
+                    "f0|f1::[[1]] #f1 CASE 'acc';[[1]] #f1 GEND 'masc';[[1]] #f1 NTYPE #f2;[[1]] #f1 NUM 'sg';[[1]] #f1 PERS '3';[[1]] #f1 PRED semform('Bertie',2,[],[]);[[1]] #f1 end int(17);[[1]] #f1 start int(11)",
+                    "f3|f4::[[1]] #f4 CASE 'acc';[[1]] #f4 GEND 'masc';[[1]] #f4 NTYPE 'pron';[[1]] #f4 NUM 'sg';[[1]] #f4 PERS '3';[[1]] #f4 PRED semform('pro',4,[],[]);[[1]] #f4 PRON-TYPE 'reflexive';[[1]] #f4 end int(31);[[1]] #f4 start int(24)"
             ), normalized);
         }
     }

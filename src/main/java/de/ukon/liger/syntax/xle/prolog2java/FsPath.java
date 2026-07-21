@@ -90,11 +90,11 @@ public class FsPath {
 
         for (GraphConstraint fsvar : fs) {
             if (fsC.getFsNode().equals(fsvar.getFsValue())) {
-                if (HelperMethods.isInteger(fsC.getFsValue())) {
+                if (HelperMethods.isNodeReference(fsC.getFsValue())) {
 
 
                     String var = vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                            Integer.parseInt(fsC.getFsValue().toString()));
+                            HelperMethods.getIntegerFromID(fsC.getFsValue().toString()));
 
                     boolean contains = false;
 
@@ -108,7 +108,7 @@ public class FsPath {
 
 
                     path.addFirst("#" + vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                                                                Integer.parseInt(fsC.getFsValue().toString())));
+                                                                HelperMethods.getIntegerFromID(fsC.getFsValue().toString())));
                 } else {
                     path.addFirst(fsC.getFsValue().toString());
                 }
@@ -121,16 +121,16 @@ public class FsPath {
             }
         }
 
-        if (HelperMethods.isInteger(fsC.getFsValue())) {
+        if (HelperMethods.isNodeReference(fsC.getFsValue())) {
             path.addFirst("#" + vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                                                        Integer.parseInt(fsC.getFsValue().toString())));
+                                                        HelperMethods.getIntegerFromID(fsC.getFsValue().toString())));
         } else {
             path.addFirst(fsC.getFsValue().toString());
         }
 
         path.addFirst(fsC.getRelationLabel());
         path.addFirst("#" + vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                                                Integer.parseInt(fsC.getFsNode())));
+                                                HelperMethods.getIntegerFromID(fsC.getFsNode())));
 
         return true;
     }
@@ -152,7 +152,7 @@ public class FsPath {
 
 
 
-        if (!(HelperMethods.isInteger(start.getFsValue()) && HelperMethods.isInteger(ladder.getFsValue())))
+        if (!(HelperMethods.isNodeReference(start.getFsValue()) && HelperMethods.isNodeReference(ladder.getFsValue())))
         {
             return null;
         }
@@ -166,7 +166,7 @@ public class FsPath {
                 if (ladder.equals(start)) {
                     re.addFirst("#" +
                             vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                                    Integer.parseInt(start.getFsValue().toString())));
+                                    HelperMethods.getIntegerFromID(start.getFsValue().toString())));
         //            re.addFirst(ladder.getRelationLabel());
           //          re.addFirst("#" +
             //                vh.returnNewVar(VariableHandler.variableType.FS_NODE,
@@ -186,7 +186,7 @@ public class FsPath {
                         Deque<String> reCopy = new LinkedList<>(re);
 
                         re.addFirst("#" + vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                                Integer.parseInt((String) (ladder.getFsValue()).toString())));
+                                HelperMethods.getIntegerFromID((String) (ladder.getFsValue()).toString())));
                         re.addFirst(ladder.getRelationLabel());
 
                         if (generateRelation(start, fsvar, fsvar, fsCopy, reCopy, false) == null) {
@@ -196,7 +196,7 @@ public class FsPath {
                             return generateRelation(start, fsvar, end, fsCopy, re, true);
                         } else {
                             re.addFirst("#" + vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                                    Integer.parseInt((String) (fsvar.getFsValue()).toString())));
+                                    HelperMethods.getIntegerFromID((String) (fsvar.getFsValue()).toString())));
                             end = fsvar;
                             ladder = fsvar;
                         }
@@ -220,13 +220,13 @@ public class FsPath {
 
             } else {
         /*
-        if (GraphConstraint.isInteger(start.getFsValue()) &&
+                if (HelperMethods.isNodeReference(start.getFsValue()) &&
                 ladder.equals(start)
                 ) {
             re.add(start.getRelationLabel());
             re.add("#" +
                     vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                            Integer.parseInt(end.getFsNode().toString())));
+                            HelperMethods.getIntegerFromID(end.getFsNode().toString())));
 
             return re;
         }
@@ -236,7 +236,7 @@ public class FsPath {
         if (ladder.getFsValue().equals(end.getFsValue())) {
             re.add("#" +
                     vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                            Integer.parseInt(ladder.getFsNode().toString())));
+                            HelperMethods.getIntegerFromID(ladder.getFsNode().toString())));
 
             return re;
         }
@@ -244,17 +244,17 @@ public class FsPath {
 
                 for (GraphConstraint fsvar : fs) {
                     if (ladder.getFsValue().equals(fsvar.getFsNode()) &&
-                            HelperMethods.isInteger(fsvar.getFsValue())) {
+                            HelperMethods.isNodeReference(fsvar.getFsValue())) {
 
 
                         Deque<String> reCopy = new LinkedList<>(re);
 
                         //reCopy.add(fsvar.getRelationLabel());
                         reCopy.add("#" + vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                                Integer.parseInt(fsvar.getFsNode().toString())));
+                                HelperMethods.getIntegerFromID(fsvar.getFsNode().toString())));
                         reCopy.add(fsvar.getRelationLabel());
                         reCopy.add("#" + vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                                Integer.parseInt(fsvar.getFsValue().toString())));
+                                HelperMethods.getIntegerFromID(fsvar.getFsValue().toString())));
 
                         System.out.println(fsvar + " <--> " + start + " <--> " + ladder);
                         if (fsvar.equals(start)) {
@@ -279,16 +279,16 @@ public class FsPath {
 
 
         /*
-            if (GraphConstraint.isInteger(end.getFsValue())) {
+            if (HelperMethods.isNodeReference(end.getFsValue())) {
                 re.addFirst("#" + vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                        Integer.parseInt(end.getFsValue().toString())));
+                        HelperMethods.getIntegerFromID(end.getFsValue().toString())));
             } else {
                 re.addFirst(end.getFsValue().toString());
             }
 
             re.addFirst(end.getRelationLabel());
             re.addFirst("#" + vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                    Integer.parseInt(end.getFsNode())));
+                    HelperMethods.getIntegerFromID(end.getFsNode())));
 
 */
                 }
@@ -314,9 +314,9 @@ public class FsPath {
 
         for (GraphConstraint fsvar : fs) {
             if (fsC.getFsNode().equals(fsvar.getFsValue())) {
-                if (GraphConstraint.isInteger(fsC.getFsValue())) {
+                if (HelperMethods.isNodeReference(fsC.getFsValue())) {
                     path.addFirst("#" + vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                            Integer.parseInt(fsC.getFsValue().toString())));
+                            HelperMethods.getIntegerFromID(fsC.getFsValue().toString())));
                 } else {
                     path.addFirst(fsC.getFsValue().toString());
                 }
@@ -329,16 +329,16 @@ public class FsPath {
             }
         }
 
-        if (GraphConstraint.isInteger(fsC.getFsValue())) {
+        if (HelperMethods.isNodeReference(fsC.getFsValue())) {
             path.addFirst("#" + vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                    Integer.parseInt(fsC.getFsValue().toString())));
+                    HelperMethods.getIntegerFromID(fsC.getFsValue().toString())));
         } else {
             path.addFirst(fsC.getFsValue().toString());
         }
 
         path.addFirst(fsC.getRelationLabel());
         path.addFirst("#" + vh.returnNewVar(VariableHandler.variableType.FS_NODE,
-                Integer.parseInt(fsC.getFsNode())));
+                HelperMethods.getIntegerFromID(fsC.getFsNode())));
 
         return true;
     }
@@ -418,7 +418,7 @@ public class FsPath {
                 Matcher qMatcher = fsNode.matcher(query.getFirst());
                 qMatcher.find();
 
-                if (varAssignment.keySet().contains(Integer.parseInt(fsIndices.get(i.next()).getFsNode()))) {
+                if (varAssignment.keySet().contains(HelperMethods.getIntegerFromID(fsIndices.get(i.next()).getFsNode()))) {
 
 
 
@@ -426,7 +426,7 @@ public class FsPath {
                     System.out.println(varAssignment);
 
 
-                    if (varAssignment.get(Integer.parseInt(fsIndices.get(i.next()).getFsNode())).contains(qMatcher.group(1))) {
+                    if (varAssignment.get(HelperMethods.getIntegerFromID(fsIndices.get(i.next()).getFsNode())).contains(qMatcher.group(1))) {
                         continue;
                     } else {
 
@@ -436,7 +436,7 @@ public class FsPath {
                 } else {
                     Set<String> newAssignment = new HashSet<String>();
                     newAssignment.add(qMatcher.group(1));
-                    varAssignment.put(Integer.parseInt(fsIndices.get(i.next()).getFsNode()), newAssignment);
+                    varAssignment.put(HelperMethods.getIntegerFromID(fsIndices.get(i.next()).getFsNode()), newAssignment);
                 }
 
             }
@@ -446,8 +446,8 @@ public class FsPath {
             else if (unifyFsNodes(query.getFirst(), fsIndices.get(i.next()).getFsValue(), varAssignment)) {
                 Matcher qMatcher = fsNode.matcher(query.getFirst());
                 qMatcher.find();
-                if (varAssignment.keySet().contains(Integer.parseInt(fsIndices.get(i.next()).getFsValue()))) {
-                    if (varAssignment.get(Integer.parseInt(fsIndices.get(i.next()).getFsValue())).contains(qMatcher.group(1))) {
+                if (varAssignment.keySet().contains(HelperMethods.getIntegerFromID(fsIndices.get(i.next()).getFsValue()))) {
+                    if (varAssignment.get(HelperMethods.getIntegerFromID(fsIndices.get(i.next()).getFsValue())).contains(qMatcher.group(1))) {
                         continue;
                     } else {
 
@@ -457,7 +457,7 @@ public class FsPath {
                 } else {
                     Set<String> newAssignment = new HashSet<String>();
                     newAssignment.add(qMatcher.group(1));
-                    varAssignment.put(Integer.parseInt(fsIndices.get(i.next()).getFsValue()), newAssignment);
+                    varAssignment.put(HelperMethods.getIntegerFromID(fsIndices.get(i.next()).getFsValue()), newAssignment);
                 }
 
             }
@@ -577,5 +577,3 @@ public class FsPath {
     }
 
     }
-
-
