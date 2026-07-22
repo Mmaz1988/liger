@@ -263,6 +263,7 @@ public class LigerController {
         LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> primaryAddedAnnotations =
                 rp.getAddedAnnotationsByRule(primary);
         response.addedAnnotationsByRule = primaryAddedAnnotations;
+        response.highlightedNodeIdsByRule = collectHighlightedNodeIdsByRule(primaryAddedAnnotations);
         response.highlightedNodeIds = collectHighlightedNodeIdsFromGroups(primaryAddedAnnotations.values());
         response.structureJson = primary == null ? ls.toJson() : primary.toJson();
         response.structureVariants = toStructureVariants(branches);
@@ -583,6 +584,7 @@ public class LigerController {
                 LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> branchAddedAnnotations =
                         rp.getAddedAnnotationsByRule(branch);
                 annotation.highlightedNodeIds = collectHighlightedNodeIdsFromGroups(branchAddedAnnotations.values());
+                annotation.highlightedNodeIdsByRule = collectHighlightedNodeIdsByRule(branchAddedAnnotations);
                 annotation.addedAnnotationsByRule = branchAddedAnnotations;
                 annotations.add(annotation);
             }
@@ -667,6 +669,21 @@ public class LigerController {
         }
 
         return highlightedNodeIds;
+    }
+
+    private LinkedHashMap<Integer, LinkedHashSet<String>> collectHighlightedNodeIdsByRule(
+            LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> annotationsByRule) {
+        LinkedHashMap<Integer, LinkedHashSet<String>> highlightedByRule = new LinkedHashMap<>();
+
+        if (annotationsByRule == null) {
+            return highlightedByRule;
+        }
+
+        for (Map.Entry<Integer, LinkedHashSet<GraphConstraint>> entry : annotationsByRule.entrySet()) {
+            highlightedByRule.put(entry.getKey(), collectHighlightedNodeIds(entry.getValue()));
+        }
+
+        return highlightedByRule;
     }
 
     @SafeVarargs

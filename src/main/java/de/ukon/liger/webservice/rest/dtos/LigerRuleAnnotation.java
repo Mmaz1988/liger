@@ -18,6 +18,8 @@ public class LigerRuleAnnotation {
 
     public LinkedHashSet<String> highlightedNodeIds;
 
+    public LinkedHashMap<Integer, LinkedHashSet<String>> highlightedNodeIdsByRule;
+
     public LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> addedAnnotationsByRule;
 
     public List<LinkedHashMap<String, Object>> structureVariants;
@@ -35,6 +37,7 @@ public class LigerRuleAnnotation {
         this.graph = graph;
         this.appliedRules = appliedRules;
         this.highlightedNodeIds = new LinkedHashSet<>();
+        this.highlightedNodeIdsByRule = new LinkedHashMap<>();
         this.addedAnnotationsByRule = new LinkedHashMap<>();
         this.structureVariants = new java.util.ArrayList<>();
         this.structureVariantGraphs = new java.util.ArrayList<>();
@@ -46,6 +49,7 @@ public class LigerRuleAnnotation {
         this.appliedRules = appliedRules;
         this.structureJson = structureJson;
         this.highlightedNodeIds = new LinkedHashSet<>();
+        this.highlightedNodeIdsByRule = new LinkedHashMap<>();
         this.addedAnnotationsByRule = new LinkedHashMap<>();
         this.structureVariants = new java.util.ArrayList<>();
         this.structureVariantGraphs = new java.util.ArrayList<>();
@@ -58,6 +62,7 @@ public class LigerRuleAnnotation {
         this.meaningConstructors = meaningConstructors;
         this.axioms = axioms;
         this.highlightedNodeIds = new LinkedHashSet<>();
+        this.highlightedNodeIdsByRule = new LinkedHashMap<>();
         this.addedAnnotationsByRule = new LinkedHashMap<>();
         this.structureVariants = new java.util.ArrayList<>();
         this.structureVariantGraphs = new java.util.ArrayList<>();
@@ -72,6 +77,7 @@ public class LigerRuleAnnotation {
         this.numberOfMCsets = numberOfMCsets;
         this.axioms = axioms;
         this.highlightedNodeIds = new LinkedHashSet<>();
+        this.highlightedNodeIdsByRule = new LinkedHashMap<>();
         this.addedAnnotationsByRule = new LinkedHashMap<>();
         this.structureVariants = new java.util.ArrayList<>();
         this.structureVariantGraphs = new java.util.ArrayList<>();
@@ -87,6 +93,7 @@ public class LigerRuleAnnotation {
         this.axioms = axioms;
         this.structureJson = structureJson;
         this.highlightedNodeIds = new LinkedHashSet<>();
+        this.highlightedNodeIdsByRule = new LinkedHashMap<>();
         this.addedAnnotationsByRule = new LinkedHashMap<>();
         this.structureVariants = new java.util.ArrayList<>();
         this.structureVariantGraphs = new java.util.ArrayList<>();
