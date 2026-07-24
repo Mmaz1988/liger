@@ -53,6 +53,7 @@ public class LinguisticStructure {
         this.local_id = local_id;
         this.text = sentence;
         this.constraints = fsFacts;
+        deduplicateEdges();
     }
 
     public LinguisticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts, ChoiceSpace cp)
@@ -61,6 +62,7 @@ public class LinguisticStructure {
         this.text = sentence;
         this.constraints = fsFacts;
         this.cp = cp;
+        deduplicateEdges();
     }
 
     public LinguisticStructure(LinguisticStructure other) {
@@ -79,6 +81,7 @@ public class LinguisticStructure {
                 .map(GraphConstraint::copy)
                 .collect(Collectors.toList());
         this.cp = other.cp == null ? new ChoiceSpace() : other.cp.copy();
+        deduplicateEdges();
     }
 
     public LinguisticStructure copy() {
@@ -86,10 +89,40 @@ public class LinguisticStructure {
     }
 
     public List<GraphConstraint> returnFullGraph(){
+        deduplicateEdges();
         List<GraphConstraint> allConstraints = new ArrayList<>();
         allConstraints.addAll(this.constraints);
         allConstraints.addAll(this.annotation);
         return allConstraints;
+    }
+
+    public void deduplicateEdges() {
+        deduplicateEdges(constraints, annotation);
+    }
+
+    public static void deduplicateEdges(List<GraphConstraint> constraints,
+                                        List<GraphConstraint> annotation) {
+        Set<List<Object>> seen = new HashSet<>();
+        deduplicateEdges(constraints, seen);
+        deduplicateEdges(annotation, seen);
+    }
+
+    private static void deduplicateEdges(List<GraphConstraint> constraints,
+                                         Set<List<Object>> seen) {
+        if (constraints == null) {
+            return;
+        }
+
+        constraints.removeIf(constraint -> {
+            if (constraint == null || !NodeIdPolicy.legacyCompatibleDefaults()
+                    .isNodeReference(String.valueOf(constraint.getFsValue()))) {
+                return false;
+            }
+            return !seen.add(Arrays.asList(
+                    constraint.getFsNode(),
+                    constraint.getFsValue(),
+                    constraint.getRelationLabel()));
+        });
     }
 
 
@@ -131,6 +164,8 @@ public class LinguisticStructure {
         else {
             ls.cp = new ChoiceSpace();
         }
+
+        ls.deduplicateEdges();
 
         return ls;
     }

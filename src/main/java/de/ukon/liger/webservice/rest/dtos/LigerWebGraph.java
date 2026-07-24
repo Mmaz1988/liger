@@ -52,6 +52,7 @@ public class LigerWebGraph {
 
     public LigerWebGraph(List<GraphConstraint> syntax, List<GraphConstraint> annotation)
     {
+        LinguisticStructure.deduplicateEdges(syntax, annotation);
         Map<String,List<LigerGraphComponent>> synMap = extractGraph2(syntax,"input");
         Map<String,List<LigerGraphComponent>> annMap = extractGraph2(annotation, "annotation");
 
@@ -73,6 +74,7 @@ public class LigerWebGraph {
 
     public LigerWebGraph(List<GraphConstraint> syntax, List<GraphConstraint> annotation, String semantics)
     {
+        LinguisticStructure.deduplicateEdges(syntax, annotation);
         Map<String,List<LigerGraphComponent>> synMap = extractGraph2(syntax,"input");
         Map<String,List<LigerGraphComponent>> annMap = extractGraph2(annotation, "annotation");
 
