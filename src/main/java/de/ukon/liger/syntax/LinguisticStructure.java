@@ -181,14 +181,11 @@ public class LinguisticStructure {
 
     private static List<GraphConstraint> parseCanonicalGraph(LinkedHashMap input) {
         List<GraphConstraint> constraints = new ArrayList<>();
-        Map<String, Map<String, Object>> nodesById = new LinkedHashMap<>();
-        Map<String, List<String>> termsByCondition = new LinkedHashMap<>();
         for (Object rawNode : (List<?>) input.get("nodes")) {
             if (!(rawNode instanceof Map<?, ?> node) || node.get("id") == null) {
                 continue;
             }
             String nodeId = String.valueOf(node.get("id"));
-            nodesById.put(nodeId, (Map<String, Object>) node);
             addCanonicalAttribute(constraints, nodeId, "NODE_TYPE", node.get("node_type"));
             if (node.get("avp") instanceof Map<?, ?> avp) {
                 for (Map.Entry<?, ?> attribute : avp.entrySet()) {
@@ -214,37 +211,8 @@ public class LinguisticStructure {
                     target,
                     null,
                     false));
-            Map<String, Object> sourceNode = nodesById.get(source);
-            if (sourceNode != null && "condition".equals(sourceNode.get("node_type"))
-                    && label.startsWith("TERM")) {
-                termsByCondition.computeIfAbsent(source, ignored -> new ArrayList<>()).add(target);
-            }
-        }
-
-        // Preserve predicate facts for the rule language alongside the
-        // canonical condition/TERM representation used by graph consumers.
-        for (Map.Entry<String, List<String>> entry : termsByCondition.entrySet()) {
-            Map<String, Object> condition = nodesById.get(entry.getKey());
-            String predicate = condition == null ? null : String.valueOf(condition.get("label"));
-            if (predicate == null || "null".equals(predicate)) {
-                continue;
-            }
-            List<String> terms = entry.getValue();
-            if (terms.size() == 1) {
-                addCanonicalPredicate(constraints, terms.get(0), predicate, terms.get(0));
-            } else if (terms.size() > 1) {
-                for (int i = 1; i < terms.size(); i++) {
-                    addCanonicalPredicate(constraints, terms.get(0), predicate, terms.get(i));
-                }
-            }
         }
         return constraints;
-    }
-
-    private static void addCanonicalPredicate(List<GraphConstraint> constraints,
-                                               String source, String predicate, String target) {
-        constraints.add(new GraphConstraint(
-                Set.of(new ChoiceVar("1")), source, predicate, target, null, false));
     }
 
     private static void addCanonicalAttribute(List<GraphConstraint> constraints,

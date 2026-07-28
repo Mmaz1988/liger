@@ -56,4 +56,5 @@ public class MergedGraphCoargTest {
         assertTrue(qpr.isSuccess);
         assertEquals(6, qpr.result.keySet().size());
     }
+
 }
