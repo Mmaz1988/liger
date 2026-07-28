@@ -424,7 +424,7 @@ public class LigerController {
                 appliedRules.values().stream().findFirst().orElseGet(LinkedHashSet::new),
                 String.join("\n", semString), axioms);
         LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> primaryAddedAnnotations =
-                rp.getAddedAnnotationsByRule(primary);
+                addedAnnotationsForBranch(rp, primary);
         response.addedAnnotationsByRule = primaryAddedAnnotations;
         response.highlightedNodeIdsByRule = collectHighlightedNodeIdsByRule(primaryAddedAnnotations);
         response.highlightedNodeIds = collectHighlightedNodeIdsFromGroups(primaryAddedAnnotations.values());
@@ -745,7 +745,7 @@ public class LigerController {
                 );
                 annotation.sentence = branch.text;
                 LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> branchAddedAnnotations =
-                        rp.getAddedAnnotationsByRule(branch);
+                        addedAnnotationsForBranch(rp, branch);
                 LOGGER.info("Rule branch " + branch.local_id + " added facts by rule: "
                         + branchAddedAnnotations.entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().size(),
@@ -758,6 +758,49 @@ public class LigerController {
         }
 
         return new LigerRuleAnnotationResponse(sentenceBuilder.toString(), annotations);
+    }
+
+    private LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> addedAnnotationsForBranch(
+            RuleParser ruleParser, LinguisticStructure branch) {
+        LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> branchFacts =
+                ruleParser.getAddedAnnotationsByRule(branch);
+        LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> result = new LinkedHashMap<>();
+        branchFacts.forEach((ruleIndex, facts) ->
+                result.put(ruleIndex, new LinkedHashSet<>(facts)));
+
+        if (branch == null || branch.annotation == null) {
+            return result;
+        }
+
+        // RuleParser normally keys this map by object identity. Uploaded and
+        // assembled structures can lose that identity, especially when rule
+        // application produced multiple branches. Recover only facts that are
+        // actually present in the selected branch, so another branch's facts
+        // are not shown in this result.
+        ruleParser.getAddedAnnotationsByRule().forEach((ruleIndex, facts) -> {
+            LinkedHashSet<GraphConstraint> presentFacts = facts.stream()
+                    .filter(fact -> branch.annotation.stream().anyMatch(candidate -> sameFact(fact, candidate)))
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            if (!presentFacts.isEmpty()) {
+                result.merge(ruleIndex, presentFacts, (existing, recovered) -> {
+                    existing.addAll(recovered);
+                    return existing;
+                });
+            }
+        });
+
+        return result;
+    }
+
+    private boolean sameFact(GraphConstraint left, GraphConstraint right) {
+        if (left == null || right == null) {
+            return left == right;
+        }
+        return Objects.equals(left.getFsNode(), right.getFsNode())
+                && Objects.equals(left.getRelationLabel(), right.getRelationLabel())
+                && Objects.equals(left.getFsValue(), right.getFsValue())
+                && Objects.equals(left.getProj(), right.getProj())
+                && Objects.equals(left.getReading(), right.getReading());
     }
 
     private List<LinguisticStructure> parseUploadedLinguisticStructures(LigerStructureUploadRequest request) throws IOException {
