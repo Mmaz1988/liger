@@ -22,6 +22,7 @@
 package de.ukon.liger.syntax;
 
 import de.ukon.liger.packing.ChoiceSpace;
+import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.utilities.HelperMethods;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -151,11 +152,19 @@ public class LinguisticStructure {
 
         ls.local_id = (String) input.get("id");
         ls.text = (String) input.get("text");
-        ls.constraints = (List<GraphConstraint>) ((List) input.get("constraints")).
-                stream().map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList());
+        if (input.get("nodes") instanceof List<?> && input.get("edges") instanceof List<?>) {
+            ls.constraints = parseCanonicalGraph(input);
+        } else {
+            ls.constraints = input.get("constraints") instanceof List<?> rawConstraints
+                    ? (List<GraphConstraint>) rawConstraints.stream()
+                    .map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList())
+                    : new ArrayList<>();
+        }
 
-        ls.annotation = (List<GraphConstraint>) ((List) input.get("annotations")).
-                stream().map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList());
+        ls.annotation = input.get("annotations") instanceof List<?> rawAnnotations
+                ? (List<GraphConstraint>) rawAnnotations.stream()
+                .map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList())
+                : new ArrayList<>();
 
 
         if (!((LinkedHashMap) input.get("choiceSpace")).isEmpty()) {
@@ -168,6 +177,48 @@ public class LinguisticStructure {
         ls.deduplicateEdges();
 
         return ls;
+    }
+
+    private static List<GraphConstraint> parseCanonicalGraph(LinkedHashMap input) {
+        List<GraphConstraint> constraints = new ArrayList<>();
+        for (Object rawNode : (List<?>) input.get("nodes")) {
+            if (!(rawNode instanceof Map<?, ?> node) || node.get("id") == null) {
+                continue;
+            }
+            String nodeId = String.valueOf(node.get("id"));
+            addCanonicalAttribute(constraints, nodeId, "NODE_TYPE", node.get("node_type"));
+            if (node.get("avp") instanceof Map<?, ?> avp) {
+                for (Map.Entry<?, ?> attribute : avp.entrySet()) {
+                    String name = String.valueOf(attribute.getKey());
+                    if (!"NODE_TYPE".equals(name)) {
+                        addCanonicalAttribute(constraints, nodeId, name, attribute.getValue());
+                    }
+                }
+            }
+        }
+        for (Object rawEdge : (List<?>) input.get("edges")) {
+            if (!(rawEdge instanceof Map<?, ?> edge)
+                    || edge.get("source") == null || edge.get("target") == null || edge.get("label") == null) {
+                continue;
+            }
+            constraints.add(new GraphConstraint(
+                    Set.of(new ChoiceVar("1")),
+                    String.valueOf(edge.get("source")),
+                    String.valueOf(edge.get("label")),
+                    String.valueOf(edge.get("target")),
+                    null,
+                    false));
+        }
+        return constraints;
+    }
+
+    private static void addCanonicalAttribute(List<GraphConstraint> constraints,
+                                              String nodeId, String name, Object value) {
+        if (value == null) {
+            return;
+        }
+        constraints.add(new GraphConstraint(
+                Set.of(new ChoiceVar("1")), nodeId, name, String.valueOf(value), null, false));
     }
 /*
 

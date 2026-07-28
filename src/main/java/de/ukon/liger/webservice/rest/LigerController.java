@@ -35,6 +35,7 @@ import de.ukon.liger.analysis.QueryParser.TemplateParser;
 import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
 import de.ukon.liger.reasoning.AxiomExtractor;
 import de.ukon.liger.semantics.GlueSemantics;
+import de.ukon.liger.semantics.SequenceGraphAssembler;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.NodeIdPolicy;
@@ -57,12 +58,16 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @CrossOrigin
 @RestController
 public class LigerController {
 
     private static final NodeIdPolicy NODE_ID_POLICY = NodeIdPolicy.legacyCompatibleDefaults();
+    private static final int MAX_SEQUENCE_VARIANTS = 256;
+    private static final Pattern SOURCE_INDEX = Pattern.compile("\\[(\\d+)]");
     private final static Logger LOGGER = Logger.getLogger(LigerController.class.getName());
 
     @Autowired
@@ -187,6 +192,164 @@ public class LigerController {
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
         return new LigerSolutionAnnotationResponse(request.sentence, solutions);
+    }
+
+    /**
+     * Parses a sentence sequence, assembles syntactic variants, and only then
+     * extracts meaning constructors from each assembled graph.
+     */
+    @CrossOrigin
+    @PostMapping(value = "/apply_rules_xle_sequence", produces = "application/json", consumes = "application/json")
+    public LigerSolutionAnnotationResponse applyRuleRequestXLESequence(
+            @RequestBody LigerSequenceRequest request) throws IOException {
+        if (request == null || request.sentences == null || request.sentences.isEmpty()) {
+            throw new IllegalArgumentException("At least one sentence is required");
+        }
+
+        XLEStarter starter = new XLEStarter();
+        starter.generateXLEStarterFile();
+        XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
+
+        List<List<SequenceCandidate>> candidatesBySentence = new ArrayList<>();
+        for (int sentenceIndex = 0; sentenceIndex < request.sentences.size(); sentenceIndex++) {
+            String sentence = request.sentences.get(sentenceIndex);
+            List<LinguisticStructure> parsed = parser.parseSingle(sentence, true);
+            if (parsed == null || parsed.isEmpty()) {
+                return LigerSolutionAnnotationResponse.failure(
+                        String.join("\n", request.sentences),
+                        sentenceIndex,
+                        "No parse was found for sentence " + (sentenceIndex + 1));
+            }
+            List<SequenceCandidate> candidates = new ArrayList<>();
+            for (LinguisticStructure structure : parsed) {
+                if (request.ruleString == null || request.ruleString.isBlank()) {
+                    candidates.add(new SequenceCandidate(structure, new LinkedHashSet<>()));
+                    continue;
+                }
+
+                RuleParser ruleParser = new RuleParser(
+                        new ArrayList<>(Collections.singletonList(structure)), request.ruleString);
+                Set<LinguisticStructure> branches = ruleParser.addAnnotation2(
+                        new LinkedHashSet<>(Collections.singleton(structure)));
+                if (branches.isEmpty()) {
+                    branches = new LinkedHashSet<>(Collections.singleton(structure));
+                }
+                LinkedHashSet<LigerRule> appliedRules = new LinkedHashSet<>();
+                for (Rule rule : ruleParser.getAppliedRules()) {
+                    appliedRules.add(new LigerRule(rule.toString(), rule.getRuleIndex(), rule.getLineNumber()));
+                }
+                for (LinguisticStructure branch : branches) {
+                    candidates.add(new SequenceCandidate(branch, appliedRules));
+                }
+            }
+            if (candidates.isEmpty()) {
+                return LigerSolutionAnnotationResponse.failure(
+                        String.join("\n", request.sentences),
+                        sentenceIndex,
+                        "No rewritten solution was found for sentence " + (sentenceIndex + 1));
+            }
+            candidatesBySentence.add(candidates);
+        }
+
+        List<List<SequenceCandidate>> variants = new ArrayList<>();
+        collectSequenceVariants(candidatesBySentence, 0, new ArrayList<>(), variants);
+        GlueSemantics semantics = new GlueSemantics();
+        List<LigerSolutionAnnotation> solutions = new ArrayList<>();
+        int variantIndex = 1;
+
+        for (List<SequenceCandidate> variant : variants) {
+            List<LinguisticStructure> structures = variant.stream()
+                    .map(SequenceCandidate::structure)
+                    .collect(Collectors.toList());
+
+            List<String> sentenceMeaningConstructors = new ArrayList<>();
+            int sourceIndexOffset = 0;
+            for (LinguisticStructure structure : structures) {
+                semantics.annotateSyntheticMcIndices(structure);
+                String sentenceMeaningConstructorsText = semantics.returnMeaningConstructors(
+                        structure, !starter.isGlue, false, true, true);
+                sentenceMeaningConstructors.add(
+                        shiftSourceIndexes(sentenceMeaningConstructorsText, sourceIndexOffset));
+                sourceIndexOffset += maxSyntheticMcIndex(structure);
+            }
+
+            LinguisticStructure sequence = SequenceGraphAssembler.assemble(structures);
+            String meaningConstructors = sentenceMeaningConstructors.isEmpty()
+                    ? ""
+                    : sentenceMeaningConstructors.get(sentenceMeaningConstructors.size() - 1);
+            LinkedHashSet<LigerRule> appliedRules = variant.stream()
+                    .flatMap(candidate -> candidate.appliedRules().stream())
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+
+            List<String> axioms = new AxiomExtractor().extractAxiomsFromLigerAnnotations(
+                    sequence, request.logicType == null || request.logicType.isBlank()
+                            ? "fof" : request.logicType);
+            String sourceKey = variant.stream()
+                    .map(candidate -> candidate.structure().local_id == null
+                            ? "solution" : candidate.structure().local_id)
+                    .collect(Collectors.joining("+"));
+            String key = "sequence-" + variantIndex + "-" + sourceKey;
+
+            solutions.add(new LigerSolutionAnnotation(
+                    key,
+                    new LigerWebGraph(sequence.constraints, sequence.annotation),
+                    sequence.toJson(),
+                    appliedRules,
+                    meaningConstructors,
+                    countMeaningConstructorSets(meaningConstructors),
+                    axioms));
+            variantIndex++;
+        }
+
+        return new LigerSolutionAnnotationResponse(
+                String.join("\n", request.sentences), solutions);
+    }
+
+    private String shiftSourceIndexes(String meaningConstructors, int offset) {
+        if (offset == 0 || meaningConstructors == null || meaningConstructors.isEmpty()) {
+            return meaningConstructors;
+        }
+        Matcher matcher = SOURCE_INDEX.matcher(meaningConstructors);
+        return matcher.replaceAll(match -> "[" + (Integer.parseInt(match.group(1)) + offset) + "]");
+    }
+
+    private int maxSyntheticMcIndex(LinguisticStructure structure) {
+        int max = 0;
+        if (structure == null || structure.constraints == null) {
+            return max;
+        }
+        for (GraphConstraint constraint : structure.constraints) {
+            if (!"SYN-ID".equals(constraint.getRelationLabel())) {
+                continue;
+            }
+            Matcher matcher = Pattern.compile("i(\\d+)").matcher(String.valueOf(constraint.getFsValue()));
+            if (matcher.matches()) {
+                max = Math.max(max, Integer.parseInt(matcher.group(1)));
+            }
+        }
+        return max;
+    }
+
+    private void collectSequenceVariants(List<List<SequenceCandidate>> candidatesBySentence,
+                                         int sentenceIndex,
+                                         List<SequenceCandidate> current,
+                                         List<List<SequenceCandidate>> output) {
+        if (output.size() >= MAX_SEQUENCE_VARIANTS) {
+            throw new IllegalArgumentException("The syntactic sequence has too many variants");
+        }
+        if (sentenceIndex == candidatesBySentence.size()) {
+            output.add(new ArrayList<>(current));
+            return;
+        }
+        for (SequenceCandidate candidate : candidatesBySentence.get(sentenceIndex)) {
+            current.add(candidate);
+            collectSequenceVariants(candidatesBySentence, sentenceIndex + 1, current, output);
+            current.remove(current.size() - 1);
+        }
+    }
+
+    private record SequenceCandidate(LinguisticStructure structure,
+                                     LinkedHashSet<LigerRule> appliedRules) {
     }
 
 

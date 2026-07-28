@@ -61,6 +61,14 @@ public class GlueSemantics {
     }
 
     public String returnMeaningConstructors(LinguisticStructure fs, boolean prolog, boolean multistage, boolean emitSourceIndex) {
+        return returnMeaningConstructors(fs, prolog, multistage, emitSourceIndex, false);
+    }
+
+    public String returnMeaningConstructors(LinguisticStructure fs,
+                                             boolean prolog,
+                                             boolean multistage,
+                                             boolean emitSourceIndex,
+                                             boolean preserveSyntheticIndices) {
 
         //Unpacked Semantics corresponds to the information that comes from LiGER
         HashMap<Set<ChoiceVar>, List<String>> unpackedSem = new HashMap<>();
@@ -71,6 +79,7 @@ public class GlueSemantics {
         }
 
         StringBuilder sb = new StringBuilder();
+        Map<String, String> syntheticIndices = syntheticIndexMap(fs);
 
             if (!fs.annotation.isEmpty()) {
                 //extract from LiGER
@@ -84,7 +93,11 @@ public class GlueSemantics {
                                         .replaceAll(m -> "'" + m.group(1).toLowerCase() + "'");
 
                                 if (emitSourceIndex && c.getFsNode() != null && !c.getFsNode().isBlank()) {
-                                    currentMC = "[" + c.getFsNode() + "] " + currentMC;
+                                    String sourceIndex = syntheticIndices.get(c.getFsNode());
+                                    String renderedIndex = sourceIndex == null
+                                            ? c.getFsNode()
+                                            : numericSourceIndex(sourceIndex);
+                                    currentMC = "[" + renderedIndex + "] " + currentMC;
                                 }
 
                                 unpackedSem.get(c.getReading()).add(currentMC);
@@ -110,7 +123,7 @@ public class GlueSemantics {
         String prologMCs = "";
         //extract from Grammar
         if (!prolog) {
-            grammarSem = translateMeaningConstructors(fs);
+            grammarSem = translateMeaningConstructors(fs, preserveSyntheticIndices);
         } else if (hasGlue)
         {
           prologMCs =  extractMCsFromFs(((Fstructure) fs).prologString);
@@ -282,6 +295,31 @@ public class GlueSemantics {
         return sb.toString();
     }
 
+    private Map<String, String> syntheticIndexMap(LinguisticStructure fs) {
+        Map<String, String> indices = new HashMap<>();
+        if (fs == null || fs.constraints == null) {
+            return indices;
+        }
+        for (GraphConstraint constraint : fs.constraints) {
+            if ("SYN-ID".equals(constraint.getRelationLabel())
+                    && constraint.getFsNode() != null
+                    && constraint.getFsValue() != null) {
+                indices.put(constraint.getFsNode(), String.valueOf(constraint.getFsValue()));
+            }
+        }
+        return indices;
+    }
+
+    private String numericSourceIndex(String sourceIndex) {
+        if (sourceIndex == null || sourceIndex.isBlank()) {
+            return "0";
+        }
+        if (sourceIndex.matches("i\\d+")) {
+            return sourceIndex.substring(1);
+        }
+        return sourceIndex.matches("\\d+") ? sourceIndex : "0";
+    }
+
 
     /**
      * method for testing multiStageProving without packing
@@ -371,7 +409,14 @@ public class GlueSemantics {
     }
 
     public Map<Set<ChoiceVar>, Set<String>> translateMeaningConstructors(LinguisticStructure fs) {
-        annotateSyntheticMcIndices(fs);
+        return translateMeaningConstructors(fs, false);
+    }
+
+    public Map<Set<ChoiceVar>, Set<String>> translateMeaningConstructors(LinguisticStructure fs,
+                                                                           boolean preserveSyntheticIndices) {
+        if (!preserveSyntheticIndices) {
+            annotateSyntheticMcIndices(fs);
+        }
 
         Map<String, Map<Set<ChoiceVar>, List<String>>> disjunctiveSem = new LinkedHashMap<>();
         List<GraphConstraint> ls = new ArrayList<>(fs.returnFullGraph());
