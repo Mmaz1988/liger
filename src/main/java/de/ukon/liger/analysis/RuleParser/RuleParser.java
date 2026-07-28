@@ -200,12 +200,14 @@ public class RuleParser {
                     temp.templateRegistry = this.templateRegistry;
                     temp.hierarchyRegistry = this.hierarchyRegistry;
                     temp.dict = this.dict;
-                    temp.setRules(new ArrayList<>(Collections.singletonList(r)));
-                    temp.addAnnotation2(structure);
-                    r.setRuleIndex(k);
-                    mergeAddedAnnotations(temp.getAddedAnnotationsByRule(), Collections.singletonMap(0, k));
-                    recordAddedAnnotations(structure, k, temp.getAddedAnnotationsByRule().get(0));
-                    next.add(structure);
+                     temp.setRules(new ArrayList<>(Collections.singletonList(r)));
+                     temp.addAnnotation2(structure);
+                     LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> tempAddedAnnotations =
+                             temp.getAddedAnnotationsByRule(structure);
+                     r.setRuleIndex(k);
+                     mergeAddedAnnotations(tempAddedAnnotations, Collections.singletonMap(0, k));
+                     recordAddedAnnotations(structure, k, tempAddedAnnotations.get(0));
+                     next.add(structure);
                 }
             }
 

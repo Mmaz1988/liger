@@ -746,6 +746,10 @@ public class LigerController {
                 annotation.sentence = branch.text;
                 LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> branchAddedAnnotations =
                         rp.getAddedAnnotationsByRule(branch);
+                LOGGER.info("Rule branch " + branch.local_id + " added facts by rule: "
+                        + branchAddedAnnotations.entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().size(),
+                                (left, right) -> left, LinkedHashMap::new)));
                 annotation.highlightedNodeIds = collectHighlightedNodeIdsFromGroups(branchAddedAnnotations.values());
                 annotation.highlightedNodeIdsByRule = collectHighlightedNodeIdsByRule(branchAddedAnnotations);
                 annotation.addedAnnotationsByRule = branchAddedAnnotations;

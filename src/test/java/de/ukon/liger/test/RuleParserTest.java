@@ -51,6 +51,18 @@ public class RuleParserTest {
     }
 
     @Test
+    void testRegularRuleAddedFactsAreAssociatedWithTheStructure() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS3.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.getRules().add(new Rule("#g TNS-ASP #h TENSE 'past' & #h PERF '-_' ==> #h SEM 'event'"));
+
+        rp.addAnnotation2(structure);
+
+        assertEquals(1, rp.getAddedAnnotationsByRule(structure).get(0).size());
+    }
+
+    @Test
     void testRuleParser2() {
         LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS3.pl");
 

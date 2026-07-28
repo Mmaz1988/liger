@@ -74,9 +74,11 @@ public class LigerWebGraph {
 
     public LigerWebGraph(List<GraphConstraint> syntax, List<GraphConstraint> annotation, String semantics)
     {
-        LinguisticStructure.deduplicateEdges(syntax, annotation);
-        Map<String,List<LigerGraphComponent>> synMap = extractGraph2(syntax,"input");
-        Map<String,List<LigerGraphComponent>> annMap = extractGraph2(annotation, "annotation");
+        List<GraphConstraint> syntaxCopy = copyConstraints(syntax);
+        List<GraphConstraint> annotationCopy = copyConstraints(annotation);
+        LinguisticStructure.deduplicateEdges(syntaxCopy, annotationCopy);
+        Map<String,List<LigerGraphComponent>> synMap = extractGraph2(syntaxCopy,"input");
+        Map<String,List<LigerGraphComponent>> annMap = extractGraph2(annotationCopy, "annotation");
 
         List<LigerGraphComponent> nodes = new ArrayList<>();
         nodes.addAll(synMap.get("nodes"));
@@ -93,6 +95,16 @@ public class LigerWebGraph {
         data.addAll(edges);
         this.graphElements = data;
         this.semantics = semantics;
+    }
+
+    private static List<GraphConstraint> copyConstraints(List<GraphConstraint> constraints) {
+        if (constraints == null) {
+            return new ArrayList<>();
+        }
+        return constraints.stream()
+                .filter(Objects::nonNull)
+                .map(GraphConstraint::copy)
+                .collect(Collectors.toList());
     }
 
     public Map<String,List<LigerGraphComponent>> extractGraph2(List<GraphConstraint> input, String type)
