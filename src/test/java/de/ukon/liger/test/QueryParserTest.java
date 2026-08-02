@@ -328,6 +328,39 @@ public class QueryParserTest {
     }
 
     @Test
+    void debugInsideOutObjStarIncrementalOnS18() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testDirS18.pl");
+        TemplateRegistry templateRegistry = new TemplateParser().parse("GF := SUBJ | OBJ | OBL .");
+        HierarchyRegistry hierarchyRegistry = new HierarchyParser().parse("GF ::= SUBJ > OBJ > OBL .");
+
+        String[] stages = {
+                "#a SUBJ #b",
+                "#a !(@GF) #b",
+                "#a ^(@GF) #b",
+                "#a ^(@GF*) #b",
+                "#a ^(@GF*) #b ^(@GF) #c",
+                "#a ^(@GF*) #b ^(@GF) #c & #c !(@GF) #d",
+                "#a ^(@GF*) #b ^(@GF) #c & #c !(@GF) #d & superior(GF,#d,#b)",
+                "#a ^(@GF*) #b ^(@GF) #c & #c !(@GF) #d & superior(GF,#d,#b) & #a PRON-TYPE"
+        };
+
+        for (String key : fs.keySet()) {
+            for (String stage : stages) {
+                QueryParser qp = new QueryParser(stage, fs.get(key), templateRegistry, hierarchyRegistry);
+                QueryParserResult result = qp.parseQuery(qp.getQueryList());
+                System.out.println("incremental uncertainty: " + stage + " -> "
+                        + result.result.size() + " solutions, success=" + result.isSuccess
+                        + ", keys=" + result.result.keySet().stream()
+                        .map(solution -> solution.stream()
+                                .map(solutionKey -> solutionKey.variable + "=" + solutionKey.reference)
+                                .sorted()
+                                .toList())
+                        .toList());
+            }
+        }
+    }
+
+    @Test
     void testInsideOutObjStarOnS18MatchesFiveSolutions() {
         LinkedHashMap<String, LinguisticStructure> fs = loadFs("testDirS18.pl");
         TemplateRegistry templateRegistry = new TemplateParser().parse("GF := SUBJ | OBJ | OBL .");

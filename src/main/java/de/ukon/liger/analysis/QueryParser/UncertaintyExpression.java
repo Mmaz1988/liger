@@ -26,13 +26,10 @@ import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.utilities.HelperMethods;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class UncertaintyExpression extends QueryExpression {
 
     private static final int MAX_UNCERTAINTY_REPEAT = 16;
-    private static final int MAX_MULTILABEL_UNCERTAINTY_REPEAT = 4;
 
     private static final class PathState {
         private final String node;
@@ -70,6 +67,15 @@ public class UncertaintyExpression extends QueryExpression {
     private QueryExpression right;
     private List<String> gf = Arrays.asList("OBL", "OBJ", "SUBJ", "COMP", "XCOMP", "OBJ-TH", "XCOMP-PRED");
     private Set<ChoiceVar> choices = new HashSet<>();
+    private final Map<String, List<Map.Entry<Integer, GraphConstraint>>> outgoing = new HashMap<>();
+    private final Map<String, List<Map.Entry<Integer, GraphConstraint>>> incoming = new HashMap<>();
+    private final Map<String, List<GraphConstraint>> constraintsByNode = new HashMap<>();
+    private final Map<String, List<GraphConstraint>> constraintsByValue = new HashMap<>();
+    private final Map<String, List<Map.Entry<Integer, GraphConstraint>>> activeOutgoing = new HashMap<>();
+    private final Map<String, List<Map.Entry<Integer, GraphConstraint>>> activeIncoming = new HashMap<>();
+    private final Map<String, List<GraphConstraint>> activeConstraintsByNode = new HashMap<>();
+    private final Map<String, List<GraphConstraint>> activeConstraintsByValue = new HashMap<>();
+    private boolean activeTraversalUsesFullGraph = true;
 
     private enum OffPathDirection {
         TO_VALUE,
@@ -87,13 +93,6 @@ public class UncertaintyExpression extends QueryExpression {
             this.offPathConstraints = offPathConstraints;
         }
 
-        private String render(String label) {
-            StringBuilder out = new StringBuilder(label);
-            for (OffPathConstraint constraint : offPathConstraints) {
-                out.append(":").append(constraint.render());
-            }
-            return out.toString();
-        }
     }
 
     private static class OffPathConstraint {
@@ -109,21 +108,6 @@ public class UncertaintyExpression extends QueryExpression {
             this.value = value;
         }
 
-        private String render() {
-            StringBuilder out = new StringBuilder();
-            if (negated) {
-                out.append("~");
-            }
-            out.append("(");
-            out.append(direction == OffPathDirection.TO_VALUE ? "->" : "<-");
-            out.append(" ");
-            out.append(attribute);
-            if (value != null && !value.isBlank()) {
-                out.append(" ").append(value);
-            }
-            out.append(")");
-            return out.toString();
-        }
     }
 
     private enum Quantifier {
@@ -147,6 +131,7 @@ public class UncertaintyExpression extends QueryExpression {
 
     @Override
     public void calculateSolutions() {
+        buildGraphIndex();
         HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
 
         for (Solution leftKey : left.getSolution().keySet()) {
@@ -231,64 +216,81 @@ public class UncertaintyExpression extends QueryExpression {
             return Collections.singletonList("");
         }
 
-        TemplateRegistry registry = middle.getParser() != null ? middle.getParser().getTemplateRegistry() : null;
-        List<PathAtom> atoms = parsePathQuery(query, registry);
-        if (atoms.stream().anyMatch(atom -> atom.quantifier != Quantifier.EXACT)) {
-            List<String> quantified = new ArrayList<>();
-            quantified.add(query);
-            return quantified;
-        }
-
-        int maxRepeat = MAX_UNCERTAINTY_REPEAT;
-        if (atoms.stream().anyMatch(atom -> atom.labels.size() > 1)) {
-            maxRepeat = Math.min(MAX_MULTILABEL_UNCERTAINTY_REPEAT, maxRepeat);
-        }
-        List<String> expanded = new ArrayList<>();
-        expandPathQueries(atoms, 0, new ArrayList<>(), maxRepeat, expanded);
-
-        return new ArrayList<>(new LinkedHashSet<>(expanded));
+        // Traversal already treats labels in one atom as alternatives. Avoid expanding
+        // template alternatives into a Cartesian product before walking the graph.
+        return Collections.singletonList(query);
     }
 
-    private void expandPathQueries(List<PathAtom> atoms, int index, List<String> prefix, int maxRepeat, List<String> out) {
-        if (index >= atoms.size()) {
-            out.add(String.join(">", prefix));
+    private void buildGraphIndex() {
+        outgoing.clear();
+        incoming.clear();
+        constraintsByNode.clear();
+        constraintsByValue.clear();
+
+        for (Map.Entry<Integer, GraphConstraint> entry : right.getFsIndices().entrySet()) {
+            GraphConstraint constraint = entry.getValue();
+            String node = String.valueOf(constraint.getFsNode());
+            String value = String.valueOf(constraint.getFsValue());
+            outgoing.computeIfAbsent(node, ignored -> new ArrayList<>()).add(entry);
+            incoming.computeIfAbsent(value, ignored -> new ArrayList<>()).add(entry);
+            constraintsByNode.computeIfAbsent(node, ignored -> new ArrayList<>()).add(constraint);
+            constraintsByValue.computeIfAbsent(value, ignored -> new ArrayList<>()).add(constraint);
+        }
+    }
+
+    private void prepareTraversalGraph(List<PathAtom> atoms) {
+        Set<String> labels = new HashSet<>();
+        boolean wildcard = false;
+
+        for (PathAtom atom : atoms) {
+            if (atom.labels.contains("%")) {
+                wildcard = true;
+            }
+            for (String label : atom.labels) {
+                if ("GF".equals(label)) {
+                    labels.addAll(gf);
+                } else if (!"%".equals(label)) {
+                    labels.add(label);
+                }
+            }
+            for (OffPathConstraint constraint : atom.offPathConstraints) {
+                labels.add(constraint.attribute);
+            }
+        }
+
+        activeTraversalUsesFullGraph = wildcard;
+        if (wildcard) {
             return;
         }
 
-        PathAtom atom = atoms.get(index);
-        int minRepeat = atom.quantifier == Quantifier.ZERO_OR_MORE ? 0 : 1;
-        int max = atom.quantifier == Quantifier.EXACT ? 1 : maxRepeat;
+        activeOutgoing.clear();
+        activeIncoming.clear();
+        activeConstraintsByNode.clear();
+        activeConstraintsByValue.clear();
 
-        for (int repeat = minRepeat; repeat <= max; repeat++) {
-            if (repeat == 0) {
-                expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
+        for (Map.Entry<Integer, GraphConstraint> entry : right.getFsIndices().entrySet()) {
+            GraphConstraint constraint = entry.getValue();
+            if (!labels.contains(constraint.getRelationLabel())) {
                 continue;
             }
 
-            expandLabelCombinations(new ArrayList<>(atom.labels), repeat, new ArrayList<>(), combination -> {
-                for (String label : combination) {
-                    prefix.add(atom.render(label));
-                }
-                expandPathQueries(atoms, index + 1, prefix, maxRepeat, out);
-                for (int i = 0; i < combination.size(); i++) {
-                    prefix.remove(prefix.size() - 1);
-                }
-            });
+            String node = String.valueOf(constraint.getFsNode());
+            String value = String.valueOf(constraint.getFsValue());
+            activeOutgoing.computeIfAbsent(node, ignored -> new ArrayList<>()).add(entry);
+            activeIncoming.computeIfAbsent(value, ignored -> new ArrayList<>()).add(entry);
+            activeConstraintsByNode.computeIfAbsent(node, ignored -> new ArrayList<>()).add(constraint);
+            activeConstraintsByValue.computeIfAbsent(value, ignored -> new ArrayList<>()).add(constraint);
         }
     }
 
-    private void expandLabelCombinations(List<String> labels, int repeat, List<String> current, java.util.function.Consumer<List<String>> consumer) {
-        if (current.size() == repeat) {
-            consumer.accept(new ArrayList<>(current));
-            return;
-        }
-
-        for (String label : labels) {
-            current.add(label);
-            expandLabelCombinations(labels, repeat, current, consumer);
-            current.remove(current.size() - 1);
-        }
+    private List<Map.Entry<Integer, GraphConstraint>> edgesFrom(String node, boolean insideOut) {
+        Map<String, List<Map.Entry<Integer, GraphConstraint>>> source = activeTraversalUsesFullGraph
+                ? (insideOut ? incoming : outgoing)
+                : (insideOut ? activeIncoming : activeOutgoing);
+        List<Map.Entry<Integer, GraphConstraint>> edges = source.get(node);
+        return edges == null ? Collections.emptyList() : edges;
     }
+
 
     private List<PathAtom> parsePathQuery(String query) {
         TemplateRegistry registry = middle.getParser() != null ? middle.getParser().getTemplateRegistry() : null;
@@ -515,7 +517,7 @@ public class UncertaintyExpression extends QueryExpression {
             } else {
                 nodeRef = String.valueOf(insideOut ? current.getFsValue() : current.getFsNode());
             }
-            boolean matches = nodeMatchesConstraint(nodeRef, constraint, graph);
+            boolean matches = matchesConstraintAtNode(nodeRef, constraint, constraint.direction);
             if (constraint.negated ? matches : !matches) {
                 return false;
             }
@@ -533,9 +535,20 @@ public class UncertaintyExpression extends QueryExpression {
                 || (atom.labels.contains("GF") && gf.contains(current.getRelationLabel()));
     }
 
-    private boolean nodeMatchesConstraint(String nodeRef, OffPathConstraint constraint, HashMap<Integer, GraphConstraint> graph) {
-        for (GraphConstraint gc : graph.values()) {
-            if (!HelperMethods.nodeIdsEqual(nodeRef, gc.getFsNode())) {
+    private boolean matchesConstraintAtNode(String nodeRef,
+                                            OffPathConstraint constraint,
+                                            OffPathDirection direction) {
+        Map<String, List<GraphConstraint>> source = activeTraversalUsesFullGraph
+                ? (direction == OffPathDirection.TO_VALUE ? constraintsByNode : constraintsByValue)
+                : (direction == OffPathDirection.TO_VALUE ? activeConstraintsByNode : activeConstraintsByValue);
+        List<GraphConstraint> candidates = source.get(nodeRef);
+        if (candidates == null) {
+            return false;
+        }
+        for (GraphConstraint gc : candidates) {
+            String candidateNode = direction == OffPathDirection.TO_VALUE
+                    ? String.valueOf(gc.getFsNode()) : String.valueOf(gc.getFsValue());
+            if (!HelperMethods.nodeIdsEqual(nodeRef, candidateNode)) {
                 continue;
             }
             if (!constraint.attribute.equals(gc.getRelationLabel())) {
@@ -560,27 +573,7 @@ public class UncertaintyExpression extends QueryExpression {
         for (OffPathConstraint constraint : atom.offPathConstraints) {
             boolean matches = false;
 
-            for (GraphConstraint gc : graph.values()) {
-                String candidateNode = constraint.direction == OffPathDirection.TO_VALUE
-                        ? String.valueOf(gc.getFsNode())
-                        : String.valueOf(gc.getFsValue());
-                if (!nodeRef.equals(candidateNode)) {
-                    continue;
-                }
-                if (!constraint.attribute.equals(gc.getRelationLabel())) {
-                    continue;
-                }
-
-                if (constraint.value == null || constraint.value.isBlank()) {
-                    matches = true;
-                    break;
-                }
-
-                if (normalizeComparableValue(String.valueOf(gc.getFsValue())).equals(normalizeComparableValue(constraint.value))) {
-                    matches = true;
-                    break;
-                }
-            }
+            matches = matchesConstraintAtNode(nodeRef, constraint, constraint.direction);
 
             if (constraint.negated ? matches : !matches) {
                 return false;
@@ -612,6 +605,7 @@ public class UncertaintyExpression extends QueryExpression {
     }
 
     private HashMap<Integer, GraphConstraint> searchUncertainty(List<PathAtom> search, HashMap<Integer, GraphConstraint> in) {
+        prepareTraversalGraph(search);
         if (search.size() == 1
                 && search.get(0).quantifier != Quantifier.EXACT
                 && search.get(0).offPathConstraints.isEmpty()) {
@@ -659,15 +653,13 @@ public class UncertaintyExpression extends QueryExpression {
                         List<Integer> keys = new ArrayList<>();
                         List<Integer> matchingKeys = new ArrayList<>();
 
-                        for (Integer key2 : right.getFsIndices().keySet()) {
-                            if (HelperMethods.nodeIdsEqual(String.valueOf(result.get(key).getFsValue()), right.getFsIndices().get(key2).getFsNode())) {
-                                keys.add(key2);
-                            }
+                        for (Map.Entry<Integer, GraphConstraint> edge : edgesFrom(String.valueOf(result.get(key).getFsValue()), false)) {
+                            keys.add(edge.getKey());
                         }
 
                         while (foundString && repeatCount < MAX_UNCERTAINTY_REPEAT) {
 
-                            keys.removeIf(next -> !atom.labels.contains(right.getFsIndices().get(next).getRelationLabel()));
+                            keys.removeIf(next -> !labelMatches(atom, right.getFsIndices().get(next)));
 
                             if (!keys.isEmpty()) {
                                 matchingKeys.addAll(keys);
@@ -675,10 +667,8 @@ public class UncertaintyExpression extends QueryExpression {
 
                                 //if (left.getFsIndices().get(key).getFsValue().equals(right.getFsIndices().get(key2).getFsNode()))
                                 for (Integer key3 : keys) {
-                                    for (Integer key4 : right.getFsIndices().keySet()) {
-                                        if (right.getFsIndices().get(key3).getFsValue().equals(right.getFsIndices().get(key4).getFsNode())) {
-                                            newKeys.add(key4);
-                                        }
+                                    for (Map.Entry<Integer, GraphConstraint> edge : edgesFrom(String.valueOf(right.getFsIndices().get(key3).getFsValue()), false)) {
+                                        newKeys.add(edge.getKey());
                                     }
                                 }
                                 keys = newKeys;
@@ -712,9 +702,9 @@ public class UncertaintyExpression extends QueryExpression {
 
                     HashMap<Integer, GraphConstraint> newResult = new HashMap<>();
 
-                    for (Integer key2 : right.getFsIndices().keySet()) {
-                        if (HelperMethods.nodeIdsEqual(String.valueOf(result.get(key).getFsValue()), right.getFsIndices().get(key2).getFsNode())) {
-                            newResult.put(key2, right.getFsIndices().get(key2));
+                    for (Map.Entry<Integer, GraphConstraint> edge : edgesFrom(String.valueOf(result.get(key).getFsValue()), false)) {
+                        if (HelperMethods.nodeIdsEqual(String.valueOf(result.get(key).getFsValue()), edge.getValue().getFsNode())) {
+                            newResult.put(edge.getKey(), edge.getValue());
                         } else {
 
 
@@ -763,7 +753,8 @@ public class UncertaintyExpression extends QueryExpression {
             for (int repetition = 0; repetition < repetitions; repetition++) {
                 Set<String> nextNodes = new LinkedHashSet<>();
                 for (String node : frontier) {
-                    for (GraphConstraint edge : right.getFsIndices().values()) {
+                    for (Map.Entry<Integer, GraphConstraint> entry : edgesFrom(node, false)) {
+                        GraphConstraint edge = entry.getValue();
                         if (!HelperMethods.nodeIdsEqual(node, String.valueOf(edge.getFsNode()))
                                 || !labelMatches(atom, edge)
                                 || !matchesOffPathConstraints(atom, edge, right.getFsIndices(), false)) {
@@ -793,8 +784,9 @@ public class UncertaintyExpression extends QueryExpression {
             String query, HashMap<Integer, GraphConstraint> in) {
         List<PathAtom> atoms = parsePathQuery(query,
                 middle.getParser() == null ? null : middle.getParser().getTemplateRegistry());
+        prepareTraversalGraph(atoms);
         if (atoms.stream().noneMatch(atom -> atom.quantifier != Quantifier.EXACT)) {
-            return List.of(searchUncertainty(atoms, in));
+            return List.of(searchNormalPath(atoms, in));
         }
 
         Set<PathState> states = new LinkedHashSet<>();
@@ -812,7 +804,7 @@ public class UncertaintyExpression extends QueryExpression {
             for (int repetition = 0; repetition < repetitions; repetition++) {
                 Set<PathState> next = new LinkedHashSet<>();
                 for (PathState state : frontier) {
-                    for (Map.Entry<Integer, GraphConstraint> entry : right.getFsIndices().entrySet()) {
+                    for (Map.Entry<Integer, GraphConstraint> entry : edgesFrom(state.node, false)) {
                         GraphConstraint edge = entry.getValue();
                         if (!HelperMethods.nodeIdsEqual(state.node, String.valueOf(edge.getFsNode()))
                                 || !labelMatches(atom, edge)
@@ -835,6 +827,41 @@ public class UncertaintyExpression extends QueryExpression {
         }
 
         return alternativesForStates(states);
+    }
+
+    private HashMap<Integer, GraphConstraint> searchNormalPath(List<PathAtom> atoms,
+                                                                HashMap<Integer, GraphConstraint> in) {
+        Set<String> currentNodes = new LinkedHashSet<>();
+        for (GraphConstraint constraint : in.values()) {
+            currentNodes.add(String.valueOf(constraint.getFsNode()));
+        }
+
+        for (PathAtom atom : atoms) {
+            Set<String> nextNodes = new LinkedHashSet<>();
+            for (String node : currentNodes) {
+                if (isZeroLengthAtom(atom)) {
+                    if (zeroHopAllowed(node, atom, right.getFsIndices(), false)) {
+                        nextNodes.add(node);
+                    }
+                    continue;
+                }
+
+                for (Map.Entry<Integer, GraphConstraint> entry : edgesFrom(node, false)) {
+                    GraphConstraint edge = entry.getValue();
+                    if (labelMatches(atom, edge)
+                            && matchesOffPathConstraints(atom, edge, right.getFsIndices(), false)) {
+                        nextNodes.add(String.valueOf(edge.getFsValue()));
+                    }
+                }
+            }
+
+            if (nextNodes.isEmpty()) {
+                return new HashMap<>();
+            }
+            currentNodes = nextNodes;
+        }
+
+        return factsForNodes(currentNodes);
     }
 
     private HashMap<Integer, GraphConstraint> factsForNodes(Set<String> nodes) {
@@ -869,6 +896,7 @@ public class UncertaintyExpression extends QueryExpression {
     }
 
     private HashMap<Integer, GraphConstraint> searchInsideOutUncertainty(List<PathAtom> search, HashMap<Integer, GraphConstraint> in) {
+        prepareTraversalGraph(search);
         if (search.size() == 1
                 && search.get(0).quantifier != Quantifier.EXACT
                 && search.get(0).offPathConstraints.isEmpty()) {
@@ -914,7 +942,8 @@ public class UncertaintyExpression extends QueryExpression {
             for (int repetition = 0; repetition < repetitions; repetition++) {
                 Set<String> nextNodes = new LinkedHashSet<>();
                 for (String node : frontier) {
-                    for (GraphConstraint edge : right.getFsIndices().values()) {
+                    for (Map.Entry<Integer, GraphConstraint> entry : edgesFrom(node, true)) {
+                        GraphConstraint edge = entry.getValue();
                         if (!HelperMethods.nodeIdsEqual(node, String.valueOf(edge.getFsValue()))
                                 || !labelMatches(atom, edge)) {
                             continue;
@@ -947,6 +976,7 @@ public class UncertaintyExpression extends QueryExpression {
             String query, HashMap<Integer, GraphConstraint> in) {
         List<PathAtom> atoms = parsePathQuery(query,
                 middle.getParser() == null ? null : middle.getParser().getTemplateRegistry());
+        prepareTraversalGraph(atoms);
         if (atoms.stream().noneMatch(atom -> atom.quantifier != Quantifier.EXACT)) {
             return List.of(searchInsideOutUncertainty(atoms, in));
         }
@@ -966,7 +996,7 @@ public class UncertaintyExpression extends QueryExpression {
             for (int repetition = 0; repetition < repetitions; repetition++) {
                 Set<PathState> next = new LinkedHashSet<>();
                 for (PathState state : frontier) {
-                    for (Map.Entry<Integer, GraphConstraint> entry : right.getFsIndices().entrySet()) {
+                    for (Map.Entry<Integer, GraphConstraint> entry : edgesFrom(state.node, true)) {
                         GraphConstraint edge = entry.getValue();
                         if (!HelperMethods.nodeIdsEqual(state.node, String.valueOf(edge.getFsValue()))
                                 || !labelMatches(atom, edge)) {
@@ -1009,7 +1039,8 @@ public class UncertaintyExpression extends QueryExpression {
                 }
             } else {
                 for (String node : currentNodes) {
-                    for (GraphConstraint edge : graph.values()) {
+                    for (Map.Entry<Integer, GraphConstraint> entry : edgesFrom(node, true)) {
+                        GraphConstraint edge = entry.getValue();
                         if (!String.valueOf(edge.getFsValue()).equals(node)) {
                             continue;
                         }
@@ -1036,11 +1067,8 @@ public class UncertaintyExpression extends QueryExpression {
 
     private boolean zeroHopAllowed(String nodeRef, PathAtom atom, HashMap<Integer, GraphConstraint> graph, boolean insideOut) {
         boolean hasCandidate = false;
-        for (GraphConstraint edge : graph.values()) {
-            String edgeAnchor = insideOut ? String.valueOf(edge.getFsValue()) : String.valueOf(edge.getFsNode());
-            if (!nodeRef.equals(edgeAnchor)) {
-                continue;
-            }
+        for (Map.Entry<Integer, GraphConstraint> entry : edgesFrom(nodeRef, insideOut)) {
+            GraphConstraint edge = entry.getValue();
             if (!labelMatches(atom, edge)) {
                 continue;
             }
