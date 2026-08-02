@@ -52,24 +52,7 @@ public class LigerWebGraph {
 
     public LigerWebGraph(List<GraphConstraint> syntax, List<GraphConstraint> annotation)
     {
-        LinguisticStructure.deduplicateEdges(syntax, annotation);
-        Map<String,List<LigerGraphComponent>> synMap = extractGraph2(syntax,"input");
-        Map<String,List<LigerGraphComponent>> annMap = extractGraph2(annotation, "annotation");
-
-        List<LigerGraphComponent> nodes = new ArrayList<>();
-        nodes.addAll(synMap.get("nodes"));
-
-        HashSet<Object> ids = nodes.stream().map(p ->  p.data.get("id")).collect(Collectors.toCollection(HashSet::new));
-
-        nodes.addAll(annMap.get("nodes").stream().filter(p -> !ids.contains(p.data.get("id"))).collect(Collectors.toList()));
-        List<LigerGraphComponent> edges = new ArrayList<>();
-        edges.addAll(synMap.get("edges"));
-        edges.addAll(annMap.get("edges"));
-
-        List<LigerGraphComponent> data = new ArrayList<>();
-        data.addAll(nodes);
-        data.addAll(edges);
-        this.graphElements = data;
+        this(syntax, annotation, null);
     }
 
     public LigerWebGraph(List<GraphConstraint> syntax, List<GraphConstraint> annotation, String semantics)
@@ -107,7 +90,7 @@ public class LigerWebGraph {
                 .collect(Collectors.toList());
     }
 
-    public Map<String,List<LigerGraphComponent>> extractGraph2(List<GraphConstraint> input, String type)
+    private Map<String,List<LigerGraphComponent>> extractGraph2(List<GraphConstraint> input, String type)
     {
         if (input == null) {
             Map<String, List<LigerGraphComponent>> output = new LinkedHashMap<>();
@@ -188,8 +171,6 @@ public class LigerWebGraph {
 
         List<LigerGraphComponent> testNodes = new ArrayList<>();
 
-        int counter = 0;
-
         for (String key : nodes.keySet())
         {
             LigerWebNode lwn = null;
@@ -210,12 +191,10 @@ public class LigerWebGraph {
                     if (((HashMap<String, String>) lwn.data.get("avp")).get("projection").equals("c")) {
                         lwn.data.put("node_type", "cnode");
                         ((HashMap<String, String>) lwn.data.get("avp")).remove("projection");
-                        counter++;
                     } else
                     if (((HashMap<String, String>) lwn.data.get("avp")).get("projection").equals("g")) {
                         lwn.data.put("node_type", "gnode");
                         ((HashMap<String, String>) lwn.data.get("avp")).remove("projection");
-                        counter++;
                     }
                 }
             }
@@ -230,8 +209,6 @@ public class LigerWebGraph {
             testNodes.add(lwn);
 
         }
-
-        System.out.println("Modified " + counter + " nodes");
 
         Map<String,List<LigerGraphComponent>> output = new LinkedHashMap<>();
         output.put("nodes",testNodes);

@@ -72,10 +72,29 @@ public class LigerController {
 
     @Autowired
     private LigerService ligerService;
+    @Autowired
+    private SourceIndexResolverService sourceIndexResolverService;
 
     public LigerController(){
 
     };
+
+    @CrossOrigin
+    @PostMapping(value = "/resolve_source_spans", produces = "application/json", consumes = "application/json")
+    public LigerSourceSpanResponse resolveSourceSpans(@RequestBody LigerSourceSpanRequest request) {
+        if (request == null || request.structure == null || request.sourceIndexGroups == null) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "structure and sourceIndexGroups are required");
+        }
+
+        LinguisticStructure structure = LinguisticStructure.parseFromJson(request.structure);
+        SourceIndexResolverService resolver = sourceIndexResolverService == null
+                ? new SourceIndexResolverService() : sourceIndexResolverService;
+        List<LigerSourceSpan> spans = request.sourceIndexGroups.stream()
+                .map(group -> resolver.resolve(structure, group))
+                .collect(Collectors.toList());
+        return new LigerSourceSpanResponse(spans);
+    }
 
 
     /************************************************************************
