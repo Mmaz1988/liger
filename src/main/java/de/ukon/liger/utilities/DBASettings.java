@@ -56,6 +56,9 @@ public class DBASettings {
     //for multistage proving
     public Boolean multi;
 
+    // Preserve XLE's packed parser output before unpacking.
+    public Boolean debugPacked;
+
     public XLEStarter.OS os;
 
     public DBASettings()
@@ -65,6 +68,7 @@ public class DBASettings {
         this.web = false;
         this.mcs = false;
         this.multi = false;
+        this.debugPacked = false;
         this.os = determineOs();
         this.multi = false;
         this.prolog = false;
@@ -93,6 +97,5 @@ public class DBASettings {
         }
         }
 }
-
 
 

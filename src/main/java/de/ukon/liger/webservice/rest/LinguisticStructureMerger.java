@@ -42,19 +42,23 @@ final class LinguisticStructureMerger {
         LinguisticStructure copy = new LinguisticStructure();
         copy.local_id = source.local_id;
         copy.text = source.text;
-        copy.constraints = source.constraints == null ? new ArrayList<>() : new ArrayList<>(source.constraints);
-        copy.annotation = source.annotation == null ? new ArrayList<>() : new ArrayList<>(source.annotation);
-        copy.cp = source.cp;
+        copy.constraints = source.constraints == null ? new ArrayList<>() : source.constraints.stream()
+                .map(GraphConstraint::copy)
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        copy.annotation = source.annotation == null ? new ArrayList<>() : source.annotation.stream()
+                .map(GraphConstraint::copy)
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        copy.cp = source.cp == null ? new ChoiceSpace() : source.cp.copy();
         return copy;
     }
 
     private static List<GraphConstraint> concat(List<GraphConstraint> left, List<GraphConstraint> right) {
         List<GraphConstraint> merged = new ArrayList<>();
         if (left != null) {
-            merged.addAll(left);
+            merged.addAll(left.stream().map(GraphConstraint::copy).toList());
         }
         if (right != null) {
-            merged.addAll(right);
+            merged.addAll(right.stream().map(GraphConstraint::copy).toList());
         }
         return merged;
     }
@@ -63,12 +67,12 @@ final class LinguisticStructureMerger {
         Map<String, GraphConstraint> merged = new LinkedHashMap<>();
         if (left != null) {
             for (GraphConstraint constraint : left) {
-                merged.putIfAbsent(constraintKey(constraint), constraint);
+                merged.putIfAbsent(constraintKey(constraint), constraint.copy());
             }
         }
         if (right != null) {
             for (GraphConstraint constraint : right) {
-                merged.putIfAbsent(constraintKey(constraint), constraint);
+                merged.putIfAbsent(constraintKey(constraint), constraint.copy());
             }
         }
         return new ArrayList<>(merged.values());
@@ -93,36 +97,36 @@ final class LinguisticStructureMerger {
 
     private static ChoiceSpace mergeChoiceSpace(ChoiceSpace left, ChoiceSpace right) {
         if (left == null) {
-            return right == null ? new ChoiceSpace() : right;
+            return right == null ? new ChoiceSpace() : right.copy();
         }
         if (right == null) {
-            return left;
+            return left.copy();
         }
 
         ChoiceSpace merged = new ChoiceSpace();
         merged.choiceNodes = new ArrayList<>();
         if (left.choiceNodes != null) {
-            merged.choiceNodes.addAll(left.choiceNodes);
+            merged.choiceNodes.addAll(left.choiceNodes.stream().map(ChoiceNode::copy).toList());
         }
         if (right.choiceNodes != null) {
-            merged.choiceNodes.addAll(right.choiceNodes);
+            merged.choiceNodes.addAll(right.choiceNodes.stream().map(ChoiceNode::copy).toList());
         }
 
         Set<Set<de.ukon.liger.packing.ChoiceVar>> choices = new LinkedHashSet<>();
         if (left.choices != null) {
-            choices.addAll(left.choices);
+            choices.addAll(copyChoices(left.choices));
         }
         if (right.choices != null) {
-            choices.addAll(right.choices);
+            choices.addAll(copyChoices(right.choices));
         }
         merged.choices = choices;
 
         merged.rootChoice = new LinkedHashSet<>();
         if (left.rootChoice != null) {
-            merged.rootChoice.addAll(left.rootChoice);
+            merged.rootChoice.addAll(left.rootChoice.stream().map(de.ukon.liger.packing.ChoiceVar::copy).toList());
         }
         if (right.rootChoice != null) {
-            merged.rootChoice.addAll(right.rootChoice);
+            merged.rootChoice.addAll(right.rootChoice.stream().map(de.ukon.liger.packing.ChoiceVar::copy).toList());
         }
         merged.allVariables = new ArrayList<>();
         if (left.allVariables != null) {
@@ -136,5 +140,15 @@ final class LinguisticStructureMerger {
             }
         }
         return merged;
+    }
+
+    private static Set<Set<de.ukon.liger.packing.ChoiceVar>> copyChoices(
+            Set<Set<de.ukon.liger.packing.ChoiceVar>> choices) {
+        Set<Set<de.ukon.liger.packing.ChoiceVar>> copied = new LinkedHashSet<>();
+        for (Set<de.ukon.liger.packing.ChoiceVar> choice : choices) {
+            copied.add(choice.stream().map(de.ukon.liger.packing.ChoiceVar::copy)
+                    .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)));
+        }
+        return copied;
     }
 }

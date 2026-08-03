@@ -22,6 +22,8 @@
 package de.ukon.liger.analysis.QueryParser;
 
 import de.ukon.liger.syntax.GraphConstraint;
+import de.ukon.liger.packing.ChoiceContext;
+import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.utilities.HelperMethods;
 
 import java.util.*;
@@ -142,6 +144,16 @@ public abstract class QueryExpression {
              */
             binding.put(nodeVar, reference);
             Solution solution = new Solution(Collections.singleton(new SolutionKey(nodeVar, fs)));
+            Set<Set<ChoiceVar>> contexts = new LinkedHashSet<>();
+            for (GraphConstraint constraint : fsIndices.values()) {
+                if (fs.equals(constraint.getFsNode()) && !ChoiceContext.isRoot(constraint.getReading())) {
+                    contexts.add(constraint.getReading());
+                }
+            }
+            if (contexts.isEmpty()) {
+                contexts.add(Collections.singleton(new ChoiceVar("1")));
+            }
+            solution.setChoiceContexts(contexts);
             out2.put(solution, binding);
         }
 

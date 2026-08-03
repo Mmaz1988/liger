@@ -135,6 +135,10 @@ public class DbaMain {
                     settings.multi = true;
                     break;
 
+                case "-debug-packed":
+                    settings.debugPacked = true;
+                    break;
+
                 // grammar format (either a oldschool glue grammar, or a xleplus glue style grammar)
                 case "-gf":
                     if (args[i + 1].equals("1") || args[i + 1].equals("glue")){
@@ -178,6 +182,8 @@ public class DbaMain {
 
         LOGGER.info("Successfully initialized working directory to " + PathVariables.workingDirectory);
         PathVariables.initializePathVariables();
+
+        XLEoperator.setDebugPackedOutput(settings.debugPacked);
 
         LOGGER.info("dir " + PathVariables.workingDirectory);
         LOGGER.info("test " + PathVariables.testPath);
@@ -499,6 +505,5 @@ public class DbaMain {
     }
 
 }
-
 
 

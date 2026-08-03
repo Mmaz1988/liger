@@ -239,6 +239,10 @@ public class LigerController {
                         sentenceIndex,
                         "No parse was found for sentence " + (sentenceIndex + 1));
             }
+            if (request.packAlternatives && parsed.size() > 1) {
+                parsed = new ArrayList<>(Collections.singletonList(
+                        PackedAlternativeAssembler.pack(parsed)));
+            }
             List<SequenceCandidate> candidates = new ArrayList<>();
             for (LinguisticStructure structure : parsed) {
                 if (request.ruleString == null || request.ruleString.isBlank()) {
@@ -274,6 +278,8 @@ public class LigerController {
         collectSequenceVariants(candidatesBySentence, 0, new ArrayList<>(), variants);
         GlueSemantics semantics = new GlueSemantics();
         List<LigerSolutionAnnotation> solutions = new ArrayList<>();
+        List<LinguisticStructure> sequenceAlternatives = new ArrayList<>();
+        LinkedHashMap<String, Object> packedSequenceJson = null;
         int variantIndex = 1;
 
         for (List<SequenceCandidate> variant : variants) {
@@ -293,6 +299,7 @@ public class LigerController {
             }
 
             LinguisticStructure sequence = SequenceGraphAssembler.assemble(structures);
+            sequenceAlternatives.add(sequence);
             String meaningConstructors = sentenceMeaningConstructors.isEmpty()
                     ? ""
                     : sentenceMeaningConstructors.get(sentenceMeaningConstructors.size() - 1);
@@ -320,8 +327,18 @@ public class LigerController {
             variantIndex++;
         }
 
+        if (request.packAlternatives && sequenceAlternatives.size() > 1) {
+            LinguisticStructure packedSequence = PackedAlternativeAssembler.pack(sequenceAlternatives);
+            packedSequenceJson = packedSequence.toJson();
+            LOGGER.info("Packed sequence alternatives before response: alternativeCount="
+                    + sequenceAlternatives.size() + ", constraintCount="
+                    + packedSequence.constraints.size() + ", annotationCount="
+                    + packedSequence.annotation.size() + ", choiceCount="
+                    + packedSequence.cp.choices.size());
+        }
+
         return new LigerSolutionAnnotationResponse(
-                String.join("\n", request.sentences), solutions);
+                String.join("\n", request.sentences), solutions, packedSequenceJson);
     }
 
     private String shiftSourceIndexes(String meaningConstructors, int offset) {
@@ -585,7 +602,24 @@ public class LigerController {
         LinguisticStructure syntax = parseStructureMap(request.syntax);
         LinguisticStructure drs = parseStructureMap(request.drs);
         LinguisticStructure merged = LinguisticStructureMerger.merge(syntax, drs);
-        return new LigerMergeResponse(new LigerWebGraph(merged.constraints, merged.annotation),merged.toJson());
+        LigerMergeResponse response = new LigerMergeResponse(
+                new LigerWebGraph(merged.constraints, merged.annotation), merged.toJson());
+        Object rawAlternatives = request.drs == null ? null : request.drs.get("alternatives");
+        if (rawAlternatives instanceof List<?> alternatives) {
+            for (Object rawAlternative : alternatives) {
+                if (rawAlternative instanceof LinkedHashMap<?, ?> alternativeMap) {
+                    @SuppressWarnings("unchecked")
+                    LinkedHashMap<String, Object> typedAlternative =
+                            (LinkedHashMap<String, Object>) alternativeMap;
+                    LinguisticStructure alternative = parseStructureMap(typedAlternative);
+                    LinguisticStructure mergedAlternative = LinguisticStructureMerger.merge(syntax, alternative);
+                    response.structureVariants.add(mergedAlternative.toJson());
+                    response.structureVariantGraphs.add(
+                            new LigerWebGraph(mergedAlternative.constraints, mergedAlternative.annotation));
+                }
+            }
+        }
+        return response;
     }
 
     private QueryMatchSummary summarizeQueryMatches(List<QueryParserResult> results) {
@@ -725,12 +759,19 @@ public class LigerController {
     }
 
     private LigerRuleAnnotationResponse applyRulesToUploadedStructure(LigerStructureRuleRequest request) throws IOException {
+        long requestStartedAt = System.nanoTime();
         List<LinguisticStructure> structures = parseUploadedLinguisticStructures(
                 new LigerStructureUploadRequest(request.content, request.format, request.id)
         );
+        long parsedAt = System.nanoTime();
 
         List<LigerRuleAnnotation> annotations = new ArrayList<>();
         StringBuilder sentenceBuilder = new StringBuilder();
+        long ruleApplicationStartedAt = System.nanoTime();
+        boolean collapsePackedBranches = structures.size() == 1 && isPackedStructure(structures.get(0));
+        List<LinguisticStructure> packedBranches = new ArrayList<>();
+        LinkedHashSet<LigerRule> packedAppliedRules = new LinkedHashSet<>();
+        LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> packedFactsByRule = new LinkedHashMap<>();
 
         for (LinguisticStructure fs : structures) {
             if (fs == null) {
@@ -757,6 +798,14 @@ public class LigerController {
                     appliedRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
                 }
 
+                if (collapsePackedBranches) {
+                    packedBranches.add(branch);
+                    packedAppliedRules.addAll(appliedRules);
+                    addedAnnotationsForBranch(rp, branch).forEach((ruleIndex, facts) ->
+                            packedFactsByRule.computeIfAbsent(ruleIndex, ignored -> new LinkedHashSet<>()).addAll(facts));
+                    continue;
+                }
+
                 LigerRuleAnnotation annotation = new LigerRuleAnnotation(
                         new LigerWebGraph(branch.constraints, branch.annotation),
                         appliedRules,
@@ -776,7 +825,78 @@ public class LigerController {
             }
         }
 
+        if (collapsePackedBranches && !packedBranches.isEmpty()) {
+            LinguisticStructure packedResult = mergeRuleBranches(packedBranches);
+            LigerRuleAnnotation annotation = new LigerRuleAnnotation(
+                    new LigerWebGraph(packedResult.constraints, packedResult.annotation),
+                    packedAppliedRules,
+                    packedResult.toJson());
+            annotation.sentence = packedResult.text;
+            annotation.addedAnnotationsByRule = packedFactsByRule;
+            annotation.highlightedNodeIds = collectHighlightedNodeIdsFromGroups(packedFactsByRule.values());
+            annotation.highlightedNodeIdsByRule = collectHighlightedNodeIdsByRule(packedFactsByRule);
+            annotation.structureVariants = packedBranches.stream()
+                    .map(LinguisticStructure::toJson)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            annotation.structureVariantGraphs = packedBranches.stream()
+                    .map(branch -> new LigerWebGraph(branch.constraints, branch.annotation))
+                    .collect(Collectors.toCollection(ArrayList::new));
+            annotations.add(annotation);
+        }
+
+        long completedAt = System.nanoTime();
+        int constraintCount = structures.stream()
+                .filter(Objects::nonNull)
+                .mapToInt(structure -> structure.constraints == null ? 0 : structure.constraints.size())
+                .sum();
+        int annotationCount = structures.stream()
+                .filter(Objects::nonNull)
+                .mapToInt(structure -> structure.annotation == null ? 0 : structure.annotation.size())
+                .sum();
+        int choiceCount = structures.stream()
+                .filter(Objects::nonNull)
+                .filter(structure -> structure.cp != null)
+                .mapToInt(structure -> structure.cp.choices == null ? 0 : structure.cp.choices.size())
+                .sum();
+        LOGGER.info("Uploaded rule timing: structures=" + structures.size()
+                + ", constraints=" + constraintCount
+                + ", annotations=" + annotationCount
+                + ", choices=" + choiceCount
+                + ", parseMs=" + elapsedMillis(requestStartedAt, parsedAt)
+                + ", ruleMs=" + elapsedMillis(ruleApplicationStartedAt, completedAt)
+                + ", totalMs=" + elapsedMillis(requestStartedAt, completedAt));
         return new LigerRuleAnnotationResponse(sentenceBuilder.toString(), annotations);
+    }
+
+    private long elapsedMillis(long startedAt, long completedAt) {
+        return (completedAt - startedAt) / 1_000_000;
+    }
+
+    private boolean isPackedStructure(LinguisticStructure structure) {
+        return structure != null
+                && structure.cp != null
+                && structure.cp.choiceNodes != null
+                && !structure.cp.choiceNodes.isEmpty()
+                && structure.cp.choices != null
+                && structure.cp.choices.size() > 1;
+    }
+
+    private LinguisticStructure mergeRuleBranches(List<LinguisticStructure> branches) {
+        LinguisticStructure merged = branches.get(0).copy();
+        for (LinguisticStructure branch : branches.subList(1, branches.size())) {
+            if (branch.constraints != null) {
+                merged.constraints.addAll(branch.constraints.stream()
+                        .map(GraphConstraint::copy)
+                        .collect(Collectors.toList()));
+            }
+            if (branch.annotation != null) {
+                merged.annotation.addAll(branch.annotation.stream()
+                        .map(GraphConstraint::copy)
+                        .collect(Collectors.toList()));
+            }
+        }
+        merged.deduplicateEdges();
+        return merged;
     }
 
     private LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> addedAnnotationsForBranch(
@@ -938,6 +1058,22 @@ public class LigerController {
     private LinguisticStructure parseStructureMap(LinkedHashMap<String, Object> json) {
         if (json == null) {
             return null;
+        }
+
+        Object alternatives = json.get("alternatives");
+        if (alternatives instanceof List<?> rawAlternatives && !rawAlternatives.isEmpty()) {
+            List<LinguisticStructure> structures = new ArrayList<>();
+            for (Object rawAlternative : rawAlternatives) {
+                if (rawAlternative instanceof LinkedHashMap<?, ?> alternativeMap) {
+                    @SuppressWarnings("unchecked")
+                    LinkedHashMap<String, Object> typedAlternative =
+                            (LinkedHashMap<String, Object>) alternativeMap;
+                    structures.add(parseStructureMap(typedAlternative));
+                }
+            }
+            if (!structures.isEmpty()) {
+                return PackedAlternativeAssembler.pack(structures);
+            }
         }
 
         LinguisticStructure structure = LinguisticStructure.parseFromJson(json);

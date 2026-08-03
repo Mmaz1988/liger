@@ -80,7 +80,10 @@ public class NodeExpression extends QueryExpression {
                         if (!key2.isTruthValue()) {
                             continue;
                         }
-                        Solution newKey = Solution.merge(key, key2);
+                        Solution newKey = Solution.mergeIfCompatible(key, key2, getParser().cp);
+                        if (newKey == null) {
+                            continue;
+                        }
 
                         out.put(newKey,new HashMap<>());
                         out.get(newKey).putAll(left.getSolution().get(key));
@@ -147,7 +150,10 @@ public class NodeExpression extends QueryExpression {
                                     if (leftSolution.get(key2).get(left.getNodeVar()).get(nodeRef2).get(key3).getFsValue().equals(nodeRef) &&
                                     leftSolution.get(key2).get(left.getNodeVar()).get(nodeRef2).get(key3).getRelationLabel().equals(left.getQuery())) {
                                         if (checkSolutionCompatibility(key, key2)) {
-                                            Solution newKey = Solution.merge(key, key2);
+                                            Solution newKey = Solution.mergeIfCompatible(key, key2, getParser().cp);
+                                            if (newKey == null) {
+                                                continue;
+                                            }
 
                                             HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
 
@@ -262,7 +268,10 @@ public class NodeExpression extends QueryExpression {
                                 binding.put(nodeVar, leftSolution.get(key).get(nodeVar));
                                 binding.put(nodeVar2, out2.get(key2).get(nodeVar2));
 
-                                Solution newKey = Solution.merge(key, key2);
+                                Solution newKey = Solution.mergeIfCompatible(key, key2, getParser().cp);
+                                if (newKey == null) {
+                                    continue;
+                                }
 
                                 out3.put(newKey, binding);
                             }

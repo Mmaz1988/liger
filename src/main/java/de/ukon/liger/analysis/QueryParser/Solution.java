@@ -1,6 +1,11 @@
 package de.ukon.liger.analysis.QueryParser;
 
+import de.ukon.liger.packing.ChoiceContext;
+import de.ukon.liger.packing.ChoiceSpace;
+import de.ukon.liger.packing.ChoiceVar;
+
 import java.util.AbstractSet;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -9,6 +14,7 @@ public class Solution extends AbstractSet<SolutionKey> {
 
     private Set<SolutionKey> solutionKeys;
     private boolean truthValue;
+    private Set<Set<ChoiceVar>> choiceContexts = new LinkedHashSet<>();
 
     public Solution() {
         this(new LinkedHashSet<>(), true);
@@ -21,6 +27,23 @@ public class Solution extends AbstractSet<SolutionKey> {
     public Solution(Set<SolutionKey> solutionKeys, boolean truthValue) {
         this.solutionKeys = solutionKeys == null ? new LinkedHashSet<>() : new LinkedHashSet<>(solutionKeys);
         this.truthValue = truthValue;
+    }
+
+    public Set<Set<ChoiceVar>> getChoiceContexts() {
+        return choiceContexts;
+    }
+
+    public void setChoiceContexts(Set<Set<ChoiceVar>> contexts) {
+        choiceContexts = new LinkedHashSet<>();
+        if (contexts != null) {
+            for (Set<ChoiceVar> context : contexts) {
+                choiceContexts.add(copyContext(context));
+            }
+        }
+    }
+
+    public void addChoiceContext(Set<ChoiceVar> context) {
+        choiceContexts.add(copyContext(context));
     }
 
     public Set<SolutionKey> getSolutionKeys() {
@@ -44,7 +67,9 @@ public class Solution extends AbstractSet<SolutionKey> {
     }
 
     public Solution copy() {
-        return new Solution(solutionKeys, truthValue);
+        Solution copy = new Solution(solutionKeys, truthValue);
+        copy.setChoiceContexts(choiceContexts);
+        return copy;
     }
 
     @Override
@@ -85,7 +110,57 @@ public class Solution extends AbstractSet<SolutionKey> {
         if (right != null) {
             merged.addAll(right.getSolutionKeys());
         }
-        return new Solution(merged, (left == null || left.truthValue) && (right == null || right.truthValue));
+        Solution result = new Solution(merged, (left == null || left.truthValue) && (right == null || right.truthValue));
+        result.setChoiceContexts(mergeContexts(left, right, null));
+        return result;
+    }
+
+    public static Solution mergeIfCompatible(Solution left, Solution right, ChoiceSpace choiceSpace) {
+        Set<Set<ChoiceVar>> contexts = mergeContexts(left, right, choiceSpace);
+        if (contexts.isEmpty()) {
+            return null;
+        }
+        Solution result = merge(left, right);
+        result.setChoiceContexts(contexts);
+        return result;
+    }
+
+    private static Set<Set<ChoiceVar>> mergeContexts(Solution left, Solution right,
+                                                      ChoiceSpace choiceSpace) {
+        Set<Set<ChoiceVar>> leftContexts = contextsOrRoot(left);
+        Set<Set<ChoiceVar>> rightContexts = contextsOrRoot(right);
+        Set<Set<ChoiceVar>> merged = new LinkedHashSet<>();
+        for (Set<ChoiceVar> leftContext : leftContexts) {
+            for (Set<ChoiceVar> rightContext : rightContexts) {
+                if (choiceSpace != null && !ChoiceContext.compatible(choiceSpace, leftContext, rightContext)) {
+                    continue;
+                }
+                Set<ChoiceVar> combined = new LinkedHashSet<>(leftContext);
+                combined.addAll(rightContext);
+                merged.add(combined);
+            }
+        }
+        return merged;
+    }
+
+    private static Set<Set<ChoiceVar>> contextsOrRoot(Solution solution) {
+        if (solution == null || solution.choiceContexts.isEmpty()) {
+            return Collections.singleton(Collections.singleton(new ChoiceVar("1")));
+        }
+        return solution.choiceContexts;
+    }
+
+    private static Set<ChoiceVar> copyContext(Set<ChoiceVar> context) {
+        Set<ChoiceVar> copy = new LinkedHashSet<>();
+        if (context != null) {
+            for (ChoiceVar choice : context) {
+                copy.add(choice.copy());
+            }
+        }
+        if (copy.isEmpty()) {
+            copy.add(new ChoiceVar("1"));
+        }
+        return copy;
     }
 
     @Override
@@ -93,11 +168,12 @@ public class Solution extends AbstractSet<SolutionKey> {
         if (this == o) return true;
         if (!(o instanceof Solution)) return false;
         Solution solution = (Solution) o;
-        return solutionKeys.equals(solution.solutionKeys);
+        return solutionKeys.equals(solution.solutionKeys)
+                && choiceContexts.equals(solution.choiceContexts);
     }
 
     @Override
     public int hashCode() {
-        return solutionKeys.hashCode();
+        return 31 * solutionKeys.hashCode() + choiceContexts.hashCode();
     }
 }

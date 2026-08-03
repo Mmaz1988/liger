@@ -35,11 +35,14 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.logging.Logger;
 
 public class XLEoperator extends SyntaxOperator {
+
+    private static volatile boolean debugPackedOutput;
 
     public VariableHandler vh;
     public XLEStarter.OS os;
@@ -109,6 +112,10 @@ public class XLEoperator extends SyntaxOperator {
     {
         this.vh = vh;
         this.os = os;
+    }
+
+    public static void setDebugPackedOutput(boolean enabled) {
+        debugPackedOutput = enabled;
     }
 
 
@@ -194,6 +201,10 @@ public class XLEoperator extends SyntaxOperator {
             int exitCode = process.waitFor();
             LOGGER.info("Process exited with code: " + exitCode);
 
+            if (exitCode == 0 && debugPackedOutput) {
+                preservePackedParserOutput();
+            }
+
             if (exitCode == 0 && unpack){
                 String unpackProcessString =
                         XLEStarter.unpackFsViaXLE(
@@ -241,6 +252,36 @@ public class XLEoperator extends SyntaxOperator {
             LOGGER.warning("Failed to execute process: " + e.getMessage());
         }
 
+    }
+
+    private void preservePackedParserOutput() {
+        Path source = Paths.get(PathVariables.workingDirectory, "tmp", "parser_output");
+        Path target = Paths.get(PathVariables.workingDirectory, "tmp", "packed_parser_output");
+        try {
+            if (Files.exists(target)) {
+                Files.walk(target)
+                        .sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+            }
+            Files.createDirectories(target);
+            Files.walk(source).forEach(path -> {
+                try {
+                    Path relative = source.relativize(path);
+                    Path destination = target.resolve(relative);
+                    if (Files.isDirectory(path)) {
+                        Files.createDirectories(destination);
+                    } else {
+                        Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+            LOGGER.info("Preserved packed parser output at " + target);
+        } catch (IOException | UncheckedIOException e) {
+            LOGGER.warning("Failed to preserve packed parser output: " + e.getMessage());
+        }
     }
 
     //TODO parse multiple
@@ -447,7 +488,4 @@ public class XLEoperator extends SyntaxOperator {
 
 
 }
-
-
-
 

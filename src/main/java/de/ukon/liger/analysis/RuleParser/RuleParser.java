@@ -32,6 +32,7 @@ import de.ukon.liger.analysis.QueryParser.EmbeddedDefinitionExtractor;
 import de.ukon.liger.analysis.QueryParser.TemplateParser;
 import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
 import de.ukon.liger.packing.ChoiceVar;
+import de.ukon.liger.packing.ChoiceContext;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.utilities.HelperMethods;
@@ -169,6 +170,7 @@ public class RuleParser {
                         ? qp.parseQueryWithTemplates(r.getLeft()).stream().filter(result -> result.isSuccess).findFirst()
                         .orElse(new QueryParserResult(new HashMap<>(), new HashMap<>()))
                         : qp.parseQuery(qp.getQueryList());
+                qpr = splitAlternativeContexts(qpr);
 
                 if (!qpr.isSuccess) {
                     next.add(structure);
@@ -230,7 +232,8 @@ public class RuleParser {
             return added;
         }
 
-        Set<ChoiceVar> context = extractContexts(qpr.result.get(solution), new HashMap<>());
+        Set<ChoiceVar> context = contextForSolution(solution,
+                qpr.result.get(solution), new HashMap<>());
         List<String> search = r.splitGoal();
 
         for (String searchString : search) {
@@ -384,6 +387,7 @@ public class RuleParser {
                     ? qp.parseQueryWithTemplates(r.getLeft()).stream().filter(result -> result.isSuccess).findFirst()
                     .orElse(new QueryParserResult(new HashMap<>(), new HashMap<>()))
                     : qp.parseQuery(qp.getQueryList());
+            qpr = splitAlternativeContexts(qpr);
 
             if (qpr.isSuccess && !r.getRight().equals("0")) {
 
@@ -408,7 +412,8 @@ public class RuleParser {
                                 for (Solution solutionKey : qpr.result.keySet()) {
 
                                     if (!fixedContext){
-                                        context = extractContexts(qpr.result.get(solutionKey), newConstraints);
+                                        context = contextForSolution(solutionKey,
+                                                qpr.result.get(solutionKey), newConstraints);
                                 }
                                     if (variableIsAssigned(qpr, solutionKey, nodeMatcher.group(1))) {
 
@@ -1089,6 +1094,55 @@ public class RuleParser {
             out.add(new ChoiceVar("1"));
             return out;
         }
+    }
+
+    private Set<ChoiceVar> contextForSolution(Solution solution,
+                                               HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> result,
+                                               HashMap<Integer, GraphConstraint> newConstraints) {
+        Set<Set<ChoiceVar>> contexts = solution == null ? Collections.emptySet() : solution.getChoiceContexts();
+        Set<ChoiceVar> selected = null;
+        for (Set<ChoiceVar> context : contexts) {
+            if (!ChoiceContext.isRoot(context)) {
+                if (selected != null) {
+                    return extractContexts(result, newConstraints);
+                }
+                selected = new HashSet<>(context);
+            }
+        }
+        return selected == null ? extractContexts(result, newConstraints) : selected;
+    }
+
+    private QueryParserResult splitAlternativeContexts(QueryParserResult input) {
+        if (input == null || input.result == null) {
+            return input;
+        }
+
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> splitResult = new HashMap<>();
+        HashMap<Solution, HashMap<String, String>> splitValueBindings = new HashMap<>();
+
+        for (Map.Entry<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> entry
+                : input.result.entrySet()) {
+            Solution solution = entry.getKey();
+            Set<Set<ChoiceVar>> contexts = solution.getChoiceContexts();
+            if (contexts == null || contexts.size() <= 1) {
+                splitResult.put(solution, entry.getValue());
+                if (input.valueBindings.containsKey(solution)) {
+                    splitValueBindings.put(solution, input.valueBindings.get(solution));
+                }
+                continue;
+            }
+
+            for (Set<ChoiceVar> context : contexts) {
+                Solution split = solution.copy();
+                split.setChoiceContexts(Collections.singleton(context));
+                splitResult.put(split, entry.getValue());
+                if (input.valueBindings.containsKey(solution)) {
+                    splitValueBindings.put(split, input.valueBindings.get(solution));
+                }
+            }
+        }
+
+        return new QueryParserResult(splitResult, splitValueBindings);
     }
 
     public LinkedHashSet<Rule> getAppliedRules() {

@@ -180,7 +180,10 @@ public class UncertaintyExpression extends QueryExpression {
                             }
                             HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>(leftBinding);
                             binding.put(right.getNodeVar(), rightSolutions.get(rightKey).get(right.getNodeVar()));
-                            out.put(Solution.merge(leftKey, rightKey), binding);
+                            Solution newKey = Solution.mergeIfCompatible(leftKey, rightKey, getParser().cp);
+                            if (newKey != null) {
+                                out.put(newKey, binding);
+                            }
                         }
                     }
                 }
