@@ -282,8 +282,10 @@ public class LigerController {
                     .collect(Collectors.toList());
 
             List<String> sentenceMeaningConstructors = new ArrayList<>();
+            List<Integer> sourceOffsets = new ArrayList<>();
             int sourceIndexOffset = 0;
             for (LinguisticStructure structure : structures) {
+                sourceOffsets.add(sourceIndexOffset);
                 semantics.annotateSyntheticMcIndices(structure);
                 String sentenceMeaningConstructorsText = semantics.returnMeaningConstructors(
                         structure, !starter.isGlue, false, true, true);
@@ -292,10 +294,21 @@ public class LigerController {
                 sourceIndexOffset += maxSyntheticMcIndex(structure);
             }
 
-            LinguisticStructure sequence = SequenceGraphAssembler.assemble(structures);
+            List<SequenceGraphAssembler.Part> sequenceParts = new ArrayList<>();
+            for (int i = 0; i < structures.size(); i++) {
+                LinguisticStructure structure = structures.get(i);
+                String sentenceId = request.sentenceIds != null && i < request.sentenceIds.size()
+                        && request.sentenceIds.get(i) != null && !request.sentenceIds.get(i).isBlank()
+                        ? request.sentenceIds.get(i) : "sentence-" + (i + 1);
+                String solutionKey = solutionKeyFor(structure, i);
+                sequenceParts.add(new SequenceGraphAssembler.Part(
+                        sentenceId, solutionKey, solutionKey, null, structure));
+            }
+            SequenceGraphAssembler.AssemblyResult assembly = SequenceGraphAssembler.assembleDetailed(sequenceParts);
+            LinguisticStructure sequence = assembly.structure();
             String meaningConstructors = sentenceMeaningConstructors.isEmpty()
                     ? ""
-                    : sentenceMeaningConstructors.get(sentenceMeaningConstructors.size() - 1);
+                    : joinMeaningConstructors(sentenceMeaningConstructors);
             LinkedHashSet<LigerRule> appliedRules = variant.stream()
                     .flatMap(candidate -> candidate.appliedRules().stream())
                     .collect(Collectors.toCollection(LinkedHashSet::new));
@@ -309,14 +322,21 @@ public class LigerController {
                     .collect(Collectors.joining("+"));
             String key = "sequence-" + variantIndex + "-" + sourceKey;
 
-            solutions.add(new LigerSolutionAnnotation(
+            LigerSolutionAnnotation solution = new LigerSolutionAnnotation(
                     key,
                     new LigerWebGraph(sequence.constraints, sequence.annotation),
                     sequence.toJson(),
                     appliedRules,
                     meaningConstructors,
                     countMeaningConstructorSets(meaningConstructors),
-                    axioms));
+                    axioms);
+            for (int i = 0; i < assembly.provenance().size(); i++) {
+                SequenceGraphAssembler.PartProvenance source = assembly.provenance().get(i);
+                solution.sequenceParts.add(new LigerSequencePartResult(source.sourceIndex(), source.sentenceId(),
+                        source.syntaxVariantId(), source.solutionKey(), sentenceMeaningConstructors.get(i),
+                        sourceOffsets.get(i), source.rootId()));
+            }
+            solutions.add(solution);
             variantIndex++;
         }
 
@@ -330,6 +350,11 @@ public class LigerController {
         }
         Matcher matcher = SOURCE_INDEX.matcher(meaningConstructors);
         return matcher.replaceAll(match -> "[" + (Integer.parseInt(match.group(1)) + offset) + "]");
+    }
+
+    static String joinMeaningConstructors(List<String> sentenceMeaningConstructors) {
+        return sentenceMeaningConstructors == null ? "" : sentenceMeaningConstructors.stream()
+                .filter(Objects::nonNull).collect(Collectors.joining("\n"));
     }
 
     private int maxSyntheticMcIndex(LinguisticStructure structure) {
@@ -588,6 +613,109 @@ public class LigerController {
         return new LigerMergeResponse(new LigerWebGraph(merged.constraints, merged.annotation),merged.toJson());
     }
 
+    @CrossOrigin
+    @PostMapping(value = "/assemble_uploaded_sequence", produces = "application/json", consumes = "application/json")
+    public LigerSequenceAssemblyResponse assembleUploadedSequence(@RequestBody LigerUploadedSequenceRequest request) {
+        if (request == null || request.structures == null || request.structures.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one ordered structure is required");
+        }
+        List<SequenceGraphAssembler.Part> parts = request.structures.stream().map(part ->
+                new SequenceGraphAssembler.Part(part.sentenceId, part.syntaxVariantId, part.solutionKey,
+                        request.side, parseStructureMap(part.structure))).collect(Collectors.toList());
+        SequenceGraphAssembler.AssemblyResult assembled = SequenceGraphAssembler.assembleDetailed(parts);
+        assembled.structure().local_id = request.id;
+
+        LigerSequenceAssemblyResponse response = new LigerSequenceAssemblyResponse();
+        response.id = request.id;
+        response.side = request.side;
+        response.graph = new LigerWebGraph(assembled.structure().constraints, assembled.structure().annotation);
+        response.structureJson = assembled.structure().toJson();
+        response.rebasedIds = assembled.rebasedIds();
+        response.provenance = assembled.provenance().stream().map(source ->
+                new LigerSequenceAssemblyResponse.Provenance(source.sourceIndex(), source.sentenceId(),
+                        source.syntaxVariantId(), source.solutionKey(), source.side(), source.rootId(),
+                        source.rebasedIds())).collect(Collectors.toList());
+        return response;
+    }
+
+    @CrossOrigin
+    @PostMapping(value = "/combine_nli_structures", produces = "application/json", consumes = "application/json")
+    public LigerNliStructureResponse combineNliStructures(@RequestBody LigerNliStructureRequest request) {
+        if (request == null || request.premise == null || request.conclusion == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "premise and conclusion structures are required");
+        }
+        SequenceGraphAssembler.AssemblyResult assembled = SequenceGraphAssembler.assembleDetailed(List.of(
+                new SequenceGraphAssembler.Part(null, null, null, "premise", parseStructureMap(request.premise)),
+                new SequenceGraphAssembler.Part(null, null, null, "conclusion", parseStructureMap(request.conclusion))));
+        LinguisticStructure combined = assembled.structure();
+        combined.local_id = request.id;
+        String premiseRoot = assembled.provenance().get(0).rootId();
+        String conclusionRoot = assembled.provenance().get(1).rootId();
+        if (premiseRoot == null || conclusionRoot == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Both NLI sides must have a graph root");
+        }
+        combined.constraints.add(new GraphConstraint(
+                combined.cp.rootChoice.stream().map(de.ukon.liger.packing.ChoiceVar::copy)
+                        .collect(Collectors.toCollection(LinkedHashSet::new)),
+                premiseRoot, "NLI_BOUNDARY", conclusionRoot, "c", false));
+        return nliResponse(request.id, combined, premiseRoot, conclusionRoot);
+    }
+
+    @CrossOrigin
+    @PostMapping(value = "/overlay_nli_structures", produces = "application/json", consumes = "application/json")
+    public LigerNliStructureResponse overlayNliStructures(@RequestBody LigerNliOverlayRequest request) {
+        if (request == null || request.syntax == null || request.semantics == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "syntax and semantics structures are required");
+        }
+        LinguisticStructure syntax = parseStructureMap(request.syntax);
+        GraphConstraint boundary = requireSingleNliBoundary(syntax);
+        LinguisticStructure semantics = parseStructureMap(request.semantics);
+        // Both independently combined sides carry an NLI boundary. The syntax
+        // boundary is authoritative for the overlaid graph; retaining the
+        // semantic copy would make the complete structure ambiguous.
+        semantics.constraints.removeIf(constraint ->
+                "NLI_BOUNDARY".equals(constraint.getRelationLabel()));
+        semantics.annotation.removeIf(constraint ->
+                "NLI_BOUNDARY".equals(constraint.getRelationLabel()));
+        LinguisticStructure merged = LinguisticStructureMerger.merge(syntax, semantics);
+        merged.local_id = request.id;
+        requireSingleNliBoundary(merged);
+        return nliResponse(request.id, merged, boundary.getFsNode(), String.valueOf(boundary.getFsValue()));
+    }
+
+    @CrossOrigin
+    @PostMapping(value = "/apply_rules_nli", produces = "application/json", consumes = "application/json")
+    public LigerRuleAnnotationResponse applyRulesNli(@RequestBody LigerNliRuleRequest request) {
+        if (request == null || request.structure == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A combined NLI structure is required");
+        }
+        LinguisticStructure structure = parseStructureMap(request.structure);
+        requireSingleNliBoundary(structure);
+        return applyRulesToStructures(List.of(structure), request.ruleString);
+    }
+
+    private LigerNliStructureResponse nliResponse(String id, LinguisticStructure structure,
+                                                  String premiseRoot, String conclusionRoot) {
+        LigerNliStructureResponse response = new LigerNliStructureResponse();
+        response.id = id;
+        response.graph = new LigerWebGraph(structure.constraints, structure.annotation);
+        response.structureJson = structure.toJson();
+        response.premiseRoot = premiseRoot;
+        response.conclusionRoot = conclusionRoot;
+        return response;
+    }
+
+    private GraphConstraint requireSingleNliBoundary(LinguisticStructure structure) {
+        List<GraphConstraint> boundaries = structure.returnFullGraph().stream()
+                .filter(constraint -> "NLI_BOUNDARY".equals(constraint.getRelationLabel()))
+                .collect(Collectors.toList());
+        if (boundaries.size() != 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Expected exactly one directional NLI_BOUNDARY relation, found " + boundaries.size());
+        }
+        return boundaries.get(0);
+    }
+
     private QueryMatchSummary summarizeQueryMatches(List<QueryParserResult> results) {
         LinkedHashMap<String, LigerQuerySolution> uniqueSolutions = new LinkedHashMap<>();
         Set<String> nodeIds = new LinkedHashSet<>();
@@ -729,6 +857,12 @@ public class LigerController {
                 new LigerStructureUploadRequest(request.content, request.format, request.id)
         );
 
+        return applyRulesToStructures(structures, request.ruleString);
+    }
+
+    private LigerRuleAnnotationResponse applyRulesToStructures(List<LinguisticStructure> structures,
+                                                               String ruleString) {
+
         List<LigerRuleAnnotation> annotations = new ArrayList<>();
         StringBuilder sentenceBuilder = new StringBuilder();
 
@@ -744,8 +878,11 @@ public class LigerController {
                 sentenceBuilder.append(fs.text);
             }
 
-            RuleParser rp = new RuleParser(new ArrayList<>(Collections.singletonList(fs)), request.ruleString == null ? "" : request.ruleString);
+            RuleParser rp = new RuleParser(new ArrayList<>(Collections.singletonList(fs)), ruleString == null ? "" : ruleString);
             Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Collections.singleton(fs)));
+            if (branches.isEmpty()) {
+                branches = new LinkedHashSet<>(Collections.singleton(fs));
+            }
 
             for (LinguisticStructure branch : branches) {
                 if (branch == null) {
@@ -1211,6 +1348,7 @@ public class LigerController {
             List<String> axioms = new ArrayList<>();
 
             List<String> semString = new ArrayList<>();
+            List<LigerBatchVariant> variantRecords = new ArrayList<>();
 
             List<LinguisticStructure> fsList = parser.parseSingle(sentence);
 
@@ -1219,7 +1357,8 @@ public class LigerController {
 
             LinkedHashSet<LigerRule> appliedLigerRules = new LinkedHashSet<>();
 
-            for (LinguisticStructure fs : fsList) {
+            for (int variantIndex = 0; variantIndex < fsList.size(); variantIndex++) {
+                LinguisticStructure fs = fsList.get(variantIndex);
 
                 if (!request.ruleString.equals("")) {
                     rp.addAnnotation2(fs);
@@ -1246,7 +1385,11 @@ public class LigerController {
                             .filter(x -> !axioms.contains(x)).collect(Collectors.toList()));
                 }
 
-                semString.add(sem.returnMeaningConstructors(fs, !starter.isGlue, false, true));
+                String variantMeaningConstructors = sem.returnMeaningConstructors(fs, !starter.isGlue, false, true);
+                semString.add(variantMeaningConstructors);
+                String solutionKey = solutionKeyFor(fs, variantIndex);
+                variantRecords.add(new LigerBatchVariant(id, solutionKey, solutionKey, fs.toJson(),
+                        new LigerWebGraph(fs.constraints, fs.annotation), variantMeaningConstructors, i));
                 addedAnnotations = addedAnnotations + fs.annotation.size();
             }
             String currentSemString = String.join("\n", semString);
@@ -1261,7 +1404,10 @@ public class LigerController {
             reportBuilder.append(String.format("%s\t\t%s\t\t%s\t\t%s", id, appliedLigerRules.size(), addedAnnotations, meaningConstructors.size()));
             reportBuilder.append(System.lineSeparator());
 
-            output.put(id, new LigerRuleAnnotation(sentence, lg, appliedLigerRules, currentSemString, fsList.size(),axioms));
+            LigerRuleAnnotation batchAnnotation = new LigerRuleAnnotation(
+                    sentence, lg, appliedLigerRules, currentSemString, fsList.size(), axioms);
+            batchAnnotation.variants = variantRecords;
+            output.put(id, batchAnnotation);
             allAppliedRules.put(id,appliedLigerRules);
         }
 

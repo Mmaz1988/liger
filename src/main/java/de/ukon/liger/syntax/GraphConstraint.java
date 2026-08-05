@@ -158,6 +158,7 @@ public class GraphConstraint implements Serializable {
         } else {
             constraintProperties.put("projection", "false");
         }
+        constraintProperties.put("root", this.root);
 
 
         return constraintProperties;
@@ -195,6 +196,9 @@ public class GraphConstraint implements Serializable {
         g.setFsNode(String.valueOf(input.get("sourceNode")));
         g.setRelationLabel((String) input.get("relationLabel"));
         g.setFsValue(String.valueOf(input.get("targetNode")));
+        if (input.containsKey("root")) {
+            g.setRoot(Boolean.parseBoolean(String.valueOf(input.get("root"))));
+        }
 
         return g;
     }

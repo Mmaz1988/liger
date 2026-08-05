@@ -35,26 +35,16 @@ final class LinguisticStructureMerger {
     }
 
     private static LinguisticStructure copy(LinguisticStructure source) {
-        if (source == null) {
-            return null;
-        }
-
-        LinguisticStructure copy = new LinguisticStructure();
-        copy.local_id = source.local_id;
-        copy.text = source.text;
-        copy.constraints = source.constraints == null ? new ArrayList<>() : new ArrayList<>(source.constraints);
-        copy.annotation = source.annotation == null ? new ArrayList<>() : new ArrayList<>(source.annotation);
-        copy.cp = source.cp;
-        return copy;
+        return source == null ? null : source.copy();
     }
 
     private static List<GraphConstraint> concat(List<GraphConstraint> left, List<GraphConstraint> right) {
         List<GraphConstraint> merged = new ArrayList<>();
         if (left != null) {
-            merged.addAll(left);
+                left.stream().map(GraphConstraint::copy).forEach(merged::add);
         }
         if (right != null) {
-            merged.addAll(right);
+            right.stream().map(GraphConstraint::copy).forEach(merged::add);
         }
         return merged;
     }
@@ -63,12 +53,12 @@ final class LinguisticStructureMerger {
         Map<String, GraphConstraint> merged = new LinkedHashMap<>();
         if (left != null) {
             for (GraphConstraint constraint : left) {
-                merged.putIfAbsent(constraintKey(constraint), constraint);
+                merged.putIfAbsent(constraintKey(constraint), constraint.copy());
             }
         }
         if (right != null) {
             for (GraphConstraint constraint : right) {
-                merged.putIfAbsent(constraintKey(constraint), constraint);
+                merged.putIfAbsent(constraintKey(constraint), constraint.copy());
             }
         }
         return new ArrayList<>(merged.values());
@@ -93,36 +83,38 @@ final class LinguisticStructureMerger {
 
     private static ChoiceSpace mergeChoiceSpace(ChoiceSpace left, ChoiceSpace right) {
         if (left == null) {
-            return right == null ? new ChoiceSpace() : right;
+            return right == null ? new ChoiceSpace() : right.copy();
         }
         if (right == null) {
-            return left;
+            return left.copy();
         }
 
         ChoiceSpace merged = new ChoiceSpace();
         merged.choiceNodes = new ArrayList<>();
         if (left.choiceNodes != null) {
-            merged.choiceNodes.addAll(left.choiceNodes);
+            left.choiceNodes.stream().map(ChoiceNode::copy).forEach(merged.choiceNodes::add);
         }
         if (right.choiceNodes != null) {
-            merged.choiceNodes.addAll(right.choiceNodes);
+            right.choiceNodes.stream().map(ChoiceNode::copy).forEach(merged.choiceNodes::add);
         }
 
         Set<Set<de.ukon.liger.packing.ChoiceVar>> choices = new LinkedHashSet<>();
         if (left.choices != null) {
-            choices.addAll(left.choices);
+            left.choices.stream().map(set -> set.stream().map(de.ukon.liger.packing.ChoiceVar::copy)
+                    .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new))).forEach(choices::add);
         }
         if (right.choices != null) {
-            choices.addAll(right.choices);
+            right.choices.stream().map(set -> set.stream().map(de.ukon.liger.packing.ChoiceVar::copy)
+                    .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new))).forEach(choices::add);
         }
         merged.choices = choices;
 
         merged.rootChoice = new LinkedHashSet<>();
         if (left.rootChoice != null) {
-            merged.rootChoice.addAll(left.rootChoice);
+            left.rootChoice.stream().map(de.ukon.liger.packing.ChoiceVar::copy).forEach(merged.rootChoice::add);
         }
         if (right.rootChoice != null) {
-            merged.rootChoice.addAll(right.rootChoice);
+            right.rootChoice.stream().map(de.ukon.liger.packing.ChoiceVar::copy).forEach(merged.rootChoice::add);
         }
         merged.allVariables = new ArrayList<>();
         if (left.allVariables != null) {

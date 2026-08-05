@@ -103,6 +103,8 @@ public class LigerWebGraph {
         Map<String, String> nodeTypes = new HashMap<>();
         List<LigerGraphComponent> edges = new ArrayList<>();
 
+        Set<String> sourceNodeIds = input.stream().map(GraphConstraint::getFsNode)
+                .filter(Objects::nonNull).collect(Collectors.toSet());
         for (int i = 0; i < input.size(); i++)
         {
             GraphConstraint g = input.get(i);
@@ -129,7 +131,8 @@ public class LigerWebGraph {
                 }
             }
 
-            if (NODE_ID_POLICY.isNodeReference(String.valueOf(g.getFsValue()))
+            if ((NODE_ID_POLICY.isNodeReference(String.valueOf(g.getFsValue()))
+                    || sourceNodeIds.contains(String.valueOf(g.getFsValue())))
             ) {
                 if (!nodes.containsKey(g.getFsValue().toString()))
                 {

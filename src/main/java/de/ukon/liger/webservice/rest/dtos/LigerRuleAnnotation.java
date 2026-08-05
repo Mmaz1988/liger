@@ -32,6 +32,8 @@ public class LigerRuleAnnotation {
 
     public List<String> axioms;
 
+    public List<LigerBatchVariant> variants = new java.util.ArrayList<>();
+
     public LigerRuleAnnotation(LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules)
     {
         this.graph = graph;

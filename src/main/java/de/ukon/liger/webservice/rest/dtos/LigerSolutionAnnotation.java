@@ -14,6 +14,7 @@ public class LigerSolutionAnnotation {
     public int numberOfMCsets;
     public List<String> axioms;
     public List<LinkedHashMap<String, Object>> structureVariants;
+    public List<LigerSequencePartResult> sequenceParts;
 
     public LigerSolutionAnnotation(String solutionKey,
                                    LigerWebGraph graph,
@@ -30,5 +31,6 @@ public class LigerSolutionAnnotation {
         this.numberOfMCsets = numberOfMCsets;
         this.axioms = axioms;
         this.structureVariants = new java.util.ArrayList<>();
+        this.sequenceParts = new java.util.ArrayList<>();
     }
 }
