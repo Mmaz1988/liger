@@ -379,11 +379,9 @@ public final class SequenceGraphAssembler {
         if (root == null) {
             return;
         }
-        addMetadata(annotations, reading, root, "SOURCE-INDEX", Integer.toString(provenance.sourceIndex()));
         addMetadata(annotations, reading, root, "SENTENCE-ID", provenance.sentenceId());
         addMetadata(annotations, reading, root, "SYNTAX-VARIANT-ID", provenance.syntaxVariantId());
         addMetadata(annotations, reading, root, "SOLUTION-KEY", provenance.solutionKey());
-        addMetadata(annotations, reading, root, "NLI-SIDE", provenance.side());
     }
 
     private static void addMetadata(List<GraphConstraint> annotations, Set<ChoiceVar> reading,

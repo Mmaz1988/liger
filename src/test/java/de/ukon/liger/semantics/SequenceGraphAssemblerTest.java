@@ -112,6 +112,8 @@ class SequenceGraphAssemblerTest {
         assertEquals("drsState2", assembled.provenance().get(1).rootId());
         assertTrue(assembled.structure().annotation.stream().anyMatch(c -> "SENTENCE-ID".equals(c.getRelationLabel())
                 && "S2".equals(c.getFsValue())));
+        assertTrue(assembled.structure().annotation.stream().noneMatch(c ->
+                "SOURCE-INDEX".equals(c.getRelationLabel()) || "NLI-SIDE".equals(c.getRelationLabel())));
 
         first.constraints.get(0).setFsValue("mutated");
         first.cp.allVariables.add("MUTATED");
