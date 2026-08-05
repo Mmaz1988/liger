@@ -282,20 +282,29 @@ public class LigerController {
                     .collect(Collectors.toList());
 
             List<String> sentenceMeaningConstructors = new ArrayList<>();
+            List<Integer> sourceIndexOffsets = new ArrayList<>();
             int sourceIndexOffset = 0;
             for (LinguisticStructure structure : structures) {
                 semantics.annotateSyntheticMcIndices(structure);
                 String sentenceMeaningConstructorsText = semantics.returnMeaningConstructors(
                         structure, !starter.isGlue, false, true, true);
+                sourceIndexOffsets.add(sourceIndexOffset);
                 sentenceMeaningConstructors.add(
                         shiftSourceIndexes(sentenceMeaningConstructorsText, sourceIndexOffset));
                 sourceIndexOffset += maxSyntheticMcIndex(structure);
             }
 
-            LinguisticStructure sequence = SequenceGraphAssembler.assemble(structures);
-            String meaningConstructors = sentenceMeaningConstructors.isEmpty()
-                    ? ""
-                    : sentenceMeaningConstructors.get(sentenceMeaningConstructors.size() - 1);
+            List<SequenceGraphAssembler.Part> parts = new ArrayList<>();
+            for (int i = 0; i < structures.size(); i++) {
+                LinguisticStructure structure = structures.get(i);
+                String structureId = structure.local_id;
+                parts.add(new SequenceGraphAssembler.Part(
+                        "S" + i, structureId, structureId, null, structure));
+            }
+            SequenceGraphAssembler.AssemblyResult assembly =
+                    SequenceGraphAssembler.assembleDetailed(parts);
+            LinguisticStructure sequence = assembly.structure();
+            String meaningConstructors = String.join("\n", sentenceMeaningConstructors);
             LinkedHashSet<LigerRule> appliedRules = variant.stream()
                     .flatMap(candidate -> candidate.appliedRules().stream())
                     .collect(Collectors.toCollection(LinkedHashSet::new));
@@ -309,14 +318,32 @@ public class LigerController {
                     .collect(Collectors.joining("+"));
             String key = "sequence-" + variantIndex + "-" + sourceKey;
 
-            solutions.add(new LigerSolutionAnnotation(
+            LigerSolutionAnnotation solution = new LigerSolutionAnnotation(
                     key,
                     new LigerWebGraph(sequence.constraints, sequence.annotation),
                     sequence.toJson(),
                     appliedRules,
                     meaningConstructors,
                     countMeaningConstructorSets(meaningConstructors),
-                    axioms));
+                    axioms);
+            solution.sequenceParts = new ArrayList<>();
+            for (int i = 0; i < sentenceMeaningConstructors.size(); i++) {
+                SequenceGraphAssembler.PartProvenance part = assembly.provenance().get(i);
+                solution.sequenceParts.add(new LigerSequencePartResult(
+                        i,
+                        part.sentenceId(),
+                        part.syntaxVariantId(),
+                        part.solutionKey(),
+                        sentenceMeaningConstructors.get(i),
+                        sourceIndexOffsets.get(i),
+                        part.rootId()));
+            }
+            solution.provenance = assembly.provenance().stream()
+                    .map(part -> new LigerSequenceAssemblyResponse.Provenance(
+                            part.sourceIndex(), part.sentenceId(), part.syntaxVariantId(),
+                            part.solutionKey(), part.side(), part.rootId(), part.rebasedIds()))
+                    .collect(Collectors.toList());
+            solutions.add(solution);
             variantIndex++;
         }
 
