@@ -25,8 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class LigerNliCompositionTest {
 
     @Test
-    void retainsEverySentenceMeaningConstructorSetInOrder() {
-        assertEquals("{\nfirst : a\n}\n{\nsecond : b\n}", LigerController.joinMeaningConstructors(List.of(
+    void exposesOnlyTheMostRecentSentenceMeaningConstructorSet() {
+        assertEquals("{\nsecond : b\n}", LigerController.latestMeaningConstructors(List.of(
                 "{\nfirst : a\n}", "{\nsecond : b\n}")));
     }
 

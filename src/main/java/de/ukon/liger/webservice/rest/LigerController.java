@@ -300,15 +300,13 @@ public class LigerController {
                 String sentenceId = request.sentenceIds != null && i < request.sentenceIds.size()
                         && request.sentenceIds.get(i) != null && !request.sentenceIds.get(i).isBlank()
                         ? request.sentenceIds.get(i) : "sentence-" + (i + 1);
-                String solutionKey = solutionKeyFor(structure, i);
+                String solutionKey = sentenceId + ":" + solutionKeyFor(structure, i);
                 sequenceParts.add(new SequenceGraphAssembler.Part(
                         sentenceId, solutionKey, solutionKey, null, structure));
             }
             SequenceGraphAssembler.AssemblyResult assembly = SequenceGraphAssembler.assembleDetailed(sequenceParts);
             LinguisticStructure sequence = assembly.structure();
-            String meaningConstructors = sentenceMeaningConstructors.isEmpty()
-                    ? ""
-                    : joinMeaningConstructors(sentenceMeaningConstructors);
+            String meaningConstructors = latestMeaningConstructors(sentenceMeaningConstructors);
             LinkedHashSet<LigerRule> appliedRules = variant.stream()
                     .flatMap(candidate -> candidate.appliedRules().stream())
                     .collect(Collectors.toCollection(LinkedHashSet::new));
@@ -352,9 +350,10 @@ public class LigerController {
         return matcher.replaceAll(match -> "[" + (Integer.parseInt(match.group(1)) + offset) + "]");
     }
 
-    static String joinMeaningConstructors(List<String> sentenceMeaningConstructors) {
-        return sentenceMeaningConstructors == null ? "" : sentenceMeaningConstructors.stream()
-                .filter(Objects::nonNull).collect(Collectors.joining("\n"));
+    static String latestMeaningConstructors(List<String> sentenceMeaningConstructors) {
+        return sentenceMeaningConstructors == null || sentenceMeaningConstructors.isEmpty()
+                ? "" : Objects.requireNonNullElse(
+                        sentenceMeaningConstructors.get(sentenceMeaningConstructors.size() - 1), "");
     }
 
     private int maxSyntheticMcIndex(LinguisticStructure structure) {
