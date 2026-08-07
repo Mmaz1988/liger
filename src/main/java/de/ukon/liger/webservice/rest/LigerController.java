@@ -394,7 +394,7 @@ public class LigerController {
         SequenceAnalysis result = new SequenceAnalysis(id, String.join("\n", texts));
         result.syntax.add(new SyntacticAnalysis(id, sequence.toJson(),
                 new LigerWebGraph(sequence.constraints, sequence.annotation),
-                meaningConstructors, countMeaningConstructorSets(meaningConstructors)));
+                null, 0));
         for (int index = 0; index < structures.size(); index++) {
             LinguisticStructure structure = structures.get(index);
             String sentenceId = sentenceIdFor(sentenceIds, index);
