@@ -16,6 +16,8 @@ public class LigerSolutionAnnotation {
     public List<LinkedHashMap<String, Object>> structureVariants;
     public List<LigerSequencePartResult> sequenceParts;
     public List<LigerSequenceAssemblyResponse.Provenance> provenance;
+    public SentenceAnalysis sentenceAnalysis;
+    public SequenceAnalysis sequenceAnalysis;
 
     public LigerSolutionAnnotation(String solutionKey,
                                    LigerWebGraph graph,

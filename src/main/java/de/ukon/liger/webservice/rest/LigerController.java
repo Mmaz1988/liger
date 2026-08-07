@@ -130,15 +130,19 @@ public class LigerController {
             LOGGER.fine(fs.constraints.toString());
             sem.annotateSyntheticMcIndices(fs);
             String semString = sem.returnMultiStageMeaningConstructors(fs);
-            solutions.add(new LigerSolutionAnnotation(
-                    solutionKeyFor(fs, i),
+            String solutionKey = solutionKeyFor(fs, i);
+            LigerSolutionAnnotation solution = new LigerSolutionAnnotation(
+                    solutionKey,
                     new LigerWebGraph(fs.constraints, fs.annotation),
                     fs.toJson(),
                     new LinkedHashSet<>(),
                     semString,
                     countMeaningConstructorSets(semString),
                     new ArrayList<>()
-            ));
+            );
+            solution.sentenceAnalysis = sentenceSyntaxAnalysis(
+                    solutionKey, request.sentence, fs, solution.graph);
+            solutions.add(solution);
         }
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
@@ -196,8 +200,9 @@ public class LigerController {
 
             List<String> axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(primary, logicType);
 
+            String solutionKey = solutionKeyFor(fs, i);
             LigerSolutionAnnotation solutionAnnotation = new LigerSolutionAnnotation(
-                    solutionKeyFor(fs, i),
+                    solutionKey,
                     lg,
                     primary.toJson(),
                     appliedLigerRules,
@@ -205,6 +210,8 @@ public class LigerController {
                     countMeaningConstructorSets(currentSemString),
                     axioms
             );
+            solutionAnnotation.sentenceAnalysis = sentenceSyntaxAnalysis(
+                    solutionKey, request.sentence, primary, lg);
             solutionAnnotation.structureVariants = toStructureVariants(branches);
             solutions.add(solutionAnnotation);
         }
@@ -346,11 +353,13 @@ public class LigerController {
                      meaningConstructors,
                      countMeaningConstructorSets(meaningConstructors),
                      axioms);
+             solution.sequenceAnalysis = sequenceSyntaxAnalysis(
+                     key, request.sentences, request.sentenceIds, structures, sequence);
             for (int sentenceIndex = 0; sentenceIndex < structures.size(); sentenceIndex++) {
                 LinguisticStructure structure = structures.get(sentenceIndex);
                 solution.sequenceParts.add(new LigerSequencePartResult(
                         sentenceIndex,
-                        "sentence-" + (sentenceIndex + 1),
+                        sentenceIdFor(request.sentenceIds, sentenceIndex),
                         structure.local_id,
                         structure.local_id,
                         sentenceMeaningConstructors.get(sentenceIndex),
@@ -363,6 +372,42 @@ public class LigerController {
 
         return new LigerSolutionAnnotationResponse(
                 String.join("\n", request.sentences), solutions);
+    }
+
+    private SentenceAnalysis sentenceSyntaxAnalysis(String id, String text,
+                                                     LinguisticStructure structure,
+                                                     LigerWebGraph graph) {
+        SentenceAnalysis sentence = new SentenceAnalysis(id, text);
+        sentence.syntax.add(new SyntacticAnalysis(id, structure.toJson(), graph));
+        return sentence;
+    }
+
+    private SequenceAnalysis sequenceSyntaxAnalysis(String id, List<String> texts,
+                                                     List<String> sentenceIds,
+                                                     List<LinguisticStructure> structures,
+                                                     LinguisticStructure sequence) {
+        SequenceAnalysis result = new SequenceAnalysis(id, String.join("\n", texts));
+        result.syntax.add(new SyntacticAnalysis(id, sequence.toJson(),
+                new LigerWebGraph(sequence.constraints, sequence.annotation)));
+        for (int index = 0; index < structures.size(); index++) {
+            LinguisticStructure structure = structures.get(index);
+            String sentenceId = sentenceIdFor(sentenceIds, index);
+            SentenceAnalysis sentence = new SentenceAnalysis(sentenceId,
+                    index < texts.size() ? texts.get(index) : sentenceId);
+            String syntaxId = structure.local_id == null ? sentenceId : structure.local_id;
+            sentence.syntax.add(new SyntacticAnalysis(syntaxId, structure.toJson(),
+                    new LigerWebGraph(structure.constraints, structure.annotation)));
+            result.sentences.add(sentence);
+        }
+        return result;
+    }
+
+    private String sentenceIdFor(List<String> sentenceIds, int index) {
+        if (sentenceIds != null && index < sentenceIds.size()
+                && sentenceIds.get(index) != null && !sentenceIds.get(index).isBlank()) {
+            return sentenceIds.get(index);
+        }
+        return "sentence-" + (index + 1);
     }
 
     private String shiftSourceIndexes(String meaningConstructors, int offset) {
