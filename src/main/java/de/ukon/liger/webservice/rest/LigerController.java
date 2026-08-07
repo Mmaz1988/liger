@@ -141,7 +141,7 @@ public class LigerController {
                     new ArrayList<>()
             );
             solution.sentenceAnalysis = sentenceSyntaxAnalysis(
-                    solutionKey, request.sentence, fs, solution.graph);
+                    solutionKey, request.sentence, fs, solution.graph, semString);
             solutions.add(solution);
         }
 
@@ -211,7 +211,7 @@ public class LigerController {
                     axioms
             );
             solutionAnnotation.sentenceAnalysis = sentenceSyntaxAnalysis(
-                    solutionKey, request.sentence, primary, lg);
+                    solutionKey, request.sentence, primary, lg, currentSemString);
             solutionAnnotation.structureVariants = toStructureVariants(branches);
             solutions.add(solutionAnnotation);
         }
@@ -354,7 +354,8 @@ public class LigerController {
                      countMeaningConstructorSets(meaningConstructors),
                      axioms);
              solution.sequenceAnalysis = sequenceSyntaxAnalysis(
-                     key, request.sentences, request.sentenceIds, structures, sequence);
+                     key, request.sentences, request.sentenceIds, structures, sequence,
+                     sentenceMeaningConstructors, meaningConstructors);
             for (int sentenceIndex = 0; sentenceIndex < structures.size(); sentenceIndex++) {
                 LinguisticStructure structure = structures.get(sentenceIndex);
                 solution.sequenceParts.add(new LigerSequencePartResult(
@@ -376,19 +377,24 @@ public class LigerController {
 
     private SentenceAnalysis sentenceSyntaxAnalysis(String id, String text,
                                                      LinguisticStructure structure,
-                                                     LigerWebGraph graph) {
+                                                     LigerWebGraph graph,
+                                                     String meaningConstructors) {
         SentenceAnalysis sentence = new SentenceAnalysis(id, text);
-        sentence.syntax.add(new SyntacticAnalysis(id, structure.toJson(), graph));
+        sentence.syntax.add(new SyntacticAnalysis(id, structure.toJson(), graph,
+                meaningConstructors, countMeaningConstructorSets(meaningConstructors)));
         return sentence;
     }
 
     private SequenceAnalysis sequenceSyntaxAnalysis(String id, List<String> texts,
                                                      List<String> sentenceIds,
                                                      List<LinguisticStructure> structures,
-                                                     LinguisticStructure sequence) {
+                                                     LinguisticStructure sequence,
+                                                     List<String> sentenceMeaningConstructors,
+                                                     String meaningConstructors) {
         SequenceAnalysis result = new SequenceAnalysis(id, String.join("\n", texts));
         result.syntax.add(new SyntacticAnalysis(id, sequence.toJson(),
-                new LigerWebGraph(sequence.constraints, sequence.annotation)));
+                new LigerWebGraph(sequence.constraints, sequence.annotation),
+                meaningConstructors, countMeaningConstructorSets(meaningConstructors)));
         for (int index = 0; index < structures.size(); index++) {
             LinguisticStructure structure = structures.get(index);
             String sentenceId = sentenceIdFor(sentenceIds, index);
@@ -396,7 +402,9 @@ public class LigerController {
                     index < texts.size() ? texts.get(index) : sentenceId);
             String syntaxId = structure.local_id == null ? sentenceId : structure.local_id;
             sentence.syntax.add(new SyntacticAnalysis(syntaxId, structure.toJson(),
-                    new LigerWebGraph(structure.constraints, structure.annotation)));
+                    new LigerWebGraph(structure.constraints, structure.annotation),
+                    sentenceMeaningConstructors.get(index),
+                    countMeaningConstructorSets(sentenceMeaningConstructors.get(index))));
             result.sentences.add(sentence);
         }
         return result;
