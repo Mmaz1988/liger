@@ -232,7 +232,25 @@ public class LigerController {
         List<List<SequenceCandidate>> candidatesBySentence = new ArrayList<>();
         for (int sentenceIndex = 0; sentenceIndex < request.sentences.size(); sentenceIndex++) {
             String sentence = request.sentences.get(sentenceIndex);
-            List<LinguisticStructure> parsed = parser.parseSingle(sentence, true);
+            List<LinguisticStructure> parsed;
+            boolean suppliedAllSentences = request.parsedSentences != null
+                    && request.parsedSentences.size() == request.sentences.size()
+                    && request.parsedSentences.stream().allMatch(values -> values != null && !values.isEmpty());
+            boolean suppliedLastSentence = !suppliedAllSentences
+                    && sentenceIndex == request.sentences.size() - 1
+                    && request.parsedLastSentence != null
+                    && !request.parsedLastSentence.isEmpty();
+            if (suppliedAllSentences) {
+                parsed = request.parsedSentences.get(sentenceIndex).stream()
+                        .map(LinguisticStructure::parseFromJson)
+                        .toList();
+            } else if (suppliedLastSentence) {
+                parsed = request.parsedLastSentence.stream()
+                        .map(LinguisticStructure::parseFromJson)
+                        .toList();
+            } else {
+                parsed = parser.parseSingle(sentence, true);
+            }
             if (parsed == null || parsed.isEmpty()) {
                 return LigerSolutionAnnotationResponse.failure(
                         String.join("\n", request.sentences),
@@ -240,6 +258,17 @@ public class LigerController {
                         "No parse was found for sentence " + (sentenceIndex + 1));
             }
             List<SequenceCandidate> candidates = new ArrayList<>();
+            if (suppliedAllSentences || suppliedLastSentence) {
+                // The client has already parsed and rewritten the current
+                // sentence through /apply_rules_xle. Reuse those structures;
+                // applying the base rule set again would duplicate work and
+                // annotations.
+                for (LinguisticStructure structure : parsed) {
+                    candidates.add(new SequenceCandidate(structure, new LinkedHashSet<>()));
+                }
+                candidatesBySentence.add(candidates);
+                continue;
+            }
             for (LinguisticStructure structure : parsed) {
                 if (request.ruleString == null || request.ruleString.isBlank()) {
                     candidates.add(new SequenceCandidate(structure, new LinkedHashSet<>()));
@@ -282,28 +311,19 @@ public class LigerController {
                     .collect(Collectors.toList());
 
             List<String> sentenceMeaningConstructors = new ArrayList<>();
-            List<Integer> sourceIndexOffsets = new ArrayList<>();
+            List<Integer> sentenceSourceOffsets = new ArrayList<>();
             int sourceIndexOffset = 0;
             for (LinguisticStructure structure : structures) {
                 semantics.annotateSyntheticMcIndices(structure);
+                sentenceSourceOffsets.add(sourceIndexOffset);
                 String sentenceMeaningConstructorsText = semantics.returnMeaningConstructors(
                         structure, !starter.isGlue, false, true, true);
-                sourceIndexOffsets.add(sourceIndexOffset);
                 sentenceMeaningConstructors.add(
                         shiftSourceIndexes(sentenceMeaningConstructorsText, sourceIndexOffset));
                 sourceIndexOffset += maxSyntheticMcIndex(structure);
             }
 
-            List<SequenceGraphAssembler.Part> parts = new ArrayList<>();
-            for (int i = 0; i < structures.size(); i++) {
-                LinguisticStructure structure = structures.get(i);
-                String structureId = structure.local_id;
-                parts.add(new SequenceGraphAssembler.Part(
-                        "S" + i, structureId, structureId, null, structure));
-            }
-            SequenceGraphAssembler.AssemblyResult assembly =
-                    SequenceGraphAssembler.assembleDetailed(parts);
-            LinguisticStructure sequence = assembly.structure();
+            LinguisticStructure sequence = SequenceGraphAssembler.assemble(structures);
             String meaningConstructors = String.join("\n", sentenceMeaningConstructors);
             LinkedHashSet<LigerRule> appliedRules = variant.stream()
                     .flatMap(candidate -> candidate.appliedRules().stream())
@@ -319,30 +339,24 @@ public class LigerController {
             String key = "sequence-" + variantIndex + "-" + sourceKey;
 
             LigerSolutionAnnotation solution = new LigerSolutionAnnotation(
-                    key,
-                    new LigerWebGraph(sequence.constraints, sequence.annotation),
-                    sequence.toJson(),
-                    appliedRules,
-                    meaningConstructors,
-                    countMeaningConstructorSets(meaningConstructors),
-                    axioms);
-            solution.sequenceParts = new ArrayList<>();
-            for (int i = 0; i < sentenceMeaningConstructors.size(); i++) {
-                SequenceGraphAssembler.PartProvenance part = assembly.provenance().get(i);
+                     key,
+                     new LigerWebGraph(sequence.constraints, sequence.annotation),
+                     sequence.toJson(),
+                     appliedRules,
+                     meaningConstructors,
+                     countMeaningConstructorSets(meaningConstructors),
+                     axioms);
+            for (int sentenceIndex = 0; sentenceIndex < structures.size(); sentenceIndex++) {
+                LinguisticStructure structure = structures.get(sentenceIndex);
                 solution.sequenceParts.add(new LigerSequencePartResult(
-                        i,
-                        part.sentenceId(),
-                        part.syntaxVariantId(),
-                        part.solutionKey(),
-                        sentenceMeaningConstructors.get(i),
-                        sourceIndexOffsets.get(i),
-                        part.rootId()));
+                        sentenceIndex,
+                        "sentence-" + (sentenceIndex + 1),
+                        structure.local_id,
+                        structure.local_id,
+                        sentenceMeaningConstructors.get(sentenceIndex),
+                        sentenceSourceOffsets.get(sentenceIndex),
+                        structure.local_id));
             }
-            solution.provenance = assembly.provenance().stream()
-                    .map(part -> new LigerSequenceAssemblyResponse.Provenance(
-                            part.sourceIndex(), part.sentenceId(), part.syntaxVariantId(),
-                            part.solutionKey(), part.side(), part.rootId(), part.rebasedIds()))
-                    .collect(Collectors.toList());
             solutions.add(solution);
             variantIndex++;
         }
@@ -794,8 +808,14 @@ public class LigerController {
                         addedAnnotationsForBranch(rp, branch);
                 LOGGER.info("Rule branch " + branch.local_id + " added facts by rule: "
                         + branchAddedAnnotations.entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().size(),
+                                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().size(),
                                 (left, right) -> left, LinkedHashMap::new)));
+                LOGGER.info("Rule branch " + branch.local_id + " added fact labels: "
+                        + branchAddedAnnotations.values().stream()
+                        .flatMap(Collection::stream)
+                        .map(fact -> fact.getRelationLabel() + "(" + fact.getFsNode()
+                                + "," + fact.getFsValue() + ")")
+                        .toList());
                 annotation.highlightedNodeIds = collectHighlightedNodeIdsFromGroups(branchAddedAnnotations.values());
                 annotation.highlightedNodeIdsByRule = collectHighlightedNodeIdsByRule(branchAddedAnnotations);
                 annotation.addedAnnotationsByRule = branchAddedAnnotations;
