@@ -33,7 +33,6 @@ public class LigerWebGraph {
     private static final NodeIdPolicy NODE_ID_POLICY = NodeIdPolicy.legacyCompatibleDefaults();
 
     public List<LigerGraphComponent> graphElements;
-    public String semantics;
 
     public LigerWebGraph() {
     }
@@ -41,21 +40,12 @@ public class LigerWebGraph {
     public LigerWebGraph(List<LigerGraphComponent> graphElements) {
         this.graphElements = graphElements;
     }
-    public LigerWebGraph(List<LigerGraphComponent> graphElements, String semantics) {
-        this.graphElements = graphElements;
-        this.semantics = semantics;
-    }
 
     public LigerWebGraph(LinguisticStructure s) {
         this(safeConstraints(s == null ? null : s.constraints), safeConstraints(s == null ? null : s.annotation));
     }
 
     public LigerWebGraph(List<GraphConstraint> syntax, List<GraphConstraint> annotation)
-    {
-        this(syntax, annotation, null);
-    }
-
-    public LigerWebGraph(List<GraphConstraint> syntax, List<GraphConstraint> annotation, String semantics)
     {
         List<GraphConstraint> syntaxCopy = copyConstraints(syntax);
         List<GraphConstraint> annotationCopy = copyConstraints(annotation);
@@ -77,7 +67,6 @@ public class LigerWebGraph {
         data.addAll(nodes);
         data.addAll(edges);
         this.graphElements = data;
-        this.semantics = semantics;
     }
 
     private static List<GraphConstraint> copyConstraints(List<GraphConstraint> constraints) {
