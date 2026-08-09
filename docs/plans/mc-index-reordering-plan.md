@@ -1,5 +1,23 @@
 # LiGER MC Index Reordering Plan
 
+## Verified Status (2026-08-09)
+
+**Functionally DONE, naming differs from the plan.**
+`GlueSemantics.annotateSyntheticMcIndices()`
+(`src/main/java/de/ukon/liger/semantics/GlueSemantics.java:536-579`) assigns a
+unique synthetic `1..n` index per MC, ordered by syntactic anchor via
+c-structure traversal (`orderedMcNodes()`, with a numeric-order fallback if
+traversal fails), and stores it as a `GraphConstraint` added to the main graph
+(`fs.constraints`, not annotation-only) — matching the plan's intended
+behavior. It uses relation label `SYN-ID` with value `"i<n>"` rather than a
+literal `INDEX` key (a grep for `"INDEX"` as a GraphConstraint value/key finds
+nothing), so if downstream consumers specifically expect an `INDEX` key by
+name, that naming mismatch needs a decision. **No dedicated test exists** for
+this method (no `GlueSemantics`-named test file in `src/test/`), so this is
+verified by static inspection only, not by a passing test. The "Open
+Implementation Question" below (annotation-only vs. main-graph constraint) is
+answered in the implementation: main graph.
+
 ## Goal
 Add a LiGER-side ordering layer for GLUE meaning constructors so that:
 - every MC gets a unique synthetic index `1..n`

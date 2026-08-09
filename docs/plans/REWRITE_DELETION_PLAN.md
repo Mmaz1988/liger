@@ -1,5 +1,24 @@
 # Rewrite Deletion Plan
 
+## Verified Status (2026-08-09)
+
+**Part 1 (atom-scoped deletion) is DONE and tested.** `RuleParser.addAnnotation2()`'s
+`=-> 0` branch (`src/main/java/de/ukon/liger/analysis/RuleParser/RuleParser.java:634-676`)
+now collects only the concrete `GraphConstraint`s matched by the LHS query
+result and removes matching entries from both `fs.constraints` and
+`fs.annotation`, rather than deleting everything bound to a variable.
+`RuleParserTest.testRuleParserRewriteDeleteRemovesOnlyMatchedEdges` and
+`testRuleParserRewriteDeleteSupportsEdgeValueAndAttributeValueFilters`
+(`src/test/java/de/ukon/liger/test/RuleParserTest.java:174-237`) cover this;
+`./mvnw -Dtest=RuleParserTest test` → 17/17 passing.
+
+**Part 2 (protected-edge `+acc` syntax) is NOT DONE.** No occurrence of
+"protected" (case-insensitive) anywhere in `RuleParser.java`, and no `+acc` or
+leading-`+`-on-relation-label handling anywhere in `src/main/` or `src/test/`.
+`Rule.java`'s operator set (`ADD`, `REWRITE`, `FORK_ADD`, `FORK_DELETE`) has no
+protected-edge concept either — this part is genuinely still open, not just
+under-tracked.
+
 ## Goal
 
 Make rewrite deletion precise. A rule such as:
