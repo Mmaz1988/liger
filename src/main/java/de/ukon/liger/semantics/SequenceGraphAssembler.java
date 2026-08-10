@@ -30,14 +30,49 @@ public final class SequenceGraphAssembler {
     private SequenceGraphAssembler() {
     }
 
+    /**
+     * Assembles structures into one sequence, numbering each part's provenance positionally.
+     *
+     * Provenance keys are assigned here rather than taken from {@code local_id}, because a
+     * structure that was parsed on its own always arrives labelled {@code S0}: merging two
+     * such structures used to produce two parts both keyed {@code S0}, and the
+     * pronoun-binding rules use these keys to tell parts apart. Only structures LiGER
+     * happened to parse itself within one request got distinct keys, so supplying
+     * pre-parsed structures silently produced an ambiguous sequence.
+     *
+     * A part that already carries provenance is itself an assembled sequence. Its parts
+     * keep the keys they were given and no wrapper key is added for the sequence as a
+     * whole -- provenance identifies an original sentence, not a merge step. The counter
+     * advances past them so a sentence appended to an N-part sequence becomes {@code SN}.
+     * This makes sequence+sentence produce the same keys as merging all sentences at once.
+     */
     public static Fstructure assemble(List<? extends LinguisticStructure> structures) {
         List<Part> parts = new ArrayList<>();
+        int nextPartIndex = 0;
         for (int i = 0; structures != null && i < structures.size(); i++) {
             LinguisticStructure structure = structures.get(i);
-            parts.add(new Part(null, structure == null ? null : structure.local_id,
-                    structure == null ? null : structure.local_id, null, structure));
+            int existingParts = countProvenanceParts(structure);
+            if (existingParts > 0) {
+                parts.add(new Part(null, null, null, null, structure));
+                nextPartIndex += existingParts;
+                continue;
+            }
+            String key = "S" + nextPartIndex++;
+            parts.add(new Part(null, key, key, null, structure));
         }
         return assembleDetailed(parts).structure();
+    }
+
+    /** How many original sentences a structure already carries provenance for. Zero for a
+     *  freshly parsed sentence, N for a sequence previously assembled from N of them. */
+    private static int countProvenanceParts(LinguisticStructure structure) {
+        if (structure == null || structure.annotation == null) {
+            return 0;
+        }
+        return (int) structure.annotation.stream()
+                .filter(constraint -> constraint != null
+                        && "SOLUTION-KEY".equals(constraint.getRelationLabel()))
+                .count();
     }
 
     public static AssemblyResult assembleDetailed(List<Part> parts) {
