@@ -6,6 +6,7 @@ import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.xle.Fstructure;
+import de.ukon.liger.utilities.HelperMethods;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -203,8 +204,17 @@ public final class SequenceGraphAssembler {
                                             Map<String, Integer> offsets,
                                             Set<String> usedNodeIds,
                                             int partIndex) {
-        Set<String> localNodeIds = source.stream().map(GraphConstraint::getFsNode)
-                .filter(Objects::nonNull).collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<String> localNodeIds = new LinkedHashSet<>();
+        for (GraphConstraint constraint : source) {
+            String node = constraint.getFsNode();
+            if (node != null) {
+                localNodeIds.add(node);
+            }
+            Object value = constraint.getFsValue();
+            if (HelperMethods.isNodeReference(value)) {
+                localNodeIds.add(String.valueOf(value));
+            }
+        }
         Map<String, Integer> localMax = new HashMap<>();
         Map<String, Integer> localMin = new HashMap<>();
         for (GraphConstraint constraint : source) {

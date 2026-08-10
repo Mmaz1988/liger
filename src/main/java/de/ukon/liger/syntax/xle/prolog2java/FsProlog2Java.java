@@ -481,6 +481,56 @@ public class FsProlog2Java {
 
 
     /**
+     * Pre-scans the raw f-structure Prolog facts to determine which variable IDs are Glue
+     * resource nodes (registered via an ANT/CONS/RESOURCE/GLUE edge, a "g::"-prefixed
+     * projection, or transitively via in_set), before any GraphConstraints are built. Mirrors
+     * the exact same matching/priority order fs2List's main loop uses, so a variable ends up
+     * registered here if and only if the main loop's non-terminal/projection/set branches would
+     * register it -- this just makes the complete result available up front, so later branches
+     * (in particular the terminals branch) don't depend on where in the fact list a variable's
+     * registering edge happens to fall.
+     */
+    private static Set<String> collectGlueNodes(List<String> constraints) {
+        Set<String> glueNodes = new HashSet<>();
+        for (String constraint : constraints) {
+            if (preds.matcher(constraint).find()) {
+                continue;
+            }
+            if (adjuncts.matcher(constraint).find()) {
+                continue;
+            }
+            Matcher nonTerminalMatcher = nonTerminals.matcher(constraint);
+            if (nonTerminalMatcher.find()) {
+                if (GLUE_LABELS.contains(nonTerminalMatcher.group(2))) {
+                    glueNodes.add(nonTerminalMatcher.group(3));
+                }
+                continue;
+            }
+            Matcher projectionMatcher = projections.matcher(constraint);
+            if (projectionMatcher.find()) {
+                if (projectionMatcher.group(2).startsWith("g")) {
+                    glueNodes.add(projectionMatcher.group(3));
+                }
+                continue;
+            }
+            Matcher setMatcher = inSet.matcher(constraint);
+            if (setMatcher.find()) {
+                String key = setMatcher.group(2);
+                Matcher varMatcher = keys.matcher(setMatcher.group(1));
+                String var = varMatcher.find() ? varMatcher.group(1) : setMatcher.group(1);
+                if (glueNodes.contains(key)) {
+                    glueNodes.add(var);
+                }
+                continue;
+            }
+            if (subsume.matcher(constraint).find()) {
+                continue;
+            }
+        }
+        return glueNodes;
+    }
+
+    /**
      * This method converts an f-structure prolog input to a list of GraphConstraints
      * @param plFs
      * @return
@@ -490,6 +540,15 @@ public class FsProlog2Java {
         List<String> constraints = plFs.fstr;
         List<GraphConstraint> graphConstraints = new ArrayList<>();
         Set<String> glueNodes = new HashSet<>();
+        // Full pre-scan, used only by the terminals branch below so a TYPE/MEANING/NOSCOPE/INSITU
+        // fact resolves correctly regardless of where its registering ANT/CONS/RESOURCE/GLUE/g::
+        // edge falls in the fact list. Deliberately NOT used by the non-terminal/projection/set
+        // branches -- those keep consulting the incrementally-built `glueNodes` above, exactly as
+        // before, since at least one real fixture (hybrid_glue_test.pl) has a node that is both a
+        // legitimate s::-projected node with its own sub-structure AND cited as a glue RESOURCE
+        // later in the same fact list, and those branches' existing order-dependent behavior for
+        // that dual-natured case is relied upon elsewhere (see testQueryParserHybrid).
+        Set<String> terminalGlueNodes = collectGlueNodes(constraints);
 
         //Patterns for different kinds of f-structure constraints
 
@@ -611,7 +670,9 @@ public class FsProlog2Java {
             // Processes terminal nodes in the f-structure
             if (terminalsMatcher.find()) {
 
-                graphConstraints.add(new GraphConstraint(context, fNode(terminalsMatcher.group(1)), terminalsMatcher.group(2), terminalsMatcher.group(3).replace("\\\\", "\\"), "f",root));
+                String rawId = terminalsMatcher.group(1);
+                String projection = terminalGlueNodes.contains(rawId) ? "g" : "f";
+                graphConstraints.add(new GraphConstraint(context, node(rawId, terminalGlueNodes), terminalsMatcher.group(2), terminalsMatcher.group(3).replace("\\\\", "\\"), projection, root));
                 continue;
             }
 
