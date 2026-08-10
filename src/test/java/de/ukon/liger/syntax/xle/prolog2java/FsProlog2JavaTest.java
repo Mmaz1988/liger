@@ -11,14 +11,18 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Regression test for a bug where fs2List's "terminals" branch (atomic leaf attribute facts
- * such as TYPE/MEANING/NOSCOPE/INSITU) unconditionally minted a fresh f&lt;N&gt; node instead of
- * reusing the g&lt;N&gt; id already assigned to that variable by an earlier ANT/CONS/RESOURCE/GLUE
- * or "g::" registering edge -- leaving an orphaned, disconnected f&lt;N&gt; twin of the real,
- * anchored g&lt;N&gt; resource node. Facts below are taken verbatim (minus trailing commas) from
- * liger_resources/testFiles/fs11.pl:89-95, which reproduces the reported shape (var 27's ANT/CONS
- * edges register vars 28/29 as glue resource nodes; their own RESOURCE/TYPE facts must then be
- * anchored at g28/g29, not f28/f29).
+ * Regression tests for FsProlog2Java's Glue-resource node classification (classifyGlueNodes):
+ * a variable gets a synthetic g&lt;N&gt; identity only if it is registered via an
+ * ANT/CONS/RESOURCE/GLUE edge or a "g::" projection AND never independently appears with
+ * structure of its own; otherwise it keeps its native f&lt;N&gt; identity everywhere it's
+ * referenced, even where cited as a resource. The first two cases reproduce a bug where a purely
+ * self-descriptive TYPE fact was minted as a disconnected f&lt;N&gt; twin instead of anchoring at
+ * its existing g&lt;N&gt; id (liger_resources/testFiles/fs11.pl:89-95: var 27's ANT/CONS edges
+ * register vars 28/29 as glue resource nodes with no other role, so their RESOURCE/TYPE facts
+ * must anchor at g28/g29). The third case is the opposite shape
+ * (liger_resources/testFiles/hybrid_glue_test.pl: var 22 is a real s::-projected sigma node with
+ * its own SIT/TEMP-REF sub-structure that is *also* cited as a RESOURCE elsewhere) and must keep
+ * its native f22 identity consistently, including at the RESOURCE edge that cites it.
  */
 class FsProlog2JavaTest {
 
@@ -76,5 +80,33 @@ class FsProlog2JavaTest {
         assertTrue(hasConstraint(result, "g28", "TYPE", "'v'"));
         assertTrue(hasConstraint(result, "f27", "ANT", "g28"));
         assertFalse(hasNode(result, "f28"), "var 28 is a glue resource node and must not appear as f28");
+    }
+
+    @Test
+    void aliasedResourceNodeKeepsNativeIdentityEvenWhenCitedAsResourceElsewhere() {
+        // Verbatim (minus trailing commas) from hybrid_glue_test.pl:29,42-43,119: var 22 is
+        // XLE's own s::-projected sigma node for a TNS-ASP eventuality, with real sub-structure
+        // of its own (SIT, TEMP-REF) -- and the same variable is separately cited as a RESOURCE
+        // by var 42's meaning constructor, because this grammar's glue formulas literally reuse
+        // the eventuality's own sigma-node variable as its resource. var 22 must stay f22
+        // everywhere, including as the RESOURCE edge's target -- not become g22 just because it's
+        // cited as a resource, and not split into f22-here/g22-there depending on which fact is
+        // consulted.
+        List<String> facts = List.of(
+                "cf(1,eq(proj(var(0),'s::'),var(22)))",
+                "cf(1,eq(attr(var(22),'SIT'),var(23)))",
+                "cf(1,eq(attr(var(22),'TEMP-REF'),var(8)))",
+                "cf(1,eq(attr(var(42),'RESOURCE'),var(22)))"
+        );
+
+        List<GraphConstraint> result = convert(facts);
+
+        assertTrue(hasConstraint(result, "f0", "s::", "f22"));
+        assertTrue(hasConstraint(result, "f22", "SIT", "f23"));
+        assertTrue(hasConstraint(result, "f22", "TEMP-REF", "f8"));
+        assertTrue(hasConstraint(result, "f42", "RESOURCE", "f22"),
+                "var 22 has independent structure of its own, so even the RESOURCE edge citing it "
+                        + "must point at its native f22 identity, not a synthetic g22 copy");
+        assertFalse(hasNode(result, "g22"), "var 22 must never appear as g22 anywhere in the output");
     }
 }

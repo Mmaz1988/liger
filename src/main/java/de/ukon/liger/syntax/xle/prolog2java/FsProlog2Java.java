@@ -68,6 +68,10 @@ public class FsProlog2Java {
     public static Pattern fspan = Pattern.compile("cf\\((.+?),fspan\\(var\\((.+)\\),(.+),(.+)\\)\\)");
 
     private static final Set<String> GLUE_LABELS = Set.of("GLUE", "ANT", "CONS", "RESOURCE");
+    // Facts a Glue resource node carries purely to describe itself -- these never establish
+    // "independent" f/s-structure identity for their source variable (see classifyGlueNodes).
+    private static final Set<String> GLUE_SELF_LABELS =
+            Set.of("GLUE", "ANT", "CONS", "RESOURCE", "TYPE", "MEANING", "NOSCOPE", "INSITU");
 
     private final static Logger LOGGER = LoggerFactory.getLogger(FsProlog2Java.class);
 
@@ -481,53 +485,88 @@ public class FsProlog2Java {
 
 
     /**
-     * Pre-scans the raw f-structure Prolog facts to determine which variable IDs are Glue
-     * resource nodes (registered via an ANT/CONS/RESOURCE/GLUE edge, a "g::"-prefixed
-     * projection, or transitively via in_set), before any GraphConstraints are built. Mirrors
-     * the exact same matching/priority order fs2List's main loop uses, so a variable ends up
-     * registered here if and only if the main loop's non-terminal/projection/set branches would
-     * register it -- this just makes the complete result available up front, so later branches
-     * (in particular the terminals branch) don't depend on where in the fact list a variable's
-     * registering edge happens to fall.
+     * Classifies every variable ID in the raw f-structure Prolog facts as either a synthetic Glue
+     * resource node (gets a "g&lt;N&gt;" identity) or a native f/s-structure node (keeps its own
+     * "f&lt;N&gt;" identity), by a single order-independent rule: a variable becomes "g" if and only
+     * if it is registered via a GLUE_LABELS edge or a "g::"-prefixed projection, AND it never
+     * independently appears as the source of a non-glue-self-descriptive fact or as the target of
+     * a non-"g" projection. A variable that is *both* registered as a resource *and* has genuine
+     * independent structure of its own (e.g. an s::-projected sigma node whose own variable is
+     * reused as a meaning constructor's resource) keeps its native identity -- the resource
+     * relation is then understood as pointing *at* that existing node, not spawning a copy of it.
+     *
+     * <p>Runs to a fixed point (repeats until neither set grows) so registration chains through
+     * in_set are resolved regardless of fact order, matching how nonTerminal/projection
+     * registration already doesn't depend on order (it's driven by label text alone).
      */
-    private static Set<String> collectGlueNodes(List<String> constraints) {
-        Set<String> glueNodes = new HashSet<>();
-        for (String constraint : constraints) {
-            if (preds.matcher(constraint).find()) {
-                continue;
-            }
-            if (adjuncts.matcher(constraint).find()) {
-                continue;
-            }
-            Matcher nonTerminalMatcher = nonTerminals.matcher(constraint);
-            if (nonTerminalMatcher.find()) {
-                if (GLUE_LABELS.contains(nonTerminalMatcher.group(2))) {
-                    glueNodes.add(nonTerminalMatcher.group(3));
+    private static Set<String> classifyGlueNodes(List<String> constraints) {
+        Set<String> glueRegistered = new HashSet<>();
+        Set<String> independent = new HashSet<>();
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+            for (String constraint : constraints) {
+                Matcher predsMatcher = preds.matcher(constraint);
+                if (predsMatcher.find()) {
+                    changed |= independent.add(predsMatcher.group(1));
+                    continue;
                 }
-                continue;
-            }
-            Matcher projectionMatcher = projections.matcher(constraint);
-            if (projectionMatcher.find()) {
-                if (projectionMatcher.group(2).startsWith("g")) {
-                    glueNodes.add(projectionMatcher.group(3));
+                Matcher adjunctMatcher = adjuncts.matcher(constraint);
+                if (adjunctMatcher.find()) {
+                    changed |= independent.add(adjunctMatcher.group(1));
+                    changed |= independent.add(adjunctMatcher.group(2));
+                    continue;
                 }
-                continue;
-            }
-            Matcher setMatcher = inSet.matcher(constraint);
-            if (setMatcher.find()) {
-                String key = setMatcher.group(2);
-                Matcher varMatcher = keys.matcher(setMatcher.group(1));
-                String var = varMatcher.find() ? varMatcher.group(1) : setMatcher.group(1);
-                if (glueNodes.contains(key)) {
-                    glueNodes.add(var);
+                Matcher nonTerminalMatcher = nonTerminals.matcher(constraint);
+                if (nonTerminalMatcher.find()) {
+                    if (GLUE_LABELS.contains(nonTerminalMatcher.group(2))) {
+                        changed |= glueRegistered.add(nonTerminalMatcher.group(3));
+                    } else {
+                        changed |= independent.add(nonTerminalMatcher.group(1));
+                    }
+                    continue;
                 }
-                continue;
-            }
-            if (subsume.matcher(constraint).find()) {
-                continue;
+                Matcher projectionMatcher = projections.matcher(constraint);
+                if (projectionMatcher.find()) {
+                    if (projectionMatcher.group(2).startsWith("g")) {
+                        changed |= glueRegistered.add(projectionMatcher.group(3));
+                    } else {
+                        changed |= independent.add(projectionMatcher.group(3));
+                    }
+                    continue;
+                }
+                Matcher setMatcher = inSet.matcher(constraint);
+                if (setMatcher.find()) {
+                    String key = setMatcher.group(2);
+                    String var = extractVar(setMatcher.group(1));
+                    if (glueRegistered.contains(key)) {
+                        changed |= glueRegistered.add(var);
+                    }
+                    continue;
+                }
+                Matcher subsumeMatcher = subsume.matcher(constraint);
+                if (subsumeMatcher.find()) {
+                    changed |= independent.add(subsumeMatcher.group(2));
+                    changed |= independent.add(extractVar(subsumeMatcher.group(1)));
+                    continue;
+                }
+                Matcher terminalsMatcher = terminals.matcher(constraint);
+                if (terminalsMatcher.find()) {
+                    if (!GLUE_SELF_LABELS.contains(terminalsMatcher.group(2))) {
+                        changed |= independent.add(terminalsMatcher.group(1));
+                    }
+                    continue;
+                }
             }
         }
+        Set<String> glueNodes = new HashSet<>(glueRegistered);
+        glueNodes.removeAll(independent);
         return glueNodes;
+    }
+
+    private static String extractVar(String value) {
+        Matcher varMatcher = keys.matcher(value);
+        return varMatcher.find() ? varMatcher.group(1) : value;
     }
 
     /**
@@ -539,16 +578,9 @@ public class FsProlog2Java {
 
         List<String> constraints = plFs.fstr;
         List<GraphConstraint> graphConstraints = new ArrayList<>();
-        Set<String> glueNodes = new HashSet<>();
-        // Full pre-scan, used only by the terminals branch below so a TYPE/MEANING/NOSCOPE/INSITU
-        // fact resolves correctly regardless of where its registering ANT/CONS/RESOURCE/GLUE/g::
-        // edge falls in the fact list. Deliberately NOT used by the non-terminal/projection/set
-        // branches -- those keep consulting the incrementally-built `glueNodes` above, exactly as
-        // before, since at least one real fixture (hybrid_glue_test.pl) has a node that is both a
-        // legitimate s::-projected node with its own sub-structure AND cited as a glue RESOURCE
-        // later in the same fact list, and those branches' existing order-dependent behavior for
-        // that dual-natured case is relied upon elsewhere (see testQueryParserHybrid).
-        Set<String> terminalGlueNodes = collectGlueNodes(constraints);
+        // Single, fully-resolved classification consulted uniformly by every branch below --
+        // see classifyGlueNodes for why this can't be built incrementally per-branch.
+        Set<String> glueNodes = classifyGlueNodes(constraints);
 
         //Patterns for different kinds of f-structure constraints
 
@@ -597,26 +629,18 @@ public class FsProlog2Java {
 
             //Processes non-terminal nodes
             if (nonTerminalMatcher.find()) {
-                String projection = GLUE_LABELS.contains(nonTerminalMatcher.group(2)) ? "g" : "f";
                 String source = node(nonTerminalMatcher.group(1), glueNodes);
-                String target = "g".equals(projection)
-                        ? gNode(nonTerminalMatcher.group(3))
-                        : fNode(nonTerminalMatcher.group(3));
-                if ("g".equals(projection)) {
-                    glueNodes.add(nonTerminalMatcher.group(3));
-                }
+                String targetId = nonTerminalMatcher.group(3);
+                String projection = glueNodes.contains(targetId) ? "g" : "f";
+                String target = node(targetId, glueNodes);
                 graphConstraints.add(new GraphConstraint(context, source, nonTerminalMatcher.group(2), target, projection,root));
                 continue;
             }
 
             if (projectionMatcher.find()) {
-                String projection = projectionMatcher.group(2).startsWith("g") ? "g" : "f";
-                String target = "g".equals(projection)
-                        ? gNode(projectionMatcher.group(3))
-                        : fNode(projectionMatcher.group(3));
-                if ("g".equals(projection)) {
-                    glueNodes.add(projectionMatcher.group(3));
-                }
+                String targetId = projectionMatcher.group(3);
+                String projection = glueNodes.contains(targetId) ? "g" : "f";
+                String target = node(targetId, glueNodes);
                 graphConstraints.add(new GraphConstraint(context, fNode(projectionMatcher.group(1)), projectionMatcher.group(2), target, projection,root));
                 continue;
             }
@@ -624,26 +648,13 @@ public class FsProlog2Java {
 
             if (setMatcher.find()) {
                 String key = setMatcher.group(2);
-                Matcher varMatcher = keys.matcher(setMatcher.group(1));
-                String var;
+                String var = extractVar(setMatcher.group(1));
 
-                if (varMatcher.find())
-                {
-                    var = varMatcher.group(1);
-                }
-                else
-                {
-                    var = setMatcher.group(1);
-                }
-
-                boolean glueSet = glueNodes.contains(key);
                 String source = node(key, glueNodes);
-                String target = glueSet ? gNode(var) : node(var, glueNodes);
-                if (glueSet) {
-                    glueNodes.add(var);
-                }
+                String target = node(var, glueNodes);
+                String projection = glueNodes.contains(var) ? "g" : "f";
                 graphConstraints.add(new GraphConstraint(context, source, "in_set", target,
-                        glueSet ? "g" : "f", root));
+                        projection, root));
                 continue;
             }
 
@@ -671,8 +682,8 @@ public class FsProlog2Java {
             if (terminalsMatcher.find()) {
 
                 String rawId = terminalsMatcher.group(1);
-                String projection = terminalGlueNodes.contains(rawId) ? "g" : "f";
-                graphConstraints.add(new GraphConstraint(context, node(rawId, terminalGlueNodes), terminalsMatcher.group(2), terminalsMatcher.group(3).replace("\\\\", "\\"), projection, root));
+                String projection = glueNodes.contains(rawId) ? "g" : "f";
+                graphConstraints.add(new GraphConstraint(context, node(rawId, glueNodes), terminalsMatcher.group(2), terminalsMatcher.group(3).replace("\\\\", "\\"), projection, root));
                 continue;
             }
 
