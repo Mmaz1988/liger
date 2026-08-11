@@ -445,7 +445,31 @@ public class GlueSemantics {
             }
         }
 
-        int syntheticIndex = 1;
+        // The source index a meaning constructor is prefixed with is the SYN-ID of the node
+        // it came from -- the same number the LiGER-annotation path reads back in
+        // returnMeaningConstructors(). It must be *looked up*, never recomputed positionally:
+        // a structure that was parsed on its own and is later supplied back (sequence parts,
+        // uploaded structures) already carries the numbering it was given, while the
+        // positional counter below re-derives it from orderedMcNodes() -- which silently
+        // degrades to node-name order for anything that is not an Fstructure. The two then
+        // disagree, SRC points at the wrong node, and the pronoun-binding rules find no
+        // antecedent. Reading SYN-ID keeps one numbering per structure: assigned once at parse
+        // time, shifted by an offset when the structure becomes part of a sequence.
+        Map<String, String> syntheticIndices = syntheticIndexMap(fs);
+        List<String> unnumberedMcNodes = glueIndices.keySet().stream()
+                .filter(mcNode -> syntheticIndices.get(mcNode) == null)
+                .collect(Collectors.toList());
+        boolean useSyntheticIndices = unnumberedMcNodes.isEmpty();
+        if (!useSyntheticIndices) {
+            // Deliberately loud: falling back to positional numbering is exactly the silent
+            // degradation described above, so it must never pass unnoticed again.
+            LOGGER.error("No SYN-ID for meaning constructor node(s) " + unnumberedMcNodes
+                    + " in structure '" + fs.local_id + "' (" + glueIndices.size()
+                    + " MC nodes total). Falling back to positional source indices; SRC values"
+                    + " may not match this structure's SYN-IDs.");
+        }
+
+        int positionalIndex = 1;
         for (String mcNode : glueIndices.keySet()) {
             HashMap<Set<ChoiceVar>, String> testMap = parseMCfromPackedProlog(mcNode, ls);
 
@@ -453,14 +477,18 @@ public class GlueSemantics {
                 disjunctiveSem.put(mcNode, new LinkedHashMap<>());
             }
 
+            String sourceIndex = useSyntheticIndices
+                    ? numericSourceIndex(syntheticIndices.get(mcNode))
+                    : String.valueOf(positionalIndex);
+
             for (Set<ChoiceVar> key : testMap.keySet()) {
                 if (!disjunctiveSem.get(mcNode).containsKey(key)) {
                     disjunctiveSem.get(mcNode).put(key, new ArrayList<>());
                 }
-                disjunctiveSem.get(mcNode).get(key).add(prefixSourceIndex(String.valueOf(syntheticIndex), testMap.get(key)));
+                disjunctiveSem.get(mcNode).get(key).add(prefixSourceIndex(sourceIndex, testMap.get(key)));
             }
 
-            syntheticIndex++;
+            positionalIndex++;
         }
 
             Map<Set<ChoiceVar>, Set<String>> unpackedSem2 = new LinkedHashMap<>();
@@ -533,13 +561,44 @@ public class GlueSemantics {
         return unpackedSem2;
     }
 
+    /**
+     * Numbers a structure's meaning-constructor nodes with SYN-IDs, in c-structure traversal
+     * order.
+     *
+     * Three cases used to be conflated here, one of them silently:
+     * <ul>
+     *   <li>the structure already carries SYN-IDs -- it was numbered when it was first parsed,
+     *       or rebased when it was assembled into a sequence. Renumbering it would break the
+     *       source indices already baked into its meaning constructors, so its numbering is
+     *       kept;</li>
+     *   <li>it carries none and is an {@link Fstructure} -- it is numbered here;</li>
+     *   <li>it carries none and is not an {@link Fstructure} -- there is no c-structure to
+     *       order by, so no numbering can be produced. This used to return silently, leaving
+     *       the structure unnumbered and letting the caller fall back to node-name order. It
+     *       is now reported loudly.</li>
+     * </ul>
+     */
     public void annotateSyntheticMcIndices(LinguisticStructure fs) {
-        if (!(fs instanceof Fstructure) || fs == null) {
+        if (fs == null) {
             return;
         }
 
         Map<String, Set<ChoiceVar>> mcReadings = collectMcReadings(fs.returnFullGraph());
         if (mcReadings.isEmpty()) {
+            return;
+        }
+
+        Map<String, String> existingIndices = syntheticIndexMap(fs);
+        if (!existingIndices.isEmpty()
+                && mcReadings.keySet().stream().allMatch(mcNode -> existingIndices.get(mcNode) != null)) {
+            return;
+        }
+
+        if (!(fs instanceof Fstructure)) {
+            LOGGER.error("Cannot assign SYN-IDs to structure '" + fs.local_id + "': it has "
+                    + mcReadings.size() + " meaning-constructor node(s) but no c-structure to order"
+                    + " them by, and it does not already carry a complete SYN-ID numbering."
+                    + " Its meaning constructors will be numbered positionally.");
             return;
         }
 
