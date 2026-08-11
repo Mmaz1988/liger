@@ -75,7 +75,8 @@ public class TemplateExpander {
         for (List<String> alternative : template.getAlternatives()) {
             List<String> renamedAlternative = alphaRenameTemplateBody(alternative, template.getParameters(), invocationReservedVars, freshVarCounter);
             List<String> instantiated = instantiate(renamedAlternative, template.getParameters(), substitution);
-            LOGGER.info("Expanded template invocation @" + invocation.name() + " with args=" + invocation.arguments() + " -> " + instantiated);
+            LOGGER.debug("Expanded template invocation @{} with args={} -> {}",
+                    invocation.name(), invocation.arguments(), instantiated);
             List<String> nextTokens = new ArrayList<>(instantiated);
             nextTokens.addAll(rest);
             Set<String> nextUsedVars = new LinkedHashSet<>(invocationReservedVars);

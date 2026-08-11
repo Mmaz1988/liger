@@ -79,7 +79,7 @@ public class CStructureTraverser {
 
             if (potentialPC != null) {
                 proofTree.addFirst(potentialPC);
-                LOGGER.info("Current proof constraint: " + potentialPC.node + " " + potentialPC.elements + " " + potentialPC.daughters);
+                LOGGER.debug("Current proof constraint: {} {} {}", potentialPC.node, potentialPC.elements, potentialPC.daughters);
 
                 //Root initial proof constraint to make sure all proof constraints are ultimately linked to one tree
                 if (anchor.equals("root") && proofTree.size() == 1)
@@ -214,8 +214,8 @@ public class CStructureTraverser {
             ProofConstraint proofConstraint = buildProofTree(fs, rootId);
             if (proofConstraint != null) {
                 proofTree.add(proofConstraint);
-                LOGGER.info("Current parent node: " + currentParent);
-                LOGGER.info("Current proof tree: " + proofConstraint.node + " " + proofConstraint.elements + " " + proofConstraint.daughters);
+                LOGGER.debug("Current parent node: {}", currentParent);
+                LOGGER.debug("Current proof tree: {} {} {}", proofConstraint.node, proofConstraint.elements, proofConstraint.daughters);
             }
         } else {
             potentialPC = buildProofTree(fs, rootId);
@@ -229,8 +229,8 @@ public class CStructureTraverser {
                 glueTree.get(currentParent).add(potentialPC.node);
                  */
                 proofTree.add(potentialPC);
-                LOGGER.info("Current parent node: " + currentParent);
-                LOGGER.info("Current proof tree: " + potentialPC.node + " " + potentialPC.elements + " " + potentialPC.daughters);
+                LOGGER.debug("Current parent node: {}", currentParent);
+                LOGGER.debug("Current proof tree: {} {} {}", potentialPC.node, potentialPC.elements, potentialPC.daughters);
             }
         }
         //Determine where mcs are anchored (currentParent)

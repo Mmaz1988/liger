@@ -360,8 +360,8 @@ public class GlueSemantics {
 
                 long endTime = System.currentTimeMillis();
                 long duration = (endTime - startTime);
-                LOGGER.info("Traversed C-Structure in " + duration + " ms");
-                LOGGER.info("Full mapping from proof tree to cstr:\n" + ctr.prooftreeToCStructure);
+                LOGGER.debug("Traversed C-Structure in {} ms", duration);
+                LOGGER.debug("Full mapping from proof tree to cstr:\n{}", ctr.prooftreeToCStructure);
 
                 //String glueRoot = ctr.findGlueTreeRoot();
 
@@ -1139,7 +1139,7 @@ public class GlueSemantics {
         //create a file that includes all Strings in solutions line  by line
         //run swipl with the file as input
 
-        LOGGER.info("Creating temporary files...");
+        LOGGER.debug("Creating temporary files...");
         //create temporary directory gswb_resources/tmp
         File tmpDir = new File(PathVariables.workingDirectory,"tmp/prolog");
 
@@ -1158,7 +1158,7 @@ public class GlueSemantics {
 
         try {
             if (prologFS.createNewFile()) {
-                LOGGER.info("File created successfully!");
+                LOGGER.debug("File created successfully!");
             } else {
                 LOGGER.error("File already exists!");
             }
@@ -1198,7 +1198,7 @@ public class GlueSemantics {
             // Java join command with white space
 
 
-            LOGGER.info("Executing Prolog goal to extract meaning constructors!");
+            LOGGER.debug("Executing Prolog goal to extract meaning constructors!");
 
             processBuilder.redirectErrorStream(true);
 

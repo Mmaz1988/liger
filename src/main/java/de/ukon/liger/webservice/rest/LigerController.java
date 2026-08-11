@@ -761,7 +761,9 @@ public class LigerController {
 
     private QueryRequestBundle stripEmbeddedQueryDefinitions(String query) {
         EmbeddedDefinitionExtractor.Result result = EmbeddedDefinitionExtractor.extract(query);
-        LOGGER.info("Stripped embedded query definitions: sanitized='" + result.query() + "'");
+        // The caller logs the sanitized query with its request line; this would
+        // repeat it.
+        LOGGER.fine("Stripped embedded query definitions: sanitized='" + result.query() + "'");
         return new QueryRequestBundle(result.query(), result.templateRegistry(), result.hierarchyRegistry());
     }
 
