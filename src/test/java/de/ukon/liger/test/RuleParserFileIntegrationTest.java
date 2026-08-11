@@ -9,6 +9,7 @@ import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.utilities.PathVariables;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -154,6 +155,7 @@ public class RuleParserFileIntegrationTest {
     }
 
     @Test
+    @Disabled("Requires merged-graph7.json and liger-test2.liger fixtures, which were never committed and are missing from disk")
     void testQuestionRuleLeftSideDoesNotOvermatchMergedGraph7() throws Exception {
         Path mergedGraph = Paths.get("merged-graph7.json");
         LinkedHashMap<String, Object> json = new ObjectMapper().readValue(mergedGraph.toFile(), LinkedHashMap.class);
@@ -176,6 +178,7 @@ public class RuleParserFileIntegrationTest {
     }
 
     @Test
+    @Disabled("Requires merged-graph7.json and liger-test2.liger fixtures, which were never committed and are missing from disk")
     void testQuestionRuleInFileDoesNotFireOnMergedGraph7() throws Exception {
         Path mergedGraph = Paths.get("merged-graph7.json");
         LinkedHashMap<String, Object> json = new ObjectMapper().readValue(mergedGraph.toFile(), LinkedHashMap.class);
