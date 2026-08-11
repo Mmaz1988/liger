@@ -85,8 +85,7 @@ public class PathVariables {
             dictPath = workingDirectory + "dicts" + File.separator;
         }catch(Exception e)
         {
-            System.out.println("Failed to locate working directory.");
-            e.printStackTrace();
+            LOGGER.error("Failed to locate working directory.", e);
         }
 
         LOGGER.info("dir " + workingDirectory);

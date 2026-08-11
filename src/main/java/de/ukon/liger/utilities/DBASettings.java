@@ -21,11 +21,15 @@
 
 package de.ukon.liger.utilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 
 public class DBASettings {
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(DBASettings.class);
     //LFG or dependency
     public String mode;
     //Input path
@@ -89,7 +93,7 @@ public class DBASettings {
             this.outputWriter = new BufferedWriter(new FileWriter(file, true));
         }catch(Exception e)
         {
-            System.out.println("Failed to create outputWriter for path: " + file.toString());
+            LOGGER.error("Failed to create outputWriter for path: {}", file);
         }
         }
 }

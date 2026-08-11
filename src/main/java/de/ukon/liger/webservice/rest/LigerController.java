@@ -859,11 +859,14 @@ public class LigerController {
                 annotation.sentence = branch.text;
                 LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> branchAddedAnnotations =
                         addedAnnotationsForBranch(rp, branch);
-                LOGGER.info("Rule branch " + branch.local_id + " added facts by rule: "
+                // Per branch, not per request: a three-turn discourse fans out to
+                // ~72 of these, so they belong at DEBUG (JUL FINE) behind
+                // LIGER_LOG_LEVEL, with the endpoint's own INFO line as the summary.
+                LOGGER.fine("Rule branch " + branch.local_id + " added facts by rule: "
                         + branchAddedAnnotations.entrySet().stream()
                                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().size(),
                                 (left, right) -> left, LinkedHashMap::new)));
-                LOGGER.info("Rule branch " + branch.local_id + " added fact labels: "
+                LOGGER.fine("Rule branch " + branch.local_id + " added fact labels: "
                         + branchAddedAnnotations.values().stream()
                         .flatMap(Collection::stream)
                         .map(fact -> fact.getRelationLabel() + "(" + fact.getFsNode()

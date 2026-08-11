@@ -238,7 +238,7 @@ public class CStructureTraverser {
 
         if (proofTree.size() == 2)
         {
-            System.out.println("Debug stop");
+            LOGGER.debug("Debug stop");
         }
 
         String currentCproj = getCProj(rootId);

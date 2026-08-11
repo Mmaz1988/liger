@@ -3,7 +3,9 @@
 <configuration scan="true">
     <include resource="org/springframework/boot/logging/logback/base.xml"/>
 
-    <logger name="de.ukon.liger" level="DEBUG"/>
+    <!-- Raise with LIGER_LOG_LEVEL=DEBUG (env var or -D) for per-rule detail;
+         no edit to this file needed. -->
+    <logger name="de.ukon.liger" level="${LIGER_LOG_LEVEL:-INFO}"/>
 
     <logger name="javax.activation" level="WARN"/>
     <logger name="javax.mail" level="WARN"/>
@@ -37,7 +39,18 @@
         <resetJUL>true</resetJUL>
     </contextListener>
 
-    <root level="DEBUG">
+    <!-- The base.xml include above already attaches a rolling FILE appender to
+         root, so a per-run log needs no extra appender here — only a path:
+           java -jar jars/liger.jar -web \
+                --logging.file.name=logs/liger-$(date +%Y%m%d-%H%M%S).log
+         Without that argument FILE still writes, to logback's default
+         ${java.io.tmpdir}/spring.log (rolled daily, 7 days kept). Detaching it
+         when no path is given would need a logback <if>, i.e. janino on the
+         classpath; at root INFO the untargeted file is small enough not to
+         justify the dependency. Listing CONSOLE below re-uses base.xml's
+         appender instance rather than adding a second one, so console lines
+         are not duplicated. -->
+    <root level="INFO">
         <appender-ref ref="CONSOLE"/>
     </root>
 

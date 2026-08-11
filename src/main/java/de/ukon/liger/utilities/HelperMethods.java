@@ -24,6 +24,8 @@ package de.ukon.liger.utilities;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.NodeIdPolicy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -36,6 +38,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HelperMethods {
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(HelperMethods.class);
 
     private static final NodeIdPolicy NODE_ID_POLICY = NodeIdPolicy.legacyCompatibleDefaults();
 
@@ -119,7 +123,7 @@ public class HelperMethods {
                         newString.append(HelperMethods.stripValue(sb.toString()));
                     }
                 } catch (Exception e) {
-                    System.out.println("Hit end of string");
+                    LOGGER.debug("Hit end of string");
                 }
             }
             if (i < value.length()) {

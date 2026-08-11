@@ -1177,7 +1177,7 @@ public class RuleParser {
             }
         }catch(Exception e)
         {
-         System.out.println("Couldn't read rule file");
+         LOGGER.error("Couldn't read rule file");
         }
         this.rules = rules;
     }
@@ -1355,7 +1355,7 @@ public class RuleParser {
                     }
                 } catch(Exception e)
                 {
-                    System.out.println("Failed to parse rule right-hand side");
+                    LOGGER.error("Failed to parse rule right-hand side");
                 }
 
 

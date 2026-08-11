@@ -59,7 +59,7 @@ try {
 }catch(Exception e)
 {
     e.printStackTrace();
-    System.out.println("Failed to initialize dictionary!");
+    LOGGER.error("Failed to initialize dictionary!");
 }
     }
     //For testing purposes
@@ -153,7 +153,7 @@ try {
         try (FileWriter writer = new FileWriter(outpath)) {
             gson.toJson(future_verbs, writer);
         } catch (Exception e) {
-            System.out.print("Something went wrong while writing to Json");
+            LOGGER.error("Something went wrong while writing to Json");
         }
     }
 

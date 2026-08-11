@@ -24,6 +24,8 @@ package de.ukon.liger.syntax.xle.prolog2java;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.utilities.HelperMethods;
 import de.ukon.liger.utilities.VariableHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -31,6 +33,8 @@ import java.util.regex.Pattern;
 
 //This class represents paths in the f-structure between two f-structure nodes;
 public class FsPath {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(FsPath.class);
 
     private Deque<String> path = new LinkedList<>();
     private VariableHandler vh = new VariableHandler();
@@ -115,8 +119,7 @@ public class FsPath {
                 path.addFirst(fsC.getRelationLabel());
 
 
-                System.out.println(fsvar.toString());
-                System.out.println(path);
+                LOGGER.debug("Path step: {} {}", fsvar, path);
                 return generatePath(fsvar, fs);
             }
         }
@@ -192,7 +195,7 @@ public class FsPath {
                         if (generateRelation(start, fsvar, fsvar, fsCopy, reCopy, false) == null) {
 
                             fsCopy.remove(ladder);
-                            System.out.println("Removed ladder " + ladder + "from f-structure."  );
+                            LOGGER.debug("Removed ladder {} from f-structure.", ladder);
                             return generateRelation(start, fsvar, end, fsCopy, re, true);
                         } else {
                             re.addFirst("#" + vh.returnNewVar(VariableHandler.variableType.FS_NODE,
@@ -256,7 +259,7 @@ public class FsPath {
                         reCopy.add("#" + vh.returnNewVar(VariableHandler.variableType.FS_NODE,
                                 HelperMethods.getIntegerFromID(fsvar.getFsValue().toString())));
 
-                        System.out.println(fsvar + " <--> " + start + " <--> " + ladder);
+                        LOGGER.debug("{} <--> {} <--> {}", fsvar, start, ladder);
                         if (fsvar.equals(start)) {
                             return reCopy;
                         }
@@ -323,8 +326,7 @@ public class FsPath {
                 path.addFirst(fsC.getRelationLabel());
 
 
-                System.out.println(fsvar.toString());
-                System.out.println(path);
+                LOGGER.debug("Path step: {} {}", fsvar, path);
                 return generatePath(fsvar, fs);
             }
         }
@@ -397,8 +399,10 @@ public class FsPath {
 
         while (i.hasNext()) {
 
-            System.out.println("New interation!");
-            System.out.println("Current element: " + fsIndices.get(i.next()));
+            // NB: i.next() below advances the iterator, and the loop relies on that.
+            // The argument is evaluated at the call site regardless of the log level,
+            // so this stays a plain call — do not guard it with isDebugEnabled().
+            LOGGER.debug("New iteration! Current element: {}", fsIndices.get(i.next()));
 
             //Attributes match
 
@@ -422,8 +426,9 @@ public class FsPath {
 
 
 
-                    System.out.println("Current key: " + fsIndices.get(i.next()).getFsNode());
-                    System.out.println(varAssignment);
+                    // i.next() advances the iterator here too; see the note above.
+                    LOGGER.debug("Current key: {}, assignment: {}",
+                            fsIndices.get(i.next()).getFsNode(), varAssignment);
 
 
                     if (varAssignment.get(HelperMethods.getIntegerFromID(fsIndices.get(i.next()).getFsNode())).contains(qMatcher.group(1))) {
@@ -497,7 +502,7 @@ public class FsPath {
         if(varAssignment.keySet().contains(Integer.parseInt(fsNode))) {
             if (varAssignment.get(Integer.parseInt(fsNode)).contains(qMatcher.group(1)))
             {
-                System.out.println("Unified " + query + " and " + fsNode);
+                LOGGER.debug("Unified {} and {}", query, fsNode);
                 return true;
             }
             else
@@ -506,7 +511,7 @@ public class FsPath {
             }
         } else
             {
-                System.out.println("Unified " + query + " and " + fsNode);
+                LOGGER.debug("Unified {} and {}", query, fsNode);
                 return true;
             }
     }

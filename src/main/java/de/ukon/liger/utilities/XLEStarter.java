@@ -158,7 +158,7 @@ public class XLEStarter {
             fw.close();
         } catch (
                 Exception e) {
-            System.out.println("Failed to write xle-unpack.sh");
+            LOGGER.error("Failed to write xle-unpack.sh");
         }
 
         try {
@@ -279,7 +279,7 @@ public class XLEStarter {
             fw.close();
         } catch (
                 Exception e) {
-            System.out.println("Failed to write xlebash.sh");
+            LOGGER.error("Failed to write xlebash.sh");
         }
 
         try {

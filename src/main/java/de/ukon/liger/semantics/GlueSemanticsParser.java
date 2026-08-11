@@ -3,6 +3,8 @@ package de.ukon.liger.semantics;
 import de.ukon.liger.utilities.VariableHandler;
 
 import java.io.File;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,6 +15,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GlueSemanticsParser {
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(GlueSemanticsParser.class);
 
 
     public LinearLogicParser llp;
@@ -177,8 +181,7 @@ public class GlueSemanticsParser {
             return sb.toString();
 
         } catch (Exception e) {
-            System.out.println("Error parsing meaning constructor: " + mc);
-            e.printStackTrace();
+            LOGGER.error("Error parsing meaning constructor: {}", mc, e);
         }
         return null;
     }

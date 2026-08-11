@@ -476,7 +476,7 @@ public class FsProlog2Java {
             for (Integer key : fsHash.get(key1).keySet()) {
                 String keyO = key.toString();
                 String value = fsHash.get(key1).get(key).toString();
-                System.out.println(key1 + " " + keyO + " " + value);
+                LOGGER.debug("{} {} {}", key1, keyO, value);
             }
         }
 */
@@ -867,7 +867,7 @@ public class FsProlog2Java {
             for (Integer key : fsHash.get(key1).keySet()) {
                 String keyO = key.toString();
                 String value = fsHash.get(key1).get(key).toString();
-                System.out.println(key1 + " " + keyO + " " + value);
+                LOGGER.debug("{} {} {}", key1, keyO, value);
             }
         }
 */

@@ -214,7 +214,7 @@ public class ReadFsProlog implements Serializable {
 
             /* Print out f-structure facts for test purposes
             for (int i = 0; i < fsConstraints.size(); i++) {
-                System.out.println(fsConstraints.get(i));
+                LOGGER.fine(String.valueOf(fsConstraints.get(i)));
             }
 */
 
@@ -365,7 +365,7 @@ public class ReadFsProlog implements Serializable {
 
             /* Print out f-structure facts for test purposes
             for (int i = 0; i < fsConstraints.size(); i++) {
-                System.out.println(fsConstraints.get(i));
+                LOGGER.fine(String.valueOf(fsConstraints.get(i)));
             }
 */
         } catch (IOException e) {

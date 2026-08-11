@@ -21,6 +21,8 @@
 
 package de.ukon.liger.syntax.xle.avp_elements;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,6 +33,8 @@ import java.util.stream.Collectors;
 
 public class PredAVP extends AttributeValuePair
 {
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(PredAVP.class);
     public List<String> themeArguments;
     public List<String> nonThemeArguments;
 
@@ -116,7 +120,7 @@ public class PredAVP extends AttributeValuePair
         }
         catch (NoSuchElementException e)
         {
-         System.out.println("Could not find pred value. \n" +e.getMessage());
+         LOGGER.warn("Could not find pred value.", e);
         }
 
         return predString;
