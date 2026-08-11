@@ -63,6 +63,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class DbaMain {
@@ -70,6 +72,7 @@ public class DbaMain {
 
     //  public BufferedWriter outputWriter;
     public static DBASettings settings;
+    private static String[] springArgs = new String[0];
     private final static Logger LOGGER = LoggerFactory.getLogger(DbaMain.class);
 
 
@@ -90,8 +93,36 @@ public class DbaMain {
         initiateArguments(args);
     }
 
+    /**
+     * The arguments Spring (and through it logback) needs to see.
+     *
+     * LiGER parses its own flags here and used to start the web service with
+     * {@code new String[0]}, which silently dropped Spring's {@code --key=value}
+     * options -- including {@code --logging.file.name}, so asking for a log file
+     * on the command line had no effect at all. Forward those through, and
+     * translate the {@code -log <dir>} alias into one for symmetry with -web:
+     *
+     *   java -jar jars/liger.jar -web -log logs
+     *   java -jar jars/liger.jar -web --logging.file.name=logs/liger.log
+     */
+    static String[] springArgs(String[] args) {
+        List<String> forwarded = new ArrayList<>();
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].startsWith("--")) {
+                forwarded.add(args[i]);
+            } else if (args[i].equals("-log") && i + 1 < args.length) {
+                String fileName = "liger-"
+                        + DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(LocalDateTime.now()) + ".log";
+                forwarded.add("--logging.file.name=" + Paths.get(args[i + 1], fileName));
+                i++;
+            }
+        }
+        return forwarded.toArray(new String[0]);
+    }
+
     public static void initiateArguments(String[] args) throws IOException {
         settings = new DBASettings();
+        springArgs = springArgs(args);
 
 
         //Initialize settings
@@ -188,7 +219,7 @@ public class DbaMain {
             //Running in online mode -- separate code in webservice
             LOGGER.info("Running system as web service ... ");
             WebApplication web = new WebApplication();
-            web.main(new String[0]);
+            web.main(springArgs);
         } else {
             // Running LiGER locally
             if (settings.outputFile != null) {
