@@ -232,6 +232,7 @@ public class RuleParser {
 
         Set<ChoiceVar> context = extractContexts(qpr.result.get(solution), new HashMap<>());
         List<String> search = r.splitGoal();
+        Map<String, String> introducedReferences = new HashMap<>();
 
         for (String searchString : search) {
             Matcher graphMatcher = graphPattern.matcher(searchString.trim());
@@ -247,12 +248,12 @@ public class RuleParser {
                 continue;
             }
 
-            String key2 = resolveNodeReference(qpr, solution, nodeMatcher.group(1));
+            String key2 = resolveNodeReference(qpr, solution, nodeMatcher.group(1), introducedReferences);
             String newLabel = graphMatcher.group(2);
             String newValue;
 
             if (valueMatches) {
-                newValue = resolveValueReference(qpr, solution, valueMatcher.group(1));
+                newValue = resolveValueReference(qpr, solution, valueMatcher.group(1), introducedReferences);
             } else {
                 newValue = graphMatcher.group(3);
                 if (replace) {
@@ -471,18 +472,30 @@ public class RuleParser {
         }
     }
 
-    private String resolveNodeReference(QueryParserResult qpr, Solution solution, String reference) {
+    /**
+     * Resolves a right-hand side node reference (e.g. {@code #z}) within one solution. A reference the
+     * left-hand side left unbound means the rule introduces a node for this match; {@code
+     * introducedReferences} makes that one node, reused by every conjunct of this rule that mentions
+     * the same reference -- whether in node or value position, see {@link #resolveValueReference} --
+     * rather than a fresh node minted per occurrence.
+     */
+    private String resolveNodeReference(QueryParserResult qpr, Solution solution, String reference,
+                                        Map<String, String> introducedReferences) {
         if (qpr.result.containsKey(solution) && qpr.result.get(solution).containsKey(reference)) {
-            return qpr.result.get(solution).get(reference).keySet().stream().findAny().orElseGet(this::returnUnusedVar);
+            return qpr.result.get(solution).get(reference).keySet().stream().findAny()
+                    .orElseGet(() -> introducedReferences.computeIfAbsent(reference, ignored -> returnUnusedVar()));
         }
-        return returnUnusedAnnotationNode();
+        return introducedReferences.computeIfAbsent(reference, ignored -> returnUnusedAnnotationNode());
     }
 
-    private String resolveValueReference(QueryParserResult qpr, Solution solution, String reference) {
+    /** The value-position counterpart of {@link #resolveNodeReference}; shares its introduced-node memo. */
+    private String resolveValueReference(QueryParserResult qpr, Solution solution, String reference,
+                                         Map<String, String> introducedReferences) {
         if (qpr.result.containsKey(solution) && qpr.result.get(solution).containsKey(reference)) {
-            return qpr.result.get(solution).get(reference).keySet().stream().findAny().orElseGet(this::returnUnusedVar);
+            return qpr.result.get(solution).get(reference).keySet().stream().findAny()
+                    .orElseGet(() -> introducedReferences.computeIfAbsent(reference, ignored -> returnUnusedVar()));
         }
-        return returnUnusedVar();
+        return introducedReferences.computeIfAbsent(reference, ignored -> returnUnusedVar());
     }
 
     public void addAnnotation2(LinguisticStructure fs) {

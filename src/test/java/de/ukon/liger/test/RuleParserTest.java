@@ -379,6 +379,83 @@ public class RuleParserTest {
         assertEquals(2, branches.size());
     }
 
+    /**
+     * "#g GEND-SEM 'male'" matches exactly one node in testdirS1.pl (John), so the left-hand side has
+     * exactly one solution -- isolating whether one solution's introduced node is shared across the
+     * right-hand side's conjuncts from whether distinct solutions get distinct nodes (already covered
+     * by {@link #testSolutionsIntroducingNewNodesAreNotConflated}).
+     */
+    @Test
+    void testIntroducedNodeIsSharedAcrossRightHandSideConjuncts() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.getRules().add(new Rule("#g GEND-SEM 'male' ?=> #z KEEP + & #z MARK 'x'"));
+
+        Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Set.of(structure)));
+
+        assertEquals(1, branches.size());
+
+        LinguisticStructure branch = branches.iterator().next();
+        Set<String> introduced = branch.annotation.stream()
+                .filter(c -> "KEEP".equals(c.getRelationLabel()) || "MARK".equals(c.getRelationLabel()))
+                .map(GraphConstraint::getFsNode)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+
+        assertEquals(1, introduced.size());
+    }
+
+    /**
+     * The same, for the accumulating operator.
+     */
+    @Test
+    void testIntroducedNodeIsSharedAcrossConjunctsForRegularRules() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.getRules().add(new Rule("#g GEND-SEM 'male' ==> #z KEEP + & #z MARK 'x'"));
+
+        rp.addAnnotation2(structure);
+
+        Set<String> introduced = structure.annotation.stream()
+                .filter(c -> "KEEP".equals(c.getRelationLabel()) || "MARK".equals(c.getRelationLabel()))
+                .map(GraphConstraint::getFsNode)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+
+        assertEquals(1, introduced.size());
+    }
+
+    /**
+     * An introduced node used in a value position is the same node as in a node position.
+     */
+    @Test
+    void testIntroducedNodeIsSharedBetweenNodeAndValuePositions() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.getRules().add(new Rule("#g GEND-SEM 'male' ?=> #z KEEP + & #g INTRODUCED #z"));
+
+        Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Set.of(structure)));
+
+        assertEquals(1, branches.size());
+        LinguisticStructure branch = branches.iterator().next();
+
+        String introducedNode = branch.annotation.stream()
+                .filter(c -> "KEEP".equals(c.getRelationLabel()))
+                .map(GraphConstraint::getFsNode)
+                .findFirst().orElseThrow();
+
+        String referencedNode = branch.annotation.stream()
+                .filter(c -> "INTRODUCED".equals(c.getRelationLabel()))
+                .map(c -> String.valueOf(c.getFsValue()))
+                .findFirst().orElseThrow();
+
+        assertEquals(introducedNode, referencedNode);
+    }
+
     @Test
     void testChoiceVarCopyPreservesNullPropValue() {
         ChoiceVar original = new ChoiceVar("A");
