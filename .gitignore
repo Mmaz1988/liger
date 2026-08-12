@@ -35,3 +35,6 @@ build/
 ### PATH FILE ###
 ./liger_resources/xle_paths.txt
 
+### Shared grammar tree ###
+/grammars/
+/.local_grammar_backups/
