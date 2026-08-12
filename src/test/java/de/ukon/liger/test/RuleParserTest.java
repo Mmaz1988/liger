@@ -298,6 +298,87 @@ public class RuleParserTest {
         assertEquals(36, branches.size());
     }
 
+    /**
+     * testdirS1.pl has two nodes carrying both TENSE 'past' and PERF '-_', so the left-hand side has
+     * four solutions. The right-hand side only reads #g, which takes two values across them -- the
+     * other two solutions repeat an annotation that was already emitted.
+     */
+    @Test
+    void testEquivalentSolutionsAreConflatedIntoOneAnnotation() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.getRules().add(new Rule("#g TENSE 'past' & #h PERF '-_' ==> #g LINK #g"));
+
+        rp.addAnnotation2(structure);
+
+        assertEquals(2, structure.annotation.size());
+        assertEquals(2, new LinkedHashSet<>(structure.annotation).size());
+    }
+
+    /**
+     * The conflated duplicates used to survive as a copy tagged with a hard-coded "X1" choice, which
+     * downstream consumers read as a genuine additional reading.
+     */
+    @Test
+    void testConflatedSolutionsDoNotLeaveAPhantomReading() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.getRules().add(new Rule("#g TENSE 'past' & #h PERF '-_' ==> #g LINK #g"));
+
+        rp.addAnnotation2(structure);
+
+        assertTrue(structure.annotation.stream()
+                .flatMap(constraint -> constraint.getReading().stream())
+                .noneMatch(choice -> "X1".equals(choice.choiceID)));
+    }
+
+    /**
+     * A right-hand side variable the left-hand side never bound means the rule introduces a node for
+     * each match, so every solution is entitled to its own. These must never be conflated, however
+     * alike the resulting facts look.
+     */
+    @Test
+    void testSolutionsIntroducingNewNodesAreNotConflated() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.getRules().add(new Rule("#g TENSE 'past' & #h PERF '-_' ?=> #z KEEP +"));
+
+        Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Set.of(structure)));
+
+        assertEquals(4, branches.size());
+
+        Set<String> introducedNodes = branches.stream()
+                .flatMap(branch -> branch.annotation.stream())
+                .filter(constraint -> "KEEP".equals(constraint.getRelationLabel()))
+                .map(GraphConstraint::getFsNode)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+
+        assertEquals(4, introducedNodes.size());
+    }
+
+    /**
+     * Branching rules whose right-hand side is fully bound conflate like any other: two solutions
+     * that would fork off identical branches fork off one.
+     */
+    @Test
+    void testBranchingRuleConflatesEquivalentSolutions() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.getRules().add(new Rule("#g TENSE 'past' & #h PERF '-_' ?=> #g KEEP +"));
+
+        Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Set.of(structure)));
+
+        assertEquals(2, branches.size());
+    }
+
     @Test
     void testChoiceVarCopyPreservesNullPropValue() {
         ChoiceVar original = new ChoiceVar("A");

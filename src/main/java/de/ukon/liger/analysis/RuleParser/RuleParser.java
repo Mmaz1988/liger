@@ -179,7 +179,7 @@ public class RuleParser {
 
                 if (isQuestionRule(r)) {
                     boolean producedBranch = false;
-                    for (Solution solution : qpr.result.keySet()) {
+                    for (Solution solution : dedupeSolutions(r, qpr)) {
                         LinguisticStructure branch = structure.copy();
                         if (r.isQuestionDelete()) {
                             removeFactsForSolution(branch, qpr, solution);
@@ -345,6 +345,132 @@ public class RuleParser {
         return r != null && ("?=>".equals(r.getOperator()) || "?->".equals(r.getOperator()));
     }
 
+    /**
+     * The solutions of a rule's left-hand side with redundant ones removed: two solutions that bind
+     * every variable the right-hand side consumes to the same references, under the same choice
+     * context, produce exactly the same annotations, so only the first of them is kept.
+     *
+     * <p>Solutions that leave a consumed variable unbound are always kept, see
+     * {@link #ruleOutputSignature}. Insertion order is preserved so that the emitted annotations
+     * and the branches derived from them stay stable across runs.
+     */
+    private List<Solution> dedupeSolutions(Rule r, QueryParserResult qpr) {
+        RuleOutputVariables variables = collectRuleOutputVariables(r);
+        List<Solution> out = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+
+        for (Solution solution : qpr.result.keySet()) {
+            String signature = ruleOutputSignature(variables, qpr, solution);
+            if (signature != null && !seen.add(signature)) {
+                continue;
+            }
+            out.add(solution);
+        }
+
+        if (out.size() < qpr.result.size()) {
+            LOGGER.debug("Conflated " + (qpr.result.size() - out.size()) + " of " + qpr.result.size() +
+                    " equivalent solutions of rule:\n\t" + r);
+        }
+
+        return out;
+    }
+
+    /**
+     * A stable key for everything a rule's right-hand side reads out of {@code solution}: the
+     * binding of every variable it consumes plus the choice context the emitted facts inherit.
+     *
+     * <p>Returns {@code null} when any consumed variable is unbound. An unbound right-hand side
+     * variable means the rule <em>introduces</em> a node for this match -- {@link #resolveNodeReference}
+     * mints a fresh one per solution -- and every match is entitled to its own node. Such solutions
+     * must therefore never be conflated with one another.
+     */
+    private String ruleOutputSignature(RuleOutputVariables variables, QueryParserResult qpr, Solution solution) {
+        if (variables.deletesMatch()) {
+            return null;
+        }
+
+        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = qpr.result.get(solution);
+        StringBuilder signature = new StringBuilder();
+
+        for (String variable : variables.nodeVariables()) {
+            if (!variableIsAssigned(qpr, solution, variable)) {
+                return null;
+            }
+            signature.append('#').append(variable).append('=')
+                    .append(new TreeSet<>(binding.get(variable).keySet())).append('|');
+        }
+
+        for (String variable : variables.valueVariables()) {
+            String valueBinding = lookupValueBinding(solution, variable, qpr.valueBindings);
+            if (valueBinding == null) {
+                return null;
+            }
+            signature.append(variable).append('=').append(valueBinding).append('|');
+        }
+
+        Set<String> context = new TreeSet<>();
+        try {
+            for (ChoiceVar choice : extractContexts(binding, new HashMap<>())) {
+                context.add(choice.toString());
+            }
+        } catch (RuntimeException e) {
+            // extractContexts assumes every matched constraint carries a reading and throws when one
+            // does not. Without the context we cannot tell whether two solutions emit under the same
+            // choice, so treat the solution as unique and leave the old behaviour untouched.
+            return null;
+        }
+
+        return signature.append("context=").append(context).toString();
+    }
+
+    /**
+     * The variables a rule's right-hand side consumes: fs-node names taken from {@code #a}, {@code *a}
+     * and typed occurrences such as {@code #c_t}, and value variables taken from {@code %a}. Both the
+     * node/value positions of a graph pattern and the terms {@link #replaceVars} substitutes into are
+     * covered, because the whole conjunct is scanned.
+     */
+    private RuleOutputVariables collectRuleOutputVariables(Rule r) {
+        if (r.getRight() == null || "0".equals(r.getRight().trim())) {
+            return RuleOutputVariables.deletion();
+        }
+
+        Set<String> nodeVariables = new TreeSet<>();
+        Set<String> valueVariables = new TreeSet<>();
+
+        for (String conjunct : r.splitGoal()) {
+            Matcher nodeMatcher = HelperMethods.fsNodePattern.matcher(conjunct);
+            while (nodeMatcher.find()) {
+                nodeVariables.add(stripTypeSuffix(nodeMatcher.group(1)));
+            }
+
+            Matcher valueMatcher = HelperMethods.valueVarPattern.matcher(conjunct);
+            while (valueMatcher.find()) {
+                valueVariables.add(valueMatcher.group(1));
+            }
+        }
+
+        return new RuleOutputVariables(nodeVariables, valueVariables, false);
+    }
+
+    /**
+     * Drops the semantic type from a typed variable occurrence, so that {@code c_t} and {@code c}
+     * refer to the same binding. Mirrors what {@link #replaceVars} does before its own lookup.
+     */
+    private static String stripTypeSuffix(String variable) {
+        String[] parts = variable.split("_");
+        return parts.length == 2 ? parts[0] : variable;
+    }
+
+    private record RuleOutputVariables(Set<String> nodeVariables, Set<String> valueVariables, boolean deletesMatch) {
+        /**
+         * Marks a rule that deletes its match instead of annotating it. Such rules emit no
+         * annotations, so there is nothing to conflate and their solutions are all kept.
+         */
+        static RuleOutputVariables deletion() {
+            return new RuleOutputVariables(Collections.emptySet(), Collections.emptySet(), true);
+        }
+    }
+
     private String resolveNodeReference(QueryParserResult qpr, Solution solution, String reference) {
         if (qpr.result.containsKey(solution) && qpr.result.get(solution).containsKey(reference)) {
             return qpr.result.get(solution).get(reference).keySet().stream().findAny().orElseGet(this::returnUnusedVar);
@@ -388,6 +514,7 @@ public class RuleParser {
             if (qpr.isSuccess && !r.getRight().equals("0")) {
 
                 List<String> search = r.splitGoal();
+                List<Solution> solutions = dedupeSolutions(r, qpr);
 
                 try {
                     boolean fixedContext = false;
@@ -405,7 +532,7 @@ public class RuleParser {
                             boolean valueMatches = valueMatcher.matches();
 
                             if (nodeMatcher.matches()) {
-                                for (Solution solutionKey : qpr.result.keySet()) {
+                                for (Solution solutionKey : solutions) {
 
                                     if (!fixedContext){
                                         context = extractContexts(qpr.result.get(solutionKey), newConstraints);
@@ -423,21 +550,6 @@ public class RuleParser {
                                                 c.setFsNode(key2);
                                                 c.setRelationLabel(graphMatcher.group(2));
                                                 c.setFsValue(key3);
-
-                                                //Readings experiment start
-                                                for (Integer constraintKey : newConstraints.keySet()) {
-                                                    //TODO return unused context
-
-
-                                                    GraphConstraint c1 = newConstraints.get(constraintKey);
-                                                    if (c1.getFsNode().equals(key2) && c1.getRelationLabel().equals(c.getRelationLabel()) &&
-                                                            c1.getReading().equals(c.getReading())) {
-                                                        ChoiceVar choice = new ChoiceVar("X1");
-                                                        Set<ChoiceVar> newChoice = new HashSet<>();
-                                                        newChoice.add(choice);
-                                                        c.setReading(newChoice);
-                                                    }
-                                                }//Readings experiment end
 
                                                 qpr.result.get(solutionKey).get(nodeMatcher.group(1)).get(key2).put(key, c);
                                                 newConstraints.put(key, c);
