@@ -4,6 +4,7 @@ import de.ukon.liger.analysis.QueryParser.HierarchyParser;
 import de.ukon.liger.analysis.QueryParser.HierarchyRegistry;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
+import de.ukon.liger.analysis.QueryParser.Solution;
 import de.ukon.liger.analysis.QueryParser.TemplateParser;
 import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
 import de.ukon.liger.syntax.GraphConstraint;
@@ -211,6 +212,41 @@ public class QueryParserTest {
             QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
 
             assertEquals(2, qpr.result.keySet().size());
+        }
+    }
+
+    /**
+     * `%i` is bound by the query's first conjunct. A `SolutionKey` is only created for a `#`-node
+     * variable, never for a `%`-value binding, so the second conjunct must introduce a genuinely new
+     * node variable (`#j`, via `#i NTYPE #j`) for the final Solution's key set to actually grow past
+     * the one %i was recorded under -- a conjunct that only re-checks the already-bound `#i` would not
+     * exercise this at all. RuleParser.lookupValueBinding resolves a %-variable for a final solution
+     * by searching qpr.valueBindings for the largest key whose SolutionKeys the final solution's keys
+     * contain -- this asserts that search actually has something to find, i.e. that parseQuery does
+     * not filter out every binding recorded before a later conjunct grows the solution.
+     */
+    @Test
+    void testValueBindingsAreReachableFromTheFinalMultiConjunctSolution() {
+        LinkedHashMap<String, LinguisticStructure> fs = loadFs("testdirS1.pl");
+
+        for (String key : fs.keySet()) {
+            QueryParser qp = new QueryParser("#i PRED %i & #i NTYPE #j", fs.get(key));
+            QueryParserResult qpr = qp.parseQuery(qp.getQueryList());
+
+            assertTrue(qpr.isSuccess);
+            assertEquals(2, qpr.result.keySet().size());
+            assertTrue(!qpr.valueBindings.isEmpty(), "value bindings were discarded for a multi-conjunct query");
+
+            for (Solution solution : qpr.result.keySet()) {
+                String binding = null;
+                for (Solution boundKey : qpr.valueBindings.keySet()) {
+                    HashMap<String, String> bindings = qpr.valueBindings.get(boundKey);
+                    if (bindings.containsKey("%i") && solution.getSolutionKeys().containsAll(boundKey.getSolutionKeys())) {
+                        binding = bindings.get("%i");
+                    }
+                }
+                assertTrue(binding != null, "no reachable %i binding for solution " + solution);
+            }
         }
     }
 

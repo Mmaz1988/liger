@@ -136,6 +136,66 @@ public class RuleParserTest {
         assertEquals(5, fslist.get(0).annotation.size());
     }
 
+    /**
+     * testRuleParser5/6 only bind %i via the LHS's single, last conjunct, which happened to keep
+     * working even when QueryParser's value-binding filter was broken. A `SolutionKey` is only ever
+     * created for a `#`-node variable (see Node.java/QueryExpression.java) -- never for a `%`-value
+     * binding -- so a later conjunct that only reuses the *same* already-bound node variable (like
+     * `#i CASE 'nom'`) never grows the Solution's key set, and the filter finds an exact match
+     * trivially. Real rules like the degree rules in liger_resources/rules/degree_rules_ev.txt bind
+     * their %-value, then go on to bind a genuinely *new* node variable later in the LHS (`#a PRED
+     * %a & #a s:: #s` introduces `#s`) -- that is what makes the final Solution strictly larger than
+     * the one %a was recorded under. This reproduces that shape via `#i NTYPE #j`, a second,
+     * previously-unseen node variable bound after %i.
+     */
+    @Test
+    void testReplaceSubstitutesValueVariableBoundBeforeALaterNodeVariableIsIntroduced() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.setReplace(true);
+        rp.getRules().add(new Rule("#i PRED %i & #i NTYPE #j ==> #i SEM 'strip(%i)'"));
+
+        rp.addAnnotation2(structure);
+
+        assertEquals(2, structure.annotation.size());
+        for (GraphConstraint c : structure.annotation) {
+            String value = String.valueOf(c.getFsValue());
+            assertTrue(value.contains("John") || value.contains("Mary"), "unexpected value: " + value);
+            assertTrue(!value.contains("%i"), "value variable was not substituted: " + value);
+        }
+    }
+
+    /**
+     * Two value variables bound at different LHS positions, mirroring the "equitives" rule in
+     * degree_rules_ev.txt (%p bound early, %a bound later, only %p used on the RHS), with a final
+     * node-introducing conjunct (`#j NSEM #k`) after both. The final conjunct matters: a value-var
+     * clause anywhere in the LHS triggers ValueExpression's own "copy forward" step, which copies an
+     * earlier %-binding onto the larger Solution live at that point -- if that clause happened to be
+     * the LHS's last one, the copy would land squarely on the final Solution and mask the bug this
+     * test exists to catch. Ending on a plain node conjunct instead means neither %i's nor %s's
+     * recorded Solution equals the true final one.
+     */
+    @Test
+    void testReplaceSubstitutesTheEarlierOfTwoValueVariables() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.setReplace(true);
+        rp.getRules().add(new Rule("#i PRED %i & #i NTYPE #j & #j NSYN %s & #j NSEM #k ==> #i SEM 'strip(%i)'"));
+
+        rp.addAnnotation2(structure);
+
+        assertEquals(2, structure.annotation.size());
+        for (GraphConstraint c : structure.annotation) {
+            String value = String.valueOf(c.getFsValue());
+            assertTrue(value.contains("John") || value.contains("Mary"), "unexpected value: " + value);
+            assertTrue(!value.contains("%i"), "value variable was not substituted: " + value);
+        }
+    }
+
     @Test
     void testRuleParserRewrite1() {
         LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS3.pl");

@@ -510,15 +510,7 @@ public class QueryParser {
                 result = applySuperiorConstraints(result);
             }
 
-            HashMap<Solution, HashMap<String, String>> filteredValueBindings = new HashMap<>();
-            for (Solution key : result.keySet()) {
-                HashMap<String, String> bindings = fsValueBindings.get(key);
-                if (bindings != null) {
-                    filteredValueBindings.put(key, new HashMap<>(bindings));
-                }
-            }
-
-            return new QueryParserResult(result, filteredValueBindings);
+            return new QueryParserResult(result, fsValueBindings);
         }
         return new QueryParserResult(new HashMap<>(),new HashMap<>());
     }
