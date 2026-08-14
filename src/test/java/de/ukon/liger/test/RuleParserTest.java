@@ -21,8 +21,42 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 public class RuleParserTest {
+
+    // Regression tests for Rule.splitGoal()'s backslash handling: it used to treat
+    // '\' as a universal escape character (dropping it before ANY following char),
+    // stripping the '\' out of every LiGER-rule-emitted lambda binder like "\P.(\Q...".
+    // The only legitimate escape need is "\&" for a literal '&' inside a GLUE value,
+    // distinct from '&' as the rule's conjunct separator.
+
+    @Test
+    void testSplitGoalPreservesBackslashes() {
+        Rule r = new Rule("dummy", "#p GLUE (\\P.(\\Q.(\\e.foo))) : bar");
+        java.util.List<String> conjuncts = r.splitGoal();
+        assertEquals(1, conjuncts.size());
+        assertTrue(conjuncts.get(0).contains("\\P"));
+        assertTrue(conjuncts.get(0).contains("\\Q"));
+        assertTrue(conjuncts.get(0).contains("\\e"));
+    }
+
+    @Test
+    void testSplitGoalStillHonorsEscapedAmpersand() {
+        Rule r = new Rule("dummy", "#p GLUE a\\&b : bar & #m GLUE c : d");
+        java.util.List<String> conjuncts = r.splitGoal();
+        assertEquals(2, conjuncts.size());
+        assertTrue(conjuncts.get(0).contains("a&b"));
+        assertEquals("#m GLUE c : d", conjuncts.get(1));
+    }
+
+    @Test
+    void testSplitGoalHandlesTrailingBackslashWithoutThrowing() {
+        Rule r = new Rule("dummy", "#p GLUE foo\\");
+        java.util.List<String> conjuncts = assertDoesNotThrow(r::splitGoal);
+        assertEquals(1, conjuncts.size());
+        assertTrue(conjuncts.get(0).endsWith("\\"));
+    }
 
     @Test
     void testPrologPrint() throws IOException {

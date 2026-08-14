@@ -178,7 +178,7 @@ public class Rule {
                 sb = new StringBuilder();
             }
 
-            if (right.charAt(i)  == '\\')
+            if (right.charAt(i) == '\\' && i + 1 < right.length() && right.charAt(i + 1) == '&')
             {
                 i++;
             }
