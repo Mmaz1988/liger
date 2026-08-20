@@ -240,14 +240,23 @@ public class LigerController {
         for (int sentenceIndex = 0; sentenceIndex < request.sentences.size(); sentenceIndex++) {
             String sentence = request.sentences.get(sentenceIndex);
             List<LinguisticStructure> parsed;
-            boolean suppliedAllSentences = request.parsedSentences != null
-                    && request.parsedSentences.size() == request.sentences.size()
-                    && request.parsedSentences.stream().allMatch(values -> values != null && !values.isEmpty());
-            boolean suppliedLastSentence = !suppliedAllSentences
+            // Per-index, not all-or-nothing: a caller supplying already-parsed structures
+            // for the prior sentences while deliberately leaving the newest sentence
+            // unsupplied (so it gets parsed and rule-applied fresh, positionally numbered
+            // into this sequence) sends a `parsedSentences` array ONE SHORTER than
+            // `sentences` -- requiring exact length equality made that supply path
+            // unreachable for every caller (both the analysis view's addSentence() and
+            // chat's sequence rebase), silently forcing every sentence to be re-parsed via
+            // XLE on every call instead of reusing already-parsed structures.
+            boolean suppliedThisSentence = request.parsedSentences != null
+                    && sentenceIndex < request.parsedSentences.size()
+                    && request.parsedSentences.get(sentenceIndex) != null
+                    && !request.parsedSentences.get(sentenceIndex).isEmpty();
+            boolean suppliedLastSentence = !suppliedThisSentence
                     && sentenceIndex == request.sentences.size() - 1
                     && request.parsedLastSentence != null
                     && !request.parsedLastSentence.isEmpty();
-            if (suppliedAllSentences) {
+            if (suppliedThisSentence) {
                 parsed = request.parsedSentences.get(sentenceIndex).stream()
                         .map(LinguisticStructure::parseFromJson)
                         .toList();
@@ -265,7 +274,7 @@ public class LigerController {
                         "No parse was found for sentence " + (sentenceIndex + 1));
             }
             List<SequenceCandidate> candidates = new ArrayList<>();
-            if (suppliedAllSentences || suppliedLastSentence) {
+            if (suppliedThisSentence || suppliedLastSentence) {
                 // The client has already parsed and rewritten the current
                 // sentence through /apply_rules_xle. Reuse those structures;
                 // applying the base rule set again would duplicate work and

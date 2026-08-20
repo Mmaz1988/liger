@@ -32,11 +32,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class SyntheticMcIndexTest {
 
     private static GraphConstraint constraint(String node, String label, String value) {
+        return constraint(node, label, value, "1");
+    }
+
+    private static GraphConstraint constraint(String node, String label, String value, String choiceId) {
         GraphConstraint constraint = new GraphConstraint();
         constraint.setFsNode(node);
         constraint.setRelationLabel(label);
         constraint.setFsValue(value);
-        constraint.setReading(new LinkedHashSet<>(Set.of(new ChoiceVar("1"))));
+        constraint.setReading(new LinkedHashSet<>(Set.of(new ChoiceVar(choiceId))));
         return constraint;
     }
 
@@ -97,5 +101,34 @@ public class SyntheticMcIndexTest {
                 .collect(Collectors.toMap(GraphConstraint::getFsNode,
                         constraint -> String.valueOf(constraint.getFsValue())));
         assertEquals(Map.of("g4", "i18", "g11", "i19"), synIds);
+    }
+
+    /**
+     * {@code parseMCfromPackedProlog} pre-seeds every reading it sees anywhere on a node
+     * (ANT/CONS/MEANING/NOSCOPE/...) with {@code ""} before resolving the non-atomic (ANT/CONS)
+     * branch, but only overwrites the readings actually reached through the antecedent/
+     * consequent recursion. A reading introduced only via a non-scoping constraint like NOSCOPE
+     * -- never through ANT/CONS -- used to keep its {@code ""} placeholder, which then printed
+     * as a blank line in the caller's one-MC-per-line {@code { ... }} block.
+     */
+    @Test
+    void packedProlgDropsUnresolvedReadingPlaceholders() {
+        List<GraphConstraint> constraints = new ArrayList<>();
+        constraints.add(constraint("g9", "ANT", "g_ant"));
+        constraints.add(constraint("g9", "CONS", "g_cons"));
+        constraints.add(constraint("g9", "MEANING", "'det'"));
+        // Only reachable via relevantChoices, never via the ANT/CONS recursion below.
+        constraints.add(constraint("g9", "NOSCOPE", "true", "2"));
+        constraints.add(constraint("g_ant", "RESOURCE", "'e_res'"));
+        constraints.add(constraint("g_ant", "TYPE", "'e'"));
+        constraints.add(constraint("g_cons", "RESOURCE", "'t_res'"));
+        constraints.add(constraint("g_cons", "TYPE", "'t'"));
+
+        Map<Set<ChoiceVar>, String> mcs = new GlueSemantics().parseMCfromPackedProlog("g9", constraints);
+
+        assertTrue(mcs.values().stream().noneMatch(String::isEmpty), mcs.toString());
+        assertEquals(1, mcs.size(), mcs.toString());
+        assertTrue(mcs.values().stream().anyMatch(mc -> mc.contains("det") && mc.contains("e_res") && mc.contains("t_res")),
+                mcs.toString());
     }
 }

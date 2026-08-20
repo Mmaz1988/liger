@@ -158,6 +158,9 @@ public class LigerWebGraph {
 
         nodes.keySet().removeIf(node -> isSemanticTypeNode(node, input, nodes.keySet()));
 
+        edges.removeIf(e -> !nodes.containsKey(String.valueOf(e.data.get("source")))
+                || !nodes.containsKey(String.valueOf(e.data.get("target"))));
+
         List<LigerGraphComponent> testNodes = new ArrayList<>();
 
         for (String key : nodes.keySet())

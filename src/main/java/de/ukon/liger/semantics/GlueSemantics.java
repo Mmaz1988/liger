@@ -1124,6 +1124,11 @@ public class GlueSemantics {
                     unpackedMeaningConstructors.put(key, newMC.toString());
                 }
             }
+            // relevantChoices (line ~886) pre-seeds every reading with "" before the ANT/CONS
+            // loops above run; a reading only reachable via a MEANING/BINDER constraint and not
+            // covered by either loop never gets overwritten. Left in, that "" becomes a blank
+            // line when the caller prints this reading's meaning constructors one per line.
+            unpackedMeaningConstructors.values().removeIf(String::isEmpty);
             return unpackedMeaningConstructors;
         }
     }
