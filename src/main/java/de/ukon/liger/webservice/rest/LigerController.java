@@ -163,15 +163,43 @@ public class LigerController {
         starter.generateXLEStarterFile();
         XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
 
-        //Parse sentence
-        List<LinguisticStructure> fsList = parser.parseSingle(request.sentence,true);
+        SentenceAnnotation annotated = annotateSentence(
+                request.sentence, request.ruleString, request.logicType, parser, starter);
 
+        LOGGER.info("Finished LiGER annotation. Returning results...");
+        return new LigerSolutionAnnotationResponse(request.sentence, annotated.solutions());
+    }
 
-        //Apply rewrite rules
-        RuleParser rp = new RuleParser(fsList, request.ruleString);
+    /** One sentence's full annotation: one {@link LigerSolutionAnnotation} per syntactic
+     *  analysis, each carrying its own structure, graph, meaning constructors, sentence
+     *  analysis and structure variants.
+     *
+     *  Extracted so {@code /apply_rules_to_batch} is literally N of these rather than a
+     *  parallel implementation returning less. It used to return ONE annotation per
+     *  sentence with every analysis's meaning constructors concatenated, no
+     *  {@code structureJson} at all, no {@code structureVariants} and only the first
+     *  analysis's graph -- which forced every consumer to compensate. See
+     *  xleplusglue/docs/plans/SHARED_PIPELINE_PLAN.md, Stage 4 and invariant I6.
+     */
+    private SentenceAnnotation annotateSentence(String sentence, String ruleString, String requestedLogicType,
+                                                XLEoperator parser, XLEStarter starter) throws IOException {
+        List<LinguisticStructure> fsList = parser.parseSingle(sentence, true);
+        if (fsList == null || fsList.isEmpty()) {
+            return new SentenceAnnotation(List.of(), new LinkedHashSet<>(), 0);
+        }
+
+        // Constructed per sentence, WITH that sentence's structures -- the batch endpoint
+        // used to share one RuleParser across every sentence, which made
+        // getAppliedRules() cumulative and its per-sentence rule counts wrong.
+        RuleParser rp = new RuleParser(fsList, ruleString);
 
         GlueSemantics sem = new GlueSemantics();
         List<LigerSolutionAnnotation> solutions = new ArrayList<>();
+        LinkedHashSet<LigerRule> allAppliedRules = new LinkedHashSet<>();
+        int addedAnnotations = 0;
+
+        String logicType = requestedLogicType != null && !requestedLogicType.isEmpty()
+                ? requestedLogicType : "fof";
 
         for (int i = 0; i < fsList.size(); i++) {
             LinguisticStructure fs = fsList.get(i);
@@ -183,22 +211,15 @@ public class LigerController {
 
             LigerWebGraph lg = new LigerWebGraph(primary.constraints, primary.annotation);
 
-
             for (Rule r : rp.getAppliedRules()) {
                 appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
             }
+            allAppliedRules.addAll(appliedLigerRules);
+            addedAnnotations += primary.annotation.size();
+
             String currentSemString = sem.returnMeaningConstructors(primary, !starter.isGlue, false, true);
 
-
-            //Extract axioms
-            AxiomExtractor axiomExtractor = new AxiomExtractor();
-
-            String logicType = "fof";
-            if (request.logicType != null && !request.logicType.isEmpty()) {
-                logicType = request.logicType;
-            }
-
-            List<String> axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(primary, logicType);
+            List<String> axioms = new AxiomExtractor().extractAxiomsFromLigerAnnotations(primary, logicType);
 
             String solutionKey = solutionKeyFor(fs, i);
             LigerSolutionAnnotation solutionAnnotation = new LigerSolutionAnnotation(
@@ -211,13 +232,18 @@ public class LigerController {
                     axioms
             );
             solutionAnnotation.sentenceAnalysis = sentenceSyntaxAnalysis(
-                    solutionKey, request.sentence, primary, lg, currentSemString);
+                    solutionKey, sentence, primary, lg, currentSemString);
             solutionAnnotation.structureVariants = toStructureVariants(branches);
             solutions.add(solutionAnnotation);
         }
+        return new SentenceAnnotation(solutions, allAppliedRules, addedAnnotations);
+    }
 
-        LOGGER.info("Finished LiGER annotation. Returning results...");
-        return new LigerSolutionAnnotationResponse(request.sentence, solutions);
+    /** What {@link #annotateSentence} produces: the per-analysis solutions plus the two
+     *  aggregates the batch report needs. */
+    private record SentenceAnnotation(List<LigerSolutionAnnotation> solutions,
+                                      LinkedHashSet<LigerRule> appliedRules,
+                                      int addedAnnotations) {
     }
 
     /**
@@ -1267,129 +1293,63 @@ public class LigerController {
     @PostMapping(value = "/apply_rules_to_batch", produces = "application/json", consumes = "application/json")
     public LigerBatchParsingAnalysis applyRulesToTestsuiteNew(@RequestBody LigerMultipleRequest request) throws IOException {
 
-        //    System.out.println(request.sentence);
-        //   System.out.println(request.ruleString);
         XLEStarter starter = new XLEStarter();
         starter.generateXLEStarterFile();
         XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
 
-        List<LigerGraphComponent> appliedRulesGraph = new ArrayList<>();
+        // Parsed once purely for createLigerAnnotationGraph's rule LIST -- it reads
+        // getRules(), not any per-sentence application state. The per-sentence parsers
+        // live inside annotateSentence().
+        RuleParser rulesForGraph = new RuleParser(request.ruleString);
 
-        boolean rules = false;
-
-        RuleParser rp = null;
-
-        rp = new RuleParser(request.ruleString);
-
-        HashMap<String,LigerRuleAnnotation> output = new HashMap<>();
-        HashMap<String,LinkedHashSet<LigerRule>> allAppliedRules = new HashMap();
+        HashMap<String, LigerSolutionAnnotationResponse> output = new HashMap<>();
+        HashMap<String, LinkedHashSet<LigerRule>> allAppliedRules = new HashMap<>();
 
         StringBuilder reportBuilder = new StringBuilder();
-
-        if (!appliedRulesGraph.isEmpty()){
-            rules = true;
-        }
-
-        if (!rules){
+        if (request.ruleString == null || request.ruleString.isEmpty()) {
             reportBuilder.append("No rewrite rules applied to testsuite!");
         }
-
         reportBuilder.append(System.lineSeparator());
-        reportBuilder.append("ID:     Applied rules:     Added facts:     No of meaning constructors:\n");
+        reportBuilder.append("ID:     Applied rules:     Added facts:     No of solutions:     No of meaning constructor sets:\n");
 
         List<String> keys = new ArrayList<>(request.sentences.keySet());
+        keys.sort(Comparator.comparingInt(key -> Integer.parseInt(key.replaceAll("\\D", ""))));
 
-        //sort keys by string final number
-
-        keys.sort(new Comparator<String>() {
-            @Override
-            public int compare(String s1, String s2) {
-                // Extract the numbers from the end of the strings
-                int num1 = Integer.parseInt(s1.replaceAll("\\D", ""));
-                int num2 = Integer.parseInt(s2.replaceAll("\\D", ""));
-
-                // Compare the numbers
-                return Integer.compare(num1, num2);
-            }
-        });
-
-        GlueSemantics sem = new GlueSemantics();
-
-        //Parsing routine
-        for (int i = 0; i < keys.size(); i++) {
-
-            String id = keys.get(i);
+        for (String id : keys) {
             String sentence = request.sentences.get(id);
 
-            LigerWebGraph lg = null;
-            List<String> axioms = new ArrayList<>();
+            // Exactly what /apply_rules_xle returns for this sentence -- one annotation
+            // per syntactic analysis, each with its own structureJson, structureVariants,
+            // sentenceAnalysis, graph and meaning constructors. A batch endpoint is N
+            // single calls with shared setup (the XLE parser and the rule list); it may
+            // not return less. See SHARED_PIPELINE_PLAN.md invariant I6.
+            SentenceAnnotation annotated = annotateSentence(
+                    sentence, request.ruleString, request.logicType, parser, starter);
 
-            List<String> semString = new ArrayList<>();
+            output.put(id, new LigerSolutionAnnotationResponse(sentence, annotated.solutions()));
+            allAppliedRules.put(id, annotated.appliedRules());
 
-            List<LinguisticStructure> fsList = parser.parseSingle(sentence);
-
-            int addedAnnotations = 0;
-
-
-            LinkedHashSet<LigerRule> appliedLigerRules = new LinkedHashSet<>();
-
-            for (LinguisticStructure fs : fsList) {
-
-                if (!request.ruleString.equals("")) {
-                    rp.addAnnotation2(fs);
-                }
-
-                // rp.addAnnotation2(fs);
-                sem.annotateSyntheticMcIndices(fs);
-
-                for (Rule r : rp.getAppliedRules()) {
-                    appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
-                }
-
-                AxiomExtractor axiomExtractor = new AxiomExtractor();
-
-                String logicType = "fof";
-                if (request.logicType != null && !request.logicType.isEmpty()) {
-                    logicType = request.logicType;
-                }
-
-                List<String> currentAxioms = axiomExtractor.extractAxiomsFromLigerAnnotations(fs, logicType);
-
-                if (!(currentAxioms == null) && !currentAxioms.isEmpty()) {
-                    axioms.addAll(currentAxioms.stream()
-                            .filter(x -> !axioms.contains(x)).collect(Collectors.toList()));
-                }
-
-                semString.add(sem.returnMeaningConstructors(fs, !starter.isGlue, false, true));
-                addedAnnotations = addedAnnotations + fs.annotation.size();
-            }
-            String currentSemString = String.join("\n", semString);
-
-
-            List<String> meaningConstructors = List.of(currentSemString.split("\n"));
-            //remove lines which equal }\n or {\n
-            meaningConstructors = meaningConstructors.stream().filter(s -> !s.equals("}") && !s.equals("{") && !s.startsWith("//")).collect(Collectors.toList());
-
-            lg = new LigerWebGraph(fsList.get(0).constraints, fsList.get(0).annotation);
-
-            reportBuilder.append(String.format("%s\t\t%s\t\t%s\t\t%s", id, appliedLigerRules.size(), addedAnnotations, meaningConstructors.size()));
+            int mcSets = annotated.solutions().stream()
+                    .mapToInt(solution -> solution.numberOfMCsets)
+                    .sum();
+            reportBuilder.append(String.format("%s\t\t%s\t\t%s\t\t%s\t\t%s",
+                    id, annotated.appliedRules().size(), annotated.addedAnnotations(),
+                    annotated.solutions().size(), mcSets));
             reportBuilder.append(System.lineSeparator());
-
-            output.put(id, new LigerRuleAnnotation(sentence, lg, appliedLigerRules, currentSemString, fsList.size(),axioms));
-            allAppliedRules.put(id,appliedLigerRules);
         }
 
-        appliedRulesGraph = createLigerAnnotationGraph(request.sentences,rp, allAppliedRules);
+        List<LigerGraphComponent> appliedRulesGraph =
+                createLigerAnnotationGraph(request.sentences, rulesForGraph, allAppliedRules);
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
-        return new LigerBatchParsingAnalysis(output,appliedRulesGraph,reportBuilder.toString());
+        return new LigerBatchParsingAnalysis(output, appliedRulesGraph, reportBuilder.toString());
     }
 
         //Method for applying a multistage grammar to a testsuite
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/multistage_to_batch", produces = "application/json", consumes = "application/json")
-    public LigerBatchParsingAnalysis applyMultiStageToTestsuite(@RequestBody LigerMultipleRequest request) throws IOException {
+    public LigerRuleAnnotationBatchAnalysis applyMultiStageToTestsuite(@RequestBody LigerMultipleRequest request) throws IOException {
 
         //    System.out.println(request.sentence);
         //   System.out.println(request.ruleString);
@@ -1460,13 +1420,13 @@ public class LigerController {
 
         }
         LOGGER.info("Finished LiGER annotation. Returning results...");
-        return new LigerBatchParsingAnalysis(output,null,reportBuilder.toString());
+        return new LigerRuleAnnotationBatchAnalysis(output,null,reportBuilder.toString());
     }
 
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rules_to_dependency_batch", produces = "application/json", consumes = "application/json")
-    public LigerBatchParsingAnalysis applyRulesToStanzaTestsuite(@RequestBody LigerMultipleRequest request) throws IOException {
+    public LigerRuleAnnotationBatchAnalysis applyRulesToStanzaTestsuite(@RequestBody LigerMultipleRequest request) throws IOException {
 
         //    System.out.println(request.sentence);
         //   System.out.println(request.ruleString);
@@ -1573,7 +1533,7 @@ public class LigerController {
         appliedRulesGraph = createLigerAnnotationGraph(request.sentences,rp, allAppliedRules);
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
-        return new LigerBatchParsingAnalysis(output,appliedRulesGraph,reportBuilder.toString());
+        return new LigerRuleAnnotationBatchAnalysis(output,appliedRulesGraph,reportBuilder.toString());
     }
 
     /************************************************************************
