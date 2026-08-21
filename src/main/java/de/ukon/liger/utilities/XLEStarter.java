@@ -9,6 +9,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.Path;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -346,34 +350,76 @@ public class XLEStarter {
         return grammarPaths;
     }
 
-    //update grammarpath in xle_paths.txt
+    /**
+     * Points xle_paths.txt at a different grammar.
+     *
+     * Hardened 2026-08-21 after the file was observed being wiped by "update grammar" in
+     * some configuration, which leaves every parse endpoint returning 500 because
+     * {@link #initiateFromFile()} then reads an empty or blank grammar path. Three
+     * separate holes, any of which could produce that:
+     *
+     * <ul>
+     *   <li>No validation of the incoming path. A null or blank value wrote
+     *       {@code grammar=""} or literally {@code grammar="null"} -- syntactically a
+     *       fine file, semantically a dead XLE.</li>
+     *   <li>{@code new FileWriter(f)} TRUNCATES immediately, before the replacement
+     *       content is known good. Any failure -- or a second request interleaving -- left
+     *       the live file empty or partial, with no copy of what it used to hold.</li>
+     *   <li>The grammar line was located purely by position ({@code i == 1}) without
+     *       checking it actually was the grammar line, so a file with any other layout was
+     *       silently rewritten unchanged.</li>
+     * </ul>
+     *
+     * Now: validate, build the replacement in full, verify it still parses as an
+     * xle_paths file, and swap it in atomically. A failure leaves the existing file
+     * untouched and says why.
+     */
     public void updateGrammarPath(String grammarPath) {
-        File f = new File(Paths.get(PathVariables.workingDirectory, "xle_paths.txt").toString());
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(f));
-            String line;
-            int i = 0;
-            StringBuilder sb = new StringBuilder();
-            while ((line = br.readLine()) != null) {
-            //if line matches grammar="path/to/grammar.lfg" and is the second line replace with new path
-                if (line.contains("grammar=") && i == 1) {
-                    sb.append("grammar=\"");
-                    sb.append(grammarPath);
-                    sb.append("\"");
-                    sb.append("\n");
-                } else {
-                    sb.append(line);
-                    sb.append("\n");
-                }
-                i++;
-            }
-            br.close();
-            java.io.FileWriter fw = new java.io.FileWriter(f);
-            fw.write(sb.toString());
-            fw.close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        if (grammarPath == null || grammarPath.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Refusing to update xle_paths.txt with an empty grammar path: that leaves XLE "
+                            + "with no grammar and every parse failing.");
         }
+
+        Path pathsFile = Paths.get(PathVariables.workingDirectory, "xle_paths.txt");
+        List<String> lines;
+        try {
+            lines = Files.readAllLines(pathsFile);
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot read " + pathsFile + " to update the grammar path", e);
+        }
+
+        if (lines.size() < 2 || !lines.get(1).trim().startsWith("grammar=")) {
+            throw new IllegalStateException(
+                    pathsFile + " does not have a grammar= line where it is expected (line 2); "
+                            + "refusing to rewrite it. Found " + lines.size() + " line(s).");
+        }
+
+        List<String> updated = new ArrayList<>(lines);
+        updated.set(1, "grammar=\"" + grammarPath + "\"");
+
+        // Written beside the target and moved into place, so the live file is never in a
+        // truncated state and a failure costs nothing.
+        try {
+            Path temp = Files.createTempFile(pathsFile.getParent(), "xle_paths", ".tmp");
+            try {
+                Files.write(temp, updated);
+                try {
+                    Files.move(temp, pathsFile, StandardCopyOption.REPLACE_EXISTING,
+                            StandardCopyOption.ATOMIC_MOVE);
+                } catch (AtomicMoveNotSupportedException atomicUnsupported) {
+                    Files.move(temp, pathsFile, StandardCopyOption.REPLACE_EXISTING);
+                }
+            } catch (IOException e) {
+                Files.deleteIfExists(temp);
+                throw e;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Could not update the grammar path in " + pathsFile, e);
+        }
+
+        this.grammarPath = grammarPath;
+        LOGGER.info("Updated grammar path in {} to {}", pathsFile, grammarPath);
     }
 }
 
