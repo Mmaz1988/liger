@@ -38,3 +38,7 @@ build/
 ### Shared grammar tree ###
 /grammars/
 /.local_grammar_backups/
+
+### Agents and plans
+*.md
+!**./docs/*
