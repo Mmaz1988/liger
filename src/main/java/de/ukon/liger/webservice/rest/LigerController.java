@@ -141,7 +141,7 @@ public class LigerController {
                     new ArrayList<>()
             );
             solution.sentenceAnalysis = sentenceSyntaxAnalysis(
-                    solutionKey, request.sentence, fs, solution.graph, semString);
+                    solutionKey, solutionKey, request.sentence, fs, solution.graph, semString);
             solutions.add(solution);
         }
 
@@ -163,8 +163,10 @@ public class LigerController {
         starter.generateXLEStarterFile();
         XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
 
+        // No caller-supplied id on the single-sentence endpoint; the solution key stands
+        // in, which is self-consistent because there is only one sentence in play.
         SentenceAnnotation annotated = annotateSentence(
-                request.sentence, request.ruleString, request.logicType, parser, starter);
+                null, request.sentence, request.ruleString, request.logicType, parser, starter);
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
         return new LigerSolutionAnnotationResponse(request.sentence, annotated.solutions());
@@ -181,7 +183,8 @@ public class LigerController {
      *  analysis's graph -- which forced every consumer to compensate. See
      *  xleplusglue/docs/plans/SHARED_PIPELINE_PLAN.md, Stage 4 and invariant I6.
      */
-    private SentenceAnnotation annotateSentence(String sentence, String ruleString, String requestedLogicType,
+    private SentenceAnnotation annotateSentence(String sentenceId, String sentence, String ruleString,
+                                                String requestedLogicType,
                                                 XLEoperator parser, XLEStarter starter) throws IOException {
         List<LinguisticStructure> fsList = parser.parseSingle(sentence, true);
         if (fsList == null || fsList.isEmpty()) {
@@ -232,6 +235,7 @@ public class LigerController {
                     axioms
             );
             solutionAnnotation.sentenceAnalysis = sentenceSyntaxAnalysis(
+                    sentenceId != null ? sentenceId : solutionKey,
                     solutionKey, sentence, primary, lg, currentSemString);
             solutionAnnotation.structureVariants = toStructureVariants(branches);
             solutions.add(solutionAnnotation);
@@ -410,12 +414,22 @@ public class LigerController {
                 String.join("\n", request.sentences), solutions);
     }
 
-    private SentenceAnalysis sentenceSyntaxAnalysis(String id, String text,
+    /**
+     * @param sentenceId identifies the SENTENCE (the caller's own id where there is one).
+     *                   Distinct from {@code solutionKey}, which identifies one syntactic
+     *                   ANALYSIS of it. Conflating them is not cosmetic: GSWB derives its
+     *                   reading ids from {@code origin.sentenceId}, and solution keys are
+     *                   numbered globally across a batch, so a sentence with two analyses
+     *                   shifts every later sentence's key by one. Reading ids then carried
+     *                   another sentence's number -- sentence S3's readings appearing as
+     *                   {@code S4-s2} while sentence S4's appeared as {@code S5-s0}.
+     */
+    private SentenceAnalysis sentenceSyntaxAnalysis(String sentenceId, String solutionKey, String text,
                                                      LinguisticStructure structure,
                                                      LigerWebGraph graph,
                                                      String meaningConstructors) {
-        SentenceAnalysis sentence = new SentenceAnalysis(id, text);
-        sentence.syntax.add(new SyntacticAnalysis(id, structure.toJson(), graph,
+        SentenceAnalysis sentence = new SentenceAnalysis(sentenceId, text);
+        sentence.syntax.add(new SyntacticAnalysis(solutionKey, structure.toJson(), graph,
                 meaningConstructors, countMeaningConstructorSets(meaningConstructors)));
         return sentence;
     }
@@ -1324,7 +1338,7 @@ public class LigerController {
             // single calls with shared setup (the XLE parser and the rule list); it may
             // not return less. See SHARED_PIPELINE_PLAN.md invariant I6.
             SentenceAnnotation annotated = annotateSentence(
-                    sentence, request.ruleString, request.logicType, parser, starter);
+                    id, sentence, request.ruleString, request.logicType, parser, starter);
 
             output.put(id, new LigerSolutionAnnotationResponse(sentence, annotated.solutions()));
             allAppliedRules.put(id, annotated.appliedRules());
