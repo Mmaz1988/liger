@@ -10,6 +10,14 @@ public class LigerStructureMergeRequest {
     public LigerWebGraph syntaxGraph;
     public LinkedHashMap<String, Object> drs;
 
+    /** Whether to render the merged structure to a LigerWebGraph as well.
+     *
+     *  Absent means yes, so every existing caller is unaffected. Callers that only feed
+     *  the merged structure into the next request -- the client's discourse/reasoning
+     *  pipeline does exactly that -- send false: the rendering is roughly a third of this
+     *  response, and it was being downloaded and discarded on every rule branch. */
+    public Boolean includeGraph;
+
     public LigerStructureMergeRequest() {
     }
 

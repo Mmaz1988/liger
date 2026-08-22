@@ -6,6 +6,12 @@ public class LigerStructureRuleRequest {
     public String id;
     public String ruleString;
 
+    /** Whether to render each rule branch to a LigerWebGraph as well. Absent means yes,
+     *  so every existing caller is unaffected. See LigerStructureMergeRequest.includeGraph
+     *  -- this one costs more, because it is paid once per branch rather than once per
+     *  request. */
+    public Boolean includeGraph;
+
     public LigerStructureRuleRequest() {
     }
 

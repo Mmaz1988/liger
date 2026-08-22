@@ -728,7 +728,17 @@ public class LigerController {
         LinguisticStructure syntax = parseStructureMap(request.syntax);
         LinguisticStructure drs = parseStructureMap(request.drs);
         LinguisticStructure merged = LinguisticStructureMerger.merge(syntax, drs);
-        return new LigerMergeResponse(new LigerWebGraph(merged.constraints, merged.annotation),merged.toJson());
+        LigerWebGraph graph = wantsGraph(request.includeGraph)
+                ? new LigerWebGraph(merged.constraints, merged.annotation)
+                : null;
+        return new LigerMergeResponse(graph, merged.toJson());
+    }
+
+    /** Graph rendering is opt-OUT: an absent flag means render, so callers that predate
+     *  the flag keep the response they always got. Only a caller that says so explicitly
+     *  gets the cheaper response. */
+    private static boolean wantsGraph(Boolean includeGraph) {
+        return !Boolean.FALSE.equals(includeGraph);
     }
 
     private QueryMatchSummary summarizeQueryMatches(List<QueryParserResult> results) {
@@ -903,7 +913,9 @@ public class LigerController {
                 }
 
                 LigerRuleAnnotation annotation = new LigerRuleAnnotation(
-                        new LigerWebGraph(branch.constraints, branch.annotation),
+                        wantsGraph(request.includeGraph)
+                                ? new LigerWebGraph(branch.constraints, branch.annotation)
+                                : null,
                         appliedRules,
                         branch.toJson()
                 );
