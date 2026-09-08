@@ -44,10 +44,10 @@ package de.ukon.liger.main;
 
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.semantics.GlueSemantics;
+import de.ukon.liger.semantics.GlueSemanticsParser;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.SyntaxOperator;
-import de.ukon.liger.syntax.ud.UDoperator;
 import de.ukon.liger.syntax.xle.Fstructure;
 import de.ukon.liger.syntax.xle.XLEoperator;
 import de.ukon.liger.utilities.DBASettings;
@@ -63,6 +63,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class DbaMain {
@@ -70,6 +72,7 @@ public class DbaMain {
 
     //  public BufferedWriter outputWriter;
     public static DBASettings settings;
+    private static String[] springArgs = new String[0];
     private final static Logger LOGGER = LoggerFactory.getLogger(DbaMain.class);
 
 
@@ -90,9 +93,39 @@ public class DbaMain {
         initiateArguments(args);
     }
 
+    /**
+     * The arguments Spring (and through it logback) needs to see.
+     *
+     * LiGER parses its own flags here and used to start the web service with
+     * {@code new String[0]}, which silently dropped Spring's {@code --key=value}
+     * options -- including {@code --logging.file.name}, so asking for a log file
+     * on the command line had no effect at all. Forward those through, and
+     * translate the {@code -log <dir>} alias into one for symmetry with -web:
+     *
+     *   java -jar jars/liger.jar -web -log logs
+     *   java -jar jars/liger.jar -web --logging.file.name=logs/liger.log
+     */
+    static String[] springArgs(String[] args) {
+        List<String> forwarded = new ArrayList<>();
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].startsWith("--")) {
+                forwarded.add(args[i]);
+            } else if (args[i].equals("-log") && i + 1 < args.length) {
+                String fileName = "liger-"
+                        + DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(LocalDateTime.now()) + ".log";
+                forwarded.add("--logging.file.name=" + Paths.get(args[i + 1], fileName));
+                i++;
+            }
+        }
+        return forwarded.toArray(new String[0]);
+    }
+
     public static void initiateArguments(String[] args) throws IOException {
         settings = new DBASettings();
+        springArgs = springArgs(args);
 
+
+        //Initialize settings
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
             LOGGER.info("GOT ARG: " + arg);
@@ -121,33 +154,45 @@ public class DbaMain {
                     settings.ruleFile = args[i + 1];
                     i++;
                     break;
-                case "-dep":
-                    settings.mode = "dep";
-                    break;
-                case "-lfg":
-                    settings.mode = "lfg";
-                    break;
-                case "-sem":
-                    settings.semanticParsing = true;
-                    break;
                 case "-mc":
                     settings.mcs = true;
                     break;
-                case "-xle":
-                    settings.xleBinary = args[i + 1];
-                    i++;
-                    break;
-                case "-grammar":
-                    settings.xleGrammar = args[i + 1];
-                    i++;
+
+                case "-glue2lfg":
+                    settings.glueGrammarFile = args[i + 1];
                     break;
 
+                case "-multi":
+                    settings.multi = true;
+                    break;
+
+                // grammar format (either a oldschool glue grammar, or a xleplus glue style grammar)
+                case "-gf":
+                    if (args[i + 1].equals("1") || args[i + 1].equals("glue")){
+                        settings.prolog = false;
+                } else if (args[i + 1].equals("0") || args[i + 1].equals("prolog")){
+                        settings.prolog = true;
+                }
+                    break;
             }
         }
 
 
+        //Execute LiGER
+        if (settings.glueGrammarFile != null) {
+            translateGlueGrammar();
+        }
+
         runDBA();
      //   System.exit(0);
+    }
+
+
+    public static void translateGlueGrammar() throws IOException {
+        File glueFile =  new File(settings.glueGrammarFile);
+        GlueSemanticsParser gps = new GlueSemanticsParser(new VariableHandler());
+        gps.convertGlueGrammar(glueFile.toString());
+        System.exit(0);
     }
 
     public static void runDBA() throws IOException {
@@ -171,10 +216,12 @@ public class DbaMain {
 
 
         if (settings.web) {
+            //Running in online mode -- separate code in webservice
             LOGGER.info("Running system as web service ... ");
             WebApplication web = new WebApplication();
-            web.main(new String[0]);
+            web.main(springArgs);
         } else {
+            // Running LiGER locally
             if (settings.outputFile != null) {
                 String outPath = settings.outputFile;
                 try {
@@ -193,16 +240,11 @@ public class DbaMain {
             }
 
             String ruleFile = "";
-
+            //TODO Setting for dependencies is deprecated
             if (settings.ruleFile == null) {
                 if (settings.mode == "dep") {
-                    if (settings.semanticParsing) {
-                        ruleFile = PathVariables.testPath + "testRulesUD1.txt";
-                    } else {
                         ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
-                    }
                 }
-
                 if (settings.mode == "lfg")
                 {
                  ruleFile = PathVariables.testPath + "testRulesLFG9.txt";
@@ -210,14 +252,10 @@ public class DbaMain {
             } else {
                 ruleFile = settings.ruleFile;
             }
-
             if (settings.mode == null) {
                 settings.mode = "dep";
-                if (settings.semanticParsing) {
-                    ruleFile = PathVariables.testPath + "testRulesUD1.txt";
-                } else {
-                    ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
-                }
+
+                ruleFile = PathVariables.testPath + "testRulesUD4c.txt";
             }
 
             LOGGER.info("Set rule file: " + ruleFile);
@@ -225,11 +263,11 @@ public class DbaMain {
             LinkedHashMap<String, HashMap<Integer, String>> result = new LinkedHashMap<>();
 
             if (settings.interactiveMode) {
-
                 LOGGER.info("Starting interactive mode...\n");
-                Scanner s = new Scanner(System.in);
 
+                Scanner s = new Scanner(System.in);
                 String input;
+
                 while (true) {
                     LOGGER.info("Enter sentence to be analyzed or enter 'quit' to exit the program.");
                     input = s.nextLine();
@@ -237,24 +275,16 @@ public class DbaMain {
                     //if (input.equals("quit"))
                     //    break;
                 }
-
                 LinkedHashMap<String, LinguisticStructure> fs = parserInteractiveWrapper(settings.mode, input, ruleFile, result);
-
-                if (settings.semanticParsing) {
-                    semanticsInteractiveWrapper(fs, result);
-                }
-
                 if (settings.mcs)
                 {
                     semanticsMeaningConstructorWrapper(fs,result);
                 }
-
-            } else {
+            }
+            // i/o mode
+            else
+            {
                 LinkedHashMap<String, LinguisticStructure> fs = fromFileWrapper(result);
-                if (settings.semanticParsing) {
-                    semanticsInteractiveWrapper(fs, result);
-                }
-
                 if (settings.mcs)
                 {
                     semanticsMeaningConstructorWrapper(fs,result);
@@ -265,10 +295,6 @@ public class DbaMain {
                 if (!settings.mcs) {
                     for (String key : result.keySet()) {
                         settings.outputWriter.append(result.get(key).get(0));
-                        if (settings.semanticParsing) {
-                            settings.outputWriter.append(result.get(key).get(1));
-                        }
-                        settings.outputWriter.close();
                     }
                 } else
                 {
@@ -276,8 +302,8 @@ public class DbaMain {
                     {
                         settings.outputWriter.append(result.get(key).get(1));
                     }
-                    settings.outputWriter.close();
                 }
+                settings.outputWriter.close();
                 }
 
         //    System.out.println();
@@ -308,46 +334,6 @@ public class DbaMain {
     }
 
     public static void
-    semanticsInteractiveWrapper(LinkedHashMap<String, LinguisticStructure> in, LinkedHashMap<String, HashMap<Integer, String>> result) {
-
-
-        for (String key : in.keySet()) {
-            LinguisticStructure fs = in.get(key);
-            GlueSemantics sem = new GlueSemantics();
-            String semantics = sem.calculateSemantics(fs);
-
-            StringBuilder resultBuilder = new StringBuilder();
-
-            resultBuilder.append("Result of the Glue derivation:");
-            resultBuilder.append(semantics);
-
-            result.get(key).put(1, semantics);
-
-       //     System.out.println("Meaning constructors:");
-       //     System.out.println(sem.returnMeaningConstructors(fs));
-
-        }
-
-        for (String key : result.keySet()) {
-            LOGGER.info("The rewrite system produced the following output:\n" + result.get(key).get(0));
-            LOGGER.info("The GSWB produced the following output:\n" + result.get(key).get(1));
-        }
-
-        StringBuilder report = new StringBuilder();
-
-        report.append(System.lineSeparator());
-        report.append("ID:      Added facts:     Glue solutions:\n");
-
-        for (String key : result.keySet()) {
-            report.append(String.format("%s\t\t\t%s\t\t\t%s", key, in.get(key).annotation.size(), result.get(key).get(1)));
-        }
-
-        LOGGER.info(report.toString());
-
-        LOGGER.info("Done");
-    }
-
-    public static void
     semanticsMeaningConstructorWrapper(LinkedHashMap<String, LinguisticStructure> in, LinkedHashMap<String, HashMap<Integer, String>> result) {
 
 
@@ -355,16 +341,31 @@ public class DbaMain {
             StringBuilder resultBuilder = new StringBuilder();
             LinguisticStructure fs = in.get(key);
             GlueSemantics sem = new GlueSemantics();
-            String semantics = sem.returnMeaningConstructors(fs);
 
+
+            String semantics = "";
+
+            if (settings.multi)
+            {
+                semantics = sem.returnMultiStageMeaningConstructors(fs);
+            } else {
+                semantics = sem.returnMeaningConstructors(fs,settings.prolog,false,true);
+            }
+
+
+            // String semantics = sem.returnMeaningConstructors(fs,false,false);
+
+
+            if (!result.containsKey(key)) {
+                result.put(key, new HashMap<>());
+            }
 
             resultBuilder.append("LiGER generated the following meaning constructors:");
             resultBuilder.append(semantics);
             result.get(key).put(1, semantics);
         }
 
-//            System.out.println("Meaning constructors:");
-//            System.out.println(sem.returnMeaningConstructors(fs));
+        LOGGER.info(result.toString());
 
 
 
@@ -380,28 +381,19 @@ public class DbaMain {
     }
 
     public static LinkedHashMap<String, LinguisticStructure>
-    parserInteractiveWrapper(String parserType, String input, String path, LinkedHashMap<String, HashMap<Integer, String>> result) {
+    parserInteractiveWrapper(String parserType, String input, String path, LinkedHashMap<String, HashMap<Integer, String>> result) throws IOException {
         VariableHandler vh = new VariableHandler();
         LinguisticStructure fs = null;
         SyntaxOperator syn = null;
 
-        switch (parserType) {
-            case "dep": {
-                syn = new UDoperator();
-                LOGGER.info("Created new dependency parser instance...");
-                break;
-            }
-            case "lfg": {
-                XLEStarter xle = new XLEStarter(settings.xleBinary, settings.xleGrammar, settings.os);
+                XLEStarter xle = new XLEStarter();
                 xle.generateXLEStarterFile();
-                syn = new XLEoperator(vh,settings.os);
+                syn = new XLEoperator(vh,xle.operatingSystem);
                 LOGGER.info("Created new XLE parser instance ...");
-                break;
-            }
-        }
+
 
         assert syn != null;
-        fs = syn.parseSingle(input);
+        fs = syn.parseSingle(input).get(0);
         //     System.out.println(fs.constraints);
 
         List<LinguisticStructure> fsList = new ArrayList<>();
@@ -439,9 +431,12 @@ public class DbaMain {
         syntaxResult.put(0, resultBuilder.toString());
         result.put(sid, syntaxResult);
 
+        /*
         if (!settings.semanticParsing) {
             LOGGER.info(resultBuilder.toString());
         }
+
+         */
         return out;
 
     }
@@ -481,6 +476,13 @@ public class DbaMain {
         //   List<SyntacticStructure> fsList = new ArrayList<>();
         //   fsList.add(fs);
 
+
+        //Only rewrite if a rulefile is specified
+
+        if (settings.ruleFile == null) {
+            return indexedFs;
+        }
+
         RuleParser rp = new RuleParser(new File(settings.ruleFile));
 
 
@@ -518,73 +520,16 @@ public class DbaMain {
             result.put(key, syntaxResult);
 
         }
-        if (!settings.semanticParsing) {
+
             for (String key : result.keySet()) {
                 LOGGER.info("The rewrite system produced the following output:\n" + result.get(key).get(0));
             }
-        }
+
 
         return indexedFs;
     }
 
 }
 
-
-
-
-
-
-
-
-
-    /*
-       System.out.println("Starting interactive lfg mode...\n");
-        Scanner s = new Scanner(System.in);
-        String input;
-        while (true) {
-            System.out.println("Enter sentence to be analyzed or enter 'quit' to exit the program.");
-            input = s.nextLine();
-            break;
-            //if (input.equals("quit"))
-            //    break;
-        }
-
-        List<String> sentences = new ArrayList<>();
-        sentences.add(input);
-
-        XLEoperator xle = new XLEoperator();
-        GlueSemantics sem = new GlueSemantics();
-
-        xle.parseSentences(sentences);
-
-        File fsFile = new File("C:\\Users\\Mark\\IdeaProjects\\xle_operator\\parser_output");
-
-        if (fsFile.isDirectory()) {
-            File[] files = fsFile.listFiles((d, name) -> name.endsWith(".pl"));
-
-
-            for(int i = 0; i < files.length; i++) {
-
-                LinkedHashMap<String, SyntacticStructure> fsRef = xle.fs2Java(files[i].getPath());
-
-               SyntacticStructure fs = fsRef.get(fsRef.keySet().stream().findAny().get());
-
-                List<SyntacticStructure> fsList = new ArrayList<>();
-                fsList.add(fs);
-
-                RuleParser rp = new RuleParser(fsList,"C:\\Users\\Mark\\IdeaProjects\\xle_operator\\src\\test\\testRules5.txt");
-
-                rp.addAnnotation2(fs);
-
-                sem.calculateSemantics(fs);
-
-                for (Premise p : sem.llprover.getSolutions())
-                {
-                    System.out.println(p.toString());
-                }
-            }
-        }
-
-     */
 
 

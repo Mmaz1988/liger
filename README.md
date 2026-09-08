@@ -17,11 +17,7 @@ If not, please visit http://www.gnu.org/licenses/ for more information.
 - This system uses Java. [OpenJDK](https://jdk.java.net/13/) is used for development. Support for other versions is not guaranteed, but please contact me if there are issues. 
 
 # Installation:
-1. To install this repository, simply import it as a maven project into your IDE. To use the -sem function for semantic analysis, install the GlueSemanticsWorkbench.jar to your local maven repository. To do this navigate to the project folder and execute the following command, or execute it as a maven goal in your IDE:
-
-```
-mvn install:install-file -Dfile=resources\glueSemWorkbench2.jar -DgroupId=uni.kn.zymla -DartifactId=gswb -Dversion=1.0 -Dpackaging=jar -DgeneratePom=true
-```
+1. To install this repository, simply import it as a maven project into your IDE. 
 
 # Running from Jar file
 
@@ -43,15 +39,15 @@ java -jar syntax-annotator-glue-0.0.1-SNAPSHOT.jar -res path/to/resources/ -web
 
 The following table presents the possible command line arguments: 
 
-| `command line argument` | `effect` |
-| ------------- | ------------- | 
-| `-res [path/to/folder/]` | `obligatory argument pointing to the resource folder in the repository` |
-| `-web` | `used to run the system as a micro-service` |
-| `-i [path/to/file]`  | `used to specify an input file (XLE output; .pl file)` |
-| `-o [path/to/file]` | `specify an output file` |
-| `-rf [path/to/file]` | `specify a rule file (see "resources/testFiles" for examples)` |
-| `-dep/-lfg` | run interactive mode with dependency or XLE parser, when no input file is specified |
-| `-sem` | `Collect meaning constructors and run glue prover after rewriting is complete` |
+| `command line argument`  | `effect`                                                                            |
+|--------------------------|-------------------------------------------------------------------------------------| 
+| `-res [path/to/folder/]` | `obligatory argument pointing to the resource folder in the repository`             |
+| `-web`                   | `used to run the system as a micro-service`                                         |
+| `-i [path/to/file]`      | `used to specify an input file (XLE output; .pl file)`                              |
+| `-o [path/to/file]`      | `specify an output file`                                                            |
+| `-rf [path/to/file]`     | `specify a rule file (see "resources/testFiles" for examples)`                      |
+| `-dep/-lfg`              | run interactive mode with dependency or XLE parser, when no input file is specified |
+| `-mc`                    | `Collect meaning constructors and print them GSWB ready`                            |
 
 
 # Notes
@@ -62,7 +58,7 @@ The following table presents the possible command line arguments:
 
 - Packed linguistic rewriting
 - Distributing rules across multiple files
-- adding identifiers for linguistic dictionaries
+- adding identifiers for linguistic dictionaries (done)
 -Streamlined interface for importing linguistic annotations
 
 # Using the system
@@ -96,60 +92,10 @@ The resulting partial semantic representations are shown in (note that the rules
  #2 GLUE [/x_e.man(x)] : (10 -o 12)
  #8 GLUE [/P_<e,t>.[/Q_<e,t>.Ax_e[P(x) -> Q(x)]]] : ((10 -o 12) -o ((8 -o 6) -o 6))
 ```
-If the rules are used to produce Glue semantics output(by using the `-sem` argument), all GLUE nodes are collected and a proof is derived. For this, the Glue semantics workbench is used (see [GSWB](https://github.com/Mmaz1988/GlueSemWorkbench_v2/tree/pure%2Bdrt)). It is included in the jar file, but needs to be installed explicitly when trying to build new versions of the project (see section "Installation"). 
+The flag `-mc` allows to extract meaning constructors and unpacks ambuous structures. The resulting output can be used to produce glue proofs via the Glue semantics workbench (see [GSWB](https://github.com/Mmaz1988/GlueSemWorkbench_v2/tree/pure%2Bdrt)). 
+
 
 ```
-Sequent:
-(10 ⊸ 12) : [λx_e.man(x)]
-(11 ⊸ 13) : [λx_e.woman(x)]
-((7 ⊸ 6) ⊸ (8 ⊸ (9 ⊸ 6))) : [λR_<v,t>.[λx_e.[λy_e.∃e[R(e) ∧ agent(e,x) ∧ theme(e,y)]]]]
-(7 ⊸ 6) : [λe_v.love(e)]
-((10 ⊸ 12) ⊸ ((8 ⊸ 6) ⊸ 6)) : [λP_<e,t>.[λQ_<e,t>.∀x[P(x) → Q(x)]]]
-((11 ⊸ 13) ⊸ ((9 ⊸ 6) ⊸ 6)) : [λP_<e,t>.[λQ_<e,t>.∃x[P(x) ∧ Q(x)]]]
-
-
-Agenda:
-(10 ⊸ 12) : [λx_e.man(x)]
-(11 ⊸ 13) : [λx_e.woman(x)]
-(6 ⊸ (8 ⊸ (9 ⊸ 6))) : [λR_<v,t>.[λx_e.[λy_e.∃e[R(e) ∧ agent(e,x) ∧ theme(e,y)]]]]
-7 : z
-(7 ⊸ 6) : [λe_v.love(e)]
-8 : y1
-(12 ⊸ (6 ⊸ 6)) : [λP_<e,t>.[λQ_<e,t>.∀x[P(x) → Q(x)]]]
-10 : x1
-9 : x2
-(13 ⊸ (6 ⊸ 6)) : [λP_<e,t>.[λQ_<e,t>.∃x[P(x) ∧ Q(x)]]]
-11 : z1
-
-
-Combining (7 ⊸ 6) : [λe_v.love(e)] and 7 : z
-to: 6 : love(z)
-Combining (10 ⊸ 12) : [λx_e.man(x)] and 10 : x1
-to: 12 : man(x1)
-Combining (11 ⊸ 13) : [λx_e.woman(x)] and 11 : z1
-to: 13 : woman(z1)
-Combining (6 ⊸ (8 ⊸ (9 ⊸ 6))) : [λR_<v,t>.[λx_e.[λy_e.∃e[R(e) ∧ agent(e,x) ∧ theme(e,y)]]]] and 6 : love(z)
-to: (8 ⊸ (9 ⊸ 6)) : [λx_e.[λy_e.∃e[love(e) ∧ agent(e,x) ∧ theme(e,y)]]]
-Combining (12 ⊸ (6 ⊸ 6)) : [λP_<e,t>.[λQ_<e,t>.∀x[P(x) → Q(x)]]] and 12 : man(x1)
-to: (6 ⊸ 6) : [λQ_<e,t>.∀x[man(x) → Q(x)]]
-Combining (13 ⊸ (6 ⊸ 6)) : [λP_<e,t>.[λQ_<e,t>.∃x[P(x) ∧ Q(x)]]] and 13 : woman(z1)
-to: (6 ⊸ 6) : [λQ_<e,t>.∃x[woman(x) ∧ Q(x)]]
-Combining (8 ⊸ (9 ⊸ 6)) : [λx_e.[λy_e.∃e[love(e) ∧ agent(e,x) ∧ theme(e,y)]]] and 8 : y1
-to: (9 ⊸ 6) : [λy_e.∃e[love(e) ∧ agent(e,y1) ∧ theme(e,y)]]
-Combining (9 ⊸ 6) : [λy_e.∃e[love(e) ∧ agent(e,y1) ∧ theme(e,y)]] and 9 : x2
-to: 6 : ∃e[love(e) ∧ agent(e,y1) ∧ theme(e,x2)]
-Combining (6 ⊸ 6) : [λQ_<e,t>.∀x[man(x) → Q(x)]] and 6 : ∃e[love(e) ∧ agent(e,y1) ∧ theme(e,x2)]
-to: 6 : ∀x[man(x) → ∃e[love(e) ∧ agent(e,x) ∧ theme(e,x2)]]
-Combining (6 ⊸ 6) : [λQ_<e,t>.∃x[woman(x) ∧ Q(x)]] and 6 : ∃e[love(e) ∧ agent(e,y1) ∧ theme(e,x2)]
-to: 6 : ∃x[woman(x) ∧ ∃e[love(e) ∧ agent(e,y1) ∧ theme(e,x)]]
-Combining (6 ⊸ 6) : [λQ_<e,t>.∃x[woman(x) ∧ Q(x)]] and 6 : ∀y2[man(y2) → ∃e[love(e) ∧ agent(e,y2) ∧ theme(e,x2)]]
-to: 6 : ∃x[woman(x) ∧ ∀y2[man(y2) → ∃e[love(e) ∧ agent(e,y2) ∧ theme(e,x)]]]
-Combining (6 ⊸ 6) : [λQ_<e,t>.∀y2[man(y2) → Q(y2)]] and 6 : ∃x[woman(x) ∧ ∃e[love(e) ∧ agent(e,y1) ∧ theme(e,x)]]
-to: 6 : ∀y2[man(y2) → ∃x[woman(x) ∧ ∃e[love(e) ∧ agent(e,y2) ∧ theme(e,x)]]]
-
-
-
-
 Result of the Glue derivation:
 6 : ∃x[woman(x) ∧ ∀y2[man(y2) → ∃e[love(e) ∧ agent(e,y2) ∧ theme(e,x)]]]
 6 : ∀y2[man(y2) → ∃x[woman(x) ∧ ∃e[love(e) ∧ agent(e,y2) ∧ theme(e,x)]]]

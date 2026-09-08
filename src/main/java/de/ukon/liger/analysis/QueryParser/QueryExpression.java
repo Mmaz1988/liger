@@ -33,11 +33,11 @@ public abstract class QueryExpression {
     private HashMap<Integer, GraphConstraint> fsIndices;
     private String nodeVar;
 
-    private HashMap<Set<SolutionKey>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> solution = new HashMap<>();
+    private HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> solution = new HashMap<>();
 
 
 
-    private List<HashMap<Set<SolutionKey>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>>> conjoinedSolutions = new ArrayList<>();
+    private List<HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>>> conjoinedSolutions = new ArrayList<>();
 
     public QueryExpression()
     {
@@ -64,11 +64,8 @@ public abstract class QueryExpression {
         {
             for (Integer key2 : fsIndices.keySet())
             {
-
-                if (HelperMethods.isInteger(fsIndices.get(key2).getFsValue())) {
-                    if (Integer.parseInt((String) fsIndices.get(key2).getFsValue()) == (Integer.parseInt(key))) {
-                        out.put(key2, fsIndices.get(key2));
-                    }
+                if (key.equals(String.valueOf(fsIndices.get(key2).getFsValue()))) {
+                    out.put(key2, fsIndices.get(key2));
                 }
             }
         }
@@ -113,21 +110,21 @@ public abstract class QueryExpression {
 
     //Test
 
-    public HashMap<Set<SolutionKey>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> getSolution() {
+    public HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> getSolution() {
         return solution;
     }
 
-    public void setSolution(HashMap<Set<SolutionKey>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> solution) {
+    public void setSolution(HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> solution) {
         this.solution = solution;
     }
 
     public abstract void calculateSolutions();
 
 
-    public HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>>
+    public HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>>
     mapUsedKeys(Set<String> usedKeys, HashMap<Integer,GraphConstraint> fsIndices, String nodeVar) {
 
-        HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 = new HashMap<>();
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 = new HashMap<>();
 
 
         for (String fs : usedKeys) {
@@ -144,25 +141,26 @@ public abstract class QueryExpression {
             }
              */
             binding.put(nodeVar, reference);
-            out2.put(Collections.singleton(new SolutionKey(nodeVar,fs)), binding);
+            Solution solution = new Solution(Collections.singleton(new SolutionKey(nodeVar, fs)));
+            out2.put(solution, binding);
         }
 
         return out2;
     }
 
-    public HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>>
-    mergeSolutions(HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> solution)
+    public HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>>
+    mergeSolutions(HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> solution)
     {
-        HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> merged = new HashMap<>();
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> merged = new HashMap<>();
 
         return null;
     }
 
-    public List<HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>>> getConjoinedSolutions() {
+    public List<HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>>> getConjoinedSolutions() {
         return conjoinedSolutions;
     }
 
-    public void setConjoinedSolutions(List<HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>>> conjoinedSolutions) {
+    public void setConjoinedSolutions(List<HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>>> conjoinedSolutions) {
         this.conjoinedSolutions = conjoinedSolutions;
     }
 

@@ -34,7 +34,8 @@ public class VariableHandler {
         EVENT_IID,
         TIME_ID,
         TREL_ID,
-        EV_NODE
+        EV_NODE,
+        LOCAL_NAME
 
 
 /*
@@ -49,6 +50,8 @@ Possibly add more types, e.g. SemVarE, SemVarT etc.
     private static Integer tid_size = 1000;
     private static List<String> trelids;
     private static Integer trelids_size = 1000;
+
+
 
     private Integer ev_node;
 
@@ -79,6 +82,11 @@ Possibly add more types, e.g. SemVarE, SemVarT etc.
 
         usedVars.put(variableType.SENTENCE_ID,
                 new ArrayList<>());
+
+        usedVars.put(variableType.LOCAL_NAME,
+                new ArrayList<>());
+
+
 
         return usedVars;
 
@@ -134,7 +142,7 @@ Possibly add more types, e.g. SemVarE, SemVarT etc.
 
             int i = 0;
             //threshold for trying out new indices; can be set higher?
-            while (i < 3) {
+            while (i < 5) {
 
                 for (String var : variables) {
 
@@ -149,6 +157,23 @@ Possibly add more types, e.g. SemVarE, SemVarT etc.
                 }
                 i++;
             }
+        }
+        else if (varType == variableType.LOCAL_NAME) {
+
+            String out = null;
+
+            int i = 0;
+            int max = 10000;
+
+            while (i < max) {
+                if (usedVariables.get(variableType.SENTENCE_ID).contains("%mc" + i)) {
+                    i++;
+                } else {
+                    usedVariables.get(variableType.SENTENCE_ID).add("%mc" + i);
+                    return "%mc" + i;
+                }
+            }
+
         }
         else if (varType == variableType.SENTENCE_ID)
         {
@@ -167,8 +192,6 @@ Possibly add more types, e.g. SemVarE, SemVarT etc.
                     return "S" + i;
                 }
             }
-
-
 
 
             //threshold for trying out new indices; can be set higher?

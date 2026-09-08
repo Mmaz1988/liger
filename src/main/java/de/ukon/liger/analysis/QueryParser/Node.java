@@ -30,11 +30,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+
 public class Node extends QueryExpression {
 
-    public Node(String query, String nodeVar, HashMap fsIndices, QueryParser parser)
+    public boolean constant;
+
+    public Node(String query, String nodeVar, HashMap fsIndices, boolean constant, QueryParser parser)
     {
 
+        this.constant = constant;
         setNodeVar(nodeVar);
         setQuery(query);
         setParser(parser);
@@ -44,9 +48,9 @@ public class Node extends QueryExpression {
 
 }
 
-    public Node(String nodeVar, HashMap fsIndices)
+    public Node(String nodeVar, boolean constant, HashMap fsIndices)
     {
-
+        this.constant = constant;
         setNodeVar(nodeVar);
         setFsIndices(fsIndices);
         calculateSolutions();
@@ -59,15 +63,43 @@ public class Node extends QueryExpression {
 public void calculateSolutions()
 {
 
-    HashMap<Set<SolutionKey>,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> out = new HashMap<>();
+    HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> out = new HashMap<>();
 
+
+    if (constant)
+    {
+        HashMap<String,HashMap<Integer,GraphConstraint>> reference = new HashMap<>();
+
+        reference.put(getNodeVar(),new HashMap<>());
+
+        for (Integer key : getFsIndices().keySet())
+        {
+            if (HelperMethods.nodeIdsEqual(getFsIndices().get(key).getFsNode(), getNodeVar()))
+            {
+                reference.get(getNodeVar()).put(key,getFsIndices().get(key));
+            }
+        }
+
+        HashMap<String,HashMap<String,HashMap<Integer,GraphConstraint>>> binding = new HashMap<>();
+        binding.put(getNodeVar(),reference);
+        SolutionKey key = new SolutionKey(getNodeVar(),getNodeVar());
+        out.put(new Solution(Collections.singleton(key)),binding);
+        setSolution(out);
+        return;
+    }
+
+    //Collect all available nodes in graph
     Set<String> usedKeys = new HashSet<>();
     for (Integer key : getFsIndices().keySet())
     {
         usedKeys.add(getFsIndices().get(key).getFsNode());
-        if (HelperMethods.isInteger(getFsIndices().get(key).getFsValue()))
+    }
+    for (Integer key : getFsIndices().keySet())
+    {
+        Object value = getFsIndices().get(key).getFsValue();
+        if (HelperMethods.isNodeReference(value))
         {
-            usedKeys.add(getFsIndices().get(key).getFsValue().toString());
+            usedKeys.add(String.valueOf(value));
         }
     }
 
@@ -93,7 +125,7 @@ public void calculateSolutions()
             // String key = getNodeVar()+fs;
             SolutionKey key = new SolutionKey(getNodeVar(),fs);
             binding.put(getNodeVar(),reference);
-            out.put(Collections.singleton(key),binding);
+            out.put(new Solution(Collections.singleton(key)),binding);
         }
 
 

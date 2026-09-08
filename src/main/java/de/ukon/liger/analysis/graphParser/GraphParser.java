@@ -1,37 +1,22 @@
 package de.ukon.liger.analysis.graphParser;
 
-import de.ukon.liger.analysis.QueryParser.*;
-import de.ukon.liger.analysis.graphParser.LigerGraph.LigerEdge;
 import de.ukon.liger.analysis.graphParser.LigerGraph.LigerGraph;
 import de.ukon.liger.analysis.graphParser.queryExpressions.*;
-import de.ukon.liger.analysis.graphParser.queryExpressions.Attribute;
-import de.ukon.liger.analysis.graphParser.queryExpressions.Conjunction;
-import de.ukon.liger.analysis.graphParser.queryExpressions.Equality;
-import de.ukon.liger.analysis.graphParser.queryExpressions.Node;
-import de.ukon.liger.analysis.graphParser.queryExpressions.QueryExpression;
-import de.ukon.liger.analysis.graphParser.queryExpressions.Uncertainty;
-import de.ukon.liger.analysis.graphParser.queryExpressions.Value;
-import de.ukon.liger.syntax.GraphConstraint;
-import de.ukon.liger.syntax.LinguisticStructure;
-import de.ukon.liger.syntax.ud.UDoperator;
-import de.ukon.liger.utilities.HelperMethods;
 import de.ukon.liger.utilities.VariableHandler;
-import org.apache.juli.logging.Log;
-import org.apache.lucene.util.automaton.CharacterRunAutomaton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.Query;
-import javax.management.QueryExp;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.regex.Matcher;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class GraphParser {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(GraphParser.class);
     private VariableHandler vh = new VariableHandler();
+
+    /*
     public static void main(String[] args) {
 
         UDoperator ud = new UDoperator();
@@ -48,6 +33,8 @@ public class GraphParser {
 
 
     }
+
+     */
 
 
     public GraphParser()
@@ -352,12 +339,13 @@ public class GraphParser {
             {
 
                 //Instantiate previous, current and next element if possible
-                QueryExpression current = parseStructure.get(i);
                 QueryExpression previous = null;
                 if (i > 0){
                     previous = parseStructure.get(i-1);
                 }
                 QueryExpression next = null;
+
+                QueryExpression current = parseStructure.get(i);
 
                 if (i < parseStructure.size() - 1)
                 {
@@ -378,18 +366,18 @@ public class GraphParser {
 
                 if (current instanceof Attribute)
                 {
-                    i++;
-                    if (parseStructure.get(i) instanceof Node)
-                    {
 
-                    }
                 } else if (current instanceof Node)
                 {
-                    i++;
-                    if (parseStructure.get(i) instanceof Attribute)
+                    if (previous instanceof Conjunction || previous == null)
                     {
+                        continue;
+                    }
+
+                    if (previous instanceof Attribute) {
 
                     }
+
                 }
 
 

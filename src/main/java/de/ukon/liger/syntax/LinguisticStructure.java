@@ -21,22 +21,111 @@
 
 package de.ukon.liger.syntax;
 
+
 import de.ukon.liger.packing.ChoiceSpace;
+import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.utilities.HelperMethods;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class LinguisticStructure {
 
+    @JsonAlias("id")
     public String local_id;
     public String text;
     public List<GraphConstraint> constraints;
+    @JsonAlias("choiceSpace")
     public ChoiceSpace cp;
 
-
-    //TODO move annotation to general LigerAnnotation structure
+    @JsonAlias("annotations")
     public List<GraphConstraint> annotation = new ArrayList<>();
+
+
+
+
+    public LinguisticStructure()
+    {}
+
+    public LinguisticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts)
+    {
+        this.local_id = local_id;
+        this.text = sentence;
+        this.constraints = fsFacts;
+        deduplicateEdges();
+    }
+
+    public LinguisticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts, ChoiceSpace cp)
+    {
+        this.local_id = local_id;
+        this.text = sentence;
+        this.constraints = fsFacts;
+        this.cp = cp;
+        deduplicateEdges();
+    }
+
+    public LinguisticStructure(LinguisticStructure other) {
+        if (other == null) {
+            this.constraints = new ArrayList<>();
+            this.annotation = new ArrayList<>();
+            this.cp = new ChoiceSpace();
+            return;
+        }
+        this.local_id = other.local_id;
+        this.text = other.text;
+        this.constraints = other.constraints == null ? new ArrayList<>() : other.constraints.stream()
+                .map(GraphConstraint::copy)
+                .collect(Collectors.toList());
+        this.annotation = other.annotation == null ? new ArrayList<>() : other.annotation.stream()
+                .map(GraphConstraint::copy)
+                .collect(Collectors.toList());
+        this.cp = other.cp == null ? new ChoiceSpace() : other.cp.copy();
+        deduplicateEdges();
+    }
+
+    public LinguisticStructure copy() {
+        return new LinguisticStructure(this);
+    }
+
+    public List<GraphConstraint> returnFullGraph(){
+        deduplicateEdges();
+        List<GraphConstraint> allConstraints = new ArrayList<>();
+        allConstraints.addAll(this.constraints);
+        allConstraints.addAll(this.annotation);
+        return allConstraints;
+    }
+
+    public void deduplicateEdges() {
+        deduplicateEdges(constraints, annotation);
+    }
+
+    public static void deduplicateEdges(List<GraphConstraint> constraints,
+                                        List<GraphConstraint> annotation) {
+        Set<List<Object>> seen = new HashSet<>();
+        deduplicateEdges(constraints, seen);
+        deduplicateEdges(annotation, seen);
+    }
+
+    private static void deduplicateEdges(List<GraphConstraint> constraints,
+                                         Set<List<Object>> seen) {
+        if (constraints == null) {
+            return;
+        }
+
+        constraints.removeIf(constraint -> {
+            if (constraint == null || !NodeIdPolicy.legacyCompatibleDefaults()
+                    .isNodeReference(String.valueOf(constraint.getFsValue()))) {
+                return false;
+            }
+            return !seen.add(Arrays.asList(
+                    constraint.getFsNode(),
+                    constraint.getFsValue(),
+                    constraint.getRelationLabel()));
+        });
+    }
 
 
     public LinkedHashMap<String,Object> toJson()
@@ -60,44 +149,90 @@ public class LinguisticStructure {
 
     public static LinguisticStructure parseFromJson(LinkedHashMap input)
     {
-     LinguisticStructure ls = new LinguisticStructure();
+        LinguisticStructure ls = new LinguisticStructure();
 
-     ls.local_id = (String) input.get("id");
-     ls.text = (String) input.get("text");
-     ls.constraints = (List<GraphConstraint>) ((List) input.get("constraints")).
-             stream().map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList());
+        ls.local_id = (String) input.get("id");
+        ls.text = (String) input.get("text");
+        if (input.get("nodes") instanceof List<?> && input.get("edges") instanceof List<?>) {
+            ls.constraints = parseCanonicalGraph(input);
+        } else {
+            ls.constraints = input.get("constraints") instanceof List<?> rawConstraints
+                    ? (List<GraphConstraint>) rawConstraints.stream()
+                    .map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList())
+                    : new ArrayList<>();
+        }
 
-     ls.annotation = (List<GraphConstraint>) ((List) input.get("annotations")).
-                stream().map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList());
+        ls.annotation = input.get("annotations") instanceof List<?> rawAnnotations
+                ? (List<GraphConstraint>) rawAnnotations.stream()
+                .map(x -> GraphConstraint.parseJson((LinkedHashMap) x)).collect(Collectors.toList())
+                : new ArrayList<>();
 
-     ls.cp = ChoiceSpace.parseJson((LinkedHashMap<String, Object>) input.get("choiceSpace"));
+
+        if (!((LinkedHashMap) input.get("choiceSpace")).isEmpty()) {
+            ls.cp = ChoiceSpace.parseJson((LinkedHashMap<String, Object>) input.get("choiceSpace"));
+        }
+        else {
+            ls.cp = new ChoiceSpace();
+        }
+
+        ls.deduplicateEdges();
 
         return ls;
     }
 
-
-    public LinguisticStructure()
-    {}
-
-    public LinguisticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts)
-    {
-        this.local_id = local_id;
-        this.text = sentence;
-        this.constraints = fsFacts;
+    private static List<GraphConstraint> parseCanonicalGraph(LinkedHashMap input) {
+        List<GraphConstraint> constraints = new ArrayList<>();
+        for (Object rawNode : (List<?>) input.get("nodes")) {
+            if (!(rawNode instanceof Map<?, ?> node) || node.get("id") == null) {
+                continue;
+            }
+            String nodeId = String.valueOf(node.get("id"));
+            addCanonicalAttribute(constraints, nodeId, "NODE_TYPE", node.get("node_type"));
+            if (node.get("avp") instanceof Map<?, ?> avp) {
+                for (Map.Entry<?, ?> attribute : avp.entrySet()) {
+                    String name = String.valueOf(attribute.getKey());
+                    if (!"NODE_TYPE".equals(name)) {
+                        addCanonicalAttribute(constraints, nodeId, name, attribute.getValue());
+                    }
+                }
+            }
+        }
+        for (Object rawEdge : (List<?>) input.get("edges")) {
+            if (!(rawEdge instanceof Map<?, ?> edge)
+                    || edge.get("source") == null || edge.get("target") == null || edge.get("label") == null) {
+                continue;
+            }
+            String source = String.valueOf(edge.get("source"));
+            String label = String.valueOf(edge.get("label"));
+            String target = String.valueOf(edge.get("target"));
+            constraints.add(new GraphConstraint(
+                    Set.of(new ChoiceVar("1")),
+                    source,
+                    label,
+                    target,
+                    null,
+                    false));
+        }
+        return constraints;
     }
 
-    public LinguisticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts, ChoiceSpace cp)
-    {
-        this.local_id = local_id;
-        this.text = sentence;
-        this.constraints = fsFacts;
-        this.cp = cp;
+    private static void addCanonicalAttribute(List<GraphConstraint> constraints,
+                                              String nodeId, String name, Object value) {
+        if (value == null) {
+            return;
+        }
+        constraints.add(new GraphConstraint(
+                Set.of(new ChoiceVar("1")), nodeId, name, String.valueOf(value), null, false));
     }
+/*
 
+    //TODO fix for cyclic structures
     public List<List<GraphConstraint>> getSubstructures(String name)
     {
+        List<GraphConstraint> allConstraints = this.returnFullGraph();
+
         List<String> topNodes = new ArrayList<>();
-        for (GraphConstraint g : annotation)
+        for (GraphConstraint g : allConstraints)
         {
             if (g.getRelationLabel().equals(name))
             {
@@ -112,21 +247,21 @@ public class LinguisticStructure {
             List<GraphConstraint> matrix = new ArrayList<>();
             Set<String> daugtherNodes = new HashSet<>();
 
-            for (GraphConstraint g: annotation)
+            for (GraphConstraint g: allConstraints)
             {
                 if (g.getFsNode().equals(node))
                 {
 
                     if (HelperMethods.isInteger(g.getFsValue())) {
-                    daugtherNodes.add((String) g.getFsValue());
-                }
+                        daugtherNodes.add((String) g.getFsValue());
+                    }
                     matrix.add(g);
                 }
 
                 while (!daugtherNodes.isEmpty())
                 {
                     Set<String> helperList = new HashSet<>();
-                    for (GraphConstraint g1 : annotation)
+                    for (GraphConstraint g1 : allConstraints)
                     {
                         if (daugtherNodes.contains(g1.getFsNode()))
                         {
@@ -143,12 +278,14 @@ public class LinguisticStructure {
 
             }
 
-        out.add(matrix);
+            out.add(matrix);
         }
 
         return out;
 
     }
+
+*/
 
 
 }

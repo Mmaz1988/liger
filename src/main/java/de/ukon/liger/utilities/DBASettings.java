@@ -21,11 +21,15 @@
 
 package de.ukon.liger.utilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 
 public class DBASettings {
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(DBASettings.class);
     //LFG or dependency
     public String mode;
     //Input path
@@ -39,6 +43,10 @@ public class DBASettings {
     //resources directory
     public String resources;
 
+    public Boolean prolog; //prolog or glue
+
+    public String glueGrammarFile;
+
     public Boolean semanticParsing;
     public Boolean interactiveMode;
 
@@ -49,9 +57,8 @@ public class DBASettings {
     //For meaning constructor output
     public Boolean mcs;
 
-    public String xleBinary;
-
-    public String xleGrammar;
+    //for multistage proving
+    public Boolean multi;
 
     public XLEStarter.OS os;
 
@@ -61,7 +68,10 @@ public class DBASettings {
         this.semanticParsing = false;
         this.web = false;
         this.mcs = false;
+        this.multi = false;
         this.os = determineOs();
+        this.multi = false;
+        this.prolog = false;
     }
 
 
@@ -83,7 +93,7 @@ public class DBASettings {
             this.outputWriter = new BufferedWriter(new FileWriter(file, true));
         }catch(Exception e)
         {
-            System.out.println("Failed to create outputWriter for path: " + file.toString());
+            LOGGER.error("Failed to create outputWriter for path: {}", file);
         }
         }
 }

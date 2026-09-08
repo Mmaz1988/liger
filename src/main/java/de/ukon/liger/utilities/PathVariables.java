@@ -21,18 +21,11 @@
 
 package de.ukon.liger.utilities;
 
-import de.ukon.liger.main.DbaMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 
 public class PathVariables {
 
@@ -92,8 +85,7 @@ public class PathVariables {
             dictPath = workingDirectory + "dicts" + File.separator;
         }catch(Exception e)
         {
-            System.out.println("Failed to locate working directory.");
-            e.printStackTrace();
+            LOGGER.error("Failed to locate working directory.", e);
         }
 
         LOGGER.info("dir " + workingDirectory);

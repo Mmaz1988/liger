@@ -24,16 +24,29 @@ package de.ukon.liger.analysis.QueryParser;
 import de.ukon.liger.syntax.GraphConstraint;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Collections;
 
 public class Value extends QueryExpression {
 
     public boolean var;
     public boolean strip;
+    public boolean idRef;
+    public String idVar;
 
     public Value(String query, HashMap<Integer, GraphConstraint> fsIndices, Boolean var, Boolean strip, QueryParser parser) {
         super(query, fsIndices,parser);
         this.var = var;
         this.strip = strip;
+    }
+
+    public void setIdRef(boolean idRef) {
+        this.idRef = idRef;
+    }
+
+    public void setIdVar(String idVar) {
+        this.idVar = idVar;
     }
 
 
@@ -42,6 +55,43 @@ public class Value extends QueryExpression {
     @Override
     public void calculateSolutions()
     {
+        String lookup = normalizeValue(getQuery());
 
+        HashMap<Integer, GraphConstraint> matching = new HashMap<>();
+        for (Integer key : getFsIndices().keySet()) {
+            String value = normalizeValue(String.valueOf(getFsIndices().get(key).getFsValue()));
+            if (lookup != null && lookup.equals(value)) {
+                matching.put(key, getFsIndices().get(key));
+            }
+        }
+
+        if (!matching.isEmpty()) {
+            setFsIndices(matching);
+
+            HashMap<String, HashMap<Integer, GraphConstraint>> reference = new HashMap<>();
+            reference.put("__match__", matching);
+            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new LinkedHashMap<>();
+            binding.put("__match__", reference);
+
+            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+            out.put(new Solution(Collections.singleton(new SolutionKey("__match__", "__match__"))), binding);
+            setSolution(out);
+        }
+    }
+
+    private String normalizeValue(String raw) {
+        if (raw == null) {
+            return null;
+        }
+
+        String normalized = raw.trim();
+        if (normalized.startsWith("value=")) {
+            normalized = normalized.substring("value=".length());
+        }
+        if ((normalized.startsWith("'") && normalized.endsWith("'")) ||
+                (normalized.startsWith("\"") && normalized.endsWith("\""))) {
+            normalized = normalized.substring(1, normalized.length() - 1);
+        }
+        return normalized;
     }
 }

@@ -24,11 +24,13 @@ package de.ukon.liger.webservice.rest.dtos;
 public class LigerRequest {
     public String sentence;
     public String ruleString;
+    public boolean unpack;
+    public String logicType;
 
-    public LigerRequest(String sentence, String ruleString)
-    {
+    public LigerRequest(String sentence, String ruleString, boolean unpack, String logicType) {
         this.sentence = sentence;
         this.ruleString = ruleString;
+        this.unpack = unpack;
+        this.logicType = logicType;
     }
-
 }

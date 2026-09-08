@@ -23,12 +23,9 @@ package de.ukon.liger.syntax;
 
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.utilities.HelperMethods;
-import org.springframework.boot.actuate.endpoint.web.Link;
 
-import java.awt.*;
 import java.io.Serializable;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class GraphConstraint implements Serializable {
@@ -42,9 +39,32 @@ public class GraphConstraint implements Serializable {
     private String fsValue;
     private Boolean projection;
 
+    private String proj;
+    private boolean root;
+
 
     public GraphConstraint()
     {this.projection = false;}
+
+    public GraphConstraint(GraphConstraint other) {
+        this();
+        if (other == null) {
+            return;
+        }
+        this.reading = other.reading == null ? new HashSet<>() : other.reading.stream()
+                .map(ChoiceVar::copy)
+                .collect(Collectors.toSet());
+        this.nodeIdentifier = other.nodeIdentifier;
+        this.relationLabel = other.relationLabel;
+        this.fsValue = other.fsValue;
+        this.projection = other.projection;
+        this.proj = other.proj;
+        this.root = other.root;
+    }
+
+    public GraphConstraint copy() {
+        return new GraphConstraint(this);
+    }
 
     public GraphConstraint(Set<ChoiceVar> reading, Integer fsNode, String relationLabel, String fsValue)
     {
@@ -66,6 +86,27 @@ public class GraphConstraint implements Serializable {
         //    this.pathNodes = new HashSet<>();
     }
 
+    public GraphConstraint(Set<ChoiceVar> reading, Integer fsNode, String relationLabel, String fsValue, String projection)
+    {
+        this.reading = reading;
+        this.nodeIdentifier = fsNode.toString();
+        this.relationLabel = relationLabel;
+        this.fsValue = fsValue;
+        this.proj = projection;
+        //    this.pathNodes = new HashSet<>();
+    }
+
+    public GraphConstraint(Set<ChoiceVar> reading, String fsNode, String relationLabel, String fsValue, String projection, boolean root)
+    {
+        this.reading = reading;
+        this.nodeIdentifier = fsNode;
+        this.relationLabel = relationLabel;
+        this.fsValue = fsValue;
+        this.proj = projection;
+        this.root = root;
+        //    this.pathNodes = new HashSet<>();
+    }
+
     @Override
     public String toString() {
 
@@ -79,7 +120,7 @@ public class GraphConstraint implements Serializable {
         sb.append(" ");
         sb.append(relationLabel);
         sb.append(" ");
-        if(HelperMethods.isInteger(fsValue))
+        if(HelperMethods.isNodeReference(fsValue))
         {
             sb.append("#" + fsValue);
         }
@@ -108,8 +149,15 @@ public class GraphConstraint implements Serializable {
         constraintProperties.put("sourceNode",this.nodeIdentifier);
         constraintProperties.put("relationLabel",this.relationLabel);
         constraintProperties.put("targetNode",this.fsValue);
-        constraintProperties.put("projection",this.projection.toString());
-
+        if (this.proj != null) {
+            constraintProperties.put("proj", this.proj);
+        }
+        if (this.projection != null) {
+            this.projection = true;
+            constraintProperties.put("projection", this.projection.toString());
+        } else {
+            constraintProperties.put("projection", "false");
+        }
 
 
         return constraintProperties;
@@ -117,25 +165,57 @@ public class GraphConstraint implements Serializable {
 
     public static GraphConstraint parseJson(LinkedHashMap<String,Object> input) {
         GraphConstraint g = new GraphConstraint();
+        if (input.containsKey("proj")) {
+            g.setProj(String.valueOf(input.get("proj")));
+            g.projection = true;
+        }
         if (input.containsKey("projection")) {
-            g.projection = Boolean.parseBoolean((String) input.get("projection"));
+            String projection = String.valueOf(input.get("projection"));
+            if ("true".equalsIgnoreCase(projection) || "false".equalsIgnoreCase(projection)) {
+                g.projection = Boolean.parseBoolean(projection);
+            } else if (g.getProj() == null) {
+                g.setProj(projection);
+                g.projection = true;
+            }
         }
 
         Set<ChoiceVar> choiceVars = new HashSet<>();
 
-        if (input.containsKey("choiceVars")) {
+        if (input.containsKey("choiceVars") && !((List) input.get("choiceVars")).isEmpty()) {
             for (LinkedHashMap cv : (List<LinkedHashMap>) input.get("choiceVars")) {
                 choiceVars.add(ChoiceVar.parseJson(cv));
             }
+        } else {
+            choiceVars.add(new ChoiceVar("1"));
         }
+
 
         g.setReading(choiceVars);
 
-        g.setFsNode((String) input.get("sourceNode"));
+        g.setFsNode(String.valueOf(input.get("sourceNode")));
         g.setRelationLabel((String) input.get("relationLabel"));
-        g.setFsValue((String) input.get("targetNode"));
+        g.setFsValue(String.valueOf(input.get("targetNode")));
 
         return g;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof GraphConstraint)) return false;
+        GraphConstraint that = (GraphConstraint) o;
+        return root == that.root
+                && Objects.equals(reading, that.reading)
+                && Objects.equals(nodeIdentifier, that.nodeIdentifier)
+                && Objects.equals(relationLabel, that.relationLabel)
+                && Objects.equals(fsValue, that.fsValue)
+                && Objects.equals(projection, that.projection)
+                && Objects.equals(proj, that.proj);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(reading, nodeIdentifier, relationLabel, fsValue, projection, proj, root);
     }
 
 
@@ -143,7 +223,7 @@ public class GraphConstraint implements Serializable {
 
         String value = fsValue.toString();
 
-        if (HelperMethods.isInteger(value))
+        if (HelperMethods.isNodeReference(value))
         {
             value = "var(" + value + ")";
         }
@@ -164,7 +244,7 @@ public class GraphConstraint implements Serializable {
         {
             return String.format("cf(%1$s,%2$s(%3$s,var(%4$s)))",choice,getRelationLabel(),value,nodeIdentifier);
         }
-        else if (this.projection)
+        else if (this.projection != null && this.projection)
         {
             return String.format("cf(%1$s,eq(proj(var(%2$s),'%3$s'),%4$s))",choice,nodeIdentifier,getRelationLabel(),value);
         }
@@ -175,26 +255,6 @@ public class GraphConstraint implements Serializable {
 
 
       }
-
-
-    public static GraphConstraint returnRoot(List<GraphConstraint> fs)
-    {
-        //TODO This only works for proper f-structures; not fractured ones
-        for (GraphConstraint fsc : fs)
-        {
-            if (fsc.getFsNode().equals(0) && fsc.getRelationLabel().equals("PRED"))
-            {
-                return fsc;
-            }
-        }
-        return null;
-    }
-
-
-    //TODO this may be more suitable somewhere else?
-
-
-
 
     //for a given graph-constraint give a valid FsPath that is compatible with the annotation of the sentence
     // currently being annotated (via variable handler)
@@ -242,7 +302,21 @@ public class GraphConstraint implements Serializable {
         this.reading = reading;
     }
 
+    public String getProj() {
+        return proj;
+    }
+
+    public void setProj(String proj) {
+        this.proj = proj;
+    }
+
+
+    public boolean isRoot() {
+        return root;
+    }
+
+    public void setRoot(boolean root) {
+        this.root = root;
+    }
+
 }
-
-
-

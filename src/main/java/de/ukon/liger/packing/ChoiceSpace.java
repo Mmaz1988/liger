@@ -20,9 +20,6 @@
  */
 
 package de.ukon.liger.packing;
-
-import edu.stanford.nlp.ling.CoreAnnotations;
-
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,8 +46,12 @@ public class ChoiceSpace {
     {
         LinkedHashMap<String,Object> jsonMap = new LinkedHashMap<>();
 
-        jsonMap.put("rootChoice",this.rootChoice.stream().map(ChoiceVar::toJson).collect(Collectors.toList()));
-        jsonMap.put("choiceNodes",this.choiceNodes.stream().map(ChoiceNode::toJson).collect(Collectors.toList()));
+        List<ChoiceVar> rootChoice = this.rootChoice == null ? new ArrayList<>() : new ArrayList<>(this.rootChoice);
+        List<ChoiceNode> choiceNodes = this.choiceNodes == null ? new ArrayList<>() : this.choiceNodes;
+        List<String> allVariables = this.allVariables == null ? new ArrayList<>() : this.allVariables;
+
+        jsonMap.put("rootChoice", rootChoice.stream().map(ChoiceVar::toJson).collect(Collectors.toList()));
+        jsonMap.put("choiceNodes", choiceNodes.stream().map(ChoiceNode::toJson).collect(Collectors.toList()));
 
         List<List<LinkedHashMap>> cs = new ArrayList<>();
 
@@ -98,7 +99,28 @@ public class ChoiceSpace {
     {
        choiceNodes = parseChoiceSpace(choices);
     }
+
     public  ChoiceSpace() {}
+
+    public ChoiceSpace(ChoiceSpace other) {
+        if (other == null) {
+            return;
+        }
+        this.rootChoice = other.rootChoice == null ? new HashSet<>() : other.rootChoice.stream()
+                .map(ChoiceVar::copy)
+                .collect(Collectors.toSet());
+        this.choiceNodes = other.choiceNodes == null ? new ArrayList<>() : other.choiceNodes.stream()
+                .map(ChoiceNode::copy)
+                .collect(Collectors.toList());
+        this.choices = other.choices == null ? new HashSet<>() : other.choices.stream()
+                .map(choiceSet -> choiceSet.stream().map(ChoiceVar::copy).collect(Collectors.toSet()))
+                .collect(Collectors.toSet());
+        this.allVariables = other.allVariables == null ? new ArrayList<>() : new ArrayList<>(other.allVariables);
+    }
+
+    public ChoiceSpace copy() {
+        return new ChoiceSpace(this);
+    }
 
 
     public static Set<ChoiceVar> parseChoice(String choice)

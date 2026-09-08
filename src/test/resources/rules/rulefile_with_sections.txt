@@ -1,0 +1,10 @@
+--replace(false);
+
+// hierarchies here
+GF ::= SUBJ > OBJ > OBL .
+
+// templates here
+SUBJEDGE(#a,#b) := #a SUBJ #b .
+
+// rules here
+@SUBJEDGE(#a,#b) & #a OBL #d & superior(GF,#b,#d) & -(#a OBL #b) ==> #a FLAG 'ok'.

@@ -26,7 +26,6 @@ import de.ukon.liger.utilities.HelperMethods;
 
 import java.util.HashMap;
 import java.util.Set;
-import java.util.regex.Matcher;
 
 public class EqualityExpression extends QueryExpression {
 
@@ -47,98 +46,38 @@ public class EqualityExpression extends QueryExpression {
     @Override
     public void calculateSolutions() {
 
-        HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
 
-        for (Set<SolutionKey> key : left.getSolution().keySet())
+        for (Solution key : left.getSolution().keySet())
         {
-            String leftString = "";
-            String rightString = "";
+            if (!key.isTruthValue()) {
+                continue;
+            }
+            String leftString = resolveValue(key, left);
+            String rightString = resolveValue(key, right);
 
-            if (left.var)
+            if (leftString == null || rightString == null)
             {
-                for (Set<SolutionKey> key2 : getParser().fsValueBindings.keySet())
-                {
-                    if (key.containsAll(key2))
-                    {
-                        //TODO ambiguity?
-                        leftString = getParser().fsValueBindings.get(key2).get(left.getQuery());
-                        break;
-                    }
-                }
-
-                /*
-                if (getParser().fsValueBindings.get(key).containsKey(left.getQuery()))
-                {
-                    leftString = getParser().fsValueBindings.get(key).get(left.getQuery());
-                }
-                 */
-
-                if (left.strip)
-                {
-                    leftString = HelperMethods.stripValue(leftString);
-                }
-            } else
-            {
-                leftString = left.getQuery();
+                continue;
             }
 
-            if (right.var)
-            {
-                for (Set<SolutionKey> key2 : getParser().fsValueBindings.keySet())
-                {
-                    if (key.containsAll(key2))
-                    {
-                        //TODO ambiguity?
-                        leftString = getParser().fsValueBindings.get(key2).get(right.getQuery());
-                        break;
-                    }
+            if (left.idRef || right.idRef) {
+                boolean equals;
+                try {
+                    equals = ValueResolver.compareIds(leftString, rightString) == 0;
+                } catch (IllegalArgumentException e) {
+                    continue;
                 }
-                /*
-                if (getParser().fsValueBindings.get(key).containsKey(right.getQuery()))
-                {
-                    rightString = getParser().fsValueBindings.get(key).get(right.getQuery());
+                if ((middle.equal && equals) || (!middle.equal && !equals)) {
+                    out.put(key, left.getSolution().get(key));
                 }
-                 */
-
-                if (right.strip)
-                {
-                    rightString = HelperMethods.stripValue(rightString);
+            } else if (middle.equal) {
+                if (leftString.equals(rightString)) {
+                    out.put(key,left.getSolution().get(key));
                 }
-
-            } else
-            {
-                rightString = right.getQuery();
-            }
-
-            if (!rightString.equals("") && !leftString.equals(""))
-            {
-               Matcher m1 = HelperMethods.valueStringPattern.matcher(rightString);
-               Matcher m2 = HelperMethods.valueStringPattern.matcher(leftString);
-
-               if (m1.find())
-               {
-                   rightString = m1.group(1);
-               }
-
-               if (m2.find())
-               {
-                   leftString = m2.group(1);
-               }
-
-
-                if (middle.equal)
-                {
-                 if (leftString.equals(rightString))
-                 {
-                     out.put(key,left.getSolution().get(key));
-                 }
-                }
-                else
-                {
-                    if (!leftString.equals(rightString))
-                    {
-                        out.put(key,left.getSolution().get(key));
-                    }
+            } else {
+                if (!leftString.equals(rightString)) {
+                    out.put(key,left.getSolution().get(key));
                 }
             }
 
@@ -149,5 +88,26 @@ public class EqualityExpression extends QueryExpression {
         setConjoinedSolutions(left.getConjoinedSolutions());
         setSolution(out);
   //      getParser().fsNodeBindings = out;
+    }
+
+    private String resolveValue(Solution solutionKey, Value value)
+    {
+        String resolved = ValueResolver.resolve(this, solutionKey, value);
+        if (resolved == null)
+        {
+            return null;
+        }
+
+        if ((resolved.startsWith("'") && resolved.endsWith("'")) ||
+                (resolved.startsWith("\"") && resolved.endsWith("\""))) {
+            resolved = resolved.substring(1, resolved.length() - 1);
+        }
+
+        if (value.strip)
+        {
+            resolved = HelperMethods.stripValue(resolved);
+        }
+
+        return resolved;
     }
 }
