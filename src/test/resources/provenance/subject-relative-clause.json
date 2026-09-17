@@ -1,0 +1,6851 @@
+{
+ "sentence": "Bill saw the dog that barked",
+ "drsText": "([x1,x2,x3,x4],[x1='bill',dog(x2),bark(x3),arg1(x3,x2),see(x4),arg2(x4,x2),arg1(x4,x1)])",
+ "syntax": {
+  "id": "S0",
+  "text": "'Bill saw the dog that barked'",
+  "constraints": [
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f0",
+    "relationLabel": "PRED",
+    "targetNode": "semform('see',1,[var(14),var(1)],[])",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f0",
+    "relationLabel": "SUBJ",
+    "targetNode": "f14",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f0",
+    "relationLabel": "OBJ",
+    "targetNode": "f1",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f0",
+    "relationLabel": "TNS-ASP",
+    "targetNode": "f18",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f0",
+    "relationLabel": "s::",
+    "targetNode": "f19",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f0",
+    "relationLabel": "PASSIVE",
+    "targetNode": "'-'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f0",
+    "relationLabel": "ROOT",
+    "targetNode": "'+'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f0",
+    "relationLabel": "VFORM",
+    "targetNode": "'fin'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f14",
+    "relationLabel": "PRED",
+    "targetNode": "semform('Bill',0,[],[])",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f14",
+    "relationLabel": "NTYPE",
+    "targetNode": "f15",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f14",
+    "relationLabel": "s::",
+    "targetNode": "f17",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f14",
+    "relationLabel": "CASE",
+    "targetNode": "'nom'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f14",
+    "relationLabel": "GENDER",
+    "targetNode": "'masc'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f14",
+    "relationLabel": "NUM",
+    "targetNode": "'sg'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f15",
+    "relationLabel": "NSEM",
+    "targetNode": "f16",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f15",
+    "relationLabel": "NSYN",
+    "targetNode": "'proper'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f16",
+    "relationLabel": "PROPER",
+    "targetNode": "'name'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f17",
+    "relationLabel": "TYPE",
+    "targetNode": "'entity'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f1",
+    "relationLabel": "PRED",
+    "targetNode": "semform('dog',3,[],[])",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f1",
+    "relationLabel": "ADJUNCT",
+    "targetNode": "f2",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f1",
+    "relationLabel": "NTYPE",
+    "targetNode": "f10",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f1",
+    "relationLabel": "SPEC",
+    "targetNode": "f11",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f1",
+    "relationLabel": "s::",
+    "targetNode": "f13",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f1",
+    "relationLabel": "CASE",
+    "targetNode": "'acc'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f1",
+    "relationLabel": "DEF",
+    "targetNode": "'+'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f1",
+    "relationLabel": "NUM",
+    "targetNode": "'sg'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f1",
+    "relationLabel": "PERS",
+    "targetNode": "'3'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f2",
+    "relationLabel": "in_set",
+    "targetNode": "f3",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f3",
+    "relationLabel": "PRED",
+    "targetNode": "semform('bark',5,[var(4)],[])",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f3",
+    "relationLabel": "SUBJ",
+    "targetNode": "f4",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f3",
+    "relationLabel": "TNS-ASP",
+    "targetNode": "f6",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f3",
+    "relationLabel": "TOPIC",
+    "targetNode": "f4",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f3",
+    "relationLabel": "s::",
+    "targetNode": "f7",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f3",
+    "relationLabel": "VFORM",
+    "targetNode": "'fin'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f4",
+    "relationLabel": "PRED",
+    "targetNode": "semform('PRO',4,[],[])",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f4",
+    "relationLabel": "s::",
+    "targetNode": "f5",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f4",
+    "relationLabel": "NUM",
+    "targetNode": "'sg'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f4",
+    "relationLabel": "PERS",
+    "targetNode": "'3'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f4",
+    "relationLabel": "PRON-FORM",
+    "targetNode": "'that'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f4",
+    "relationLabel": "PRON-TYPE",
+    "targetNode": "'rel'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f5",
+    "relationLabel": "TYPE",
+    "targetNode": "'entity'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f6",
+    "relationLabel": "MOOD",
+    "targetNode": "'indicative'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f6",
+    "relationLabel": "PERF",
+    "targetNode": "'-_'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f6",
+    "relationLabel": "PROG",
+    "targetNode": "'-_'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f6",
+    "relationLabel": "TENSE",
+    "targetNode": "'past'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f7",
+    "relationLabel": "EV",
+    "targetNode": "g8",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f7",
+    "relationLabel": "SIT",
+    "targetNode": "g9",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g8",
+    "relationLabel": "TYPE",
+    "targetNode": "'eventuality'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f10",
+    "relationLabel": "NSYN",
+    "targetNode": "'common'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f11",
+    "relationLabel": "DET",
+    "targetNode": "f12",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f12",
+    "relationLabel": "PRED",
+    "targetNode": "semform('the',2,[],[])",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f13",
+    "relationLabel": "TYPE",
+    "targetNode": "'entity'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f18",
+    "relationLabel": "MOOD",
+    "targetNode": "'indicative'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f18",
+    "relationLabel": "PERF",
+    "targetNode": "'-_'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f18",
+    "relationLabel": "PROG",
+    "targetNode": "'-_'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f18",
+    "relationLabel": "TENSE",
+    "targetNode": "'past'",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f19",
+    "relationLabel": "EV",
+    "targetNode": "g20",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f19",
+    "relationLabel": "SIT",
+    "targetNode": "g21",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g20",
+    "relationLabel": "TYPE",
+    "targetNode": "'eventuality'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f101",
+    "relationLabel": "g::",
+    "targetNode": "g102",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g102",
+    "relationLabel": "GLUE",
+    "targetNode": "g103",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g103",
+    "relationLabel": "in_set",
+    "targetNode": "g104",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g103",
+    "relationLabel": "in_set",
+    "targetNode": "g107",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g103",
+    "relationLabel": "in_set",
+    "targetNode": "g110",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g103",
+    "relationLabel": "in_set",
+    "targetNode": "g115",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g104",
+    "relationLabel": "ANT",
+    "targetNode": "g105",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g104",
+    "relationLabel": "CONS",
+    "targetNode": "g106",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g104",
+    "relationLabel": "MEANING",
+    "targetNode": "'(\\P.P)'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g105",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f7",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g105",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g106",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g9",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g106",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g107",
+    "relationLabel": "ANT",
+    "targetNode": "g108",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g107",
+    "relationLabel": "CONS",
+    "targetNode": "g109",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g107",
+    "relationLabel": "MEANING",
+    "targetNode": "'(\\v.([],[bark(v)]))'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g108",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g8",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g108",
+    "relationLabel": "TYPE",
+    "targetNode": "'v'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g109",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g8",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g109",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g110",
+    "relationLabel": "ANT",
+    "targetNode": "g111",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g110",
+    "relationLabel": "CONS",
+    "targetNode": "g114",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g110",
+    "relationLabel": "MEANING",
+    "targetNode": "'(\\V.([e],[])+V@e)'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g111",
+    "relationLabel": "ANT",
+    "targetNode": "g112",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g111",
+    "relationLabel": "CONS",
+    "targetNode": "g113",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g112",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g8",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g112",
+    "relationLabel": "TYPE",
+    "targetNode": "'v'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g113",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g8",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g113",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g114",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f7",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g114",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g115",
+    "relationLabel": "ANT",
+    "targetNode": "g116",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g115",
+    "relationLabel": "CONS",
+    "targetNode": "g119",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g115",
+    "relationLabel": "MEANING",
+    "targetNode": "'(\\V.(\\x.(\\e.(V@e+([],[arg1(e,x)])))))'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g115",
+    "relationLabel": "NOSCOPE",
+    "targetNode": "'+'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g116",
+    "relationLabel": "ANT",
+    "targetNode": "g117",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g116",
+    "relationLabel": "CONS",
+    "targetNode": "g118",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g117",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g8",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g117",
+    "relationLabel": "TYPE",
+    "targetNode": "'v'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g118",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g8",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g118",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g119",
+    "relationLabel": "ANT",
+    "targetNode": "g120",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g119",
+    "relationLabel": "CONS",
+    "targetNode": "g121",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g120",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f5",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g120",
+    "relationLabel": "TYPE",
+    "targetNode": "'e'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g121",
+    "relationLabel": "ANT",
+    "targetNode": "g122",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g121",
+    "relationLabel": "CONS",
+    "targetNode": "g123",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g122",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g8",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g122",
+    "relationLabel": "TYPE",
+    "targetNode": "'v'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g123",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g8",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g123",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f87",
+    "relationLabel": "g::",
+    "targetNode": "g88",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g88",
+    "relationLabel": "GLUE",
+    "targetNode": "g89",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g89",
+    "relationLabel": "in_set",
+    "targetNode": "g90",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g90",
+    "relationLabel": "ANT",
+    "targetNode": "g91",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g90",
+    "relationLabel": "CONS",
+    "targetNode": "g94",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g90",
+    "relationLabel": "MEANING",
+    "targetNode": "'(\\P.(\\Q.(\\x.(P@x+Q@x))))'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g90",
+    "relationLabel": "NOSCOPE",
+    "targetNode": "'+'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g91",
+    "relationLabel": "ANT",
+    "targetNode": "g92",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g91",
+    "relationLabel": "CONS",
+    "targetNode": "g93",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g92",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f13",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g92",
+    "relationLabel": "TYPE",
+    "targetNode": "'e'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g93",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f13",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g93",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g94",
+    "relationLabel": "ANT",
+    "targetNode": "g95",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g94",
+    "relationLabel": "CONS",
+    "targetNode": "g98",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g95",
+    "relationLabel": "ANT",
+    "targetNode": "g96",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g95",
+    "relationLabel": "CONS",
+    "targetNode": "g97",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g96",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f5",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g96",
+    "relationLabel": "TYPE",
+    "targetNode": "'e'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g97",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g9",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g97",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g98",
+    "relationLabel": "ANT",
+    "targetNode": "g99",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g98",
+    "relationLabel": "CONS",
+    "targetNode": "g100",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g99",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f13",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g99",
+    "relationLabel": "TYPE",
+    "targetNode": "'e'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g100",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f13",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g100",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f81",
+    "relationLabel": "g::",
+    "targetNode": "g82",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g82",
+    "relationLabel": "GLUE",
+    "targetNode": "g83",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g83",
+    "relationLabel": "in_set",
+    "targetNode": "g84",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g84",
+    "relationLabel": "ANT",
+    "targetNode": "g85",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g84",
+    "relationLabel": "CONS",
+    "targetNode": "g86",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g84",
+    "relationLabel": "MEANING",
+    "targetNode": "'(\\x.([],[dog(x)]))'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g85",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f13",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g85",
+    "relationLabel": "TYPE",
+    "targetNode": "'e'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g86",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f13",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g86",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f69",
+    "relationLabel": "g::",
+    "targetNode": "g70",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g70",
+    "relationLabel": "GLUE",
+    "targetNode": "g71",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g71",
+    "relationLabel": "in_set",
+    "targetNode": "g72",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g72",
+    "relationLabel": "ANT",
+    "targetNode": "g73",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g72",
+    "relationLabel": "CONS",
+    "targetNode": "g76",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g72",
+    "relationLabel": "INSITU",
+    "targetNode": "'+'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g72",
+    "relationLabel": "MEANING",
+    "targetNode": "'(\\Q.(\\R.([x],[])+Q@x+R@x))'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g73",
+    "relationLabel": "ANT",
+    "targetNode": "g74",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g73",
+    "relationLabel": "CONS",
+    "targetNode": "g75",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g74",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f13",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g74",
+    "relationLabel": "TYPE",
+    "targetNode": "'e'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g75",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f13",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g75",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g76",
+    "relationLabel": "ANT",
+    "targetNode": "g77",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g76",
+    "relationLabel": "CONS",
+    "targetNode": "g80",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g77",
+    "relationLabel": "ANT",
+    "targetNode": "g78",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g77",
+    "relationLabel": "CONS",
+    "targetNode": "g79",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g78",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f13",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g78",
+    "relationLabel": "TYPE",
+    "targetNode": "'e'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g79",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f19",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g79",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g80",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f19",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g80",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f37",
+    "relationLabel": "g::",
+    "targetNode": "g38",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g38",
+    "relationLabel": "GLUE",
+    "targetNode": "g39",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g39",
+    "relationLabel": "in_set",
+    "targetNode": "g40",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g39",
+    "relationLabel": "in_set",
+    "targetNode": "g43",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g39",
+    "relationLabel": "in_set",
+    "targetNode": "g46",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g39",
+    "relationLabel": "in_set",
+    "targetNode": "g51",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g39",
+    "relationLabel": "in_set",
+    "targetNode": "g60",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g40",
+    "relationLabel": "ANT",
+    "targetNode": "g41",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g40",
+    "relationLabel": "CONS",
+    "targetNode": "g42",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g40",
+    "relationLabel": "MEANING",
+    "targetNode": "'(\\P.P)'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g41",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f19",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g41",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g42",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g21",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g42",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g43",
+    "relationLabel": "ANT",
+    "targetNode": "g44",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g43",
+    "relationLabel": "CONS",
+    "targetNode": "g45",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g43",
+    "relationLabel": "MEANING",
+    "targetNode": "'(\\v.([],[see(v)]))'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g44",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g20",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g44",
+    "relationLabel": "TYPE",
+    "targetNode": "'v'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g45",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g20",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g45",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g46",
+    "relationLabel": "ANT",
+    "targetNode": "g47",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g46",
+    "relationLabel": "CONS",
+    "targetNode": "g50",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g46",
+    "relationLabel": "MEANING",
+    "targetNode": "'(\\V.([e],[])+V@e)'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g47",
+    "relationLabel": "ANT",
+    "targetNode": "g48",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g47",
+    "relationLabel": "CONS",
+    "targetNode": "g49",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g48",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g20",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g48",
+    "relationLabel": "TYPE",
+    "targetNode": "'v'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g49",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g20",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g49",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g50",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f19",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g50",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g51",
+    "relationLabel": "ANT",
+    "targetNode": "g52",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g51",
+    "relationLabel": "CONS",
+    "targetNode": "g55",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g51",
+    "relationLabel": "MEANING",
+    "targetNode": "'(\\V.(\\x.(\\e.(V@e+([],[arg1(e,x)])))))'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g51",
+    "relationLabel": "NOSCOPE",
+    "targetNode": "'+'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g52",
+    "relationLabel": "ANT",
+    "targetNode": "g53",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g52",
+    "relationLabel": "CONS",
+    "targetNode": "g54",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g53",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g20",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g53",
+    "relationLabel": "TYPE",
+    "targetNode": "'v'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g54",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g20",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g54",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g55",
+    "relationLabel": "ANT",
+    "targetNode": "g56",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g55",
+    "relationLabel": "CONS",
+    "targetNode": "g57",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g56",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f17",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g56",
+    "relationLabel": "TYPE",
+    "targetNode": "'e'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g57",
+    "relationLabel": "ANT",
+    "targetNode": "g58",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g57",
+    "relationLabel": "CONS",
+    "targetNode": "g59",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g58",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g20",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g58",
+    "relationLabel": "TYPE",
+    "targetNode": "'v'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g59",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g20",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g59",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g60",
+    "relationLabel": "ANT",
+    "targetNode": "g61",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g60",
+    "relationLabel": "CONS",
+    "targetNode": "g64",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g60",
+    "relationLabel": "MEANING",
+    "targetNode": "'(\\V.(\\x.(\\e.(V@e+([],[arg2(e,x)])))))'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g60",
+    "relationLabel": "NOSCOPE",
+    "targetNode": "'+'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g61",
+    "relationLabel": "ANT",
+    "targetNode": "g62",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g61",
+    "relationLabel": "CONS",
+    "targetNode": "g63",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g62",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g20",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g62",
+    "relationLabel": "TYPE",
+    "targetNode": "'v'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g63",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g20",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g63",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g64",
+    "relationLabel": "ANT",
+    "targetNode": "g65",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g64",
+    "relationLabel": "CONS",
+    "targetNode": "g66",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g65",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f13",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g65",
+    "relationLabel": "TYPE",
+    "targetNode": "'e'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g66",
+    "relationLabel": "ANT",
+    "targetNode": "g67",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g66",
+    "relationLabel": "CONS",
+    "targetNode": "g68",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g67",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g20",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g67",
+    "relationLabel": "TYPE",
+    "targetNode": "'v'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g68",
+    "relationLabel": "RESOURCE",
+    "targetNode": "g20",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g68",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f22",
+    "relationLabel": "g::",
+    "targetNode": "g23",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g23",
+    "relationLabel": "GLUE",
+    "targetNode": "g24",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g24",
+    "relationLabel": "in_set",
+    "targetNode": "g25",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g24",
+    "relationLabel": "in_set",
+    "targetNode": "g34",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g25",
+    "relationLabel": "ANT",
+    "targetNode": "g26",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g25",
+    "relationLabel": "CONS",
+    "targetNode": "g29",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g25",
+    "relationLabel": "INSITU",
+    "targetNode": "'+'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g25",
+    "relationLabel": "MEANING",
+    "targetNode": "'(\\Q.(\\R.([x],[])+Q@x+R@x))'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g26",
+    "relationLabel": "ANT",
+    "targetNode": "g27",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g26",
+    "relationLabel": "CONS",
+    "targetNode": "g28",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g27",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f17",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g27",
+    "relationLabel": "TYPE",
+    "targetNode": "'e'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g28",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f17",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g28",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g29",
+    "relationLabel": "ANT",
+    "targetNode": "g30",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g29",
+    "relationLabel": "CONS",
+    "targetNode": "g33",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g30",
+    "relationLabel": "ANT",
+    "targetNode": "g31",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g30",
+    "relationLabel": "CONS",
+    "targetNode": "g32",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g31",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f17",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g31",
+    "relationLabel": "TYPE",
+    "targetNode": "'e'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g32",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f19",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g32",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g33",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f19",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g33",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g34",
+    "relationLabel": "ANT",
+    "targetNode": "g35",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g34",
+    "relationLabel": "CONS",
+    "targetNode": "g36",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g34",
+    "relationLabel": "MEANING",
+    "targetNode": "'(\\x.([],[x=\\'Bill\\']))'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g35",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f17",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g35",
+    "relationLabel": "TYPE",
+    "targetNode": "'e'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g36",
+    "relationLabel": "RESOURCE",
+    "targetNode": "f17",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g36",
+    "relationLabel": "TYPE",
+    "targetNode": "'t'",
+    "proj": "g",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c276",
+    "relationLabel": "left",
+    "targetNode": "c274",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c276",
+    "relationLabel": "CAT",
+    "targetNode": "'ROOT'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c276",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c274",
+    "relationLabel": "left",
+    "targetNode": "c149",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c274",
+    "relationLabel": "right",
+    "targetNode": "c272",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c274",
+    "relationLabel": "CAT",
+    "targetNode": "'S'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c274",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c272",
+    "relationLabel": "left",
+    "targetNode": "c268",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c272",
+    "relationLabel": "CAT",
+    "targetNode": "'VP[fin]'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c272",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c268",
+    "relationLabel": "left",
+    "targetNode": "c188",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c268",
+    "relationLabel": "right",
+    "targetNode": "c264",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c268",
+    "relationLabel": "CAT",
+    "targetNode": "'VPv[fin]'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c268",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c264",
+    "relationLabel": "left",
+    "targetNode": "c217",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c264",
+    "relationLabel": "right",
+    "targetNode": "c262",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c264",
+    "relationLabel": "CAT",
+    "targetNode": "'NP'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c264",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c262",
+    "relationLabel": "left",
+    "targetNode": "c260",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c262",
+    "relationLabel": "CAT",
+    "targetNode": "'CPnom'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c262",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c260",
+    "relationLabel": "left",
+    "targetNode": "c223",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c260",
+    "relationLabel": "right",
+    "targetNode": "c258",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c260",
+    "relationLabel": "CAT",
+    "targetNode": "'CPrel'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c260",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c258",
+    "relationLabel": "left",
+    "targetNode": "c240",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c258",
+    "relationLabel": "CAT",
+    "targetNode": "'VP[fin]'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c258",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c240",
+    "relationLabel": "left",
+    "targetNode": "c238",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c240",
+    "relationLabel": "CAT",
+    "targetNode": "'VPv[fin]'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c240",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c238",
+    "relationLabel": "left",
+    "targetNode": "c237",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c238",
+    "relationLabel": "right",
+    "targetNode": "c120",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c238",
+    "relationLabel": "CAT",
+    "targetNode": "'V[fin]'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c238",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c237",
+    "relationLabel": "left",
+    "targetNode": "c236",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c237",
+    "relationLabel": "right",
+    "targetNode": "c122",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c237",
+    "relationLabel": "CAT",
+    "targetNode": "'V[fin]'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c237",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c236",
+    "relationLabel": "left",
+    "targetNode": "c235",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c236",
+    "relationLabel": "right",
+    "targetNode": "c124",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c236",
+    "relationLabel": "CAT",
+    "targetNode": "'V[fin]'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c236",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c235",
+    "relationLabel": "left",
+    "targetNode": "c126",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c235",
+    "relationLabel": "CAT",
+    "targetNode": "'V[fin]'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c235",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c223",
+    "relationLabel": "left",
+    "targetNode": "c117",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c223",
+    "relationLabel": "CAT",
+    "targetNode": "'CPrel'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c223",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c217",
+    "relationLabel": "left",
+    "targetNode": "c200",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c217",
+    "relationLabel": "right",
+    "targetNode": "c214",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c217",
+    "relationLabel": "CAT",
+    "targetNode": "'NP'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c217",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c214",
+    "relationLabel": "left",
+    "targetNode": "c213",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c214",
+    "relationLabel": "right",
+    "targetNode": "c61",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c214",
+    "relationLabel": "CAT",
+    "targetNode": "'N'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c214",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c213",
+    "relationLabel": "left",
+    "targetNode": "c212",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c213",
+    "relationLabel": "right",
+    "targetNode": "c63",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c213",
+    "relationLabel": "CAT",
+    "targetNode": "'N'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c213",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c212",
+    "relationLabel": "left",
+    "targetNode": "c65",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c212",
+    "relationLabel": "CAT",
+    "targetNode": "'N'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c212",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c200",
+    "relationLabel": "left",
+    "targetNode": "c59",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c200",
+    "relationLabel": "CAT",
+    "targetNode": "'NP'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c200",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c188",
+    "relationLabel": "left",
+    "targetNode": "c185",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c188",
+    "relationLabel": "CAT",
+    "targetNode": "'VPv[fin]'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c188",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c185",
+    "relationLabel": "left",
+    "targetNode": "c184",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c185",
+    "relationLabel": "right",
+    "targetNode": "c14",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c185",
+    "relationLabel": "CAT",
+    "targetNode": "'V[fin]'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c185",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c184",
+    "relationLabel": "left",
+    "targetNode": "c183",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c184",
+    "relationLabel": "right",
+    "targetNode": "c16",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c184",
+    "relationLabel": "CAT",
+    "targetNode": "'V[fin]'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c184",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c183",
+    "relationLabel": "left",
+    "targetNode": "c182",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c183",
+    "relationLabel": "right",
+    "targetNode": "c18",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c183",
+    "relationLabel": "CAT",
+    "targetNode": "'V[fin]'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c183",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c182",
+    "relationLabel": "left",
+    "targetNode": "c20",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c182",
+    "relationLabel": "CAT",
+    "targetNode": "'V[fin]'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c182",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c149",
+    "relationLabel": "left",
+    "targetNode": "c141",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c149",
+    "relationLabel": "CAT",
+    "targetNode": "'S'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c149",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c141",
+    "relationLabel": "left",
+    "targetNode": "c12",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c141",
+    "relationLabel": "CAT",
+    "targetNode": "'NP'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c141",
+    "relationLabel": "phi",
+    "targetNode": "f14",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c127",
+    "relationLabel": "CAT",
+    "targetNode": "'bark'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c127",
+    "relationLabel": "terminal",
+    "targetNode": "c119",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c127",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c127",
+    "relationLabel": "cproj",
+    "targetNode": "f101",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c126",
+    "relationLabel": "left",
+    "targetNode": "c127",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c126",
+    "relationLabel": "CAT",
+    "targetNode": "'V-S_BASE'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c126",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c126",
+    "relationLabel": "cproj",
+    "targetNode": "f101",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c125",
+    "relationLabel": "CAT",
+    "targetNode": "'+Verb'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c125",
+    "relationLabel": "terminal",
+    "targetNode": "c119",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c125",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c124",
+    "relationLabel": "left",
+    "targetNode": "c125",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c124",
+    "relationLabel": "CAT",
+    "targetNode": "'V-POS_BASE'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c124",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c123",
+    "relationLabel": "CAT",
+    "targetNode": "'+PastBoth'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c123",
+    "relationLabel": "terminal",
+    "targetNode": "c119",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c123",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c122",
+    "relationLabel": "left",
+    "targetNode": "c123",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c122",
+    "relationLabel": "CAT",
+    "targetNode": "'TNS_BASE'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c122",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c121",
+    "relationLabel": "CAT",
+    "targetNode": "'+123SP'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c121",
+    "relationLabel": "terminal",
+    "targetNode": "c119",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c121",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c120",
+    "relationLabel": "left",
+    "targetNode": "c121",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c120",
+    "relationLabel": "CAT",
+    "targetNode": "'PERS_BASE'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c120",
+    "relationLabel": "phi",
+    "targetNode": "f3",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c117",
+    "relationLabel": "left",
+    "targetNode": "c76",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c117",
+    "relationLabel": "CAT",
+    "targetNode": "'PRON'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c117",
+    "relationLabel": "phi",
+    "targetNode": "f4",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c117",
+    "relationLabel": "cproj",
+    "targetNode": "f87",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c76",
+    "relationLabel": "CAT",
+    "targetNode": "'that'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c76",
+    "relationLabel": "terminal",
+    "targetNode": "c76",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c76",
+    "relationLabel": "phi",
+    "targetNode": "f124",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c76",
+    "relationLabel": "cproj",
+    "targetNode": "f87",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c66",
+    "relationLabel": "CAT",
+    "targetNode": "'dog'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c66",
+    "relationLabel": "terminal",
+    "targetNode": "c60",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c66",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c66",
+    "relationLabel": "cproj",
+    "targetNode": "f81",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c65",
+    "relationLabel": "left",
+    "targetNode": "c66",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c65",
+    "relationLabel": "CAT",
+    "targetNode": "'N-S_BASE'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c65",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c65",
+    "relationLabel": "cproj",
+    "targetNode": "f81",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c64",
+    "relationLabel": "CAT",
+    "targetNode": "'+Noun'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c64",
+    "relationLabel": "terminal",
+    "targetNode": "c60",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c64",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c63",
+    "relationLabel": "left",
+    "targetNode": "c64",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c63",
+    "relationLabel": "CAT",
+    "targetNode": "'N-POS_BASE'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c63",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c62",
+    "relationLabel": "CAT",
+    "targetNode": "'+Sg'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c62",
+    "relationLabel": "terminal",
+    "targetNode": "c60",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c62",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c61",
+    "relationLabel": "left",
+    "targetNode": "c62",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c61",
+    "relationLabel": "CAT",
+    "targetNode": "'N-NUM_BASE'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c61",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c59",
+    "relationLabel": "left",
+    "targetNode": "c37",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c59",
+    "relationLabel": "CAT",
+    "targetNode": "'D'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c59",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c59",
+    "relationLabel": "cproj",
+    "targetNode": "f69",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c37",
+    "relationLabel": "CAT",
+    "targetNode": "'the'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c37",
+    "relationLabel": "terminal",
+    "targetNode": "c37",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c37",
+    "relationLabel": "phi",
+    "targetNode": "f1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c37",
+    "relationLabel": "cproj",
+    "targetNode": "f69",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c21",
+    "relationLabel": "CAT",
+    "targetNode": "'see'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c21",
+    "relationLabel": "terminal",
+    "targetNode": "c13",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c21",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c21",
+    "relationLabel": "cproj",
+    "targetNode": "f37",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c20",
+    "relationLabel": "left",
+    "targetNode": "c21",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c20",
+    "relationLabel": "CAT",
+    "targetNode": "'V-S_BASE'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c20",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c20",
+    "relationLabel": "cproj",
+    "targetNode": "f37",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c19",
+    "relationLabel": "CAT",
+    "targetNode": "'+Verb'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c19",
+    "relationLabel": "terminal",
+    "targetNode": "c13",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c19",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c18",
+    "relationLabel": "left",
+    "targetNode": "c19",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c18",
+    "relationLabel": "CAT",
+    "targetNode": "'V-POS_BASE'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c18",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c17",
+    "relationLabel": "CAT",
+    "targetNode": "'+PastTense'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c17",
+    "relationLabel": "terminal",
+    "targetNode": "c13",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c17",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c16",
+    "relationLabel": "left",
+    "targetNode": "c17",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c16",
+    "relationLabel": "CAT",
+    "targetNode": "'TNS_BASE'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c16",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c15",
+    "relationLabel": "CAT",
+    "targetNode": "'+123SP'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c15",
+    "relationLabel": "terminal",
+    "targetNode": "c13",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c15",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c14",
+    "relationLabel": "left",
+    "targetNode": "c15",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c14",
+    "relationLabel": "CAT",
+    "targetNode": "'PERS_BASE'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c14",
+    "relationLabel": "phi",
+    "targetNode": "f0",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c12",
+    "relationLabel": "left",
+    "targetNode": "c1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c12",
+    "relationLabel": "CAT",
+    "targetNode": "'N'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c12",
+    "relationLabel": "phi",
+    "targetNode": "f14",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c12",
+    "relationLabel": "cproj",
+    "targetNode": "f22",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c1",
+    "relationLabel": "CAT",
+    "targetNode": "'Bill'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c1",
+    "relationLabel": "terminal",
+    "targetNode": "c1",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c1",
+    "relationLabel": "phi",
+    "targetNode": "f14",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c1",
+    "relationLabel": "cproj",
+    "targetNode": "f22",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f0",
+    "relationLabel": "start",
+    "targetNode": "int(1)",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f0",
+    "relationLabel": "end",
+    "targetNode": "int(29)",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f14",
+    "relationLabel": "start",
+    "targetNode": "int(1)",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f14",
+    "relationLabel": "end",
+    "targetNode": "int(5)",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f1",
+    "relationLabel": "start",
+    "targetNode": "int(10)",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f1",
+    "relationLabel": "end",
+    "targetNode": "int(29)",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f3",
+    "relationLabel": "start",
+    "targetNode": "int(18)",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f3",
+    "relationLabel": "end",
+    "targetNode": "int(29)",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f4",
+    "relationLabel": "start",
+    "targetNode": "int(18)",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "f4",
+    "relationLabel": "end",
+    "targetNode": "int(22)",
+    "proj": "f",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c1",
+    "relationLabel": "token",
+    "targetNode": "'Bill'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c1",
+    "relationLabel": "start",
+    "targetNode": "int(1)",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c1",
+    "relationLabel": "end",
+    "targetNode": "int(5)",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c13",
+    "relationLabel": "token",
+    "targetNode": "'saw'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c13",
+    "relationLabel": "start",
+    "targetNode": "int(6)",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c13",
+    "relationLabel": "end",
+    "targetNode": "int(9)",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c37",
+    "relationLabel": "token",
+    "targetNode": "'the'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c37",
+    "relationLabel": "start",
+    "targetNode": "int(10)",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c37",
+    "relationLabel": "end",
+    "targetNode": "int(13)",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c60",
+    "relationLabel": "token",
+    "targetNode": "'dog'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c60",
+    "relationLabel": "start",
+    "targetNode": "int(14)",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c60",
+    "relationLabel": "end",
+    "targetNode": "int(17)",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c76",
+    "relationLabel": "token",
+    "targetNode": "'that'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c76",
+    "relationLabel": "start",
+    "targetNode": "int(18)",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c76",
+    "relationLabel": "end",
+    "targetNode": "int(22)",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c119",
+    "relationLabel": "token",
+    "targetNode": "'barked'",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c119",
+    "relationLabel": "start",
+    "targetNode": "int(23)",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "c119",
+    "relationLabel": "end",
+    "targetNode": "int(29)",
+    "proj": "c",
+    "projection": "false"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g34",
+    "relationLabel": "SYN-ID",
+    "targetNode": "i1",
+    "projection": "true"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g25",
+    "relationLabel": "SYN-ID",
+    "targetNode": "i2",
+    "projection": "true"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g60",
+    "relationLabel": "SYN-ID",
+    "targetNode": "i3",
+    "projection": "true"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g51",
+    "relationLabel": "SYN-ID",
+    "targetNode": "i4",
+    "projection": "true"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g46",
+    "relationLabel": "SYN-ID",
+    "targetNode": "i5",
+    "projection": "true"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g43",
+    "relationLabel": "SYN-ID",
+    "targetNode": "i6",
+    "projection": "true"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g40",
+    "relationLabel": "SYN-ID",
+    "targetNode": "i7",
+    "projection": "true"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g72",
+    "relationLabel": "SYN-ID",
+    "targetNode": "i8",
+    "projection": "true"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g84",
+    "relationLabel": "SYN-ID",
+    "targetNode": "i9",
+    "projection": "true"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g90",
+    "relationLabel": "SYN-ID",
+    "targetNode": "i10",
+    "projection": "true"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g115",
+    "relationLabel": "SYN-ID",
+    "targetNode": "i11",
+    "projection": "true"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g110",
+    "relationLabel": "SYN-ID",
+    "targetNode": "i12",
+    "projection": "true"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g107",
+    "relationLabel": "SYN-ID",
+    "targetNode": "i13",
+    "projection": "true"
+   },
+   {
+    "choiceVars": [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ],
+    "sourceNode": "g104",
+    "relationLabel": "SYN-ID",
+    "targetNode": "i14",
+    "projection": "true"
+   }
+  ],
+  "annotations": [],
+  "choiceSpace": {
+   "rootChoice": [
+    {
+     "choiceID": "1",
+     "propValue": "true"
+    }
+   ],
+   "choiceNodes": [],
+   "choices": [
+    [
+     {
+      "choiceID": "1",
+      "propValue": "true"
+     }
+    ]
+   ],
+   "allVars": []
+  }
+ },
+ "drs": {
+  "id": "s0",
+  "text": "",
+  "nodes": [
+   {
+    "id": "d1",
+    "node_type": "root",
+    "label": "s0",
+    "avp": {
+     "NAME": "s0",
+     "NODE_TYPE": "root",
+     "ROOT": "true"
+    }
+   },
+   {
+    "id": "d2",
+    "node_type": "state",
+    "label": "s1",
+    "avp": {
+     "NAME": "s1",
+     "NODE_TYPE": "state",
+     "SRC": "i2"
+    }
+   },
+   {
+    "id": "d3",
+    "node_type": "referent",
+    "label": "x1",
+    "avp": {
+     "NAME": "x1",
+     "NODE_TYPE": "referent",
+     "SRC": "i2"
+    }
+   },
+   {
+    "id": "d4",
+    "node_type": "condition",
+    "label": "EQ",
+    "avp": {
+     "NAME": "EQ",
+     "NODE_TYPE": "condition"
+    }
+   },
+   {
+    "id": "d5",
+    "node_type": "value",
+    "label": "'bill'",
+    "avp": {
+     "NAME": "'bill'",
+     "NODE_TYPE": "value"
+    }
+   },
+   {
+    "id": "d6",
+    "node_type": "state",
+    "label": "s2",
+    "avp": {
+     "NAME": "s2",
+     "NODE_TYPE": "state",
+     "SRC": "i8"
+    }
+   },
+   {
+    "id": "d7",
+    "node_type": "referent",
+    "label": "x2",
+    "avp": {
+     "NAME": "x2",
+     "NODE_TYPE": "referent",
+     "SRC": "i8"
+    }
+   },
+   {
+    "id": "d8",
+    "node_type": "state",
+    "label": "s3",
+    "avp": {
+     "NAME": "s3",
+     "NODE_TYPE": "state",
+     "SRC": "i10"
+    }
+   },
+   {
+    "id": "d9",
+    "node_type": "referent",
+    "label": "x3",
+    "avp": {
+     "NAME": "x3",
+     "NODE_TYPE": "referent",
+     "SRC": "i12"
+    }
+   },
+   {
+    "id": "d10",
+    "node_type": "condition",
+    "label": "dog",
+    "avp": {
+     "NAME": "dog",
+     "NODE_TYPE": "condition",
+     "SRC": "i9"
+    }
+   },
+   {
+    "id": "d11",
+    "node_type": "condition",
+    "label": "bark",
+    "avp": {
+     "NAME": "bark",
+     "NODE_TYPE": "condition",
+     "SRC": "i13"
+    }
+   },
+   {
+    "id": "d12",
+    "node_type": "condition",
+    "label": "arg1",
+    "avp": {
+     "NAME": "arg1",
+     "NODE_TYPE": "condition",
+     "SRC": "i11"
+    }
+   },
+   {
+    "id": "d13",
+    "node_type": "state",
+    "label": "s4",
+    "avp": {
+     "NAME": "s4",
+     "NODE_TYPE": "state",
+     "SRC": "i5"
+    }
+   },
+   {
+    "id": "d14",
+    "node_type": "referent",
+    "label": "x4",
+    "avp": {
+     "NAME": "x4",
+     "NODE_TYPE": "referent",
+     "SRC": "i5"
+    }
+   },
+   {
+    "id": "d15",
+    "node_type": "condition",
+    "label": "see",
+    "avp": {
+     "NAME": "see",
+     "NODE_TYPE": "condition",
+     "SRC": "i6"
+    }
+   },
+   {
+    "id": "d16",
+    "node_type": "condition",
+    "label": "arg2",
+    "avp": {
+     "NAME": "arg2",
+     "NODE_TYPE": "condition",
+     "SRC": "i3"
+    }
+   },
+   {
+    "id": "d17",
+    "node_type": "condition",
+    "label": "arg1",
+    "avp": {
+     "NAME": "arg1",
+     "NODE_TYPE": "condition",
+     "SRC": "i4"
+    }
+   }
+  ],
+  "edges": [
+   {
+    "source": "d1",
+    "target": "d2",
+    "label": "MERGE"
+   },
+   {
+    "source": "d2",
+    "target": "d3",
+    "label": "IN"
+   },
+   {
+    "source": "d2",
+    "target": "d4",
+    "label": "COND"
+   },
+   {
+    "source": "d4",
+    "target": "d3",
+    "label": "TERM1"
+   },
+   {
+    "source": "d4",
+    "target": "d5",
+    "label": "TERM2"
+   },
+   {
+    "source": "d2",
+    "target": "d6",
+    "label": "MERGE"
+   },
+   {
+    "source": "d6",
+    "target": "d7",
+    "label": "IN"
+   },
+   {
+    "source": "d6",
+    "target": "d8",
+    "label": "MERGE"
+   },
+   {
+    "source": "d8",
+    "target": "d9",
+    "label": "IN"
+   },
+   {
+    "source": "d8",
+    "target": "d10",
+    "label": "COND"
+   },
+   {
+    "source": "d10",
+    "target": "d7",
+    "label": "TERM1"
+   },
+   {
+    "source": "d8",
+    "target": "d11",
+    "label": "COND"
+   },
+   {
+    "source": "d11",
+    "target": "d9",
+    "label": "TERM1"
+   },
+   {
+    "source": "d8",
+    "target": "d12",
+    "label": "COND"
+   },
+   {
+    "source": "d12",
+    "target": "d9",
+    "label": "TERM1"
+   },
+   {
+    "source": "d12",
+    "target": "d7",
+    "label": "TERM2"
+   },
+   {
+    "source": "d8",
+    "target": "d13",
+    "label": "MERGE"
+   },
+   {
+    "source": "d13",
+    "target": "d14",
+    "label": "IN"
+   },
+   {
+    "source": "d13",
+    "target": "d15",
+    "label": "COND"
+   },
+   {
+    "source": "d15",
+    "target": "d14",
+    "label": "TERM1"
+   },
+   {
+    "source": "d13",
+    "target": "d16",
+    "label": "COND"
+   },
+   {
+    "source": "d16",
+    "target": "d14",
+    "label": "TERM1"
+   },
+   {
+    "source": "d16",
+    "target": "d7",
+    "label": "TERM2"
+   },
+   {
+    "source": "d13",
+    "target": "d17",
+    "label": "COND"
+   },
+   {
+    "source": "d17",
+    "target": "d14",
+    "label": "TERM1"
+   },
+   {
+    "source": "d17",
+    "target": "d3",
+    "label": "TERM2"
+   }
+  ],
+  "constraints": [],
+  "annotations": [],
+  "choiceSpace": {},
+  "sourceIndex": "i2"
+ }
+}

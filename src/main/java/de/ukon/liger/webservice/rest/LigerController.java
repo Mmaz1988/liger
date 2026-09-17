@@ -90,10 +90,7 @@ public class LigerController {
         LinguisticStructure structure = LinguisticStructure.parseFromJson(request.structure);
         SourceIndexResolverService resolver = sourceIndexResolverService == null
                 ? new SourceIndexResolverService() : sourceIndexResolverService;
-        List<LigerSourceSpan> spans = request.sourceIndexGroups.stream()
-                .map(group -> resolver.resolve(structure, group))
-                .collect(Collectors.toList());
-        return new LigerSourceSpanResponse(spans);
+        return new LigerSourceSpanResponse(resolver.resolveGroups(structure, request.sourceIndexGroups));
     }
 
 
