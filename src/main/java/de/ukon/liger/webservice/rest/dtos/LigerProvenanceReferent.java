@@ -27,6 +27,16 @@ public class LigerProvenanceReferent {
     public List<String> phraseTokenIds = new ArrayList<>();
     public List<int[]> phraseSpans = new ArrayList<>();
     public String phraseText;
+    /** Lexical content only: the conditions whose single argument is this referent -- "black dog"
+     *  for the dog of "the black dog on the table", "saw" for an event, "he" for a pronoun. Relations
+     *  to other referents ({@code on(x,y)}, {@code arg1(e,x)}) are functional and left out. */
+    public List<String> lexicalConditionIds = new ArrayList<>();
+    public List<String> lexicalTokenIds = new ArrayList<>();
+    public List<int[]> lexicalSpans = new ArrayList<>();
+    public String lexicalText;
+    /** True when no one-place condition has a token (e.g. a proper name, whose EQ condition has
+     *  no SRC) and the lexical surface is the referent's own source token instead. */
+    public boolean lexicalFromReferentSource;
 
     public LigerProvenanceReferent() {}
 }

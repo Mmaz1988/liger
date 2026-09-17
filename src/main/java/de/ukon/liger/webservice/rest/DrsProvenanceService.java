@@ -29,6 +29,10 @@ import java.util.stream.Collectors;
  * An event referent's f-structure is its clause, so its description is the whole clause;
  * {@link LigerProvenanceReferent#directConditionIds} is returned alongside for callers that
  * want only the conditions on the referent itself.
+ *
+ * The lexical description ({@link LigerProvenanceReferent#lexicalText}) is narrower: only the
+ * one-place conditions on the referent, i.e. its lexical content without its relations to
+ * other referents -- <i>black dog</i>, <i>barked</i>, <i>he</i>.
  */
 @Service
 public class DrsProvenanceService {
@@ -131,6 +135,18 @@ public class DrsProvenanceService {
         describingNodes.forEach(n -> describingTokens.addAll(tokensByNode.getOrDefault(n, List.of())));
         fillSurface(new ArrayList<>(describingTokens), response.text, referent.tokenIds, referent.spans);
         referent.text = textOf(referent.spans, response.text);
+
+        referent.lexicalConditionIds = referent.directConditionIds.stream()
+                .filter(condition -> graph.arguments(condition).equals(List.of(node)))
+                .collect(Collectors.toList());
+        LinkedHashSet<LigerSourceToken> lexicalTokens = new LinkedHashSet<>();
+        referent.lexicalConditionIds.forEach(c -> lexicalTokens.addAll(tokensByNode.getOrDefault(c, List.of())));
+        if (lexicalTokens.isEmpty()) {
+            lexicalTokens.addAll(ownTokens);
+            referent.lexicalFromReferentSource = !ownTokens.isEmpty();
+        }
+        fillSurface(new ArrayList<>(lexicalTokens), response.text, referent.lexicalTokenIds, referent.lexicalSpans);
+        referent.lexicalText = textOf(referent.lexicalSpans, response.text);
 
         if (referent.fsNode != null) {
             Set<String> subtree = index.fsSubtree(referent.fsNode);

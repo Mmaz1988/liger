@@ -110,6 +110,32 @@ public class DrsProvenanceServiceTest {
     }
 
     @Test
+    void lexicalDescriptionKeepsOnlyOnePlaceConditions() throws Exception {
+        LigerDrsProvenanceResponse response = describe("black-dog-on-table.json");
+
+        LigerProvenanceReferent dog = referentOf(response, "dog");
+        // black(x), dog(x) -- not on(x,y), table(y) or arg1(e,x)
+        assertEquals("black dog", dog.lexicalText);
+        assertEquals(List.of(condition(response, "black").nodeId, condition(response, "dog").nodeId).stream().sorted().toList(),
+                dog.lexicalConditionIds.stream().sorted().toList());
+        assertFalse(dog.lexicalFromReferentSource);
+        assertEquals("table", referentOf(response, "table").lexicalText);
+        assertEquals("barked", referentOf(response, "bark").lexicalText);
+    }
+
+    @Test
+    void lexicalDescriptionOfARelativisedNounAndOfANameIsTheWordItself() throws Exception {
+        LigerDrsProvenanceResponse response = describe("object-relative-clause.json");
+
+        assertEquals("dog", referentOf(response, "dog").lexicalText);
+        assertEquals("saw", referentOf(response, "see").lexicalText);
+        LigerProvenanceReferent bill = response.referents.stream()
+                .filter(r -> "Bill".equals(r.text)).findFirst().orElseGet(() -> fail("no referent for Bill"));
+        assertEquals("Bill", bill.lexicalText);
+        assertTrue(bill.lexicalFromReferentSource);
+    }
+
+    @Test
     void properNameReferentResolvesThroughItsOwnSource() throws Exception {
         LigerDrsProvenanceResponse response = describe("proper-name.json");
 
