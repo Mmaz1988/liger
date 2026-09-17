@@ -74,6 +74,8 @@ public class LigerController {
     private LigerService ligerService;
     @Autowired
     private SourceIndexResolverService sourceIndexResolverService;
+    @Autowired
+    private DrsProvenanceService drsProvenanceService;
 
     public LigerController(){
 
@@ -91,6 +93,21 @@ public class LigerController {
         SourceIndexResolverService resolver = sourceIndexResolverService == null
                 ? new SourceIndexResolverService() : sourceIndexResolverService;
         return new LigerSourceSpanResponse(resolver.resolveGroups(structure, request.sourceIndexGroups));
+    }
+
+    /** Maps the referents and conditions of one semantic solution's DRS graph onto the input
+     *  string: tokens and 0-based character spans per condition, and per referent the span of
+     *  its whole description (see {@link DrsProvenanceService}). */
+    @CrossOrigin
+    @PostMapping(value = "/drs_provenance", produces = "application/json", consumes = "application/json")
+    public LigerDrsProvenanceResponse drsProvenance(@RequestBody LigerDrsProvenanceRequest request) {
+        if (request == null || request.syntax == null || request.drs == null) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "syntax and drs are required");
+        }
+        DrsProvenanceService service = drsProvenanceService == null
+                ? new DrsProvenanceService() : drsProvenanceService;
+        return service.describe(parseStructureMap(request.syntax), parseStructureMap(request.drs));
     }
 
 

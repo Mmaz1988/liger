@@ -89,6 +89,13 @@ public final class SourceTokenIndex {
                 .toList();
     }
 
+    /** Every surface token of the structure, ordered by position. */
+    public List<LigerSourceToken> allTokens() {
+        return tokensByNode.values().stream()
+                .sorted(Comparator.comparingInt((LigerSourceToken t) -> t.start).thenComparingInt(t -> t.end))
+                .toList();
+    }
+
     /** Whether the structure carries a meaning constructor with this source index at all. */
     public boolean hasSourceIndex(int sourceIndex) {
         return mcNodesBySynId.containsKey("i" + sourceIndex);
@@ -149,9 +156,13 @@ public final class SourceTokenIndex {
             return null;
         }
         LigerSourceToken token = new LigerSourceToken(node, unquote(form), start - 1, end - 1);
+        // The terminal's own phi is not reliable: the relative pronoun "that" projects to a
+        // disconnected f-structure while its preterminal PRON projects into the noun phrase.
+        // So stem nodes pointing here via terminal and the direct mother count as well.
         LinkedHashSet<String> fsNodes = new LinkedHashSet<>(values(node, "phi"));
         for (GraphConstraint constraint : incoming.getOrDefault(node, List.of())) {
-            if ("terminal".equals(constraint.getRelationLabel())) {
+            String relation = constraint.getRelationLabel();
+            if ("terminal".equals(relation) || "left".equals(relation) || "right".equals(relation)) {
                 fsNodes.addAll(values(constraint.getFsNode(), "phi"));
             }
         }
