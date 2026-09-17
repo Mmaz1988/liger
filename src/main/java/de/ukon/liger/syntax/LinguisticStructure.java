@@ -47,8 +47,26 @@ public class LinguisticStructure {
 
 
 
+    /** Separates the sentences of an assembled sequence, both in its text and in the character
+     *  offsets of its tokens. */
+    public static final String SENTENCE_SEPARATOR = "\n";
+
     public LinguisticStructure()
     {}
+
+    /** The input text without XLE's quoting. A parsed sentence stores its text as
+     *  {@code 'Bill barked'}; an assembled sequence joins its sentences' quoted texts with
+     *  {@link #SENTENCE_SEPARATOR}. Token offsets index into this plain text. */
+    public static String plainText(String text) {
+        if (text == null) {
+            return "";
+        }
+        return Arrays.stream(text.split(SENTENCE_SEPARATOR, -1))
+                .map(line -> line.length() >= 2 && line.startsWith("'") && line.endsWith("'")
+                        ? line.substring(1, line.length() - 1)
+                        : line)
+                .collect(Collectors.joining(SENTENCE_SEPARATOR));
+    }
 
     public LinguisticStructure(String local_id, String sentence, List<GraphConstraint> fsFacts)
     {

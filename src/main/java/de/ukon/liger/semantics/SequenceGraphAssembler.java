@@ -26,6 +26,7 @@ public final class SequenceGraphAssembler {
 
     private static final Pattern NUMERIC_ID = Pattern.compile("(.+?)(\\d+)");
     private static final Pattern SYN_ID = Pattern.compile("i(\\d+)");
+    private static final Pattern TOKEN_OFFSET = Pattern.compile("int\\((\\d+)\\)");
 
     private SequenceGraphAssembler() {
     }
@@ -120,7 +121,7 @@ public final class SequenceGraphAssembler {
             constraints.add(next);
         }
 
-        String text = String.join("\n", texts);
+        String text = String.join(LinguisticStructure.SENTENCE_SEPARATOR, texts);
         Fstructure result = new Fstructure("sequence", text, constraints, choiceSpace);
         result.annotation = annotations;
         List<PartProvenance> provenance = new ArrayList<>();
@@ -169,6 +170,11 @@ public final class SequenceGraphAssembler {
         List<String> roots = new ArrayList<>();
         List<Map<String, String>> idMaps = new ArrayList<>();
         int synNext = 0;
+        // Token character offsets are rebased like SYN-IDs: each part's offsets are relative to
+        // its own plain text, so they are shifted by the length of everything before it plus the
+        // separators. A part that is itself a sequence already carries offsets relative to its
+        // joined text, so appending to a sequence and assembling all sentences at once agree.
+        int charBase = 0;
         Map<String, Integer> nodeOffsets = new HashMap<>();
         Set<String> usedNodeIds = new LinkedHashSet<>();
         for (int structureIndex = 0; structureIndex < structures.size(); structureIndex++) {
@@ -205,8 +211,15 @@ public final class SequenceGraphAssembler {
                         int value = Integer.parseInt(matcher.group(1)) + synShift;
                         constraint.setFsValue("i" + value);
                     }
+                } else if (charBase > 0 && isTokenOffsetRelation(constraint.getRelationLabel())) {
+                    Matcher matcher = TOKEN_OFFSET.matcher(String.valueOf(constraint.getFsValue()));
+                    if (matcher.matches()) {
+                        constraint.setFsValue("int(" + (Integer.parseInt(matcher.group(1)) + charBase) + ")");
+                    }
                 }
             }
+            charBase += LinguisticStructure.plainText(structure.text).length()
+                    + LinguisticStructure.SENTENCE_SEPARATOR.length();
 
             int constraintCount = originalConstraints.size();
             List<GraphConstraint> copiedConstraints = copied.subList(0, constraintCount);
@@ -360,6 +373,11 @@ public final class SequenceGraphAssembler {
 
     private static boolean isIndexedRelation(String relation) {
         return "SYN-ID".equals(relation) || "SRC".equals(relation);
+    }
+
+    /** Character offsets of a surface token (see FsProlog2Java's surfaceform handling). */
+    private static boolean isTokenOffsetRelation(String relation) {
+        return "start".equals(relation) || "end".equals(relation);
     }
 
     private static void mergeChoiceSpace(ChoiceSpace target, ChoiceSpace source, int partIndex) {

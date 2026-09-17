@@ -22,7 +22,9 @@ import java.util.*;
  * So {@code terminal} is followed as well, and only nodes carrying a token are kept.
  *
  * XLE reports offsets shifted by one ({@code surfaceform(1,'John',1,5)} for "John" at
- * {@code [0,4)}); tokens returned here are 0-based and end-exclusive.
+ * {@code [0,4)}); tokens returned here are 0-based and end-exclusive, into
+ * {@link LinguisticStructure#plainText} -- for a sequence, the sentences joined by
+ * {@link LinguisticStructure#SENTENCE_SEPARATOR}, whose offsets the assembler has shifted.
  */
 public final class SourceTokenIndex {
     private static final List<String> REVERSE_PATH = List.of("in_set", "GLUE", "g::", "cproj");
@@ -36,7 +38,7 @@ public final class SourceTokenIndex {
     private final Map<String, LigerSourceToken> tokensByNode = new LinkedHashMap<>();
 
     public SourceTokenIndex(LinguisticStructure structure) {
-        this.text = structure == null ? "" : unquote(structure.text == null ? "" : structure.text);
+        this.text = structure == null ? "" : LinguisticStructure.plainText(structure.text);
         if (structure == null) {
             return;
         }
