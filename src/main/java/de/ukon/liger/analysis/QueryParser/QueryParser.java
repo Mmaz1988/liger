@@ -708,6 +708,13 @@ public class QueryParser {
                 continue;
             }
 
+            // A ' right after a label character is a prime, as in ASP-RESTR' or T-REF'', not
+            // the start of a quoted value.
+            if (c == '\'' && !current.isEmpty() && isLabelChar(current.charAt(current.length() - 1))) {
+                current.append(c);
+                continue;
+            }
+
             if (c == '\'' || c == '"') {
                 inQuote = true;
                 quoteChar = c;
@@ -762,6 +769,10 @@ public class QueryParser {
         }
 
         return tokens;
+    }
+
+    private static boolean isLabelChar(char c) {
+        return Character.isLetterOrDigit(c) || c == '-' || c == '_' || c == '\'';
     }
 
     private boolean isNegationToken(String token) {

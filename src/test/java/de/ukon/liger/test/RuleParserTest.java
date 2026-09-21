@@ -330,6 +330,29 @@ public class RuleParserTest {
         assertEquals("present", tenseStructure.constraints.get(0).getFsValue());
     }
 
+    /**
+     * Primed labels (ASP-RESTR', T-REF') are how the TAM rules name derived edges. The query
+     * tokenizer read their ' as the start of a quoted value and rejected every rule that
+     * queried one ("Unterminated quote in query"). A ' after a label character is a prime;
+     * elsewhere it still opens a quoted value.
+     */
+    @Test
+    void testPrimedLabelsCanBeQueried() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testDirS17.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.setRules(rp.parseRuleFile(
+                "#a TENSE 'past' ==> #a ASP-RESTR' #b & #a T-REF'' #c.\n" +
+                "#a ASP-RESTR' #b & #a T-REF'' #c ==> #b FLAG 'primed'.\n"));
+        assertDoesNotThrow(() -> rp.addAnnotation2(structure));
+
+        assertTrue(structure.annotation.stream().anyMatch(c -> "ASP-RESTR'".equals(c.getRelationLabel())));
+        assertTrue(structure.annotation.stream().anyMatch(c -> "T-REF''".equals(c.getRelationLabel())));
+        assertTrue(structure.annotation.stream()
+                .anyMatch(c -> "FLAG".equals(c.getRelationLabel()) && "'primed'".equals(c.getFsValue())));
+    }
+
     @Test
     void testStrip2() {
         assertEquals("sssasssa", HelperMethods.stripValeue2("sssstrip(semform('a',5,[],[]))sssstrip(semform('a',5,[],[]))"));
