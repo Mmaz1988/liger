@@ -98,4 +98,19 @@ class LoadRulesTest {
         assertTrue(response.getBody().get("error").contains("missing.txt"));
         assertEquals("DEFAULT", LexiconRegistry.active().lookup("d", "x").orElseThrow());
     }
+
+    @Test
+    void loadFileReturnsTextWithoutTouchingTheActiveLexica() throws IOException {
+        Path other = resources.resolve("rules/other.liger.yaml");
+        Files.writeString(other, "lexica:\n  - ../dicts/other.txt\n");
+        load(other);
+        List<Path> before = LexiconRegistry.activePaths();
+        Path axioms = resources.resolve("axioms.txt");
+        Files.writeString(axioms, "fof(a, axiom, p).\n");
+
+        GrammarString text = new LigerController().loadFile(new GrammarString(axioms.toString()));
+
+        assertEquals("fof(a, axiom, p).\n", text.grammar);
+        assertEquals(before, LexiconRegistry.activePaths());
+    }
 }

@@ -1648,6 +1648,23 @@ public class LigerController {
         return new LigerRuleSet(ruleSet.kind(), gs.grammar, ruleSet.semantics(), ruleSet.pragmatics(), lexica);
     }
 
+    /**
+     * Returns a file's text and nothing else. For files that are not rules (testsuites,
+     * axioms): /load_rules would treat them as a rule set and reset the active lexica.
+     */
+    @CrossOrigin
+    @PostMapping(value = "/load_file", produces = "application/json", consumes = "application/json")
+    public GrammarString loadFile(@RequestBody GrammarString gs) {
+        if (gs.grammar == null || gs.grammar.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No file given");
+        }
+        try {
+            return new GrammarString(java.nio.file.Files.readString(Paths.get(gs.grammar)));
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to read " + gs.grammar + ": " + e, e);
+        }
+    }
+
     @ExceptionHandler(LigerConfigException.class)
     public ResponseEntity<Map<String, String>> handleConfigError(LigerConfigException e) {
         LOGGER.warning(e.getMessage());
