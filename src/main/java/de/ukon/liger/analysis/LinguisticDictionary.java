@@ -22,14 +22,16 @@
 package de.ukon.liger.analysis;
 
 import com.google.gson.Gson;
-import de.ukon.liger.main.DbaMain;
-import de.ukon.liger.utilities.PathVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class LinguisticDictionary {
@@ -50,99 +52,60 @@ public class LinguisticDictionary {
     }
 */
 
-    public static HashMap<String, HashMap<String, List<String>>> ld;
     private final static Logger LOGGER = LoggerFactory.getLogger(LinguisticDictionary.class);
 
-    public LinguisticDictionary() {
-try {
-   this.ld = initializeLinguisticDictionary();
-}catch(Exception e)
-{
-    e.printStackTrace();
-    LOGGER.error("Failed to initialize dictionary!");
-}
-    }
-    //For testing purposes
+    /**
+     * Parses a dictionary file used by the rule function {@code lex(value,dictionary)}.
+     *
+     * <pre>
+     * >dictionary-name        starts a dictionary (the second argument of lex/2)
+     * ***                     starts an entry
+     * #LABEL                  the label lex/2 returns for the entry's values
+     * value, value, ...       one or more value lines; one value per line is fine
+     * // comment
+     * </pre>
+     *
+     * Labels written one after the other within one entry share that entry's values.
+     * Values are split on ',' and trimmed, so "she ,it" and a trailing "see,hear," both
+     * yield separate values.
+     *
+     * Map and list order follow the file, which lex/2 relies on: the first label whose
+     * values contain the looked-up value wins.
+     */
+    public static LinkedHashMap<String, LinkedHashMap<String, List<String>>> text2Dict(Path file) throws IOException {
+        LinkedHashMap<String, LinkedHashMap<String, List<String>>> lingDict = new LinkedHashMap<>();
+        LinkedHashMap<String, List<String>> labels = new LinkedHashMap<>();
+        List<String> values = new ArrayList<>();
 
+        for (String line : Files.readAllLines(file)) {
+            String trimmed = line.strip();
 
-    public static HashMap<String, HashMap<String, List<String>>> initializeLinguisticDictionary() throws IOException {
-        HashMap<String, HashMap<String, List<String>>> dict = new HashMap<>();
-
-        try {
-            return text2Dict(PathVariables.dictPath, "ling_dict_eng.txt");
-        }catch(Exception e)
-        {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    //TODO write Method that loads in external lexicon; JSON?
-    public static HashMap<String, HashMap<String, List<String>>>  text2Dict(String path_to_txt, String file_name) throws IOException {
-
-        HashMap<String, HashMap<String, List<String>>> lingDict = new HashMap<>();
-        //String tense = file_name;
-        //A linguistic dictionary is a collection  of dictionaries for different categories, e.g. tense,
-        // within a dictionary specific tokens are associated with a label, i.e. hashmap that has a label as key and a list of possible values as value.
-        //==> type HashMap<String,HashMap<String,List<String>>>
-
-
-        List<String> verbs = new ArrayList();
-        HashMap<String, List<String>> map_verbs = new HashMap<>();
-
-        //File file = new File("C:\\Users\\User\\Documents\\Uni\\HiWi-Java\\ling_dict_eng.txt");
-        try{
-        File file = new File(path_to_txt + file_name);
-        BufferedReader br = new BufferedReader(new FileReader(file));
-        //Key has to start with #
-        //Lines should not end with ,
-        // Block have to end with *
-
-       String line = null;
-        while ((line = br.readLine()) != null) {
-            String key = "";
-
-            String lexKey ="";
-
-            if (line.startsWith("//"))
-            {
+            if (trimmed.isEmpty() || trimmed.startsWith("//")) {
                 continue;
             }
 
-            if (line.startsWith(">"))
-            {
-                 lexKey = line.substring(1).strip();
-                 map_verbs = new HashMap<>();
-                 lingDict.put(lexKey,map_verbs);
-            }
-
-//            while ((line = br.readLine()) != null && !line.startsWith(">")) {
-
-                if (line.startsWith("#")) {
-                    key = line.replace("#", "");
-                    map_verbs.put(key, verbs);
-                } else if (line.contains(",")) {
-                    String[] lines = line.split(", ");
-                    for (String ss : lines) {
-                        verbs.add(ss.strip());
+            if (trimmed.startsWith(">")) {
+                labels = lingDict.computeIfAbsent(trimmed.substring(1).strip(), k -> new LinkedHashMap<>());
+            } else if (trimmed.startsWith("#")) {
+                labels.put(trimmed.substring(1).strip(), values);
+            } else if (trimmed.startsWith("*")) {
+                values = new ArrayList<>();
+            } else {
+                for (String value : trimmed.split(",")) {
+                    if (!value.isBlank()) {
+                        values.add(value.strip());
                     }
-                } else if (line.contains("*")) {
-                    verbs = new ArrayList<String>();
                 }
-     //           lexKey = line.substring(1).strip();
-  //          }
-         //   future_verbs.put(lexKey, map_verbs);
+            }
         }
-
-        //writing to json
-        //write2json(future_verbs);
-        //json2hashmap("C:/Users/User/Documents/Uni/HiWi-Java/future_map.json");
         return lingDict;
-        }catch(Exception e)
-        {
-            LOGGER.warn("Failed to find or parse dictionary file at: " + path_to_txt + file_name);
-            return new HashMap<String, HashMap<String, List<String>>>();
-        }
+    }
+
+    /** Legacy entry point: directory and file name given separately. */
+    public static HashMap<String, HashMap<String, List<String>>> text2Dict(String path_to_txt, String file_name) throws IOException {
+        HashMap<String, HashMap<String, List<String>>> out = new HashMap<>();
+        text2Dict(Paths.get(path_to_txt + file_name)).forEach((dict, labels) -> out.put(dict, new HashMap<>(labels)));
+        return out;
     }
 
 

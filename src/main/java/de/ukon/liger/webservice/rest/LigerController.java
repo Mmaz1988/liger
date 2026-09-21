@@ -23,6 +23,10 @@ package de.ukon.liger.webservice.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.ukon.liger.analysis.RuleParser.Rule;
+import de.ukon.liger.analysis.config.LigerConfigException;
+import de.ukon.liger.analysis.config.LigerConfigLoader;
+import de.ukon.liger.analysis.config.ResolvedRuleSet;
+import de.ukon.liger.analysis.lexicon.LexiconRegistry;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.HierarchyParser;
@@ -40,11 +44,14 @@ import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.syntax.NodeIdPolicy;
 import de.ukon.liger.syntax.xle.XLEoperator;
+import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.utilities.VariableHandler;
 import de.ukon.liger.utilities.XLEStarter;
 import de.ukon.liger.webservice.rest.dtos.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -54,6 +61,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
@@ -1616,25 +1624,34 @@ public class LigerController {
     @CrossOrigin
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/load_rules", produces = "application/json", consumes = "application/json")
-    public GrammarString loadRules(@RequestBody GrammarString gs) throws IOException {
+    public LigerRuleSet loadRules(@RequestBody GrammarString gs) {
 
         LOGGER.info("Loading rules from " + gs.grammar + ".");
 
-        File f = new File(gs.grammar);
-        //Load string content of file
-        BufferedReader br = new BufferedReader(new java.io.FileReader(f));
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = br.readLine()) != null) {
-            sb.append(line);
-            sb.append(System.lineSeparator());
+        if (gs.grammar == null || gs.grammar.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No rule or config file given");
         }
-        br.close();
 
-        String ruleString = sb.toString();
+        // A config (*.liger.yaml) or a single rule file. Either way its lexica become the
+        // globally active ones: one config is active per parsing session.
+        ResolvedRuleSet ruleSet = LigerConfigLoader.resolve(Paths.get(gs.grammar), PathVariables.defaultConfigPath());
+        LexiconRegistry.setActive(ruleSet.lexica());
 
-        return new GrammarString(ruleString);
+        List<String> lexica = new ArrayList<>();
+        for (Path lexicon : ruleSet.lexica()) {
+            try {
+                lexica.add(lexicon.toRealPath().toString());
+            } catch (IOException e) {
+                lexica.add(lexicon.toString());
+            }
+        }
+        return new LigerRuleSet(ruleSet.kind(), gs.grammar, ruleSet.semantics(), ruleSet.pragmatics(), lexica);
+    }
 
+    @ExceptionHandler(LigerConfigException.class)
+    public ResponseEntity<Map<String, String>> handleConfigError(LigerConfigException e) {
+        LOGGER.warning(e.getMessage());
+        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 
     /************************************************************************

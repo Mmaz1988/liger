@@ -26,6 +26,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class PathVariables {
 
@@ -34,6 +36,8 @@ public class PathVariables {
     public static String testPath;
     //Path to the dict package
     public static String dictPath;
+    //LiGER config whose pragmatics and lexica apply when a config or rule file loaded without them
+    public static final String DEFAULT_CONFIG = "rules" + File.separator + "default.liger.yaml";
 
     private final static Logger LOGGER = LoggerFactory.getLogger(PathVariables.class);
 
@@ -96,6 +100,10 @@ public class PathVariables {
 
 
 
+
+    public static Path defaultConfigPath() {
+        return workingDirectory == null ? null : Paths.get(workingDirectory, DEFAULT_CONFIG);
+    }
 
     public static String returnResourcesFolder() throws FileNotFoundException {
 

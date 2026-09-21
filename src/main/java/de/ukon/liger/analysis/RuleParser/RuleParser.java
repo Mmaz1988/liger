@@ -21,7 +21,9 @@
 
 package de.ukon.liger.analysis.RuleParser;
 
-import de.ukon.liger.analysis.LinguisticDictionary;
+import de.ukon.liger.analysis.lexicon.Lexicon;
+import de.ukon.liger.analysis.lexicon.LexiconDirectives;
+import de.ukon.liger.analysis.lexicon.LexiconRegistry;
 import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.QueryParser.Solution;
@@ -35,6 +37,7 @@ import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.utilities.HelperMethods;
+import de.ukon.liger.utilities.PathVariables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +68,9 @@ public class RuleParser {
     private Set<Set<String>> usedReadings = new HashSet<>();
     private TemplateRegistry templateRegistry = new TemplateRegistry();
     private HierarchyRegistry hierarchyRegistry = new HierarchyRegistry();
-    public LinguisticDictionary dict = new LinguisticDictionary();
+    // Dictionaries for lex/2: the globally active lexica plus this rule text's --lexicon
+    // directives. Resolved when rules are parsed; null until then (active lexica apply).
+    private Lexicon lexicon;
     private final static Logger LOGGER = LoggerFactory.getLogger(RuleParser.class);
 
 
@@ -199,7 +204,7 @@ public class RuleParser {
                     temp.setReplace(this.replace);
                     temp.templateRegistry = this.templateRegistry;
                     temp.hierarchyRegistry = this.hierarchyRegistry;
-                    temp.dict = this.dict;
+                    temp.lexicon = this.lexicon();
                      temp.setRules(new ArrayList<>(Collections.singletonList(r)));
                      temp.addAnnotation2(structure);
                      LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> tempAddedAnnotations =
@@ -922,20 +927,12 @@ public class RuleParser {
         StringBuffer sb3 = new StringBuffer();
 
         while (matcher3.find()) {
-            String val = matcher3.group(2);
-            String dict = matcher3.group(3);
-            boolean replace = false;
+            String val = unquote(matcher3.group(2).strip());
+            String dict = matcher3.group(3).strip();
 
-            if (LinguisticDictionary.ld.containsKey(dict)) {
-                for (String key : LinguisticDictionary.ld.get(dict).keySet()) {
-                    if (LinguisticDictionary.ld.get(dict).get(key).contains(val)) {
-                        matcher3.appendReplacement(sb3, key);
-                        replace = true;
-                    }
-                }
-                if (!replace) {
-                    matcher3.appendReplacement(sb3, "undefined");
-                }
+            // Unknown dictionary: leave lex(...) in place.
+            if (lexicon().hasDictionary(dict)) {
+                matcher3.appendReplacement(sb3, Matcher.quoteReplacement(lexicon().lookup(dict, val).orElse("undefined")));
             }
         }
         matcher3.appendTail(sb3);
@@ -944,6 +941,15 @@ public class RuleParser {
         replacedFsVars = HelperMethods.stripValeue2(replacedFsVars);
 
         return replacedFsVars;
+    }
+
+    // A value variable binds the value as written in the structure, e.g. 'past'; dictionary
+    // entries are bare words.
+    private static String unquote(String value) {
+        if (value.length() >= 2 && value.startsWith("'") && value.endsWith("'")) {
+            return value.substring(1, value.length() - 1);
+        }
+        return value;
     }
 
     private String edgeKey(GraphConstraint constraint) {
@@ -1015,6 +1021,7 @@ public class RuleParser {
         List<Rule> out = new ArrayList<>();
 
         if (fileString != null && fileString.length() > 0) {
+            fileString = resolveLexicon(fileString);
             fileString = stripEmbeddedDefinitions(fileString);
 
             StringBuilder left = new StringBuilder();
@@ -1257,6 +1264,27 @@ public class RuleParser {
 
     private boolean isHierarchyDefinitionLine(String trimmed) {
         return !trimmed.startsWith("//") && trimmed.contains("::=");
+    }
+
+    /**
+     * Strips --lexicon(path) directives and layers their lexica over the active ones. Relative
+     * paths resolve against LiGER's resources folder; /load_rules has already made the paths of
+     * rule files it served absolute.
+     */
+    private String resolveLexicon(String fileString) {
+        Path baseDir = PathVariables.workingDirectory == null ? null : Paths.get(PathVariables.workingDirectory);
+        LexiconDirectives.Extracted extracted = LexiconDirectives.extract(fileString, baseDir);
+        this.lexicon = extracted.lexica().isEmpty()
+                ? LexiconRegistry.active()
+                : Lexicon.merge(List.of(LexiconRegistry.loadAll(extracted.lexica()), LexiconRegistry.active()));
+        return extracted.ruleText();
+    }
+
+    private Lexicon lexicon() {
+        if (lexicon == null) {
+            lexicon = LexiconRegistry.active();
+        }
+        return lexicon;
     }
 
     private String stripEmbeddedDefinitions(String fileString) {

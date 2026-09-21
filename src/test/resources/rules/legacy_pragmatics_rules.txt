@@ -1,0 +1,103 @@
+// HIERARCHIES
+
+//Functional hierarchy
+GF ::= SUBJ > OBJ > OBJ2 > OBL .
+
+//Templates
+GF := SUBJ | OBJ | OBL .
+
+DRS := IMP | NOT | IN | MERGE | SUB . 
+
+BIND-PATH(#a,#b) := #a ^(PRSP>@DRS*) #b & #a NAME %a & #b NAME %b & id(%b) < id(%a).
+
+//Link DRs to their originating GFs
+DR-GF-LINK(#a, #d) := #a NODE_TYPE 'referent' & #a SRC %a & #b SYN-ID %b & %a == %b & #b ^(in_set>GLUE>g::>cproj) #c phi #d .
+
+// ***** PRONOUNS *****
+
+//Minimal complete nucleus path
+MCN-PATH(#a,#b,#c) := #a ^(@GF*:~(->SUBJ)) #b & #b ^(@GF) #c.
+
+//Reflexive binding constraints (positive constraint)
+REFL-BIND(#f,#h) := #f PRON-TYPE 'refl' & @MCN-PATH(#f,#i,#j) & #j !(@GF) #h & superior(GF,#h,#i) .
+
+//Coargument path
+COARG-PATH(#a,#b,#c) := #a ^(@GF*:~(->PRED)) #b ^(@GF) #c.
+
+COARG(#a,#b) := @COARG-PATH(#a,#r,#s) & #s !(@GF) #b & id(#a) != id(#b).
+
+DR-PRECEDENCE(#a,#b) := #a NAME %a & #a NODE_TYPE referent &
+                        #b NAME %b & #b NODE_TYPE referent &
+			            id(%a) < id(%b).  
+//Checks if two antecedent paths remain disjoint
+DISJOINT(#a,#b) := -(#a !(POSSIBLE-ANT+) #g & #b !(POSSIBLE-ANT+) #h & id(#g) == id(#h)) .
+
+CLOSEST-POTENTIAL-ANT(#a,#c) := #a POTENTIAL-ANT #c .
+
+ANT(#a) := #a ^(TERM1) #b & #b NAME 'ant' .
+
+BIND(#a) := #a ^(TERM1) #b & #b NAME 'bind' .
+
+// & -(#a POTENTIAL-ANT #b POTENTIAL-ANT #c) .
+
+//Personal pronoun binding constraint (negative constraint)
+// For preventing:
+//EX.: He_i thinks that John_i likes Sue.
+//EX.: He_i likes John_i
+//EX.: John_i likes him_i
+//Ex.: John thinks that he likes him. 
+//PERS-BIND-FILTER(#a,#b) := 
+
+// ***** PRESUPPOSITIONS *****
+
+// RULES
+
+//Connects referents via SRC with syntactic indices via SYN-ID
+@DR-GF-LINK(#a,#d) ==> #a SYNSEM #d.
+
+@COARG(#a,#b) ==> #a COARG #b.
+
+//Presupposition rules
+
+//search for potential binders
+@BIND-PATH(#a,#b) ==> #a POTENTIAL-BINDER #b .
+
+//Check if DRs in PRSP have binders
+#a ^(POTENTIAL-BINDER) #b & #b IN #c & @BIND(#c) & #a IN #d &
+@DR-PRECEDENCE(#d,#c) ==> #c PRSP-ANT #d.
+
+//search for bound referents 
+#a POTENTIAL-BINDER #b IN #c & #a IN #d & @BIND(#d) ==> #d POSSIBLE-BINDER #c .
+
+#a POTENTIAL-BINDER #b IN #c & #a IN #d & -(#d POSSIBLE-BINDER #c) ?=> #d acc #d.
+
+@BIND(#d) & #d acc #d =-> #d acc #d.
+
+//Pronoun rules
+
+//Reflexives
+@ANT(#a) & #a SYNSEM #b & @REFL-BIND(#b,#c) & #c ^(SYNSEM) #d ==> #a POSSIBLE-ANT #d.
+
+//Personal pronouns
+@ANT(#a) & #a SYNSEM #b PRON-TYPE 'pers' & #c SYNSEM #d & 
+@DR-PRECEDENCE(#c,#a) & -(@COARG(#b,#d)) ==> #a POTENTIAL-ANT #c.
+
+//For cases like EX.: Kim thought he saw him"
+//More precise -(#a !(POTENTIAL-ANT+) #e & #c !(POTENTIAL-ANT+) #f & id(#f) == id(#e))
+//There is no antecedent path such that two coargs refer to the same DR 
+@ANT(#a) & #a SYNSEM #b & @ANT(#c) & #c SYNSEM #d &
+@DR-PRECEDENCE(#c,#a) & @COARG(#b,#d) & 
+@CLOSEST-POTENTIAL-ANT(#a,#e) & 
+@CLOSEST-POTENTIAL-ANT(#c,#f) & 
+id(#f) != id(#e) ?=> #a POSSIBLE-ANT #e & #c POSSIBLE-ANT #f.
+
+//Preparing for elimination of redundant edges (reflexive closure)
+#a POTENTIAL-ANT #c & 
+-(#a POTENTIAL-ANT #b POTENTIAL-ANT #c) &
+-(#a POSSIBLE-ANT) ==> #a POSSIBLE-ANT #c.
+
+@ANT(#a) & #a SYNSEM #b & @ANT(#c) & #c SYNSEM #d &
+@COARG(#b,#d) & @DISJOINT(#a,#c) ?=> #z KEEP +.
+
+//Clean up
+edge=POTENTIAL-ANT =-> 0.
