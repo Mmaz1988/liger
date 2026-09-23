@@ -41,8 +41,11 @@ class LoadRulesTest {
         Files.writeString(resources.resolve("rules/prag.liger"), "#a SUBJ #b ==> #a FLAG 'prag'.\n");
         Files.writeString(resources.resolve("dicts/default.txt"), ">d\n***\n#DEFAULT\nx\n");
         Files.writeString(resources.resolve("dicts/other.txt"), ">d\n***\n#OTHER\nx\n");
+        Files.createDirectories(resources.resolve("axioms"));
+        Files.writeString(resources.resolve("axioms/basic.p"), "fof(basic, axiom, p).\n");
         Files.writeString(resources.resolve("rules/default.liger.yaml"),
-                "semantics:\n  - sem.liger\npragmatics:\n  - prag.liger\nlexica:\n  - ../dicts/default.txt\n");
+                "semantics:\n  - sem.liger\npragmatics:\n  - prag.liger\nlexica:\n  - ../dicts/default.txt\n"
+                        + "axioms:\n  - ../axioms/basic.p\n");
     }
 
     @AfterEach
@@ -81,6 +84,7 @@ class LoadRulesTest {
         assertEquals("#a OBJ #b ==> #a FLAG 'single'.\n", set.semantics);
         assertTrue(set.pragmatics.contains("FLAG 'prag'"));
         assertEquals("DEFAULT", LexiconRegistry.active().lookup("d", "x").orElseThrow());
+        assertTrue(set.axioms.contains("fof(basic, axiom, p)."), "axioms come from the default config too");
     }
 
     @Test

@@ -9,8 +9,10 @@ import java.util.List;
  *
  * @param kind       "config" or "rules"
  * @param pragmatics null when neither the loaded file nor a default config supplies any
+ * @param axioms     the concatenated axiom files, or null when there are none
  */
-public record ResolvedRuleSet(String kind, Path source, String semantics, String pragmatics, List<Path> lexica) {
+public record ResolvedRuleSet(String kind, Path source, String semantics, String pragmatics, List<Path> lexica,
+                              String axioms) {
 
     public static final String CONFIG = "config";
     public static final String RULES = "rules";

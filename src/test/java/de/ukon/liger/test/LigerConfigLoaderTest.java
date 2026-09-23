@@ -67,6 +67,44 @@ public class LigerConfigLoaderTest {
     }
 
     @Test
+    void assemblesAxiomFilesWithTptpComments() throws IOException {
+        write("axioms/a.p", "fof(a, axiom, p).\n");
+        write("axioms/b.p", "fof(b, axiom, q).\n");
+        Path config = write("rules/c.liger.yaml", """
+                axioms:
+                  - ../axioms/a.p
+                  - ../axioms/b.p
+                """);
+
+        ResolvedRuleSet set = LigerConfigLoader.resolve(config, null);
+
+        assertTrue(set.axioms().contains("fof(a, axiom, p)."));
+        assertTrue(set.axioms().indexOf("fof(a") < set.axioms().indexOf("fof(b"));
+        // TPTP's comment character, not the rule files' //.
+        for (String line : set.axioms().split("\n")) {
+            assertTrue(line.startsWith("%") || line.startsWith("fof(") || line.isBlank(), line);
+        }
+    }
+
+    @Test
+    void axiomsAreInheritedFromTheDefaultConfigLikePragmatics() throws IOException {
+        write("axioms/a.p", "fof(a, axiom, p).\n");
+        write("rules/own.liger", "#a X #b ==> #a Y #b.\n");
+        Path defaultConfig = write("rules/default.liger.yaml", "axioms:\n  - ../axioms/a.p\n");
+        Path single = write("rules/s.liger", "");
+        Path withOwn = write("rules/own.liger.yaml", "semantics:\n  - own.liger\naxioms: []\n");
+
+        assertTrue(LigerConfigLoader.resolve(single, defaultConfig).axioms().contains("fof(a"));
+        // A config that lists axioms, even none, keeps its own.
+        assertEquals("", LigerConfigLoader.resolve(withOwn, defaultConfig).axioms());
+    }
+
+    @Test
+    void withoutAxiomsAnywhereTheRuleSetHasNone() throws IOException {
+        assertNull(LigerConfigLoader.resolve(write("s.liger", ""), dir.resolve("missing.yaml")).axioms());
+    }
+
+    @Test
     void rejectsUnknownFields() throws IOException {
         Path config = write("c.yaml", "semantic:\n  - a.liger\n");
         LigerConfigException e = assertThrows(LigerConfigException.class, () -> LigerConfigLoader.load(config));

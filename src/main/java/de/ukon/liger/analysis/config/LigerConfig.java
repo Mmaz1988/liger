@@ -11,6 +11,8 @@ import java.util.List;
  * @param semantics  rule files applied before semantic composition (GSWB), in order
  * @param pragmatics post-processing rule files (presuppositions, pronouns), in order
  * @param lexica     dictionary files available to lex/2 in every rule set
+ * @param axioms     TPTP axiom files loaded into the axioms editor, in order
  */
-public record LigerConfig(Path source, List<Path> semantics, List<Path> pragmatics, List<Path> lexica) {
+public record LigerConfig(Path source, List<Path> semantics, List<Path> pragmatics, List<Path> lexica,
+                          List<Path> axioms) {
 }

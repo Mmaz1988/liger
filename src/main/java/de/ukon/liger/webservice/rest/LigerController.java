@@ -1645,7 +1645,8 @@ public class LigerController {
                 lexica.add(lexicon.toString());
             }
         }
-        return new LigerRuleSet(ruleSet.kind(), gs.grammar, ruleSet.semantics(), ruleSet.pragmatics(), lexica);
+        return new LigerRuleSet(ruleSet.kind(), gs.grammar, ruleSet.semantics(), ruleSet.pragmatics(), lexica,
+                ruleSet.axioms());
     }
 
     /**

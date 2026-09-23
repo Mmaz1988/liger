@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Loads LiGER configs and assembles their rule files.
@@ -29,6 +30,8 @@ import java.util.Set;
  *   - pragmatics/pronouns.liger
  * lexica:               # dictionaries for lex/2, available to all rules
  *   - ../dicts/ling_dict_eng.txt
+ * axioms:               # TPTP axiom files, loaded into the client's axioms editor
+ *   - ../../axioms/basic_axioms.txt
  * </pre>
  *
  * The rule files of a stage are concatenated in order into one rule text rather than parsed
@@ -41,7 +44,8 @@ public final class LigerConfigLoader {
     public static final String SEMANTICS = "semantics";
     public static final String PRAGMATICS = "pragmatics";
     public static final String LEXICA = "lexica";
-    private static final Set<String> FIELDS = Set.of(SEMANTICS, PRAGMATICS, LEXICA);
+    public static final String AXIOMS = "axioms";
+    private static final Set<String> FIELDS = Set.of(SEMANTICS, PRAGMATICS, LEXICA, AXIOMS);
 
     private final static Logger LOGGER = LoggerFactory.getLogger(LigerConfigLoader.class);
 
@@ -79,7 +83,8 @@ public final class LigerConfigLoader {
         return new LigerConfig(configFile,
                 pathList(fields, SEMANTICS, configFile, baseDir),
                 pathList(fields, PRAGMATICS, configFile, baseDir),
-                pathList(fields, LEXICA, configFile, baseDir));
+                pathList(fields, LEXICA, configFile, baseDir),
+                pathList(fields, AXIOMS, configFile, baseDir));
     }
 
     // No normalize() when resolving: a rules folder may be a symlink (it is one in a local
@@ -113,19 +118,32 @@ public final class LigerConfigLoader {
 
     /** A rule file's text, with its --lexicon directives made absolute. */
     public static String readRuleFile(Path file) {
+        return LexiconDirectives.absolutize(readFile(file), file.toAbsolutePath().getParent());
+    }
+
+    private static String readFile(Path file) {
         try {
-            return LexiconDirectives.absolutize(Files.readString(file), file.toAbsolutePath().getParent());
+            return Files.readString(file);
         } catch (IOException e) {
-            throw new LigerConfigException("Failed to read rule file " + file + ": " + e, e);
+            throw new LigerConfigException("Failed to read " + file + ": " + e, e);
         }
     }
 
     /** Concatenates rule files in order, each headed by a comment naming it. */
     public static String assemble(List<Path> ruleFiles) {
+        return concatenate(ruleFiles, "// ", LigerConfigLoader::readRuleFile);
+    }
+
+    /** The axiom files in order. Their marker lines use TPTP's comment character. */
+    public static String assembleAxioms(List<Path> axiomFiles) {
+        return concatenate(axiomFiles, "% ", LigerConfigLoader::readFile);
+    }
+
+    private static String concatenate(List<Path> files, String commentPrefix, Function<Path, String> read) {
         StringBuilder sb = new StringBuilder();
-        for (Path file : ruleFiles) {
-            String text = readRuleFile(file);
-            sb.append("// ===== ").append(file).append(" =====\n");
+        for (Path file : files) {
+            String text = read.apply(file);
+            sb.append(commentPrefix).append("===== ").append(file).append(" =====\n");
             sb.append(text);
             if (!text.endsWith("\n")) {
                 sb.append('\n');
@@ -153,7 +171,8 @@ public final class LigerConfigLoader {
         LigerConfig config = isConfig(path) ? load(path) : null;
 
         LigerConfig fallback = null;
-        boolean inherits = config == null || config.pragmatics() == null || config.lexica() == null;
+        boolean inherits = config == null || config.pragmatics() == null || config.lexica() == null
+                || config.axioms() == null;
         if (inherits && defaultConfig != null && !isSameFile(path, defaultConfig)) {
             if (Files.isRegularFile(defaultConfig)) {
                 fallback = load(defaultConfig);
@@ -177,8 +196,12 @@ public final class LigerConfigLoader {
                 : fallback != null && fallback.lexica() != null ? fallback.lexica()
                 : LexiconRegistry.defaultPaths();
 
+        List<Path> axiomFiles = config != null && config.axioms() != null ? config.axioms()
+                : fallback != null ? fallback.axioms() : null;
+        String axioms = axiomFiles != null ? assembleAxioms(axiomFiles) : null;
+
         return new ResolvedRuleSet(config != null ? ResolvedRuleSet.CONFIG : ResolvedRuleSet.RULES,
-                path, semantics, pragmatics, lexica);
+                path, semantics, pragmatics, lexica, axioms);
     }
 
     private static boolean isSameFile(Path a, Path b) {

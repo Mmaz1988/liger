@@ -19,15 +19,19 @@ public class LigerRuleSet {
     public String pragmatics;
     /** The now-active lexica, as real paths. */
     public List<String> lexica = new ArrayList<>();
+    /** The config's TPTP axiom files, concatenated; null when it lists none. */
+    public String axioms;
 
     public LigerRuleSet() {
     }
 
-    public LigerRuleSet(String kind, String source, String semantics, String pragmatics, List<String> lexica) {
+    public LigerRuleSet(String kind, String source, String semantics, String pragmatics, List<String> lexica,
+                        String axioms) {
         this.kind = kind;
         this.source = source;
         this.semantics = semantics;
         this.pragmatics = pragmatics;
         this.lexica = lexica;
+        this.axioms = axioms;
     }
 }
