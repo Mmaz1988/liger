@@ -23,6 +23,7 @@ package de.ukon.liger.webservice.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.ukon.liger.analysis.RuleParser.Rule;
+import de.ukon.liger.analysis.config.ConfigTree;
 import de.ukon.liger.analysis.config.LigerConfigException;
 import de.ukon.liger.analysis.config.LigerConfigLoader;
 import de.ukon.liger.analysis.config.ResolvedRuleSet;
@@ -1664,6 +1665,46 @@ public class LigerController {
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Failed to read " + gs.grammar + ": " + e, e);
         }
+    }
+
+    /**
+     * The files of a config or single rule file, per field, without reading them and without
+     * touching the active lexica (unlike /load_rules).
+     */
+    @CrossOrigin
+    @PostMapping(value = "/config_tree", produces = "application/json", consumes = "application/json")
+    public LigerConfigTree configTree(@RequestBody GrammarString gs) {
+        if (gs.grammar == null || gs.grammar.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No rule or config file given");
+        }
+        ConfigTree tree = LigerConfigLoader.tree(Paths.get(gs.grammar), PathVariables.defaultConfigPath());
+
+        LigerConfigTree dto = new LigerConfigTree();
+        dto.kind = tree.kind();
+        dto.source = gs.grammar;
+        for (ConfigTree.Section section : tree.sections()) {
+            LigerConfigTree.Section s = new LigerConfigTree.Section();
+            s.field = section.field();
+            s.inheritedFrom = section.inheritedFrom();
+            s.present = section.present();
+            if (section.present()) {
+                for (Path file : section.files()) {
+                    s.files.add(new LigerConfigTree.File(file.toString(), file.getFileName().toString()));
+                }
+            }
+            dto.sections.add(s);
+        }
+        return dto;
+    }
+
+    /** The LiGER configs (*.liger.yaml) under a grammar's directory, given its main file or the directory. */
+    @CrossOrigin
+    @PostMapping(value = "/list_configs", produces = "application/json", consumes = "application/json")
+    public List<String> listConfigs(@RequestBody GrammarString gs) {
+        if (gs.grammar == null || gs.grammar.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No grammar given");
+        }
+        return LigerConfigLoader.findConfigs(Paths.get(gs.grammar)).stream().map(Path::toString).toList();
     }
 
     @ExceptionHandler(LigerConfigException.class)

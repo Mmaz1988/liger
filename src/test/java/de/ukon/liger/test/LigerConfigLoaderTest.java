@@ -3,6 +3,7 @@ package de.ukon.liger.test;
 import de.ukon.liger.analysis.QueryParser.QueryTemplate;
 import de.ukon.liger.analysis.RuleParser.Rule;
 import de.ukon.liger.analysis.RuleParser.RuleParser;
+import de.ukon.liger.analysis.config.ConfigTree;
 import de.ukon.liger.analysis.config.LigerConfig;
 import de.ukon.liger.analysis.config.LigerConfigException;
 import de.ukon.liger.analysis.config.LigerConfigLoader;
@@ -185,6 +186,85 @@ public class LigerConfigLoaderTest {
 
         assertNull(set.pragmatics());
         assertEquals(LexiconRegistry.defaultPaths(), set.lexica());
+    }
+
+    private static List<String> fields(ConfigTree tree) {
+        return tree.sections().stream().map(ConfigTree.Section::field).toList();
+    }
+
+    @Test
+    void theTreeListsAConfigsFilesPerFieldAndMarksInheritedOnes() throws IOException {
+        write("rules/own.liger", "");
+        write("rules/p.liger", "");
+        write("dicts/d.txt", "");
+        write("axioms/a.p", "");
+        Path defaultConfig = write("rules/default.liger.yaml", "pragmatics:\n  - p.liger\nlexica:\n  - ../dicts/d.txt\n");
+        Path config = write("rules/c.liger.yaml", "semantics:\n  - own.liger\naxioms:\n  - ../axioms/a.p\n");
+
+        ConfigTree tree = LigerConfigLoader.tree(config, defaultConfig);
+
+        assertEquals(ResolvedRuleSet.CONFIG, tree.kind());
+        assertEquals(List.of("semantics", "pragmatics", "lexica", "axioms"), fields(tree));
+        assertEquals(List.of(dir.resolve("rules/own.liger")), tree.section("semantics").files());
+        assertNull(tree.section("semantics").inheritedFrom());
+        assertEquals(List.of(dir.resolve("rules/p.liger")), tree.section("pragmatics").files());
+        assertEquals(defaultConfig.toString(), tree.section("pragmatics").inheritedFrom());
+        assertEquals(defaultConfig.toString(), tree.section("lexica").inheritedFrom());
+        assertNull(tree.section("axioms").inheritedFrom());
+    }
+
+    @Test
+    void theTreeOfASingleRuleFileIsThatFileAsSemantics() throws IOException {
+        write("rules/p.liger", "");
+        Path defaultConfig = write("rules/default.liger.yaml", "pragmatics:\n  - p.liger\n");
+        Path single = write("rules/s.liger", "");
+
+        ConfigTree tree = LigerConfigLoader.tree(single, dir.resolve("missing.yaml"));
+        assertEquals(ResolvedRuleSet.RULES, tree.kind());
+        assertEquals(List.of(single), tree.section("semantics").files());
+        assertFalse(tree.section("pragmatics").present());
+        assertFalse(tree.section("axioms").present());
+        assertEquals(ConfigTree.BUILTIN, tree.section("lexica").inheritedFrom());
+
+        ConfigTree inherited = LigerConfigLoader.tree(single, defaultConfig);
+        assertEquals(defaultConfig.toString(), inherited.section("pragmatics").inheritedFrom());
+    }
+
+    /** What the client does with the tree when a file is edited: join the files as assemble does. */
+    @Test
+    void joiningTheTreesFilesReproducesTheResolvedText() throws IOException {
+        write("rules/a.liger", "#a X #b ==> #a Y #b.\n");
+        write("rules/b.liger", "--lexicon(../dicts/d.txt)\n#a Y #b ==> #a Z #b.");
+        write("axioms/a.p", "fof(a, axiom, p).\n");
+        Path config = write("rules/c.liger.yaml", """
+                semantics:
+                  - a.liger
+                  - b.liger
+                pragmatics: []
+                axioms:
+                  - ../axioms/a.p
+                """);
+
+        ConfigTree tree = LigerConfigLoader.tree(config, null);
+        ResolvedRuleSet set = LigerConfigLoader.resolve(config, null);
+
+        assertEquals(set.semantics(), LigerConfigLoader.assemble(tree.section("semantics").files()));
+        assertEquals(set.pragmatics(), LigerConfigLoader.assemble(tree.section("pragmatics").files()));
+        assertEquals(set.axioms(), LigerConfigLoader.assembleAxioms(tree.section("axioms").files()));
+    }
+
+    @Test
+    void findsConfigsAnywhereUnderTheGrammarButNotInFileIndexDirs() throws IOException {
+        Path grammar = write("g/main.lfg", "");
+        write("g/c.liger.yaml", "");
+        write("g/liger_rules/sub/d.liger.yaml", "");
+        write("g/main.lfg.fileindexdir/x.liger.yaml", "");
+        write("g/other.yaml", "");
+        write("elsewhere/e.liger.yaml", "");
+
+        List<Path> expected = List.of(dir.resolve("g/c.liger.yaml"), dir.resolve("g/liger_rules/sub/d.liger.yaml"));
+        assertEquals(expected, LigerConfigLoader.findConfigs(grammar));
+        assertEquals(expected, LigerConfigLoader.findConfigs(dir.resolve("g")));
     }
 
     /**

@@ -10,8 +10,11 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +49,7 @@ public final class LigerConfigLoader {
     public static final String LEXICA = "lexica";
     public static final String AXIOMS = "axioms";
     private static final Set<String> FIELDS = Set.of(SEMANTICS, PRAGMATICS, LEXICA, AXIOMS);
+    public static final String CONFIG_SUFFIX = ".liger.yaml";
 
     private final static Logger LOGGER = LoggerFactory.getLogger(LigerConfigLoader.class);
 
@@ -164,6 +168,25 @@ public final class LigerConfigLoader {
      *                      pragmatics are null and the lexica are LiGER's default lexicon
      */
     public static ResolvedRuleSet resolve(Path path, Path defaultConfig) {
+        ConfigTree tree = tree(path, defaultConfig);
+
+        String semantics = ResolvedRuleSet.RULES.equals(tree.kind()) ? readRuleFile(path)
+                : assemble(tree.section(SEMANTICS).files());
+
+        ConfigTree.Section pragmatics = tree.section(PRAGMATICS);
+        ConfigTree.Section axioms = tree.section(AXIOMS);
+        return new ResolvedRuleSet(tree.kind(), path, semantics,
+                pragmatics.present() ? assemble(pragmatics.files()) : null,
+                tree.section(LEXICA).files(),
+                axioms.present() ? assembleAxioms(axioms.files()) : null);
+    }
+
+    /**
+     * The files behind {@link #resolve}, per field and without reading them: which files a
+     * config or single rule file stands for, and which fields came from the default config.
+     * Paths are the ones {@link #assemble} names in its marker lines.
+     */
+    public static ConfigTree tree(Path path, Path defaultConfig) {
         if (!Files.isRegularFile(path)) {
             throw new LigerConfigException("No such rule or config file: " + path);
         }
@@ -181,27 +204,73 @@ public final class LigerConfigLoader {
             }
         }
 
-        String semantics;
-        if (config == null) {
-            semantics = readRuleFile(path);
-        } else {
-            semantics = config.semantics() != null ? assemble(config.semantics()) : "";
+        // A config's semantics are never inherited: a config without them has none.
+        ConfigTree.Section semantics = config == null
+                ? new ConfigTree.Section(SEMANTICS, List.of(path), null)
+                : new ConfigTree.Section(SEMANTICS, config.semantics() != null ? config.semantics() : List.of(), null);
+
+        ConfigTree.Section lexica = inherit(LEXICA, config, fallback, LigerConfig::lexica);
+        if (!lexica.present()) {
+            lexica = new ConfigTree.Section(LEXICA, LexiconRegistry.defaultPaths(), ConfigTree.BUILTIN);
         }
 
-        List<Path> pragmaticsFiles = config != null && config.pragmatics() != null ? config.pragmatics()
-                : fallback != null ? fallback.pragmatics() : null;
-        String pragmatics = pragmaticsFiles != null ? assemble(pragmaticsFiles) : null;
+        return new ConfigTree(config != null ? ResolvedRuleSet.CONFIG : ResolvedRuleSet.RULES, path,
+                List.of(semantics,
+                        inherit(PRAGMATICS, config, fallback, LigerConfig::pragmatics),
+                        lexica,
+                        inherit(AXIOMS, config, fallback, LigerConfig::axioms)));
+    }
 
-        List<Path> lexica = config != null && config.lexica() != null ? config.lexica()
-                : fallback != null && fallback.lexica() != null ? fallback.lexica()
-                : LexiconRegistry.defaultPaths();
+    private static ConfigTree.Section inherit(String field, LigerConfig config, LigerConfig fallback,
+                                              Function<LigerConfig, List<Path>> files) {
+        if (config != null && files.apply(config) != null) {
+            return new ConfigTree.Section(field, files.apply(config), null);
+        }
+        if (fallback != null && files.apply(fallback) != null) {
+            return new ConfigTree.Section(field, files.apply(fallback), fallback.source().toString());
+        }
+        return new ConfigTree.Section(field, null, null);
+    }
 
-        List<Path> axiomFiles = config != null && config.axioms() != null ? config.axioms()
-                : fallback != null ? fallback.axioms() : null;
-        String axioms = axiomFiles != null ? assembleAxioms(axiomFiles) : null;
+    /**
+     * The LiGER configs (*.liger.yaml) in a grammar's directory and below, sorted. A config
+     * may sit anywhere under the grammar; XLE's *.fileindexdir folders are skipped.
+     *
+     * @param grammar the grammar's main file or its directory
+     */
+    public static List<Path> findConfigs(Path grammar) {
+        Path root = Files.isDirectory(grammar) ? grammar : grammar.toAbsolutePath().getParent();
+        if (root == null || !Files.isDirectory(root)) {
+            throw new LigerConfigException("No such grammar file or directory: " + grammar);
+        }
+        List<Path> configs = new ArrayList<>();
+        try {
+            Files.walkFileTree(root, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                    return dir.getFileName().toString().endsWith(".fileindexdir")
+                            ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
+                }
 
-        return new ResolvedRuleSet(config != null ? ResolvedRuleSet.CONFIG : ResolvedRuleSet.RULES,
-                path, semantics, pragmatics, lexica, axioms);
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                    if (attrs.isRegularFile() && file.getFileName().toString().endsWith(CONFIG_SUFFIX)) {
+                        configs.add(file);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException e) {
+                    LOGGER.warn("Skipping {} while looking for LiGER configs: {}", file, e.toString());
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            throw new LigerConfigException("Failed to list LiGER configs under " + root + ": " + e, e);
+        }
+        configs.sort(null);
+        return configs;
     }
 
     private static boolean isSameFile(Path a, Path b) {

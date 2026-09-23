@@ -4,6 +4,7 @@ import de.ukon.liger.analysis.config.LigerConfigException;
 import de.ukon.liger.analysis.lexicon.LexiconRegistry;
 import de.ukon.liger.utilities.PathVariables;
 import de.ukon.liger.webservice.rest.dtos.GrammarString;
+import de.ukon.liger.webservice.rest.dtos.LigerConfigTree;
 import de.ukon.liger.webservice.rest.dtos.LigerRuleSet;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -116,5 +117,47 @@ class LoadRulesTest {
 
         assertEquals("fof(a, axiom, p).\n", text.grammar);
         assertEquals(before, LexiconRegistry.activePaths());
+    }
+
+    @Test
+    void configTreeListsTheFilesPerFieldWithoutTouchingTheActiveLexica() throws IOException {
+        Path other = resources.resolve("rules/other.liger.yaml");
+        Files.writeString(other, "semantics:\n  - sem.liger\nlexica:\n  - ../dicts/other.txt\n");
+        load(resources.resolve("rules/default.liger.yaml"));
+        List<Path> before = LexiconRegistry.activePaths();
+
+        LigerConfigTree tree = new LigerController().configTree(new GrammarString(other.toString()));
+
+        assertEquals(before, LexiconRegistry.activePaths());
+        assertEquals("config", tree.kind);
+        assertEquals(other.toString(), tree.source);
+        assertEquals(List.of("semantics", "pragmatics", "lexica", "axioms"),
+                tree.sections.stream().map(s -> s.field).toList());
+
+        LigerConfigTree.Section semantics = tree.sections.get(0);
+        assertNull(semantics.inheritedFrom);
+        assertEquals("sem.liger", semantics.files.get(0).name);
+        assertTrue(Files.isSameFile(resources.resolve("rules/sem.liger"), Path.of(semantics.files.get(0).path)));
+
+        LigerConfigTree.Section pragmatics = tree.sections.get(1);
+        assertTrue(pragmatics.present);
+        assertEquals(PathVariables.defaultConfigPath().toString(), pragmatics.inheritedFrom);
+        assertEquals("prag.liger", pragmatics.files.get(0).name);
+
+        // The marker lines /load_rules writes name the tree's paths, so a client can key on them.
+        LigerRuleSet set = load(other);
+        assertTrue(set.pragmatics.startsWith("// ===== " + pragmatics.files.get(0).path + " =====\n"), set.pragmatics);
+    }
+
+    @Test
+    void listConfigsFindsTheConfigsUnderAGrammar() throws IOException {
+        Path grammarDir = resources.resolve("grammar");
+        Files.createDirectories(grammarDir.resolve("liger"));
+        Files.writeString(grammarDir.resolve("main.lfg"), "");
+        Files.writeString(grammarDir.resolve("liger/g.liger.yaml"), "");
+
+        List<String> configs = new LigerController().listConfigs(new GrammarString(grammarDir.resolve("main.lfg").toString()));
+
+        assertEquals(List.of(grammarDir.resolve("liger/g.liger.yaml").toString()), configs);
     }
 }
