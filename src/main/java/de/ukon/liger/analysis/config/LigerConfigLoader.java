@@ -1,5 +1,6 @@
 package de.ukon.liger.analysis.config;
 
+import de.ukon.liger.analysis.RuleParser.RuleParser;
 import de.ukon.liger.analysis.lexicon.LexiconDirectives;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -152,6 +154,60 @@ public final class LigerConfigLoader {
             return Files.readString(file);
         } catch (IOException e) {
             throw new LigerConfigException("Failed to read " + file + ": " + e, e);
+        }
+    }
+
+    /**
+     * How many rules each file of a stage contributes, in order; null from the first file whose
+     * prefix does not parse. Counted on growing prefixes of the assembled stage (the rules of
+     * file k are those of files 1..k minus those of files 1..k-1), so templates and hierarchies
+     * from earlier files are visible, as when the stage runs, and no line numbers are needed.
+     */
+    public static List<Integer> ruleCounts(List<Path> ruleFiles) {
+        List<Integer> counts = new ArrayList<>();
+        int before = 0;
+        boolean failed = false;
+        for (int k = 1; k <= ruleFiles.size(); k++) {
+            Integer total = failed ? null : countRules(assemble(ruleFiles.subList(0, k)));
+            failed = total == null;
+            counts.add(failed ? null : total - before);
+            before = failed ? before : total;
+        }
+        return counts;
+    }
+
+    /** The rules in a single rule file, as the semantics stage; null if it does not parse. */
+    public static Integer ruleCount(Path ruleFile) {
+        return countRules(readRuleFile(ruleFile));
+    }
+
+    private static Integer countRules(String ruleText) {
+        try {
+            return new RuleParser(ruleText).getRules().size();
+        } catch (RuntimeException e) {
+            LOGGER.warn("Could not count the rules: {}", e.toString());
+            return null;
+        }
+    }
+
+    private static final Pattern LEXICON_LABEL = Pattern.compile("(?m)^#\\S");
+    private static final Pattern TPTP_FORMULA = Pattern.compile("(?m)^\\s*(?:fof|tff|thf|cnf)\\(");
+
+    /** The labels (#LABEL lines) of a dictionary; null if it cannot be read. */
+    public static Integer lexiconLabelCount(Path lexicon) {
+        return countMatches(lexicon, LEXICON_LABEL);
+    }
+
+    /** The TPTP formulas of an axiom file; null if it cannot be read. */
+    public static Integer axiomCount(Path axiomFile) {
+        return countMatches(axiomFile, TPTP_FORMULA);
+    }
+
+    private static Integer countMatches(Path file, Pattern pattern) {
+        try {
+            return (int) pattern.matcher(Files.readString(file)).results().count();
+        } catch (IOException e) {
+            return null;
         }
     }
 

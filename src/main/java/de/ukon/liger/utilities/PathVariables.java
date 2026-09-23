@@ -99,6 +99,22 @@ public class PathVariables {
 
 
 
+    /**
+     * The project's grammars folder, as a real path: {@code <resources>/../grammars}, where
+     * {@link XLEStarter#listGrammars()} looks too. Null when there is none. The workspace in
+     * the client browses no further up than this.
+     */
+    public static Path grammarsRoot() {
+        if (workingDirectory == null) {
+            return null;
+        }
+        try {
+            return Paths.get(workingDirectory, "..", "grammars").toRealPath();
+        } catch (java.io.IOException e) {
+            return null;
+        }
+    }
+
     public static String returnResourcesFolder() throws FileNotFoundException {
 
 /*

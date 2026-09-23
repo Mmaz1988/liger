@@ -1686,19 +1686,38 @@ public class LigerController {
         // "scope: ." would otherwise come back as ".../liger/."; the folder exists (the loader
         // checks), so its real path is the one to show and browse.
         dto.scope = realPath(tree.scope()).toString();
+        Path grammarsRoot = PathVariables.grammarsRoot();
+        dto.projectRoot = grammarsRoot == null ? null : grammarsRoot.toString();
         for (ConfigTree.Section section : tree.sections()) {
             LigerConfigTree.Section s = new LigerConfigTree.Section();
             s.field = section.field();
             s.present = section.present();
             if (section.present()) {
-                for (Path file : section.files()) {
-                    s.files.add(new LigerConfigTree.File(file.toString(), file.getFileName().toString(),
-                            tree.inScope(file)));
+                List<Integer> counts = counts(tree, section);
+                for (int i = 0; i < section.files().size(); i++) {
+                    Path file = section.files().get(i);
+                    LigerConfigTree.File f = new LigerConfigTree.File(file.toString(),
+                            file.getFileName().toString(), tree.inScope(file));
+                    f.count = counts.get(i);
+                    s.files.add(f);
                 }
             }
             dto.sections.add(s);
         }
         return dto;
+    }
+
+    /** Per file: rules for a rule stage, labels for lexica, formulas for axioms. */
+    private static List<Integer> counts(ConfigTree tree, ConfigTree.Section section) {
+        List<Path> files = section.files();
+        return switch (section.field()) {
+            case LigerConfigLoader.SEMANTICS, LigerConfigLoader.PRAGMATICS ->
+                    ResolvedRuleSet.RULES.equals(tree.kind())
+                            ? Collections.singletonList(LigerConfigLoader.ruleCount(files.get(0)))
+                            : LigerConfigLoader.ruleCounts(files);
+            case LigerConfigLoader.LEXICA -> files.stream().map(LigerConfigLoader::lexiconLabelCount).toList();
+            default -> files.stream().map(LigerConfigLoader::axiomCount).toList();
+        };
     }
 
     private static Path realPath(Path path) {

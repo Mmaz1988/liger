@@ -272,6 +272,26 @@ public class LigerConfigLoaderTest {
         assertEquals(expected, LigerConfigLoader.findConfigs(dir.resolve("g")));
     }
 
+    @Test
+    void countsEachFilesRulesWithTemplatesFromEarlierFiles() throws IOException {
+        Path templates = write("t.liger", "SUBJEDGE(#a,#b) := #a SUBJ #b .\n");
+        Path rules = write("r.liger", "@SUBJEDGE(#a,#b) ==> #a FLAG 'ok'.\n#a OBJ #b ==> #a FLAG 'obj'.\n");
+        Path more = write("m.liger", "// a comment\n#a X #b ==> #a Y #b.\n");
+
+        assertEquals(List.of(0, 2, 1), LigerConfigLoader.ruleCounts(List.of(templates, rules, more)));
+        assertEquals(0, LigerConfigLoader.ruleCount(templates));
+    }
+
+    @Test
+    void countsLexiconLabelsAndAxiomFormulas() throws IOException {
+        Path lexicon = write("d.txt", ">tense\n***\n#FUTURE\nwill\n***\n#PAST\nwas, had\n>mood\n***\n#IRREALIS\nwould\n");
+        Path axioms = write("a.p", "% comment fof(no, axiom, p).\nfof(a, axiom, p).\n  tff(b, axiom, q).\ncnf(c, axiom, r).\n");
+
+        assertEquals(3, LigerConfigLoader.lexiconLabelCount(lexicon));
+        assertEquals(3, LigerConfigLoader.axiomCount(axioms));
+        assertNull(LigerConfigLoader.axiomCount(dir.resolve("missing.p")));
+    }
+
     /** A loose grammar beside a grammar folder (grammars/dev) is not offered the folder's config. */
     @Test
     void aLooseGrammarIsNotOfferedANeighboursConfig() throws IOException {
@@ -299,6 +319,9 @@ public class LigerConfigLoaderTest {
         RuleParser after = new RuleParser(assembled);
 
         assertEquals(13, before.getRules().size());
+        // The per-file counts the workspace shows add up to the stage's rules.
+        assertEquals(13, LigerConfigLoader.ruleCounts(LigerConfigLoader.load(lfgxdrtConfig).pragmatics())
+                .stream().mapToInt(Integer::intValue).sum());
         assertEquals(ruleStrings(before), ruleStrings(after));
         assertEquals(templates(before), templates(after));
         assertEquals(before.getHierarchyRegistry().getHierarchies(), after.getHierarchyRegistry().getHierarchies());

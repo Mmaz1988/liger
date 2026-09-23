@@ -139,6 +139,9 @@ class LoadRulesTest {
 
         LigerConfigTree.Section semantics = tree.sections.get(0);
         assertEquals("sem.liger", semantics.files.get(0).name);
+        assertEquals(1, semantics.files.get(0).count, "rules in sem.liger");
+        assertEquals(1, tree.sections.get(2).files.get(0).count, "labels in other.txt");
+        assertNull(tree.projectRoot, "no grammars folder beside these resources");
         assertTrue(semantics.files.get(0).inScope);
         assertTrue(Files.isSameFile(resources.resolve("rules/sem.liger"), Path.of(semantics.files.get(0).path)));
         assertFalse(tree.sections.get(2).files.get(0).inScope, "../dicts is outside the config's folder");
@@ -162,5 +165,19 @@ class LoadRulesTest {
         List<String> configs = new LigerController().listConfigs(new GrammarString(grammarDir.resolve("main.lfg").toString()));
 
         assertEquals(List.of(grammarDir.resolve("liger/g.liger.yaml").toString()), configs);
+    }
+
+    @Test
+    void configTreeNamesTheProjectsGrammarsFolder() throws IOException {
+        // A project inside the temp folder: <project>/liger_resources and <project>/grammars.
+        Path project = resources.resolve("project");
+        Files.createDirectories(project.resolve("liger_resources"));
+        Files.createDirectories(project.resolve("grammars"));
+        PathVariables.workingDirectory = project.resolve("liger_resources") + "/";
+
+        LigerConfigTree tree = new LigerController().configTree(
+                new GrammarString(resources.resolve("rules/default.liger.yaml").toString()));
+
+        assertEquals(project.resolve("grammars").toRealPath().toString(), tree.projectRoot);
     }
 }

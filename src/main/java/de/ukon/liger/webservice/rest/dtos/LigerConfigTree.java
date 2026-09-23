@@ -20,6 +20,8 @@ public class LigerConfigTree {
     /** The config's scope folder, absolute (a single rule file's own folder): where its
      *  files belong, and where the client browses for more. */
     public String scope;
+    /** The project's grammars folder (real path), or null: the client browses no higher. */
+    public String projectRoot;
     /** semantics, pragmatics, lexica, axioms, in that order; always all four. */
     public List<Section> sections = new ArrayList<>();
 
@@ -37,6 +39,9 @@ public class LigerConfigTree {
         public String name;
         /** False for a file outside the config's scope: allowed, but worth seeing. */
         public boolean inScope = true;
+        /** Rules (semantics, pragmatics), labels (lexica) or formulas (axioms) in the file,
+         *  as on disk; null when they could not be counted. */
+        public Integer count;
 
         public File() {
         }
