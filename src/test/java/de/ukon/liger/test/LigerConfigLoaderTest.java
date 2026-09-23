@@ -221,7 +221,10 @@ public class LigerConfigLoaderTest {
 
         ConfigTree tree = LigerConfigLoader.tree(single, dir.resolve("missing.yaml"));
         assertEquals(ResolvedRuleSet.RULES, tree.kind());
-        assertEquals(List.of(single), tree.section("semantics").files());
+        assertEquals(List.of(single.toAbsolutePath()), tree.section("semantics").files());
+        Path relative = Path.of("").toAbsolutePath().relativize(single);
+        assertTrue(LigerConfigLoader.tree(relative, null).section("semantics").files().get(0).isAbsolute(),
+                "a relative rule-file path comes back absolute");
         assertFalse(tree.section("pragmatics").present());
         assertFalse(tree.section("axioms").present());
         assertEquals(ConfigTree.BUILTIN, tree.section("lexica").inheritedFrom());

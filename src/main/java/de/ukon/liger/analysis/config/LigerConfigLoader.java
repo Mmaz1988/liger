@@ -204,9 +204,12 @@ public final class LigerConfigLoader {
             }
         }
 
-        // A config's semantics are never inherited: a config without them has none.
+        // A config's semantics are never inherited: a config without them has none. A single
+        // rule file's path is made absolute like a config's files are, so a client can resolve
+        // its --lexicon directives without knowing LiGER's working directory; its semantics
+        // text has no marker line naming the path.
         ConfigTree.Section semantics = config == null
-                ? new ConfigTree.Section(SEMANTICS, List.of(path), null)
+                ? new ConfigTree.Section(SEMANTICS, List.of(path.toAbsolutePath()), null)
                 : new ConfigTree.Section(SEMANTICS, config.semantics() != null ? config.semantics() : List.of(), null);
 
         ConfigTree.Section lexica = inherit(LEXICA, config, fallback, LigerConfig::lexica);

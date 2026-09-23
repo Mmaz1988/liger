@@ -8,7 +8,8 @@ import java.util.List;
  * client's workspace tree. Reading them is /load_file's job.
  *
  * Joining a section's files as LigerConfigLoader.assemble does reproduces /load_rules' text,
- * except for kind "rules": its semantics is the rule file's text alone, without a marker line.
+ * except for kind "rules": its semantics is the rule file's text alone, without a marker line,
+ * and its one file's path is absolute even when the request named it relatively.
  */
 public class LigerConfigTree {
 
