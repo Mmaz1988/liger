@@ -1,7 +1,6 @@
 package de.ukon.liger.analysis.config;
 
 import de.ukon.liger.analysis.lexicon.LexiconDirectives;
-import de.ukon.liger.analysis.lexicon.LexiconRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -10,32 +9,35 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * Loads LiGER configs and assembles their rule files.
  *
  * <pre>
- * # paths are relative to the config file
+ * # paths are relative to the config file; a config lives in its grammar's liger/ folder
+ * scope: .              # the folder its files belong in (default: the config's folder)
  * semantics:            # rules applied before semantic composition
- *   - degree_rules_lfgxdrt.liger
+ *   - semantics/degree_rules_lfgxdrt.liger
  * pragmatics:           # post-processing rules, applied to the merged syntax + DRS
  *   - pragmatics/core.liger
  *   - pragmatics/pronouns.liger
  * lexica:               # dictionaries for lex/2, available to all rules
- *   - ../dicts/ling_dict_eng.txt
+ *   - dicts/ling_dict_eng.txt
  * axioms:               # TPTP axiom files, loaded into the client's axioms editor
- *   - ../../axioms/basic_axioms.txt
+ *   - axioms/degree_axioms.txt
  * </pre>
+ *
+ * A config gets exactly what it lists: nothing is inherited from a default config, and a
+ * single rule file is a semantics stage and nothing else. Post-processing needs pragmatics
+ * rules, so a rule set without them cannot be post-processed; the client says so.
  *
  * The rule files of a stage are concatenated in order into one rule text rather than parsed
  * one by one: templates and hierarchies are per parse, so a template defined in one file is
@@ -48,8 +50,11 @@ public final class LigerConfigLoader {
     public static final String PRAGMATICS = "pragmatics";
     public static final String LEXICA = "lexica";
     public static final String AXIOMS = "axioms";
-    private static final Set<String> FIELDS = Set.of(SEMANTICS, PRAGMATICS, LEXICA, AXIOMS);
+    public static final String SCOPE = "scope";
+    private static final Set<String> FIELDS = Set.of(SCOPE, SEMANTICS, PRAGMATICS, LEXICA, AXIOMS);
     public static final String CONFIG_SUFFIX = ".liger.yaml";
+    /** Where a grammar keeps its LiGER config and rule files. */
+    public static final String CONFIG_FOLDER = "liger";
 
     private final static Logger LOGGER = LoggerFactory.getLogger(LigerConfigLoader.class);
 
@@ -85,10 +90,27 @@ public final class LigerConfigLoader {
 
         Path baseDir = configFile.toAbsolutePath().getParent();
         return new LigerConfig(configFile,
+                scope(fields, configFile, baseDir),
                 pathList(fields, SEMANTICS, configFile, baseDir),
                 pathList(fields, PRAGMATICS, configFile, baseDir),
                 pathList(fields, LEXICA, configFile, baseDir),
                 pathList(fields, AXIOMS, configFile, baseDir));
+    }
+
+    private static Path scope(Map<?, ?> fields, Path configFile, Path baseDir) {
+        Object value = fields.get(SCOPE);
+        if (value == null) {
+            return baseDir;
+        }
+        if (!(value instanceof String raw) || raw.isBlank()) {
+            throw new LigerConfigException("Field 'scope' in LiGER config " + configFile + " must be a folder path");
+        }
+        Path scope = baseDir.resolve(raw.strip());
+        if (!Files.isDirectory(scope)) {
+            throw new LigerConfigException("Scope '" + raw + "' in LiGER config " + configFile
+                    + " is not a folder (resolved to " + scope + ")");
+        }
+        return scope;
     }
 
     // No normalize() when resolving: a rules folder may be a symlink (it is one in a local
@@ -158,88 +180,74 @@ public final class LigerConfigLoader {
     }
 
     /**
-     * Loads either a config or a single rule file.
-     *
-     * A single rule file is the semantics stage, and loading one means no config is active:
-     * its pragmatics and lexica come from the default config. A config inherits pragmatics
-     * or lexica from the default config only when it leaves the field out.
-     *
-     * @param defaultConfig may be null or missing on disk; then nothing is inherited, the
-     *                      pragmatics are null and the lexica are LiGER's default lexicon
+     * Loads either a config or a single rule file: the assembled rule text of each stage and
+     * the lexica. A field the config does not list is null (lexica: empty); a single rule
+     * file has semantics only.
      */
-    public static ResolvedRuleSet resolve(Path path, Path defaultConfig) {
-        ConfigTree tree = tree(path, defaultConfig);
+    public static ResolvedRuleSet resolve(Path path) {
+        ConfigTree tree = tree(path);
 
         String semantics = ResolvedRuleSet.RULES.equals(tree.kind()) ? readRuleFile(path)
                 : assemble(tree.section(SEMANTICS).files());
 
         ConfigTree.Section pragmatics = tree.section(PRAGMATICS);
+        ConfigTree.Section lexica = tree.section(LEXICA);
         ConfigTree.Section axioms = tree.section(AXIOMS);
         return new ResolvedRuleSet(tree.kind(), path, semantics,
                 pragmatics.present() ? assemble(pragmatics.files()) : null,
-                tree.section(LEXICA).files(),
+                lexica.present() ? lexica.files() : List.of(),
                 axioms.present() ? assembleAxioms(axioms.files()) : null);
     }
 
     /**
-     * The files behind {@link #resolve}, per field and without reading them: which files a
-     * config or single rule file stands for, and which fields came from the default config.
-     * Paths are the ones {@link #assemble} names in its marker lines.
+     * The files behind {@link #resolve}, per field and without reading them. Paths are the
+     * ones {@link #assemble} names in its marker lines. Files outside the config's scope are
+     * logged; the client marks them.
      */
-    public static ConfigTree tree(Path path, Path defaultConfig) {
+    public static ConfigTree tree(Path path) {
         if (!Files.isRegularFile(path)) {
             throw new LigerConfigException("No such rule or config file: " + path);
         }
 
-        LigerConfig config = isConfig(path) ? load(path) : null;
+        if (!isConfig(path)) {
+            // A single rule file's path is made absolute like a config's files are, so a
+            // client can resolve its --lexicon directives without knowing LiGER's working
+            // directory; its semantics text has no marker line naming the path.
+            Path file = path.toAbsolutePath();
+            return new ConfigTree(ResolvedRuleSet.RULES, path, file.getParent(), List.of(
+                    new ConfigTree.Section(SEMANTICS, List.of(file)),
+                    new ConfigTree.Section(PRAGMATICS, null),
+                    new ConfigTree.Section(LEXICA, null),
+                    new ConfigTree.Section(AXIOMS, null)));
+        }
 
-        LigerConfig fallback = null;
-        boolean inherits = config == null || config.pragmatics() == null || config.lexica() == null
-                || config.axioms() == null;
-        if (inherits && defaultConfig != null && !isSameFile(path, defaultConfig)) {
-            if (Files.isRegularFile(defaultConfig)) {
-                fallback = load(defaultConfig);
-            } else {
-                LOGGER.warn("Default LiGER config not found at {}", defaultConfig);
+        LigerConfig config = load(path);
+        ConfigTree tree = new ConfigTree(ResolvedRuleSet.CONFIG, path, config.scope(), List.of(
+                // A config without semantics has none, rather than no semantics stage.
+                new ConfigTree.Section(SEMANTICS, config.semantics() != null ? config.semantics() : List.of()),
+                new ConfigTree.Section(PRAGMATICS, config.pragmatics()),
+                new ConfigTree.Section(LEXICA, config.lexica()),
+                new ConfigTree.Section(AXIOMS, config.axioms())));
+        for (ConfigTree.Section section : tree.sections()) {
+            if (section.present()) {
+                for (Path file : section.files()) {
+                    if (!tree.inScope(file)) {
+                        LOGGER.warn("{} lists {} under '{}', outside its scope {}", path, file, section.field(),
+                                config.scope());
+                    }
+                }
             }
         }
-
-        // A config's semantics are never inherited: a config without them has none. A single
-        // rule file's path is made absolute like a config's files are, so a client can resolve
-        // its --lexicon directives without knowing LiGER's working directory; its semantics
-        // text has no marker line naming the path.
-        ConfigTree.Section semantics = config == null
-                ? new ConfigTree.Section(SEMANTICS, List.of(path.toAbsolutePath()), null)
-                : new ConfigTree.Section(SEMANTICS, config.semantics() != null ? config.semantics() : List.of(), null);
-
-        ConfigTree.Section lexica = inherit(LEXICA, config, fallback, LigerConfig::lexica);
-        if (!lexica.present()) {
-            lexica = new ConfigTree.Section(LEXICA, LexiconRegistry.defaultPaths(), ConfigTree.BUILTIN);
-        }
-
-        return new ConfigTree(config != null ? ResolvedRuleSet.CONFIG : ResolvedRuleSet.RULES, path,
-                List.of(semantics,
-                        inherit(PRAGMATICS, config, fallback, LigerConfig::pragmatics),
-                        lexica,
-                        inherit(AXIOMS, config, fallback, LigerConfig::axioms)));
-    }
-
-    private static ConfigTree.Section inherit(String field, LigerConfig config, LigerConfig fallback,
-                                              Function<LigerConfig, List<Path>> files) {
-        if (config != null && files.apply(config) != null) {
-            return new ConfigTree.Section(field, files.apply(config), null);
-        }
-        if (fallback != null && files.apply(fallback) != null) {
-            return new ConfigTree.Section(field, files.apply(fallback), fallback.source().toString());
-        }
-        return new ConfigTree.Section(field, null, null);
+        return tree;
     }
 
     /**
-     * The LiGER configs (*.liger.yaml) in a grammar's directory and below, sorted. A config
-     * may sit anywhere under the grammar; XLE's *.fileindexdir folders are skipped.
+     * The LiGER configs (*.liger.yaml) of a grammar, sorted: those directly in the grammar's
+     * folder and those directly in its {@code liger/} folder. Not deeper: a folder can hold
+     * several grammars (grammars/dev holds a loose grammar beside a grammar folder), and one
+     * grammar's config must not be offered for another.
      *
-     * @param grammar the grammar's main file or its directory
+     * @param grammar the grammar's main file or its folder
      */
     public static List<Path> findConfigs(Path grammar) {
         Path root = Files.isDirectory(grammar) ? grammar : grammar.toAbsolutePath().getParent();
@@ -247,40 +255,18 @@ public final class LigerConfigLoader {
             throw new LigerConfigException("No such grammar file or directory: " + grammar);
         }
         List<Path> configs = new ArrayList<>();
-        try {
-            Files.walkFileTree(root, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                    return dir.getFileName().toString().endsWith(".fileindexdir")
-                            ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    if (attrs.isRegularFile() && file.getFileName().toString().endsWith(CONFIG_SUFFIX)) {
-                        configs.add(file);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException e) {
-                    LOGGER.warn("Skipping {} while looking for LiGER configs: {}", file, e.toString());
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            throw new LigerConfigException("Failed to list LiGER configs under " + root + ": " + e, e);
+        for (Path dir : List.of(root, root.resolve(CONFIG_FOLDER))) {
+            if (!Files.isDirectory(dir)) {
+                continue;
+            }
+            try (Stream<Path> files = Files.list(dir)) {
+                files.filter(file -> Files.isRegularFile(file) && file.getFileName().toString().endsWith(CONFIG_SUFFIX))
+                        .forEach(configs::add);
+            } catch (IOException e) {
+                throw new LigerConfigException("Failed to list LiGER configs in " + dir + ": " + e, e);
+            }
         }
         configs.sort(null);
         return configs;
-    }
-
-    private static boolean isSameFile(Path a, Path b) {
-        try {
-            return Files.exists(b) && Files.isSameFile(a, b);
-        } catch (IOException e) {
-            return false;
-        }
     }
 }

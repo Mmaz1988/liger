@@ -74,7 +74,7 @@ class LoadRulesTest {
     }
 
     @Test
-    void aSingleRuleFileFallsBackToTheDefaultConfig() throws IOException {
+    void aSingleRuleFileIsSemanticsOnlyAndActivatesNoLexica() throws IOException {
         load(resources.resolve("rules/default.liger.yaml"));
         Path single = resources.resolve("rules/single.liger");
         Files.writeString(single, "#a OBJ #b ==> #a FLAG 'single'.\n");
@@ -83,9 +83,10 @@ class LoadRulesTest {
 
         assertEquals("rules", set.kind);
         assertEquals("#a OBJ #b ==> #a FLAG 'single'.\n", set.semantics);
-        assertTrue(set.pragmatics.contains("FLAG 'prag'"));
-        assertEquals("DEFAULT", LexiconRegistry.active().lookup("d", "x").orElseThrow());
-        assertTrue(set.axioms.contains("fof(basic, axiom, p)."), "axioms come from the default config too");
+        assertNull(set.pragmatics, "nothing is inherited: no pragmatics, so no post-processing");
+        assertNull(set.axioms);
+        assertEquals(List.of(), set.lexica);
+        assertTrue(LexiconRegistry.active().lookup("d", "x").isEmpty());
     }
 
     @Test
@@ -122,7 +123,7 @@ class LoadRulesTest {
     @Test
     void configTreeListsTheFilesPerFieldWithoutTouchingTheActiveLexica() throws IOException {
         Path other = resources.resolve("rules/other.liger.yaml");
-        Files.writeString(other, "semantics:\n  - sem.liger\nlexica:\n  - ../dicts/other.txt\n");
+        Files.writeString(other, "semantics:\n  - sem.liger\npragmatics:\n  - prag.liger\nlexica:\n  - ../dicts/other.txt\n");
         load(resources.resolve("rules/default.liger.yaml"));
         List<Path> before = LexiconRegistry.activePaths();
 
@@ -131,20 +132,22 @@ class LoadRulesTest {
         assertEquals(before, LexiconRegistry.activePaths());
         assertEquals("config", tree.kind);
         assertEquals(other.toString(), tree.source);
+        assertTrue(Files.isSameFile(resources.resolve("rules"), Path.of(tree.scope)));
+        assertEquals(resources.resolve("rules").toRealPath().toString(), tree.scope);
         assertEquals(List.of("semantics", "pragmatics", "lexica", "axioms"),
                 tree.sections.stream().map(s -> s.field).toList());
 
         LigerConfigTree.Section semantics = tree.sections.get(0);
-        assertNull(semantics.inheritedFrom);
         assertEquals("sem.liger", semantics.files.get(0).name);
+        assertTrue(semantics.files.get(0).inScope);
         assertTrue(Files.isSameFile(resources.resolve("rules/sem.liger"), Path.of(semantics.files.get(0).path)));
-
-        LigerConfigTree.Section pragmatics = tree.sections.get(1);
-        assertTrue(pragmatics.present);
-        assertEquals(PathVariables.defaultConfigPath().toString(), pragmatics.inheritedFrom);
-        assertEquals("prag.liger", pragmatics.files.get(0).name);
+        assertFalse(tree.sections.get(2).files.get(0).inScope, "../dicts is outside the config's folder");
+        LigerConfigTree.Section axioms = tree.sections.get(3);
+        assertFalse(axioms.present);
+        assertTrue(axioms.files.isEmpty());
 
         // The marker lines /load_rules writes name the tree's paths, so a client can key on them.
+        LigerConfigTree.Section pragmatics = tree.sections.get(1);
         LigerRuleSet set = load(other);
         assertTrue(set.pragmatics.startsWith("// ===== " + pragmatics.files.get(0).path + " =====\n"), set.pragmatics);
     }

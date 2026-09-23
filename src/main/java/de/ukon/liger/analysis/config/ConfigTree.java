@@ -1,5 +1,6 @@
 package de.ukon.liger.analysis.config;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -9,22 +10,24 @@ import java.util.List;
  *
  * @param kind   "config" or "rules", as in {@link ResolvedRuleSet}
  * @param source the loaded path, as given
+ * @param scope  the config's scope folder, absolute; for a single rule file, its folder
  */
-public record ConfigTree(String kind, Path source, List<Section> sections) {
+public record ConfigTree(String kind, Path source, Path scope, List<Section> sections) {
 
-    /** inheritedFrom of lexica that fall back to LiGER's default lexicon rather than a config. */
-    public static final String BUILTIN = "builtin";
-
-    /**
-     * @param files         null when neither the loaded file nor the default config has the field
-     * @param inheritedFrom the default config's path when the field comes from it,
-     *                      {@link #BUILTIN} for LiGER's default lexicon, null when it is the
-     *                      loaded file's own
-     */
-    public record Section(String field, List<Path> files, String inheritedFrom) {
+    /** @param files null when the loaded file does not list the field */
+    public record Section(String field, List<Path> files) {
 
         public boolean present() {
             return files != null;
+        }
+    }
+
+    /** Whether {@code file} lies inside {@link #scope}, after resolving symlinks and "..". */
+    public boolean inScope(Path file) {
+        try {
+            return file.toRealPath().startsWith(scope.toRealPath());
+        } catch (IOException e) {
+            return file.toAbsolutePath().normalize().startsWith(scope.toAbsolutePath().normalize());
         }
     }
 

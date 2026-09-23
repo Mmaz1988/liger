@@ -1634,8 +1634,9 @@ public class LigerController {
         }
 
         // A config (*.liger.yaml) or a single rule file. Either way its lexica become the
-        // globally active ones: one config is active per parsing session.
-        ResolvedRuleSet ruleSet = LigerConfigLoader.resolve(Paths.get(gs.grammar), PathVariables.defaultConfigPath());
+        // globally active ones (none, for a single rule file): one config is active per
+        // parsing session.
+        ResolvedRuleSet ruleSet = LigerConfigLoader.resolve(Paths.get(gs.grammar));
         LexiconRegistry.setActive(ruleSet.lexica());
 
         List<String> lexica = new ArrayList<>();
@@ -1677,19 +1678,22 @@ public class LigerController {
         if (gs.grammar == null || gs.grammar.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No rule or config file given");
         }
-        ConfigTree tree = LigerConfigLoader.tree(Paths.get(gs.grammar), PathVariables.defaultConfigPath());
+        ConfigTree tree = LigerConfigLoader.tree(Paths.get(gs.grammar));
 
         LigerConfigTree dto = new LigerConfigTree();
         dto.kind = tree.kind();
         dto.source = gs.grammar;
+        // "scope: ." would otherwise come back as ".../liger/."; the folder exists (the loader
+        // checks), so its real path is the one to show and browse.
+        dto.scope = realPath(tree.scope()).toString();
         for (ConfigTree.Section section : tree.sections()) {
             LigerConfigTree.Section s = new LigerConfigTree.Section();
             s.field = section.field();
-            s.inheritedFrom = section.inheritedFrom();
             s.present = section.present();
             if (section.present()) {
                 for (Path file : section.files()) {
-                    s.files.add(new LigerConfigTree.File(file.toString(), file.getFileName().toString()));
+                    s.files.add(new LigerConfigTree.File(file.toString(), file.getFileName().toString(),
+                            tree.inScope(file)));
                 }
             }
             dto.sections.add(s);
@@ -1697,7 +1701,15 @@ public class LigerController {
         return dto;
     }
 
-    /** The LiGER configs (*.liger.yaml) under a grammar's directory, given its main file or the directory. */
+    private static Path realPath(Path path) {
+        try {
+            return path.toRealPath();
+        } catch (IOException e) {
+            return path.toAbsolutePath().normalize();
+        }
+    }
+
+    /** A grammar's LiGER configs (*.liger.yaml, in its folder or its liger/ folder), given its main file or folder. */
     @CrossOrigin
     @PostMapping(value = "/list_configs", produces = "application/json", consumes = "application/json")
     public List<String> listConfigs(@RequestBody GrammarString gs) {

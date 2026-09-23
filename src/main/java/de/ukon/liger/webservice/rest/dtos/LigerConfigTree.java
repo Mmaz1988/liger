@@ -17,16 +17,16 @@ public class LigerConfigTree {
     public String kind;
     /** The path that was loaded, as requested. */
     public String source;
+    /** The config's scope folder, absolute (a single rule file's own folder): where its
+     *  files belong, and where the client browses for more. */
+    public String scope;
     /** semantics, pragmatics, lexica, axioms, in that order; always all four. */
     public List<Section> sections = new ArrayList<>();
 
     public static class Section {
         public String field;
-        /** The default config's path when the field is inherited from it, "builtin" for
-         *  LiGER's default lexicon, null when it is the loaded file's own. */
-        public String inheritedFrom;
-        /** False when neither the loaded file nor the default config has the field; then
-         *  /load_rules reports it as null and files is empty. */
+        /** False when the loaded file does not list the field; then /load_rules reports it
+         *  as null (lexica: empty) and files is empty. Nothing is inherited. */
         public boolean present;
         public List<File> files = new ArrayList<>();
     }
@@ -35,13 +35,16 @@ public class LigerConfigTree {
         /** As /load_rules names it in its "===== path =====" marker lines. */
         public String path;
         public String name;
+        /** False for a file outside the config's scope: allowed, but worth seeing. */
+        public boolean inScope = true;
 
         public File() {
         }
 
-        public File(String path, String name) {
+        public File(String path, String name, boolean inScope) {
             this.path = path;
             this.name = name;
+            this.inScope = inScope;
         }
     }
 }

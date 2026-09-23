@@ -8,7 +8,6 @@ import de.ukon.liger.analysis.config.LigerConfig;
 import de.ukon.liger.analysis.config.LigerConfigException;
 import de.ukon.liger.analysis.config.LigerConfigLoader;
 import de.ukon.liger.analysis.config.ResolvedRuleSet;
-import de.ukon.liger.analysis.lexicon.LexiconRegistry;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -77,7 +76,7 @@ public class LigerConfigLoaderTest {
                   - ../axioms/b.p
                 """);
 
-        ResolvedRuleSet set = LigerConfigLoader.resolve(config, null);
+        ResolvedRuleSet set = LigerConfigLoader.resolve(config);
 
         assertTrue(set.axioms().contains("fof(a, axiom, p)."));
         assertTrue(set.axioms().indexOf("fof(a") < set.axioms().indexOf("fof(b"));
@@ -88,21 +87,13 @@ public class LigerConfigLoaderTest {
     }
 
     @Test
-    void axiomsAreInheritedFromTheDefaultConfigLikePragmatics() throws IOException {
-        write("axioms/a.p", "fof(a, axiom, p).\n");
+    void aConfigWithoutAxiomsHasNone() throws IOException {
         write("rules/own.liger", "#a X #b ==> #a Y #b.\n");
-        Path defaultConfig = write("rules/default.liger.yaml", "axioms:\n  - ../axioms/a.p\n");
-        Path single = write("rules/s.liger", "");
-        Path withOwn = write("rules/own.liger.yaml", "semantics:\n  - own.liger\naxioms: []\n");
+        Path without = write("rules/own.liger.yaml", "semantics:\n  - own.liger\n");
+        Path empty = write("rules/empty.liger.yaml", "semantics:\n  - own.liger\naxioms: []\n");
 
-        assertTrue(LigerConfigLoader.resolve(single, defaultConfig).axioms().contains("fof(a"));
-        // A config that lists axioms, even none, keeps its own.
-        assertEquals("", LigerConfigLoader.resolve(withOwn, defaultConfig).axioms());
-    }
-
-    @Test
-    void withoutAxiomsAnywhereTheRuleSetHasNone() throws IOException {
-        assertNull(LigerConfigLoader.resolve(write("s.liger", ""), dir.resolve("missing.yaml")).axioms());
+        assertNull(LigerConfigLoader.resolve(without).axioms());
+        assertEquals("", LigerConfigLoader.resolve(empty).axioms());
     }
 
     @Test
@@ -148,44 +139,30 @@ public class LigerConfigLoaderTest {
     }
 
     @Test
-    void aSingleRuleFileTakesPragmaticsAndLexicaFromTheDefaultConfig() throws IOException {
-        write("rules/p.liger", "#a X #b ==> #a Y #b.\n");
-        write("dicts/d.txt", "");
-        Path defaultConfig = write("rules/default.liger.yaml", "pragmatics:\n  - p.liger\nlexica:\n  - ../dicts/d.txt\n");
+    void aSingleRuleFileIsSemanticsOnly() throws IOException {
         Path single = write("rules/s.liger", "#a SUBJ #b ==> #a FLAG 'ok'.\n");
 
-        ResolvedRuleSet set = LigerConfigLoader.resolve(single, defaultConfig);
+        ResolvedRuleSet set = LigerConfigLoader.resolve(single);
 
         assertEquals(ResolvedRuleSet.RULES, set.kind());
         assertEquals("#a SUBJ #b ==> #a FLAG 'ok'.\n", set.semantics());
-        assertTrue(set.pragmatics().contains("#a X #b ==> #a Y #b."));
-        assertEquals(1, set.lexica().size());
+        assertNull(set.pragmatics(), "no pragmatics: such a rule set cannot be post-processed");
+        assertNull(set.axioms());
+        assertEquals(List.of(), set.lexica());
     }
 
+    /** Nothing is inherited, from a default config or anywhere else. */
     @Test
-    void aConfigInheritsOnlyTheFieldsItLeavesOut() throws IOException {
-        write("rules/p.liger", "#a X #b ==> #a Y #b.\n");
+    void aConfigGetsExactlyWhatItLists() throws IOException {
         write("rules/own.liger", "#a OWN #b ==> #a Z #b.\n");
-        write("dicts/d.txt", "");
-        Path defaultConfig = write("rules/default.liger.yaml", "pragmatics:\n  - p.liger\nlexica:\n  - ../dicts/d.txt\n");
-        Path withoutPragmatics = write("rules/a.liger.yaml", "semantics:\n  - own.liger\nlexica: []\n");
+        Path config = write("rules/a.liger.yaml", "semantics:\n  - own.liger\n");
 
-        ResolvedRuleSet set = LigerConfigLoader.resolve(withoutPragmatics, defaultConfig);
+        ResolvedRuleSet set = LigerConfigLoader.resolve(config);
 
         assertEquals(ResolvedRuleSet.CONFIG, set.kind());
         assertTrue(set.semantics().contains("#a OWN #b"));
-        assertTrue(set.pragmatics().contains("#a X #b"), "pragmatics left out: inherited");
-        assertEquals(List.of(), set.lexica(), "lexica given as empty: not inherited");
-    }
-
-    @Test
-    void withoutADefaultConfigTheLexicaAreLigersDefault() throws IOException {
-        Path single = write("s.liger", "");
-
-        ResolvedRuleSet set = LigerConfigLoader.resolve(single, dir.resolve("missing.yaml"));
-
         assertNull(set.pragmatics());
-        assertEquals(LexiconRegistry.defaultPaths(), set.lexica());
+        assertEquals(List.of(), set.lexica());
     }
 
     private static List<String> fields(ConfigTree tree) {
@@ -193,44 +170,69 @@ public class LigerConfigLoaderTest {
     }
 
     @Test
-    void theTreeListsAConfigsFilesPerFieldAndMarksInheritedOnes() throws IOException {
-        write("rules/own.liger", "");
-        write("rules/p.liger", "");
-        write("dicts/d.txt", "");
-        write("axioms/a.p", "");
-        Path defaultConfig = write("rules/default.liger.yaml", "pragmatics:\n  - p.liger\nlexica:\n  - ../dicts/d.txt\n");
-        Path config = write("rules/c.liger.yaml", "semantics:\n  - own.liger\naxioms:\n  - ../axioms/a.p\n");
+    void theTreeListsAConfigsFilesPerField() throws IOException {
+        write("liger/semantics/own.liger", "");
+        write("liger/dicts/d.txt", "");
+        Path config = write("liger/c.liger.yaml", "semantics:\n  - semantics/own.liger\nlexica:\n  - dicts/d.txt\n");
 
-        ConfigTree tree = LigerConfigLoader.tree(config, defaultConfig);
+        ConfigTree tree = LigerConfigLoader.tree(config);
 
         assertEquals(ResolvedRuleSet.CONFIG, tree.kind());
         assertEquals(List.of("semantics", "pragmatics", "lexica", "axioms"), fields(tree));
-        assertEquals(List.of(dir.resolve("rules/own.liger")), tree.section("semantics").files());
-        assertNull(tree.section("semantics").inheritedFrom());
-        assertEquals(List.of(dir.resolve("rules/p.liger")), tree.section("pragmatics").files());
-        assertEquals(defaultConfig.toString(), tree.section("pragmatics").inheritedFrom());
-        assertEquals(defaultConfig.toString(), tree.section("lexica").inheritedFrom());
-        assertNull(tree.section("axioms").inheritedFrom());
+        assertEquals(List.of(dir.resolve("liger/semantics/own.liger")), tree.section("semantics").files());
+        assertFalse(tree.section("pragmatics").present());
+        assertEquals(List.of(dir.resolve("liger/dicts/d.txt")), tree.section("lexica").files());
+        assertFalse(tree.section("axioms").present());
+    }
+
+    @Test
+    void theScopeDefaultsToTheConfigsFolderAndMarksFilesOutsideIt() throws IOException {
+        write("g/liger/semantics/in.liger", "");
+        write("g/shared/out.liger", "");
+        Path config = write("g/liger/c.liger.yaml", "semantics:\n  - semantics/in.liger\n  - ../shared/out.liger\n");
+
+        ConfigTree tree = LigerConfigLoader.tree(config);
+
+        assertTrue(Files.isSameFile(dir.resolve("g/liger"), tree.scope()));
+        List<Path> files = tree.section("semantics").files();
+        assertTrue(tree.inScope(files.get(0)));
+        assertFalse(tree.inScope(files.get(1)), "../ leaves the scope even though it is lexically under it");
+    }
+
+    @Test
+    void theScopeFieldWidensTheBoundaryWithoutChangingHowPathsResolve() throws IOException {
+        write("g/liger/semantics/in.liger", "");
+        write("g/shared/out.liger", "");
+        Path config = write("g/liger/c.liger.yaml", "scope: ..\nsemantics:\n  - ../shared/out.liger\n");
+
+        ConfigTree tree = LigerConfigLoader.tree(config);
+
+        assertTrue(Files.isSameFile(dir.resolve("g"), tree.scope()));
+        assertTrue(tree.inScope(tree.section("semantics").files().get(0)));
+    }
+
+    @Test
+    void rejectsAScopeThatIsNotAFolder() throws IOException {
+        Path config = write("c.liger.yaml", "scope: nowhere\n");
+
+        LigerConfigException e = assertThrows(LigerConfigException.class, () -> LigerConfigLoader.load(config));
+        assertTrue(e.getMessage().contains("nowhere"), e.getMessage());
     }
 
     @Test
     void theTreeOfASingleRuleFileIsThatFileAsSemantics() throws IOException {
-        write("rules/p.liger", "");
-        Path defaultConfig = write("rules/default.liger.yaml", "pragmatics:\n  - p.liger\n");
         Path single = write("rules/s.liger", "");
 
-        ConfigTree tree = LigerConfigLoader.tree(single, dir.resolve("missing.yaml"));
+        ConfigTree tree = LigerConfigLoader.tree(single);
         assertEquals(ResolvedRuleSet.RULES, tree.kind());
         assertEquals(List.of(single.toAbsolutePath()), tree.section("semantics").files());
+        assertEquals(single.toAbsolutePath().getParent(), tree.scope());
         Path relative = Path.of("").toAbsolutePath().relativize(single);
-        assertTrue(LigerConfigLoader.tree(relative, null).section("semantics").files().get(0).isAbsolute(),
+        assertTrue(LigerConfigLoader.tree(relative).section("semantics").files().get(0).isAbsolute(),
                 "a relative rule-file path comes back absolute");
         assertFalse(tree.section("pragmatics").present());
+        assertFalse(tree.section("lexica").present());
         assertFalse(tree.section("axioms").present());
-        assertEquals(ConfigTree.BUILTIN, tree.section("lexica").inheritedFrom());
-
-        ConfigTree inherited = LigerConfigLoader.tree(single, defaultConfig);
-        assertEquals(defaultConfig.toString(), inherited.section("pragmatics").inheritedFrom());
     }
 
     /** What the client does with the tree when a file is edited: join the files as assemble does. */
@@ -248,8 +250,8 @@ public class LigerConfigLoaderTest {
                   - ../axioms/a.p
                 """);
 
-        ConfigTree tree = LigerConfigLoader.tree(config, null);
-        ResolvedRuleSet set = LigerConfigLoader.resolve(config, null);
+        ConfigTree tree = LigerConfigLoader.tree(config);
+        ResolvedRuleSet set = LigerConfigLoader.resolve(config);
 
         assertEquals(set.semantics(), LigerConfigLoader.assemble(tree.section("semantics").files()));
         assertEquals(set.pragmatics(), LigerConfigLoader.assemble(tree.section("pragmatics").files()));
@@ -257,31 +259,41 @@ public class LigerConfigLoaderTest {
     }
 
     @Test
-    void findsConfigsAnywhereUnderTheGrammarButNotInFileIndexDirs() throws IOException {
+    void findsAGrammarsConfigsInItsFolderAndItsLigerFolderOnly() throws IOException {
         Path grammar = write("g/main.lfg", "");
         write("g/c.liger.yaml", "");
-        write("g/liger_rules/sub/d.liger.yaml", "");
-        write("g/main.lfg.fileindexdir/x.liger.yaml", "");
+        write("g/liger/d.liger.yaml", "");
+        write("g/liger/deeper/x.liger.yaml", "");
+        write("g/other/y.liger.yaml", "");
         write("g/other.yaml", "");
-        write("elsewhere/e.liger.yaml", "");
 
-        List<Path> expected = List.of(dir.resolve("g/c.liger.yaml"), dir.resolve("g/liger_rules/sub/d.liger.yaml"));
+        List<Path> expected = List.of(dir.resolve("g/c.liger.yaml"), dir.resolve("g/liger/d.liger.yaml"));
         assertEquals(expected, LigerConfigLoader.findConfigs(grammar));
         assertEquals(expected, LigerConfigLoader.findConfigs(dir.resolve("g")));
     }
 
+    /** A loose grammar beside a grammar folder (grammars/dev) is not offered the folder's config. */
+    @Test
+    void aLooseGrammarIsNotOfferedANeighboursConfig() throws IOException {
+        Path loose = write("dev/loose.lfg", "");
+        write("dev/big/liger/big.liger.yaml", "");
+
+        assertEquals(List.of(), LigerConfigLoader.findConfigs(loose));
+    }
+
     /**
      * The pragmatics rules used to be one string in the client (APP_DEFAULTS.graphInspector.rulesText),
-     * kept here as legacy_pragmatics_rules.txt. Split into files and chained by the default config,
-     * they must parse to the same rules, in the same order, with the same templates and hierarchies.
+     * kept here as legacy_pragmatics_rules.txt. Split into files and chained by the lfgxdrt grammar's
+     * config, they must parse to the same rules, in the same order, with the same templates and
+     * hierarchies.
      */
     @Test
-    void theDefaultConfigsPragmaticsMatchTheFormerHardcodedRules() throws IOException {
-        Path defaultConfig = Paths.get("liger_resources", "rules", "default.liger.yaml");
-        Assumptions.assumeTrue(Files.exists(defaultConfig), "needs liger_resources/rules from xleplusglue");
+    void theLfgxdrtConfigsPragmaticsMatchTheFormerHardcodedRules() throws IOException {
+        Path lfgxdrtConfig = Paths.get("grammars", "dev", "lfgxdrt_inference_grammar", "liger", "lfgxdrt.liger.yaml");
+        Assumptions.assumeTrue(Files.exists(lfgxdrtConfig), "needs grammars/ from xleplusglue");
 
         String legacy = Files.readString(Paths.get("src", "test", "resources", "rules", "legacy_pragmatics_rules.txt"));
-        String assembled = LigerConfigLoader.assemble(LigerConfigLoader.load(defaultConfig).pragmatics());
+        String assembled = LigerConfigLoader.assemble(LigerConfigLoader.load(lfgxdrtConfig).pragmatics());
 
         RuleParser before = new RuleParser(legacy);
         RuleParser after = new RuleParser(assembled);

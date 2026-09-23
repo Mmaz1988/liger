@@ -8,7 +8,8 @@ import java.util.List;
  * stages and the lexica to activate.
  *
  * @param kind       "config" or "rules"
- * @param pragmatics null when neither the loaded file nor a default config supplies any
+ * @param pragmatics null when the loaded file lists none (always, for a single rule file);
+ *                   such a rule set cannot be post-processed
  * @param axioms     the concatenated axiom files, or null when there are none
  */
 public record ResolvedRuleSet(String kind, Path source, String semantics, String pragmatics, List<Path> lexica,
