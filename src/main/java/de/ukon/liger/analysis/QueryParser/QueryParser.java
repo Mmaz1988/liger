@@ -58,12 +58,18 @@ public class QueryParser {
         for (int i = 0; i < fs.constraints.size();i++)
         {
             usedKeys.add(fs.constraints.get(i).getFsNode());
+            if (fs.constraints.get(i).getFsValue() instanceof String value) {
+                usedKeys.add(value);  // a node may so far occur only as a value (RuleParser.markUsed)
+            }
             fsIndexed.put(i,fs.constraints.get(i));
         }
         if (!fs.annotation.isEmpty()) {
             for (int i = 0; i < fs.annotation.size(); i++) {
                 int j = i + fs.constraints.size();
                 usedKeys.add(fs.annotation.get(i).getFsNode());
+                if (fs.annotation.get(i).getFsValue() instanceof String value) {
+                    usedKeys.add(value);
+                }
                 fsIndexed.put(j, fs.annotation.get(i));
             }
         }
@@ -106,12 +112,18 @@ public class QueryParser {
         for (int i = 0; i < fs.constraints.size();i++)
         {
             usedKeys.add(fs.constraints.get(i).getFsNode());
+            if (fs.constraints.get(i).getFsValue() instanceof String value) {
+                usedKeys.add(value);  // a node may so far occur only as a value (RuleParser.markUsed)
+            }
             fsIndexed.put(i,fs.constraints.get(i));
         }
         if (!fs.annotation.isEmpty()) {
             for (int i = 0; i < fs.annotation.size(); i++) {
                 int j = i + fs.constraints.size();
                 usedKeys.add(fs.annotation.get(i).getFsNode());
+                if (fs.annotation.get(i).getFsValue() instanceof String value) {
+                    usedKeys.add(value);
+                }
                 fsIndexed.put(j, fs.annotation.get(i));
             }
         }

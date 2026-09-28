@@ -336,14 +336,29 @@ public class RuleParser {
 
         if (structure.constraints != null) {
             for (GraphConstraint constraint : structure.constraints) {
-                usedKeys.add(constraint.getFsNode());
+                markUsed(constraint);
             }
         }
 
         if (structure.annotation != null) {
             for (GraphConstraint constraint : structure.annotation) {
-                usedKeys.add(constraint.getFsNode());
+                markUsed(constraint);
             }
+        }
+    }
+
+    /**
+     * Records the node ids a fact uses, as the node AND as the value. A node a rule introduces
+     * only as a value (#a EVAL #b, #c VAR #d) has no facts of its own yet; counting only fact
+     * nodes let the next rule mint the same id again, so a clause's VIEWPOINT node became an EVAL
+     * node and a T-REF' node a VAR node -- of the same clause or the other one, depending on the
+     * numbering. Atomic values ('past') and meaning constructors never look like a minted id, so
+     * recording every string value is harmless.
+     */
+    private void markUsed(GraphConstraint constraint) {
+        usedKeys.add(constraint.getFsNode());
+        if (constraint.getFsValue() instanceof String value) {
+            usedKeys.add(value);
         }
     }
 
@@ -508,7 +523,7 @@ public class RuleParser {
         QueryParser qp = new QueryParser(fs, templateRegistry, hierarchyRegistry);
 
         for (Integer key : qp.getFsIndices().keySet()) {
-            usedKeys.add(qp.getFsIndices().get(key).getFsNode());
+            markUsed(qp.getFsIndices().get(key));
         }
 
         Integer key = qp.getFsIndices().keySet().size();
