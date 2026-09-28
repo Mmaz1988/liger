@@ -109,4 +109,22 @@ class FsProlog2JavaTest {
                         + "must point at its native f22 identity, not a synthetic g22 copy");
         assertFalse(hasNode(result, "g22"), "var 22 must never appear as g22 anywhere in the output");
     }
+
+    /** An atom in a set stays an atom. XLE puts the optimality mark of final punctuation in the
+     *  o:: set (in_set('Punct',var(27))); converted like a structure element it became the node
+     *  f'Punct', which the meaning-constructor numbering took for a constructor node. */
+    @Test
+    void atomicSetElementStaysAnAtom() {
+        List<String> facts = List.of(
+                "cf(1,eq(proj(var(26),'o::'),var(27)))",
+                "cf(1,in_set('Punct',var(27)))",
+                "cf(1,in_set(var(3),var(27)))"
+        );
+
+        List<GraphConstraint> result = convert(facts);
+
+        assertTrue(hasConstraint(result, "f27", "in_set", "'Punct'"));
+        assertTrue(hasConstraint(result, "f27", "in_set", "f3"), "a structure element is still a node");
+        assertFalse(hasNode(result, "f'Punct'"));
+    }
 }

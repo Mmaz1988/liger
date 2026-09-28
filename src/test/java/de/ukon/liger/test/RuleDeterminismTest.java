@@ -95,4 +95,39 @@ public class RuleDeterminismTest {
 
         assertEquals(Map.of(), shared, "introduced nodes reached by more than one edge");
     }
+
+    /**
+     * A structure read back from JSON (a supplied sequence part) numbers its meaning constructors
+     * by the SYN-IDs it carries. The fixture has final punctuation, whose o:: set element was
+     * counted as a constructor node without a SYN-ID; the numbering then fell back to node-name
+     * order (f'Punct' first, g102 before g31) -- different numbers than the same sentence parsed
+     * fresh.
+     */
+    @Test
+    void suppliedStructureKeepsItsSynIds() throws Exception {
+        @SuppressWarnings("unchecked")
+        LinkedHashMap<String, Object> json = new ObjectMapper().readValue(
+                DIR.resolve("woman_thought_man_saw_himself.json").toFile(), LinkedHashMap.class);
+        LinguisticStructure fs = LinguisticStructure.parseFromJson(json);
+
+        Map<String, String> synIdByNode = new LinkedHashMap<>();
+        Map<String, String> meaningByNode = new LinkedHashMap<>();
+        for (var c : fs.constraints) {
+            if ("SYN-ID".equals(c.getRelationLabel())) {
+                synIdByNode.put(c.getFsNode(), String.valueOf(c.getFsValue()).substring(1));
+            } else if ("MEANING".equals(c.getRelationLabel())) {
+                String m = String.valueOf(c.getFsValue());
+                meaningByNode.put(c.getFsNode(), m.substring(1, m.length() - 1).replace("\\'", "'"));
+            }
+        }
+
+        String mcs = new GlueSemantics().returnMeaningConstructors(fs, false, false, true);
+
+        List<String> lines = mcs.lines().collect(Collectors.toList());
+        for (var e : synIdByNode.entrySet()) {
+            String prefix = "[" + e.getValue() + "] " + meaningByNode.get(e.getKey());
+            assertEquals(1, lines.stream().filter(l -> l.startsWith(prefix)).count(),
+                    "constructor of " + e.getKey() + " not numbered by its SYN-ID: " + prefix + "\n" + mcs);
+        }
+    }
 }

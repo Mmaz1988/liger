@@ -47,6 +47,9 @@ public class SyntheticMcIndexTest {
     /** Two glue nodes whose names sort as g11 &lt; g4, numbered the other way round. */
     private static LinguisticStructure structure(String firstSynId, String secondSynId) {
         List<GraphConstraint> constraints = new ArrayList<>();
+        // As in XLE output: a GLUE fact points at the set of meaning constructors. Only that
+        // set's elements are constructor nodes (GlueSemantics.collectMcReadings).
+        constraints.add(constraint("g0", "GLUE", "s"));
         constraints.add(constraint("s", "in_set", "g11"));
         constraints.add(constraint("s", "in_set", "g4"));
         constraints.add(constraint("g4", "SYN-ID", firstSynId));

@@ -648,9 +648,20 @@ public class FsProlog2Java {
 
             if (setMatcher.find()) {
                 String key = setMatcher.group(2);
-                String var = extractVar(setMatcher.group(1));
-
+                String element = setMatcher.group(1);
                 String source = node(key, glueNodes);
+
+                // A set can hold atoms as well as structures: the o:: projection's set of
+                // optimality marks holds 'Punct'. An atom stays an atom; turned into a node it
+                // became f'Punct', which the meaning-constructor numbering then took for a
+                // constructor node without a SYN-ID.
+                if (!keys.matcher(element).find()) {
+                    graphConstraints.add(new GraphConstraint(context, source, "in_set", element,
+                            glueNodes.contains(key) ? "g" : "f", root));
+                    continue;
+                }
+
+                String var = extractVar(element);
                 String target = node(var, glueNodes);
                 String projection = glueNodes.contains(var) ? "g" : "f";
                 graphConstraints.add(new GraphConstraint(context, source, "in_set", target,

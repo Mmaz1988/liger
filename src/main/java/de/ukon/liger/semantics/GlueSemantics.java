@@ -637,11 +637,26 @@ public class GlueSemantics {
         }
     }
 
+    /**
+     * The grammar's meaning-constructor nodes: the elements of the sets a GLUE fact points to
+     * ({@code g129 GLUE g130}, {@code g130 in_set g131}). Only those -- an f-structure has other
+     * sets (ADJUNCT, the o:: optimality marks), and counting their elements made the SYN-ID
+     * numbering look incomplete, so every punctuated sentence fell back to positional source
+     * indices. Rule-added GLUE facts carry a constructor, not a set, and are not numbered here.
+     */
     private Map<String, Set<ChoiceVar>> collectMcReadings(List<GraphConstraint> constraints) {
         Map<String, Set<ChoiceVar>> mcReadings = new LinkedHashMap<>();
 
+        Set<String> glueSets = new LinkedHashSet<>();
         for (GraphConstraint c : constraints) {
-            if ("in_set".equals(c.getRelationLabel()) && c.getFsValue() != null) {
+            if ("GLUE".equals(c.getRelationLabel()) && c.getFsValue() != null) {
+                glueSets.add(c.getFsValue().toString());
+            }
+        }
+
+        for (GraphConstraint c : constraints) {
+            if ("in_set".equals(c.getRelationLabel()) && c.getFsValue() != null
+                    && glueSets.contains(c.getFsNode())) {
                 mcReadings.computeIfAbsent(c.getFsValue().toString(), key -> new LinkedHashSet<>()).addAll(c.getReading());
             }
         }
@@ -683,7 +698,29 @@ public class GlueSemantics {
         if (fs instanceof Fstructure fstructure) {
             return orderedMcNodes(fstructure, fallbackNodes);
         }
+        // No c-structure object (a structure supplied back as JSON), but SYN-IDs were assigned in
+        // c-structure order, so ordering by them lists the constructors exactly as the fresh parse
+        // did -- same text, not only the same numbers.
+        Map<String, String> synIds = syntheticIndexMap(fs);
+        if (!fallbackNodes.isEmpty() && fallbackNodes.stream().allMatch(node -> synIdNumber(synIds.get(node)) != null)) {
+            List<String> ordered = new ArrayList<>(fallbackNodes);
+            ordered.sort(Comparator.comparing(node -> synIdNumber(synIds.get(node))));
+            return ordered;
+        }
         return fallbackOrderedMcNodes(fallbackNodes);
+    }
+
+    /** The number of a SYN-ID value like {@code i12}; null if it is not one. */
+    private static Integer synIdNumber(String synId) {
+        if (synId == null) {
+            return null;
+        }
+        String digits = synId.startsWith("i") ? synId.substring(1) : synId;
+        try {
+            return Integer.parseInt(digits);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private List<String> fallbackOrderedMcNodes(Set<String> fallbackNodes) {
