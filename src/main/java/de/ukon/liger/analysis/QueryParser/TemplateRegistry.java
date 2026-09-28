@@ -1,11 +1,12 @@
 package de.ukon.liger.analysis.QueryParser;
 
+import java.util.LinkedHashMap;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class TemplateRegistry {
-    private final Map<String, QueryTemplate> templates = new HashMap<>();
+    private final Map<String, QueryTemplate> templates = new LinkedHashMap<>();
 
     public void addTemplate(QueryTemplate template) {
         templates.put(template.getName(), template);

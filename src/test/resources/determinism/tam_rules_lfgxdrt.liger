@@ -1,0 +1,157 @@
+--replace(true);
+
+// LFGxDRT version of the Prolog-DRT TAM rules in tam_rules.liger.
+// The rule structure is copied from the original; GLUE meanings use
+// LFGxDRT literal notation instead of Prolog-style DRT constructors.
+
+#a TNS-ASP #b & #a s:: #c ==>
+#c TEMP-REF #d &
+#d T-REF 'undefined'.
+
+//Injection
+#c TEMP-REF #b & #c SIT #d & #c EV #v  ==>
+#d GLUE (\V.(\s.(\e.(([],[partOf(e,s)]) + V@e)))) : ((#v_v -o #v_t) -o (#d_s -o (#v_v -o #v_t))).
+
+//Consumption
+
+//Tier 1 rules
+#a TNS-ASP #b TENSE 'past' & #a s:: #c TEMP-REF #d & #d T-REF 'undefined' ==>  #d T-REF 'past' & #d CHECK '-'.
+#a TNS-ASP #b TENSE 'pres' & #a s:: #c TEMP-REF #d & #d T-REF 'undefined' ==>  #d T-REF 'pres' & #d CHECK '-'.
+#a TNS-ASP #b TENSE 'fut' & #a s:: #c TEMP-REF #d & #d T-REF 'undefined' ==>  #d T-REF 'future' & #d CHECK '-'.
+
+//#a TNS-ASP #b TENSE 'pres' & #a s:: #c ==> #c TEMP-REF #d & #d T-REF 'pres' & #d EVAL #e & #e TIME 'now'.
+//#a TNS-ASP #b TENSE 'fut' & #a s:: #c ==> #c TEMP-REF #d & #d T-REF 'fut' & #d EVAL #e & #e TIME 'now'.
+
+//Tier 2 rules
+//SOT rule
+#a T-REF 'past' &
+#a ^(TEMP-REF>s::>COMP) #b & #b !(s::>TEMP-REF) #c T-REF 'past' ==> #a T-REF 'non-future'.
+
+//Present counterfactual
+#a T-REF 'past' &
+#a ^(TEMP-REF>s::>OBJ>in_set>ADJUNCT) #b & #b VTYPE 'modal' &
+#b !(s::>TEMP-REF) #c T-REF 'pres' &
+#c CHECK '-'
+==> #a T-REF 'non-past' & #c CHECK '+' & #c EVAL #a.
+
+
+//Adding evals
+#a T-REF %a ==> #a EVAL #b.
+
+//COMP and XCOMP INJECTION
+#m COMP #a TNS-ASP #b & #a s:: #c TEMP-REF #e EVAL #f &
+#m s:: #n EV #v & #n SIT #d
+==> #d GLUE (\V.(\s.(\e.(([],[partOf(e,s)]) + V@s@e)))) : ((#f_s -o (#v_v -o #v_t)) -o (#d_s -o (#v_v -o #v_t))).
+
+#m XCOMP #a TNS-ASP #b & #a s:: #c TEMP-REF #e EVAL #f &
+#m s:: #n EV #v & #n SIT #d
+==> #d GLUE (\V.(\s.(\e.(([],[partOf(e,s)]) + V@s@e)))) : ((#f_s -o (#v_v -o #v_t)) -o (#d_s -o (#v_v -o #v_t))).
+
+#a XCOMP #b s:: #c TEMP-REF #d EVAL #e & #d T-REF 'undefined' &
+#a s:: #g TEMPF-REF #h T-REF %a & %a != 'undefined'& #h EVAL #i ==> #d EVAL #i.
+
+//Aspect rules
+#a TNS-ASP #b PROG '+_' & #a s:: #c ==> #c VIEWPOINT #d & #d ASPECT 'impv' & #d A-RESTR 'ongoing'.
+#a TNS-ASP #b PROG '-_' & #a s:: #c ==> #c VIEWPOINT #d & #d ASPECT 'undefined'.
+#a TNS-ASP #b TENSE %x & #b PROG '-_' & #a s:: #c VIEWPOINT #d ASPECT 'undefined' ==> #d ASPECT 'prv' & #d A-RESTR 'bounded'.
+#a TNS-ASP #b PERF '+_' & #a s:: #c ==> #c ASP-TENSE #d & #d A-REF 'past'.
+
+//Tier 2 aspect example
+#a T-REF 'undefined' &
+#a ^(TEMP-REF) #b ^(s::>XCOMP) #c & #c !(s::>TEMP-REF) #d EVAL #e &
+#b VIEWPOINT #f ASPECT 'prv'
+==>  #a T-REF 'future' & #a EVAL #d.
+
+//Semantic interpretation
+
+//Rules for interpreting grammatical aspect
+#a s:: #b VIEWPOINT #c ==>
+#c VAR #d & #c RESTR #e &
+#c ASP-RESTR' #f.
+
+#a s:: #b VIEWPOINT #c A-RESTR 'ongoing' &
+#c VAR #d & #c RESTR #e &
+#c ASP-RESTR' #f ==>
+#f GLUE (\s.(\t.([],[ongoing(t,s)]))) : (#d_s -o (#e_s -o #c_t)).
+
+#a s:: #b VIEWPOINT #c A-RESTR 'bounded' &
+#c VAR #d & #c RESTR #e &
+#c ASP-RESTR' #f ==>
+#f GLUE (\s.(\t.([],[bounded(t,s)]))) : (#d_s -o (#e_s -o #c_t)).
+
+
+#a s:: #b VIEWPOINT #c ASPECT 'impv' &
+#c VAR #d & #c RESTR #e &
+#b TEMP-REF #f &
+#b SIT #g
+ ==>  #c GLUE (\M.(\P.(\s.([],[(([z],[]) + M@s@z) -> P@z])))) : ((#d_s -o (#e_s -o #c_t)) -o ((#g_s -o #g_t) -o (#f_s -o #f_t))).
+
+//prv closure -- fixed
+#a s:: #b VIEWPOINT #c ASPECT 'prv' &
+#c VAR #d & #c RESTR #e &
+#b TEMP-REF #f &
+#b SIT #g
+ ==>  #c GLUE (\M.(\P.(\s.(([z],[]) + M@s@z + P@z)))) : ((#d_s -o (#e_s -o #c_t)) -o ((#g_s -o #g_t) -o (#f_s -o #f_t))).
+
+#a s:: #b VIEWPOINT #c ASPECT 'undefined' &
+#b TEMP-REF #f &
+#b SIT #g
+ ==>  #c GLUE (\P.(\s.(([],[]) + P@s))) : ((#g_s -o #g_t) -o (#f_s -o #f_t)).
+
+//Tense values
+
+//Past reference
+#a s:: #b TEMP-REF #c T-REF 'past' & #c EVAL #d ==>
+#c T-REF' #e & #e GLUE (\t.(\t2.([],[before(t,t2)]))) : (#c_s -o (#d_s -o #c_t)).
+
+//Aspectual tense
+#a s:: #b TEMP-REF #c EVAL #d &
+#b ASP-TENSE #e A-REF 'past' &
+ ==>
+#e A-REF' #f & #f GLUE (\t.(\t2.([],[before(t,t2)]))) :(#e_s -o (#c_s -o #e_t)) .
+
+//Present reference
+#a s:: #b TEMP-REF #c T-REF 'pres' & #c EVAL #d ==>
+#c T-REF' #e & #e GLUE (\t.(\t2.([],[overlap(t,t2)]))) : (#c_s -o (#d_s -o #c_t)).
+
+//Non-future
+#a s:: #b TEMP-REF #c T-REF 'non-future' & #c EVAL #d ==>
+#c T-REF' #e & #e GLUE (\t.(\t2.([],[nonfut(t,t2)]))) : (#c_s -o (#d_s -o #c_t)).
+
+
+//Non-past
+#a s:: #b TEMP-REF #c T-REF 'non-past' & #c EVAL #d ==>
+#c T-REF' #e & #e GLUE (\t.(\t2.([],[nonpast(t,t2)]))) : (#c_s -o (#d_s -o #c_t)).
+
+//Future reference
+#a s:: #b TEMP-REF #c T-REF 'future' & #c EVAL #d ==>
+#c T-REF' #e & #e GLUE (\t.(\t2.([],[after(t,t2)]))) : (#c_s -o (#d_s -o #c_t)).
+
+
+//absolute tense closure -- fixed
+#a s:: #b TEMP-REF #c T-REF %a & %a != 'undefined' & #c EVAL #d
+==> #c GLUE (\T.(\P.(\s.(([r],[]) + T@r@s + P@r)))) : ((#c_s -o (#d_s -o #c_t)) -o ((#c_s -o #c_t) -o (#d_s -o #d_t))).
+
+//aspectual tense closure
+#a s:: #b ASP-TENSE #c A-REF %a &
+#b TEMP-REF #e &
+ %a != 'undefined'
+==> #c GLUE (\T.(\P.(\s.(([r],[]) + T@r@s + P@r)))) : ((#c_s -o (#e_s -o #c_t)) -o ((#e_s -o #e_t) -o (#e_s -o #e_t))) || noscope.
+
+//unspec absolute closure
+#a s:: #b TEMP-REF #c T-REF %a & %a == 'undefined' & #c EVAL #d
+==> #c GLUE (\P.(\s.P@s)) : ((#c_s -o #c_t) -o (#d_s -o #d_t)).
+
+//#a EVAL #b
+//==> #b GLUE (\P.(([t],[t=now]) + P@t)) : ((#b_s -o #b_t) -o #b_t).
+
+#a TEMP-REF #b EVAL #c & #a SIT #s
+==> #a GLUE (\P.(([t],[t=now]) + P@t)) : ((#c_s -o #c_t) -o #s_t).
+
+
+#m COMP #n s:: #o TEMP-REF #a EVAL #b & #o SIT #s
+==> #o GLUE (\P.P) : ((#b_s -o #b_t) -o (#b_s -o #s_t)).
+
+#m XCOMP #n s:: #o TEMP-REF #a EVAL #b & #o SIT #s
+==> #o GLUE (\P.P) : ((#b_s -o #b_t) -o (#b_s -o #s_t)).
+

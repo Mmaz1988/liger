@@ -1,5 +1,6 @@
 package de.ukon.liger.analysis.QueryParser;
 
+import java.util.LinkedHashMap;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.utilities.HelperMethods;
 
@@ -30,7 +31,7 @@ public class Superior extends QueryExpression {
 
     @Override
     public void calculateSolutions() {
-        setSolution(new HashMap<>());
+        setSolution(new LinkedHashMap<>());
     }
 
     public String getHierarchyName() {

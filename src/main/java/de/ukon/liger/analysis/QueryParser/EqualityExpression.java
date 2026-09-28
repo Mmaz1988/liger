@@ -21,6 +21,7 @@
 
 package de.ukon.liger.analysis.QueryParser;
 
+import java.util.LinkedHashMap;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.utilities.HelperMethods;
 
@@ -46,7 +47,7 @@ public class EqualityExpression extends QueryExpression {
     @Override
     public void calculateSolutions() {
 
-        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new LinkedHashMap<>();
 
         for (Solution key : left.getSolution().keySet())
         {

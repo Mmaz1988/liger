@@ -21,6 +21,7 @@
 
 package de.ukon.liger.analysis.QueryParser;
 
+import java.util.LinkedHashMap;
 import de.ukon.liger.syntax.GraphConstraint;
 
 import java.util.HashMap;
@@ -49,7 +50,7 @@ public class AttributeExpression extends QueryExpression {
     {
         HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> out = left.getSolution();
 
-        HashMap<Integer,GraphConstraint> fsIndices = new HashMap<>();
+        HashMap<Integer,GraphConstraint> fsIndices = new LinkedHashMap<>();
 
             Iterator<Solution> it = out.keySet().iterator();
 

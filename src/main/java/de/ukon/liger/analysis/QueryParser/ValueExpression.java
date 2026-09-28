@@ -57,11 +57,11 @@ public class ValueExpression extends QueryExpression {
     @Override
     public void calculateSolutions()
     {
-        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new LinkedHashMap<>();
         out.putAll(left.getSolution());
 
         if (left.getNodeVar() == null) {
-            HashMap<Integer, GraphConstraint> matchingIndices = new HashMap<>();
+            HashMap<Integer, GraphConstraint> matchingIndices = new LinkedHashMap<>();
             String expected = normalizeFilterValue(right.getQuery());
 
             for (Integer key : left.getFsIndices().keySet()) {
@@ -81,13 +81,13 @@ public class ValueExpression extends QueryExpression {
             }
 
             if (!matchingIndices.isEmpty()) {
-                HashMap<String, HashMap<Integer, GraphConstraint>> reference = new HashMap<>();
+                HashMap<String, HashMap<Integer, GraphConstraint>> reference = new LinkedHashMap<>();
                 reference.put("__match__", matchingIndices);
 
                 HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new LinkedHashMap<>();
                 binding.put("__match__", reference);
 
-                HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> globalOut = new HashMap<>();
+                HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> globalOut = new LinkedHashMap<>();
                 globalOut.put(new Solution(Collections.singleton(new SolutionKey("__match__", "__match__"))), binding);
                 setSolution(globalOut);
                 setFsIndices(matchingIndices);
@@ -97,7 +97,7 @@ public class ValueExpression extends QueryExpression {
             return;
         }
 
-        HashMap<Integer,GraphConstraint> fsIndices = new HashMap<>();
+        HashMap<Integer,GraphConstraint> fsIndices = new LinkedHashMap<>();
 
         HashMap<Solution,HashMap<String,String>> newValueBindings = getParser().fsValueBindings;
 
@@ -115,8 +115,8 @@ public class ValueExpression extends QueryExpression {
             String nodeRef = out.get(key).get(nodeVar).keySet().stream().findAny().get();
             HashMap<Integer, GraphConstraint> boundIndices =  out.get(key).get(nodeVar).get(nodeRef);
 
-            HashMap<Integer,GraphConstraint> matchingIndices = new HashMap<>();
-            HashSet<Integer> nonBoundIndices = new HashSet<>();
+            HashMap<Integer,GraphConstraint> matchingIndices = new LinkedHashMap<>();
+            HashSet<Integer> nonBoundIndices = new LinkedHashSet<>();
 
             if (right.idRef)
             {
@@ -146,7 +146,7 @@ public class ValueExpression extends QueryExpression {
                         if (!newValueBindings.containsKey(key))
                         {
 
-                            newValueBindings.put(key,new HashMap<>());
+                            newValueBindings.put(key,new LinkedHashMap<>());
                             //
                             Iterator<Solution> it2 = getParser().fsValueBindings.keySet().iterator();
 

@@ -21,6 +21,8 @@
 
 package de.ukon.liger.analysis.QueryParser;
 
+import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.utilities.HelperMethods;
@@ -63,14 +65,14 @@ public class Node extends QueryExpression {
 public void calculateSolutions()
 {
 
-    HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> out = new HashMap<>();
+    HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> out = new LinkedHashMap<>();
 
 
     if (constant)
     {
-        HashMap<String,HashMap<Integer,GraphConstraint>> reference = new HashMap<>();
+        HashMap<String,HashMap<Integer,GraphConstraint>> reference = new LinkedHashMap<>();
 
-        reference.put(getNodeVar(),new HashMap<>());
+        reference.put(getNodeVar(),new LinkedHashMap<>());
 
         for (Integer key : getFsIndices().keySet())
         {
@@ -80,7 +82,7 @@ public void calculateSolutions()
             }
         }
 
-        HashMap<String,HashMap<String,HashMap<Integer,GraphConstraint>>> binding = new HashMap<>();
+        HashMap<String,HashMap<String,HashMap<Integer,GraphConstraint>>> binding = new LinkedHashMap<>();
         binding.put(getNodeVar(),reference);
         SolutionKey key = new SolutionKey(getNodeVar(),getNodeVar());
         out.put(new Solution(Collections.singleton(key)),binding);
@@ -89,7 +91,7 @@ public void calculateSolutions()
     }
 
     //Collect all available nodes in graph
-    Set<String> usedKeys = new HashSet<>();
+    Set<String> usedKeys = new LinkedHashSet<>();
     for (Integer key : getFsIndices().keySet())
     {
         usedKeys.add(getFsIndices().get(key).getFsNode());
@@ -106,10 +108,10 @@ public void calculateSolutions()
 
         for (String fs : usedKeys)
         {
-            HashMap<String,HashMap<Integer,GraphConstraint>> reference = new HashMap<>();
-            reference.put(fs,new HashMap<>());
-            HashMap<String,HashMap<String,HashMap<Integer,GraphConstraint>>> binding = new HashMap<>();
-            binding.put(getNodeVar(),new HashMap<>());
+            HashMap<String,HashMap<Integer,GraphConstraint>> reference = new LinkedHashMap<>();
+            reference.put(fs,new LinkedHashMap<>());
+            HashMap<String,HashMap<String,HashMap<Integer,GraphConstraint>>> binding = new LinkedHashMap<>();
+            binding.put(getNodeVar(),new LinkedHashMap<>());
 
 
 

@@ -1,5 +1,6 @@
 package de.ukon.liger.analysis.QueryParser;
 
+import java.util.LinkedHashMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,7 +10,7 @@ import java.util.Objects;
 
 public class HierarchyRegistry {
 
-    private final Map<String, List<String>> hierarchies = new HashMap<>();
+    private final Map<String, List<String>> hierarchies = new LinkedHashMap<>();
 
     public void addHierarchy(String name, List<String> order) {
         hierarchies.put(name, new ArrayList<>(order));

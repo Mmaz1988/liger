@@ -64,8 +64,8 @@ public class RuleParser {
     private LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> removedAnnotationsByRule = new LinkedHashMap<>();
     private static Pattern graphPattern = Pattern.compile("(#.+?)\\s+(\\S+)\\s+(.+)");
     private Boolean replace;
-    private Set<String> usedKeys = new HashSet<>();
-    private Set<Set<String>> usedReadings = new HashSet<>();
+    private Set<String> usedKeys = new LinkedHashSet<>();
+    private Set<Set<String>> usedReadings = new LinkedHashSet<>();
     private TemplateRegistry templateRegistry = new TemplateRegistry();
     private HierarchyRegistry hierarchyRegistry = new HierarchyRegistry();
     // Dictionaries for lex/2: the globally active lexica plus this rule text's --lexicon
@@ -172,7 +172,7 @@ public class RuleParser {
                 qp.generateQuery(r.getLeft());
                 QueryParserResult qpr = templateRegistry != null && !templateRegistry.getTemplates().isEmpty()
                         ? qp.parseQueryWithTemplates(r.getLeft()).stream().filter(result -> result.isSuccess).findFirst()
-                        .orElse(new QueryParserResult(new HashMap<>(), new HashMap<>()))
+                        .orElse(new QueryParserResult(new LinkedHashMap<>(), new LinkedHashMap<>()))
                         : qp.parseQuery(qp.getQueryList());
 
                 if (!qpr.isSuccess) {
@@ -235,9 +235,9 @@ public class RuleParser {
             return added;
         }
 
-        Set<ChoiceVar> context = extractContexts(qpr.result.get(solution), new HashMap<>());
+        Set<ChoiceVar> context = extractContexts(qpr.result.get(solution), new LinkedHashMap<>());
         List<String> search = r.splitGoal();
-        Map<String, String> introducedReferences = new HashMap<>();
+        Map<String, String> introducedReferences = new LinkedHashMap<>();
 
         for (String searchString : search) {
             Matcher graphMatcher = graphPattern.matcher(searchString.trim());
@@ -363,7 +363,7 @@ public class RuleParser {
     private List<Solution> dedupeSolutions(Rule r, QueryParserResult qpr) {
         RuleOutputVariables variables = collectRuleOutputVariables(r);
         List<Solution> out = new ArrayList<>();
-        Set<String> seen = new HashSet<>();
+        Set<String> seen = new LinkedHashSet<>();
 
         for (Solution solution : qpr.result.keySet()) {
             String signature = ruleOutputSignature(variables, qpr, solution);
@@ -416,7 +416,7 @@ public class RuleParser {
 
         Set<String> context = new TreeSet<>();
         try {
-            for (ChoiceVar choice : extractContexts(binding, new HashMap<>())) {
+            for (ChoiceVar choice : extractContexts(binding, new LinkedHashMap<>())) {
                 context.add(choice.toString());
             }
         } catch (RuntimeException e) {
@@ -520,13 +520,13 @@ public class RuleParser {
             LOGGER.debug("Currently processing rule with index " + k + ":\n" +
                     "\t" + r.toString());
 
-            HashMap<Integer, GraphConstraint> annotation = new HashMap<>();
+            HashMap<Integer, GraphConstraint> annotation = new LinkedHashMap<>();
 
             qp.resetParser();
             qp.generateQuery(r.getLeft());
             QueryParserResult qpr = templateRegistry != null && !templateRegistry.getTemplates().isEmpty()
                     ? qp.parseQueryWithTemplates(r.getLeft()).stream().filter(result -> result.isSuccess).findFirst()
-                    .orElse(new QueryParserResult(new HashMap<>(), new HashMap<>()))
+                    .orElse(new QueryParserResult(new LinkedHashMap<>(), new LinkedHashMap<>()))
                     : qp.parseQuery(qp.getQueryList());
 
             if (qpr.isSuccess && !r.getRight().equals("0")) {
@@ -536,7 +536,7 @@ public class RuleParser {
 
                 try {
                     boolean fixedContext = false;
-                    Set<ChoiceVar> context = new HashSet<>();
+                    Set<ChoiceVar> context = new LinkedHashSet<>();
                     //for (String searchString : search) {
                     for (int i = 0; i < search.size(); i++) {
                         String searchString = search.get(i).trim();
@@ -545,7 +545,7 @@ public class RuleParser {
                         if (graphMatcher.matches()) {
                             Matcher nodeMatcher = HelperMethods.fsNodePattern.matcher(graphMatcher.group(1));
                             Matcher valueMatcher = HelperMethods.fsNodePattern.matcher(graphMatcher.group(3));
-                            HashMap<Integer, GraphConstraint> newConstraints = new HashMap<>();
+                            HashMap<Integer, GraphConstraint> newConstraints = new LinkedHashMap<>();
 
                             boolean valueMatches = valueMatcher.matches();
 
@@ -579,13 +579,13 @@ public class RuleParser {
 
                                                 /*
                                                 if (!newValues.keySet().contains(valueMatcher.group(1))) {
-                                                    newValues.put(valueMatcher.group(1), new HashSet<>());
+                                                    newValues.put(valueMatcher.group(1), new LinkedHashSet<>());
                                                 }
                                                 newValues.get(valueMatcher.group(1)).add(newFsNode);
                                                 */
 
 
-                                                //   qp.getFsVarAssignment().put(valueMatcher.group(1),new HashSet<>());
+                                                //   qp.getFsVarAssignment().put(valueMatcher.group(1),new LinkedHashSet<>());
                                                 //   qp.getFsVarAssignment().get(valueMatcher.group(1)).add(newFsNode);
 
                                                 GraphConstraint c = new GraphConstraint();
@@ -595,9 +595,9 @@ public class RuleParser {
                                                 c.setFsValue(newFsNode);
 
                                                 if (!qpr.result.get(solutionKey).keySet().contains(valueMatcher.group(1))) {
-                                                    qpr.result.get(solutionKey).put(valueMatcher.group(1), new HashMap<>());
+                                                    qpr.result.get(solutionKey).put(valueMatcher.group(1), new LinkedHashMap<>());
                                                 }
-                                                qpr.result.get(solutionKey).get(valueMatcher.group(1)).put(newFsNode, new HashMap<>());
+                                                qpr.result.get(solutionKey).get(valueMatcher.group(1)).put(newFsNode, new LinkedHashMap<>());
                                                 newConstraints.put(key, c);
                                                 key++;
 
@@ -622,9 +622,9 @@ public class RuleParser {
                                                         ChoiceVar current = new ChoiceVar("A1");
                                                         ChoiceVar branch = new ChoiceVar("A2");
 
-                                                        Set<ChoiceVar> currentSet = new HashSet<>();
+                                                        Set<ChoiceVar> currentSet = new LinkedHashSet<>();
                                                         currentSet.add(current);
-                                                        Set<ChoiceVar> branchSet = new HashSet<>();
+                                                        Set<ChoiceVar> branchSet = new LinkedHashSet<>();
                                                         branchSet.add(branch);
 
                                                         c.setReading(currentSet);
@@ -674,7 +674,7 @@ public class RuleParser {
                                                 for (Integer constraintKey : newConstraints.keySet()) {
                                                     //TODO return unused context
                                                     ChoiceVar choice = new ChoiceVar("A1");
-                                                    Set<ChoiceVar> newChoice = new HashSet<>();
+                                                    Set<ChoiceVar> newChoice = new LinkedHashSet<>();
                                                     newChoice.add(choice);
 
                                                     GraphConstraint c1 = newConstraints.get(constraintKey);
@@ -698,9 +698,9 @@ public class RuleParser {
 
                                          String key2 = returnUnusedAnnotationNode();
 
-                                        qpr.result.get(solutionKey).put(nodeMatcher.group(1), new HashMap<>());
-                                        qpr.result.get(solutionKey).get(nodeMatcher.group(1)).put(key2, new HashMap<>());
-                                        //    qp.getFsVarAssignment().put(nodeMatcher.group(1), new HashSet<>());
+                                        qpr.result.get(solutionKey).put(nodeMatcher.group(1), new LinkedHashMap<>());
+                                        qpr.result.get(solutionKey).get(nodeMatcher.group(1)).put(key2, new LinkedHashMap<>());
+                                        //    qp.getFsVarAssignment().put(nodeMatcher.group(1), new LinkedHashSet<>());
                                         //   qp.getFsVarAssignment().get(nodeMatcher.group(1)).add(key2);
 
                                         if (valueMatches) {
@@ -805,7 +805,7 @@ public class RuleParser {
 
             }
 
-            HashMap<Integer,GraphConstraint> newIndexedInidces = new HashMap<>();
+            HashMap<Integer,GraphConstraint> newIndexedInidces = new LinkedHashMap<>();
             List<GraphConstraint> newConstraints = new ArrayList<>();
 
             int keys = 0;
@@ -1163,7 +1163,7 @@ public class RuleParser {
 /*
     public void resolveAmbiguity(GraphConstraint a, GraphConstraint b, HashMap<Integer,GraphConstraint> fsConstraints)
     {
-        Set<String> usedReadings = new HashSet<>();
+        Set<String> usedReadings = new LinkedHashSet<>();
 
         for (Integer key : fsConstraints.keySet())
         {
@@ -1173,8 +1173,8 @@ public class RuleParser {
 */
 
     public void resetRuleParser() {
-        usedKeys = new HashSet<>();
-        usedReadings = new HashSet<>();
+        usedKeys = new LinkedHashSet<>();
+        usedReadings = new LinkedHashSet<>();
         appliedRules = new LinkedHashSet<>();
         addedAnnotationsByRule = new LinkedHashMap<>();
         addedAnnotationsByStructure = new IdentityHashMap<>();
@@ -1184,7 +1184,7 @@ public class RuleParser {
 
     public Set<ChoiceVar> extractContexts(HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> result,
                                           HashMap<Integer, GraphConstraint> newConstraints) {
-        Set<ChoiceVar> out = new HashSet<>();
+        Set<ChoiceVar> out = new LinkedHashSet<>();
 
         for (String key : result.keySet()) {
             for (String key2 : result.get(key).keySet()) {
@@ -1359,7 +1359,7 @@ public class RuleParser {
         for (Rule r : rules)
         {
 
-            HashMap<Integer, GraphConstraint> annotation = new HashMap<>();
+            HashMap<Integer, GraphConstraint> annotation = new LinkedHashMap<>();
 
             qp.resetParser();
             qp.generateQuery(r.getLeft());
@@ -1383,14 +1383,14 @@ public class RuleParser {
                         if (graphMatcher.matches()) {
                             Matcher nodeMatcher = analysis.QueryParser.fsNodePattern.matcher(graphMatcher.group(1));
                             Matcher valueMatcher = analysis.QueryParser.fsNodePattern.matcher(graphMatcher.group(3));
-                            HashMap<Integer,GraphConstraint> newConstraints = new HashMap<>();
+                            HashMap<Integer,GraphConstraint> newConstraints = new LinkedHashMap<>();
 
                             boolean valueMatches = valueMatcher.matches();
 
                             if (nodeMatcher.matches()) {
                                 if (variableIsAssigned(qpr,nodeMatcher.group(1)))
                                 {
-                                    HashMap<String,Set<String>> newValues = new HashMap<>();
+                                    HashMap<String,Set<String>> newValues = new LinkedHashMap<>();
 
                                     for (String key2 : qp.getFsVarAssignment().get(nodeMatcher.group(1)))
                                     {
@@ -1412,10 +1412,10 @@ public class RuleParser {
 
                                                 if (!newValues.keySet().contains(valueMatcher.group(1)))
                                                 {
-                                                    newValues.put(valueMatcher.group(1),new HashSet<>());
+                                                    newValues.put(valueMatcher.group(1),new LinkedHashSet<>());
                                                 }
                                                 newValues.get(valueMatcher.group(1)).add(newFsNode);
-                                             //   qp.getFsVarAssignment().put(valueMatcher.group(1),new HashSet<>());
+                                             //   qp.getFsVarAssignment().put(valueMatcher.group(1),new LinkedHashSet<>());
                                              //   qp.getFsVarAssignment().get(valueMatcher.group(1)).add(newFsNode);
                                                 GraphConstraint c = new GraphConstraint();
                                                 c.setFsNode(key2);
@@ -1446,7 +1446,7 @@ public class RuleParser {
                                 {
 
                                     String key2 = qp.returnUnusedVar();
-                                    qp.getFsVarAssignment().put(nodeMatcher.group(1),new HashSet<>());
+                                    qp.getFsVarAssignment().put(nodeMatcher.group(1),new LinkedHashSet<>());
                                     qp.getFsVarAssignment().get(nodeMatcher.group(1)).add(key2);
 
 
@@ -1459,7 +1459,7 @@ public class RuleParser {
                                                 c.setFsValue(key3);
 
 
-                                                qp.getVarAssignment().put(nodeMatcher.group(1),new HashSet<>());
+                                                qp.getVarAssignment().put(nodeMatcher.group(1),new LinkedHashSet<>());
                                                 qp.getVarAssignment().get(nodeMatcher.group(1)).add(key);
                                                 newConstraints.put(key,c);
                                                 key++;
@@ -1469,7 +1469,7 @@ public class RuleParser {
                                         else
                                         {
                                             String newFsNode = qp.returnUnusedVar();
-                                            qp.getFsVarAssignment().put(valueMatcher.group(1),new HashSet<>());
+                                            qp.getFsVarAssignment().put(valueMatcher.group(1),new LinkedHashSet<>());
                                             qp.getFsVarAssignment().get(valueMatcher.group(1)).add(newFsNode);
                                             GraphConstraint c = new GraphConstraint();
                                             c.setFsNode(key2);
@@ -1477,7 +1477,7 @@ public class RuleParser {
                                             c.setFsValue(newFsNode);
 
 
-                                            qp.getVarAssignment().put(nodeMatcher.group(1),new HashSet<>());
+                                            qp.getVarAssignment().put(nodeMatcher.group(1),new LinkedHashSet<>());
                                             qp.getVarAssignment().get(nodeMatcher.group(1)).add(key);
                                             newConstraints.put(key,c);
                                             key++;
@@ -1493,7 +1493,7 @@ public class RuleParser {
 
                                         c.setFsValue(graphMatcher.group(3));
 
-                                        qp.getVarAssignment().put(nodeMatcher.group(1),new HashSet<>());
+                                        qp.getVarAssignment().put(nodeMatcher.group(1),new LinkedHashSet<>());
                                         qp.getVarAssignment().get(nodeMatcher.group(1)).add(key);
                                         newConstraints.put(key,c);
                                         key++;

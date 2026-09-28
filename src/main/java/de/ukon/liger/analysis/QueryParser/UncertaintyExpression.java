@@ -66,15 +66,15 @@ public class UncertaintyExpression extends QueryExpression {
     private Uncertainty middle;
     private QueryExpression right;
     private List<String> gf = Arrays.asList("OBL", "OBJ", "SUBJ", "COMP", "XCOMP", "OBJ-TH", "XCOMP-PRED");
-    private Set<ChoiceVar> choices = new HashSet<>();
-    private final Map<String, List<Map.Entry<Integer, GraphConstraint>>> outgoing = new HashMap<>();
-    private final Map<String, List<Map.Entry<Integer, GraphConstraint>>> incoming = new HashMap<>();
-    private final Map<String, List<GraphConstraint>> constraintsByNode = new HashMap<>();
-    private final Map<String, List<GraphConstraint>> constraintsByValue = new HashMap<>();
-    private final Map<String, List<Map.Entry<Integer, GraphConstraint>>> activeOutgoing = new HashMap<>();
-    private final Map<String, List<Map.Entry<Integer, GraphConstraint>>> activeIncoming = new HashMap<>();
-    private final Map<String, List<GraphConstraint>> activeConstraintsByNode = new HashMap<>();
-    private final Map<String, List<GraphConstraint>> activeConstraintsByValue = new HashMap<>();
+    private Set<ChoiceVar> choices = new LinkedHashSet<>();
+    private final Map<String, List<Map.Entry<Integer, GraphConstraint>>> outgoing = new LinkedHashMap<>();
+    private final Map<String, List<Map.Entry<Integer, GraphConstraint>>> incoming = new LinkedHashMap<>();
+    private final Map<String, List<GraphConstraint>> constraintsByNode = new LinkedHashMap<>();
+    private final Map<String, List<GraphConstraint>> constraintsByValue = new LinkedHashMap<>();
+    private final Map<String, List<Map.Entry<Integer, GraphConstraint>>> activeOutgoing = new LinkedHashMap<>();
+    private final Map<String, List<Map.Entry<Integer, GraphConstraint>>> activeIncoming = new LinkedHashMap<>();
+    private final Map<String, List<GraphConstraint>> activeConstraintsByNode = new LinkedHashMap<>();
+    private final Map<String, List<GraphConstraint>> activeConstraintsByValue = new LinkedHashMap<>();
     private boolean activeTraversalUsesFullGraph = true;
 
     private enum OffPathDirection {
@@ -123,7 +123,7 @@ public class UncertaintyExpression extends QueryExpression {
         this.middle = middle;
         this.right = right;
         setParser(this.right.getParser());
-        setFsIndices(new HashMap<>());
+        setFsIndices(new LinkedHashMap<>());
 
         calculateSolutions();
     }
@@ -132,7 +132,7 @@ public class UncertaintyExpression extends QueryExpression {
     @Override
     public void calculateSolutions() {
         buildGraphIndex();
-        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new LinkedHashMap<>();
 
         for (Solution leftKey : left.getSolution().keySet()) {
             if (!leftKey.isTruthValue()) {
@@ -145,7 +145,7 @@ public class UncertaintyExpression extends QueryExpression {
             }
 
             for (String nodeRef : leftBinding.get(nodeVar).keySet()) {
-                HashMap<Integer, GraphConstraint> boundIndices = new HashMap<>();
+                HashMap<Integer, GraphConstraint> boundIndices = new LinkedHashMap<>();
                 for (Integer index : middle.getFsIndices().keySet()) {
                     if (HelperMethods.nodeIdsEqual(middle.getFsIndices().get(index).getFsNode(), nodeRef)) {
                         boundIndices.put(index, middle.getFsIndices().get(index));
@@ -178,7 +178,7 @@ public class UncertaintyExpression extends QueryExpression {
                             if (!isCompatibleNodeBinding(leftBinding, rightSolutions.get(rightKey), right.getNodeVar())) {
                                 continue;
                             }
-                            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>(leftBinding);
+                            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new LinkedHashMap<>(leftBinding);
                             binding.put(right.getNodeVar(), rightSolutions.get(rightKey).get(right.getNodeVar()));
                             out.put(Solution.merge(leftKey, rightKey), binding);
                         }
@@ -239,7 +239,7 @@ public class UncertaintyExpression extends QueryExpression {
     }
 
     private void prepareTraversalGraph(List<PathAtom> atoms) {
-        Set<String> labels = new HashSet<>();
+        Set<String> labels = new LinkedHashSet<>();
         boolean wildcard = false;
 
         for (PathAtom atom : atoms) {
@@ -612,7 +612,7 @@ public class UncertaintyExpression extends QueryExpression {
             return searchQuantifiedNormal(search, in);
         }
 
-        HashMap<Integer, GraphConstraint> result = new HashMap<>();
+        HashMap<Integer, GraphConstraint> result = new LinkedHashMap<>();
 
         List<Integer> boundVariables = new ArrayList<>();
 
@@ -622,7 +622,7 @@ public class UncertaintyExpression extends QueryExpression {
                 result = in;
             }
 
-            HashMap<Integer, GraphConstraint> currentResult = new HashMap<>();
+            HashMap<Integer, GraphConstraint> currentResult = new LinkedHashMap<>();
 
             for (Integer key : result.keySet()) {
 
@@ -679,7 +679,7 @@ public class UncertaintyExpression extends QueryExpression {
                             repeatCount++;
                         }
 
-                        HashMap<Integer, GraphConstraint> newResult = new HashMap<>(right.getFsIndices());
+                        HashMap<Integer, GraphConstraint> newResult = new LinkedHashMap<>(right.getFsIndices());
                         for (Integer r : new ArrayList<>(newResult.keySet())) {
                             if (!matchingKeys.contains(r)) {
                                 newResult.remove(r);
@@ -700,7 +700,7 @@ public class UncertaintyExpression extends QueryExpression {
                         boundVariables.add(key);
                     }
 
-                    HashMap<Integer, GraphConstraint> newResult = new HashMap<>();
+                    HashMap<Integer, GraphConstraint> newResult = new LinkedHashMap<>();
 
                     for (Map.Entry<Integer, GraphConstraint> edge : edgesFrom(String.valueOf(result.get(key).getFsValue()), false)) {
                         if (HelperMethods.nodeIdsEqual(String.valueOf(result.get(key).getFsValue()), edge.getValue().getFsNode())) {
@@ -772,7 +772,7 @@ public class UncertaintyExpression extends QueryExpression {
             }
 
             if (acceptedNodes.isEmpty()) {
-                return new HashMap<>();
+                return new LinkedHashMap<>();
             }
             currentNodes = acceptedNodes;
         }
@@ -856,7 +856,7 @@ public class UncertaintyExpression extends QueryExpression {
             }
 
             if (nextNodes.isEmpty()) {
-                return new HashMap<>();
+                return new LinkedHashMap<>();
             }
             currentNodes = nextNodes;
         }
@@ -909,7 +909,7 @@ public class UncertaintyExpression extends QueryExpression {
         }
 
         Set<String> endpointNodes = evaluateInsideOutPath(startNodes, search, right.getFsIndices());
-        HashMap<Integer, GraphConstraint> result = new HashMap<>();
+        HashMap<Integer, GraphConstraint> result = new LinkedHashMap<>();
 
         for (Integer key : right.getFsIndices().keySet()) {
             GraphConstraint constraint = right.getFsIndices().get(key);
@@ -964,7 +964,7 @@ public class UncertaintyExpression extends QueryExpression {
             }
 
             if (acceptedNodes.isEmpty()) {
-                return new HashMap<>();
+                return new LinkedHashMap<>();
             }
             currentNodes = acceptedNodes;
         }

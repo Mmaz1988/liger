@@ -1,5 +1,7 @@
 package de.ukon.liger.analysis.QueryParser;
 
+import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import de.ukon.liger.syntax.GraphConstraint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,12 +29,12 @@ public class NegationExpression extends QueryExpression {
 
     @Override
     public void calculateSolutions() {
-        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new LinkedHashMap<>();
 
         if (left == null) {
             Solution seed = new Solution();
-            if (!matchesNegatedQuery(seed, new HashMap<>())) {
-                out.put(seed, new HashMap<>());
+            if (!matchesNegatedQuery(seed, new LinkedHashMap<>())) {
+                out.put(seed, new LinkedHashMap<>());
             }
             setSolution(out);
             setConjoinedSolutions(new java.util.ArrayList<>());
@@ -59,14 +61,14 @@ public class NegationExpression extends QueryExpression {
                                         HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> seedBinding) {
         try {
             QueryParser parser = getParser();
-            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> seedSolution = new HashMap<>();
+            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> seedSolution = new LinkedHashMap<>();
             if (outerKey != null) {
                 seedSolution.put(outerKey.copy(), copyBinding(seedBinding));
             }
 
             QueryParser nestedParser = new QueryParser(
                     current.getNegatedQuery(),
-                    parser.getFsIndices() == null ? new HashMap<>() : new HashMap<>(parser.getFsIndices()),
+                    parser.getFsIndices() == null ? new LinkedHashMap<>() : new LinkedHashMap<>(parser.getFsIndices()),
                     parser.cp,
                     parser.getTemplateRegistry(),
                     parser.getHierarchyRegistry());
@@ -92,15 +94,15 @@ public class NegationExpression extends QueryExpression {
 
     private HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> copyBinding(
             HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> source) {
-        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> copy = new HashMap<>();
+        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> copy = new LinkedHashMap<>();
         if (source == null) {
             return copy;
         }
 
         for (java.util.Map.Entry<String, HashMap<String, HashMap<Integer, GraphConstraint>>> variable : source.entrySet()) {
-            HashMap<String, HashMap<Integer, GraphConstraint>> references = new HashMap<>();
+            HashMap<String, HashMap<Integer, GraphConstraint>> references = new LinkedHashMap<>();
             for (java.util.Map.Entry<String, HashMap<Integer, GraphConstraint>> reference : variable.getValue().entrySet()) {
-                references.put(reference.getKey(), new HashMap<>(reference.getValue()));
+                references.put(reference.getKey(), new LinkedHashMap<>(reference.getValue()));
             }
             copy.put(variable.getKey(), references);
         }
@@ -108,7 +110,7 @@ public class NegationExpression extends QueryExpression {
     }
 
     private Set<String> extractQueryVariables(String query) {
-        Set<String> vars = new HashSet<>();
+        Set<String> vars = new LinkedHashSet<>();
         if (query == null) {
             return vars;
         }

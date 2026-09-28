@@ -33,7 +33,7 @@ public abstract class QueryExpression {
     private HashMap<Integer, GraphConstraint> fsIndices;
     private String nodeVar;
 
-    private HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> solution = new HashMap<>();
+    private HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> solution = new LinkedHashMap<>();
 
 
 
@@ -52,8 +52,8 @@ public abstract class QueryExpression {
 
     public HashMap<Integer,GraphConstraint> calculateInsideOutIndices(HashMap<Integer,GraphConstraint> in, HashMap<Integer,GraphConstraint> fsIndices)
     {
-        Set<String> fsNodes = new HashSet<>();
-        HashMap<Integer,GraphConstraint> out = new HashMap<>();
+        Set<String> fsNodes = new LinkedHashSet<>();
+        HashMap<Integer,GraphConstraint> out = new LinkedHashMap<>();
 
         for (Integer key : in.keySet())
         {
@@ -124,14 +124,14 @@ public abstract class QueryExpression {
     public HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>>
     mapUsedKeys(Set<String> usedKeys, HashMap<Integer,GraphConstraint> fsIndices, String nodeVar) {
 
-        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 = new HashMap<>();
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 = new LinkedHashMap<>();
 
 
         for (String fs : usedKeys) {
-            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
-            binding.put(nodeVar, new HashMap<>());
-            HashMap<String, HashMap<Integer, GraphConstraint>> reference = new HashMap<>();
-            reference.put(fs, new HashMap<>());
+            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new LinkedHashMap<>();
+            binding.put(nodeVar, new LinkedHashMap<>());
+            HashMap<String, HashMap<Integer, GraphConstraint>> reference = new LinkedHashMap<>();
+            reference.put(fs, new LinkedHashMap<>());
 
             /*
             for (Integer key : fsIndices.keySet()) {
@@ -151,7 +151,7 @@ public abstract class QueryExpression {
     public HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>>
     mergeSolutions(HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> solution)
     {
-        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> merged = new HashMap<>();
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> merged = new LinkedHashMap<>();
 
         return null;
     }

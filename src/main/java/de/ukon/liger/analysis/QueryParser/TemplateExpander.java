@@ -64,7 +64,7 @@ public class TemplateExpander {
             throw new IllegalArgumentException("Template arity mismatch for " + invocation.name());
         }
 
-        Map<String, String> substitution = new HashMap<>();
+        Map<String, String> substitution = new LinkedHashMap<>();
         for (int i = 0; i < template.getParameters().size(); i++) {
             substitution.put(template.getParameters().get(i), invocation.arguments().get(i));
         }
@@ -185,7 +185,7 @@ public class TemplateExpander {
     private static String freshFsNodeName(Set<String> usedVars, AtomicInteger freshVarCounter) {
         de.ukon.liger.utilities.VariableHandler variableHandler = new de.ukon.liger.utilities.VariableHandler();
         HashMap<de.ukon.liger.utilities.VariableHandler.variableType, List<String>> reserved = variableHandler.getReservedVariables();
-        HashMap<de.ukon.liger.utilities.VariableHandler.variableType, List<String>> seeded = new HashMap<>();
+        HashMap<de.ukon.liger.utilities.VariableHandler.variableType, List<String>> seeded = new LinkedHashMap<>();
 
         for (Map.Entry<de.ukon.liger.utilities.VariableHandler.variableType, List<String>> entry : reserved.entrySet()) {
             seeded.put(entry.getKey(), new ArrayList<>(entry.getValue()));

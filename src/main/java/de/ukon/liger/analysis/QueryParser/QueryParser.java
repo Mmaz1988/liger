@@ -40,8 +40,8 @@ public class QueryParser {
     private LinkedList<QueryExpression> queryList;
     private HashMap<Integer, GraphConstraint> fsIndices;
     private VariableHandler vh = new VariableHandler();
-    private Set<String> usedKeys = new HashSet<>();
-    public HashMap<Solution, HashMap<String,String>> fsValueBindings = new HashMap<>();
+    private Set<String> usedKeys = new LinkedHashSet<>();
+    public HashMap<Solution, HashMap<String,String>> fsValueBindings = new LinkedHashMap<>();
     private final static Logger LOGGER = LoggerFactory.getLogger(QueryParser.class);
     public ChoiceSpace cp;
     private TemplateRegistry templateRegistry;
@@ -53,7 +53,7 @@ public class QueryParser {
     {
         this.query = query;
 
-        HashMap<Integer,GraphConstraint> fsIndexed = new HashMap<>();
+        HashMap<Integer,GraphConstraint> fsIndexed = new LinkedHashMap<>();
 
         for (int i = 0; i < fs.constraints.size();i++)
         {
@@ -101,7 +101,7 @@ public class QueryParser {
     public QueryParser(LinguisticStructure fs)
     {
 
-        HashMap<Integer,GraphConstraint> fsIndexed = new HashMap<>();
+        HashMap<Integer,GraphConstraint> fsIndexed = new LinkedHashMap<>();
 
         for (int i = 0; i < fs.constraints.size();i++)
         {
@@ -176,7 +176,7 @@ public class QueryParser {
 
         LinkedList<QueryExpression> queryList = new LinkedList<>();
         List<String> deque = (LinkedList<String>) queryDeque;
-        HashMap<String, Node> usedFsNodes = new HashMap<String, Node>();
+        HashMap<String, Node> usedFsNodes = new LinkedHashMap<String, Node>();
 
         for (int i = 0; i < queryDeque.size(); i++) {
             String currentToken = deque.get(i);
@@ -366,7 +366,7 @@ public class QueryParser {
 
             ListIterator<QueryExpression> it = parsedQueryList.listIterator();
 
-            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> result = new HashMap<>();
+            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> result = new LinkedHashMap<>();
 
 
             QueryExpression previous = null;
@@ -512,7 +512,7 @@ public class QueryParser {
 
             return new QueryParserResult(result, fsValueBindings);
         }
-        return new QueryParserResult(new HashMap<>(),new HashMap<>());
+        return new QueryParserResult(new LinkedHashMap<>(),new LinkedHashMap<>());
     }
 
     private boolean isStandaloneFilterQuery(LinkedList<QueryExpression> queryList) {
@@ -534,7 +534,7 @@ public class QueryParser {
     }
 
     private QueryParserResult parseStandaloneFilterQuery(LinkedList<QueryExpression> queryList) {
-        HashSet<Integer> candidateIndices = new HashSet<>(fsIndices.keySet());
+        HashSet<Integer> candidateIndices = new LinkedHashSet<>(fsIndices.keySet());
 
         for (QueryExpression expression : queryList) {
             if (expression instanceof End || expression instanceof Conjunction) {
@@ -560,7 +560,7 @@ public class QueryParser {
         }
 
         if (candidateIndices.isEmpty()) {
-            return new QueryParserResult(new HashMap<>(), new HashMap<>());
+            return new QueryParserResult(new LinkedHashMap<>(), new LinkedHashMap<>());
         }
 
         HashMap<Integer, GraphConstraint> matches = new LinkedHashMap<>();
@@ -577,7 +577,7 @@ public class QueryParser {
         HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> result = new LinkedHashMap<>();
         result.put(new Solution(Collections.singleton(new SolutionKey("__match__", "__match__"))), binding);
 
-        return new QueryParserResult(result, new HashMap<>());
+        return new QueryParserResult(result, new LinkedHashMap<>());
     }
 
     private String normalizeStandaloneAttribute(String token) {
@@ -633,7 +633,7 @@ public class QueryParser {
 
     public void resetParser()
     {
-        this.fsValueBindings = new HashMap<>();
+        this.fsValueBindings = new LinkedHashMap<>();
         this.queryList = null;
         this.query = null;
         this.superiorConstraints = new ArrayList<>();
@@ -845,7 +845,7 @@ public class QueryParser {
             return result;
         }
 
-        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> filtered = new HashMap<>();
+        HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> filtered = new LinkedHashMap<>();
 
         for (Solution solutionKey : result.keySet()) {
             boolean valid = true;

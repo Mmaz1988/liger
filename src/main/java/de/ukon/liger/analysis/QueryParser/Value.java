@@ -57,7 +57,7 @@ public class Value extends QueryExpression {
     {
         String lookup = normalizeValue(getQuery());
 
-        HashMap<Integer, GraphConstraint> matching = new HashMap<>();
+        HashMap<Integer, GraphConstraint> matching = new LinkedHashMap<>();
         for (Integer key : getFsIndices().keySet()) {
             String value = normalizeValue(String.valueOf(getFsIndices().get(key).getFsValue()));
             if (lookup != null && lookup.equals(value)) {
@@ -68,12 +68,12 @@ public class Value extends QueryExpression {
         if (!matching.isEmpty()) {
             setFsIndices(matching);
 
-            HashMap<String, HashMap<Integer, GraphConstraint>> reference = new HashMap<>();
+            HashMap<String, HashMap<Integer, GraphConstraint>> reference = new LinkedHashMap<>();
             reference.put("__match__", matching);
             HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new LinkedHashMap<>();
             binding.put("__match__", reference);
 
-            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new LinkedHashMap<>();
             out.put(new Solution(Collections.singleton(new SolutionKey("__match__", "__match__"))), binding);
             setSolution(out);
         }

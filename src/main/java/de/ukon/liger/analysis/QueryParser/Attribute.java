@@ -33,7 +33,7 @@ public class Attribute extends QueryExpression {
     public Attribute(String query, HashMap<Integer, GraphConstraint> fsIndices, QueryParser parser) {
         super(query, fsIndices,parser);
 
-        HashMap<Integer,GraphConstraint> fs = new HashMap<>();
+        HashMap<Integer,GraphConstraint> fs = new LinkedHashMap<>();
         String lookup = query != null && query.startsWith("edge=") ? query.substring("edge=".length()) : query;
 
         for (int key : fsIndices.keySet())
@@ -56,7 +56,7 @@ public class Attribute extends QueryExpression {
                 ? getQuery().substring("edge=".length())
                 : getQuery();
 
-        HashMap<Integer, GraphConstraint> matching = new HashMap<>();
+        HashMap<Integer, GraphConstraint> matching = new LinkedHashMap<>();
         for (Integer key : getFsIndices().keySet()) {
             if (lookup != null && lookup.equals(getFsIndices().get(key).getRelationLabel())) {
                 matching.put(key, getFsIndices().get(key));
@@ -66,12 +66,12 @@ public class Attribute extends QueryExpression {
         if (!matching.isEmpty()) {
             setFsIndices(matching);
 
-            HashMap<String, HashMap<Integer, GraphConstraint>> reference = new HashMap<>();
+            HashMap<String, HashMap<Integer, GraphConstraint>> reference = new LinkedHashMap<>();
             reference.put("__match__", matching);
             HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new LinkedHashMap<>();
             binding.put("__match__", reference);
 
-            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new LinkedHashMap<>();
             out.put(new Solution(Collections.singleton(new SolutionKey("__match__", "__match__"))), binding);
             setSolution(out);
         }

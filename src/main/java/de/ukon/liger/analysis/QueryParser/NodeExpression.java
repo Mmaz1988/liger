@@ -32,7 +32,7 @@ public class NodeExpression extends QueryExpression {
 
     public NodeExpression(QueryExpression left, Node right) {
         setNodeVar(right.getNodeVar());
-        setFsIndices(new HashMap<>());
+        setFsIndices(new LinkedHashMap<>());
         this.left = left;
         this.right = right;
         setParser(left.getParser());
@@ -64,7 +64,7 @@ public class NodeExpression extends QueryExpression {
 
             if (!alreadyBound)
             {
-                HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new HashMap<>();
+                HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new LinkedHashMap<>();
 
 
                     HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out2 =
@@ -82,7 +82,7 @@ public class NodeExpression extends QueryExpression {
                         }
                         Solution newKey = Solution.merge(key, key2);
 
-                        out.put(newKey,new HashMap<>());
+                        out.put(newKey,new LinkedHashMap<>());
                         out.get(newKey).putAll(left.getSolution().get(key));
                         out.get(newKey).putAll(out2.get(key2));
                     }
@@ -125,7 +125,7 @@ public class NodeExpression extends QueryExpression {
             HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> leftSolution = left.getSolution();
             HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> rightSolution = right.getSolution();
 
-            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> solution = new HashMap<>();
+            HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> solution = new LinkedHashMap<>();
 
 
 
@@ -149,7 +149,7 @@ public class NodeExpression extends QueryExpression {
                                         if (checkSolutionCompatibility(key, key2)) {
                                             Solution newKey = Solution.merge(key, key2);
 
-                                            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
+                                            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new LinkedHashMap<>();
 
                                             binding.putAll(rightSolution.get(key));
                                             binding.putAll(leftSolution.get(key2));
@@ -165,7 +165,7 @@ public class NodeExpression extends QueryExpression {
                     } else {
                         for (Integer key2 : left.getFsIndices().keySet()) {
                             if (left.getFsIndices().get(key2).getFsValue().equals(nodeRef)) {
-                                HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
+                                HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new LinkedHashMap<>();
 
                                 binding.putAll(rightSolution.get(key));
                                 solution.put(key, binding);
@@ -228,7 +228,7 @@ public class NodeExpression extends QueryExpression {
             //Concatenation with previous variable bindings
 
             if (left.getNodeVar() != null) {
-                HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out3 = new HashMap<>();
+                HashMap<Set<SolutionKey>, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out3 = new LinkedHashMap<>();
 
 
                 for (Solution key : leftSolution.keySet()) {
@@ -248,7 +248,7 @@ public class NodeExpression extends QueryExpression {
                         String nodeRef2 = out2.get(key2).get(nodeVar2).keySet().stream().findAny().get();
                         //      HashMap<Integer,GraphConstraint> boundIndices2 = out2.get(key2).get(nodeVar2).get(nodeRef2);
 
-                        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new HashMap<>();
+                        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = new LinkedHashMap<>();
 
                         for (String key4 : leftSolution.get(key).keySet()) {
                             if (!key4.equals(nodeVar)) {
@@ -314,7 +314,7 @@ public class NodeExpression extends QueryExpression {
                     SolutionKey sol1var = sol1Itr.next();
                     if (!sol1map.containsKey(sol1var.variable))
                     {
-                        sol1map.put(sol1var.variable,new HashSet<>());
+                        sol1map.put(sol1var.variable,new LinkedHashSet<>());
                     }
                     sol1map.get(sol1var.variable).add(sol1var.reference);
                 }
@@ -326,7 +326,7 @@ public class NodeExpression extends QueryExpression {
                     SolutionKey sol2var = sol2Itr.next();
                     if (!sol2map.containsKey(sol2var.variable))
                     {
-                        sol2map.put(sol2var.variable,new HashSet<>());
+                        sol2map.put(sol2var.variable,new LinkedHashSet<>());
                     }
                     sol2map.get(sol2var.variable).add(sol2var.reference);
                 }
