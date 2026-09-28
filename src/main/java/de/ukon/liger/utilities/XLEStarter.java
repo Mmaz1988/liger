@@ -83,225 +83,97 @@ public class XLEStarter {
     }
 
 
+    /** The grammar the last {@link #generateXLEStarterFile()} resolved (a {@code .glue} grammar's
+     *  converted {@code .lfg}), which every parse script uses. The loaded grammar is LiGER-wide
+     *  state already (xle_paths.txt), so one value serves every request. */
+    private static volatile String activeGrammarPath;
+
+    /** The environment every XLE script sets up. */
+    private static String scriptHeader() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("#!/bin/bash\n");
+        sb.append("export XLEPATH=").append(xlePath).append("\n");
+        sb.append("export PATH=${XLEPATH}/bin:$PATH\n");
+        sb.append("export DYLD_LIBRARY_PATH=$XLEPATH/lib:$XLEPATH/bin/sp-3.12.7\n");
+        sb.append("export LD_LIBRARY_PATH=${XLEPATH}/lib\n");
+        sb.append("export LD_LIBRARY_PATH=${XLEPATH}/lib:$LD_LIBRARY_PATH\n");
+        sb.append("export DYLD_LIBRARY_PATH=${XLEPATH}/lib:$DYLD_LIBRARY_PATH\n");
+        sb.append("\n");
+        sb.append("export TCL_LIBRARY=${XLEPATH}/tcl/scripts/tcl\n");
+        sb.append("export TCLLIBPATH=${XLEPATH}/tcl/scripts/tcl\n");
+        sb.append("export TKLIBPATH=${XLEPATH}/tcl/scripts/tk\n");
+        sb.append("export TK_LIBRARY=${XLEPATH}/tcl/scripts/tk\n");
+        sb.append("\n");
+        return sb.toString();
+    }
+
+    private static String scriptPath(Path path) {
+        String p = path.toString();
+        return operatingSystem == OS.WINDOWS ? HelperMethods.formatWslString(p) : p;
+    }
+
+    /** Writes an executable script. Made executable in-process: the former
+     *  {@code Runtime.exec("chmod +x ...")} ran asynchronously, so a script could be started
+     *  before it was executable. */
+    private static Path writeScript(Path file, String content) throws IOException {
+        Files.writeString(file, content);
+        if (operatingSystem == OS.WINDOWS) {
+            try {
+                new ProcessBuilder("wsl", "chmod", "+x", HelperMethods.formatWslString(file.toFile().getCanonicalPath()))
+                        .start().waitFor();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted while making " + file + " executable", e);
+            }
+        } else if (!file.toFile().setExecutable(true)) {
+            throw new IOException("Could not make " + file + " executable");
+        }
+        return file;
+    }
+
     /*
     Example command: xle -noTk -e "unpack-prolog-graph fschart2 100; exit"
      */
 
-    public static String unpackFsViaXLE(String fsPath, String noOfSolutions) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        sb.append("#!/bin/bash\n");
-
-        /*
-        export XLEPATH=/bin/xle
-        export PATH=${XLEPATH}/bin:$PATH
-        export DYLD_LIBRARY_PATH=$XLEPATH/lib:$XLEPATH/bin/sp-3.12.7
-        export LD_LIBRARY_PATH=${XLEPATH}/lib
-        export LD_LIBRARY_PATH=${XLEPATH}/lib:$LD_LIBRARY_PATH
-        export DYLD_LIBRARY_PATH=${XLEPATH}/lib:$DYLD_LIBRARY_PATH
-         */
-
-        sb.append("export XLEPATH=");
-        sb.append(xlePath);
-        sb.append("\n");
-        sb.append("export PATH=${XLEPATH}/bin:$PATH");
-        sb.append("\n");
-        sb.append("export DYLD_LIBRARY_PATH=$XLEPATH/lib:$XLEPATH/bin/sp-3.12.7");
-        sb.append("\n");
-        sb.append("export LD_LIBRARY_PATH=${XLEPATH}/lib");
-        sb.append("\n");
-        sb.append("export LD_LIBRARY_PATH=${XLEPATH}/lib:$LD_LIBRARY_PATH");
-        sb.append("\n");
-        sb.append("export DYLD_LIBRARY_PATH=${XLEPATH}/lib:$DYLD_LIBRARY_PATH");
-        sb.append("\n");
-        sb.append("\n");
-
-        //   if (this.operatingSystem.equals(OS.WINDOWS)) {
-            /*
-            export TCL_LIBRARY=${XLEPATH}/tcl/scripts/tcl
-            export TCLLIBPATH=${XLEPATH}/tcl/scripts/tcl
-            export TKLIBPATH=${XLEPATH}/tcl/scripts/tk
-            export TK_LIBRARY=${XLEPATH}/tcl/scripts/tk
-             */
-        sb.append("export TCL_LIBRARY=${XLEPATH}/tcl/scripts/tcl");
-        sb.append("\n");
-        sb.append("export TCLLIBPATH=${XLEPATH}/tcl/scripts/tcl");
-        sb.append("\n");
-        sb.append("export TKLIBPATH=${XLEPATH}/tcl/scripts/tk");
-        sb.append("\n");
-        sb.append("export TK_LIBRARY=${XLEPATH}/tcl/scripts/tk");
-        sb.append("\n");
-        sb.append("\n");
-
-        // }
-
-
-        // xle -noTk -e "create-parser /mnt/d/Resources/english_pargram/index/main.lfg; parse-testfile testfile.lfg -outputPrefix parser_output/sentence; exit"
-
-        sb.append("xle -noTk -e \"unpack-prolog-graph ");
-
-        String fileString = fsPath;
-
-        sb.append(fileString);
-
-        sb.append(" ");
-        sb.append(noOfSolutions);
-        sb.append("; exit\"");
-
-        File tempDir = new File(Paths.get(PathVariables.workingDirectory, "tmp").toString());
-
-        if (!tempDir.exists()) {
-            tempDir.mkdir();
-        }
-
-        //open file and write
-        File file = new File(Paths.get(PathVariables.workingDirectory, "tmp", "xle-unpack.sh").toString());
-
-        try {
-            java.io.FileWriter fw = new java.io.FileWriter(file);
-            fw.write(sb.toString());
-            fw.close();
-        } catch (
-                Exception e) {
-            LOGGER.error("Failed to write xle-unpack.sh");
-        }
-
-        try {
-            String chmodCommand = "";
-
-            if (operatingSystem.equals(OS.WINDOWS)) {
-                chmodCommand = "wsl chmod +x " + HelperMethods.formatWslString(file.getCanonicalPath());
-            } else {
-                chmodCommand = "chmod +x " + file.getCanonicalPath();
-            }
-
-            Runtime.getRuntime().exec(chmodCommand);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        LOGGER.info("Generated xle-unpack.sh at " + file.getCanonicalFile());
-        return Paths.get(PathVariables.workingDirectory, "tmp", "xle-unpack.sh").toString();
+    /** The script that unpacks {@code fsPath}'s packed f-structures, written into {@code workDir}:
+     *  one per parse, so concurrent parses do not overwrite each other's script. */
+    public static Path writeUnpackScript(Path workDir, String fsPath, String noOfSolutions) throws IOException {
+        String command = "xle -noTk -e \"unpack-prolog-graph " + fsPath + " " + noOfSolutions + "; exit\"";
+        Path file = writeScript(workDir.resolve("xle-unpack.sh"), scriptHeader() + command);
+        LOGGER.info("Generated xle-unpack.sh at " + file);
+        return file;
     }
 
-
+    /**
+     * Resolves the grammar to parse with (converting a {@code .glue} grammar) and makes it the one
+     * {@link #writeParseScript} uses. The script itself is no longer written here: a single
+     * tmp/xlebash.sh, tmp/testfile.lfg and tmp/parser_output were shared by every request, so
+     * concurrent parses read each other's output.
+     */
     public void generateXLEStarterFile() throws IOException {
-
         useGlueGrammar();
+        activeGrammarPath = grammarPath;
+    }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("#!/bin/bash\n");
+    // xle -noTk -e "create-parser /mnt/d/Resources/english_pargram/index/main.lfg; parse-testfile testfile.lfg -outputPrefix parser_output/sentence; exit"
 
-        /*
-        export XLEPATH=/bin/xle
-        export PATH=${XLEPATH}/bin:$PATH
-        export DYLD_LIBRARY_PATH=$XLEPATH/lib:$XLEPATH/bin/sp-3.12.7
-        export LD_LIBRARY_PATH=${XLEPATH}/lib
-        export LD_LIBRARY_PATH=${XLEPATH}/lib:$LD_LIBRARY_PATH
-        export DYLD_LIBRARY_PATH=${XLEPATH}/lib:$DYLD_LIBRARY_PATH
-         */
-
-        sb.append("export XLEPATH=");
-        sb.append(xlePath);
-        sb.append("\n");
-        sb.append("export PATH=${XLEPATH}/bin:$PATH");
-        sb.append("\n");
-        sb.append("export DYLD_LIBRARY_PATH=$XLEPATH/lib:$XLEPATH/bin/sp-3.12.7");
-        sb.append("\n");
-        sb.append("export LD_LIBRARY_PATH=${XLEPATH}/lib");
-        sb.append("\n");
-        sb.append("export LD_LIBRARY_PATH=${XLEPATH}/lib:$LD_LIBRARY_PATH");
-        sb.append("\n");
-        sb.append("export DYLD_LIBRARY_PATH=${XLEPATH}/lib:$DYLD_LIBRARY_PATH");
-        sb.append("\n");
-        sb.append("\n");
-
-     //   if (this.operatingSystem.equals(OS.WINDOWS)) {
-            /*
-            export TCL_LIBRARY=${XLEPATH}/tcl/scripts/tcl
-            export TCLLIBPATH=${XLEPATH}/tcl/scripts/tcl
-            export TKLIBPATH=${XLEPATH}/tcl/scripts/tk
-            export TK_LIBRARY=${XLEPATH}/tcl/scripts/tk
-             */
-            sb.append("export TCL_LIBRARY=${XLEPATH}/tcl/scripts/tcl");
-            sb.append("\n");
-            sb.append("export TCLLIBPATH=${XLEPATH}/tcl/scripts/tcl");
-            sb.append("\n");
-            sb.append("export TKLIBPATH=${XLEPATH}/tcl/scripts/tk");
-            sb.append("\n");
-            sb.append("export TK_LIBRARY=${XLEPATH}/tcl/scripts/tk");
-            sb.append("\n");
-            sb.append("\n");
-
-       // }
-
-
-        // xle -noTk -e "create-parser /mnt/d/Resources/english_pargram/index/main.lfg; parse-testfile testfile.lfg -outputPrefix parser_output/sentence; exit"
-
-        sb.append("xle -noTk -e \"set timeout 5; create-parser ");
-
-        String grammarString = grammarPath;
-
-        if (operatingSystem.equals(OS.WINDOWS)) {
-            grammarString = HelperMethods.formatWslString(grammarString);
+    /** The script that parses {@code workDir}/testfile.lfg into {@code workDir}/parser_output,
+     *  with the grammar {@link #generateXLEStarterFile()} resolved. */
+    public static Path writeParseScript(Path workDir) throws IOException {
+        String grammar = activeGrammarPath;
+        if (grammar == null) {
+            throw new IllegalStateException("No grammar resolved: call generateXLEStarterFile() first");
         }
-
-        sb.append(grammarString);
-        sb.append("; parse-testfile ");
-
-
-        String testFileString = Paths.get(PathVariables.workingDirectory, "tmp", "testfile.lfg").toString();
-
-        if (operatingSystem.equals(OS.WINDOWS)) {
-            testFileString = HelperMethods.formatWslString(testFileString);
+        if (operatingSystem == OS.WINDOWS) {
+            grammar = HelperMethods.formatWslString(grammar);
         }
-
-        sb.append(testFileString);
-
-        String outputPrefix = Paths.get(PathVariables.workingDirectory, "tmp", "parser_output/sentence").toString();
-
-        if (operatingSystem.equals(OS.WINDOWS)) {
-            outputPrefix = HelperMethods.formatWslString(outputPrefix);
-        }
-
-        sb.append(" -outputPrefix ");
-        sb.append(outputPrefix);
-        sb.append("; exit\"");
-        sb.append("\n");
-
-
-        File tempDir = new File(Paths.get(PathVariables.workingDirectory, "tmp").toString());
-
-        if (!tempDir.exists()) {
-            tempDir.mkdir();
-        }
-
-        //open file and write
-        File file = new File(Paths.get(PathVariables.workingDirectory, "tmp", "xlebash.sh").toString());
-
-        try {
-            java.io.FileWriter fw = new java.io.FileWriter(file);
-            fw.write(sb.toString());
-            fw.close();
-        } catch (
-                Exception e) {
-            LOGGER.error("Failed to write xlebash.sh");
-        }
-
-        try {
-
-            String chmodCommand = "";
-
-            if (operatingSystem.equals(OS.WINDOWS)) {
-                chmodCommand = "wsl chmod +x " + HelperMethods.formatWslString(file.getCanonicalPath());
-            } else {
-                chmodCommand = "chmod +x " + file.getCanonicalPath();
-            }
-
-            Runtime.getRuntime().exec(chmodCommand);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        LOGGER.info("Generated xlebash.sh at " + file.getCanonicalFile());
+        String command = "xle -noTk -e \"set timeout 5; create-parser " + grammar
+                + "; parse-testfile " + scriptPath(workDir.resolve("testfile.lfg"))
+                + " -outputPrefix " + scriptPath(workDir.resolve("parser_output").resolve("sentence"))
+                + "; exit\"\n";
+        Path file = writeScript(workDir.resolve("xlebash.sh"), scriptHeader() + command);
+        LOGGER.info("Generated xlebash.sh at " + file);
+        return file;
     }
 
 

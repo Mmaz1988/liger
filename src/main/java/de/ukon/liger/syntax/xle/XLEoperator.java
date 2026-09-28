@@ -43,9 +43,6 @@ public class XLEoperator extends SyntaxOperator {
 
     public VariableHandler vh;
     public XLEStarter.OS os;
-    //for Mac
-    public String xlebashcommand = Paths.get(PathVariables.workingDirectory,  "tmp" , "xlebash.sh").toString();
-
     //For Windows
     //public String xlebashcommand = "/mnt/c/Users/Celeste/IdeaProjects/LiGER/liger_resources/xlebash_win.sh";
     private final static Logger LOGGER = Logger.getLogger(XLEoperator.class.getName());
@@ -113,134 +110,97 @@ public class XLEoperator extends SyntaxOperator {
 
 
 
-    public void parseSentences(List<String> sentences, boolean unpack){
-
-
-        File testdir = new File( Paths.get(PathVariables.workingDirectory,"tmp","parser_output").toString());
-
-        if (testdir.exists() && testdir.isDirectory())
-        {
-            try {
-                Files.walk(testdir.toPath())
-                        .sorted(Comparator.reverseOrder())
-                        .map(Path::toFile)
-                        .forEach(File::delete);
-            }catch(Exception e)
-            {
-                LOGGER.warning("Failed to delete output directory");
-            }
-        }
-        new File( Paths.get(PathVariables.workingDirectory,"tmp","parser_output").toString()).mkdirs();
-
-        // new File("output").mkdirs();
-
-        File f = new File(Paths.get(PathVariables.workingDirectory,"tmp","testfile.lfg").toString());
-
-        if (f.exists())
-        {
-            f.delete();
-        }
-
+    /**
+     * Parses {@code sentences} with XLE in a working directory of its own and returns it; the
+     * caller reads {@code parser_output/} from it and deletes it ({@link #deleteWorkDir}).
+     *
+     * Every parse used to run in one shared place (tmp/testfile.lfg, tmp/parser_output/,
+     * tmp/xlebash.sh). Spring serves requests concurrently, so two overlapping parses deleted and
+     * read each other's output: a sentence silently got another sentence's f-structure
+     * (xleplusglue docs/bug_reports/liger_xle_shared_tmp_dir_race.md).
+     */
+    public Path parseSentences(List<String> sentences, boolean unpack) {
+        Path workDir;
         try {
-            f.createNewFile();
+            Path tmp = Paths.get(PathVariables.workingDirectory, "tmp");
+            Files.createDirectories(tmp);
+            workDir = Files.createTempDirectory(tmp, "parse-");
+            Files.createDirectories(workDir.resolve("parser_output"));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException("Could not create a working directory for XLE", e);
         }
 
-        try (
-                FileWriter fw = new FileWriter(f, true);
-                BufferedWriter bw = new BufferedWriter(fw);
-                PrintWriter out = new PrintWriter(bw))
-        {
+        try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(workDir.resolve("testfile.lfg")))) {
             for (String sentence : sentences) {
                 out.println(sentence);
                 out.println(System.lineSeparator());
             }
-        }
-        catch(Exception e)
-        {
+        } catch (IOException e) {
             LOGGER.warning("Something went wrong while setting temporary files for parsing.\n" + e.getMessage());
         }
+
         try {
+            LOGGER.info("Parsing following sentences: " + String.join("\n", sentences) + " (in " + workDir + ")");
 
-            LOGGER.info("Parsing following sentences: " + String.join("\n", sentences));
-
-            String processString = xlebashcommand;
-
-            if (this.os.equals(XLEStarter.OS.WINDOWS)) {
-                processString = HelperMethods.formatWslString(processString);
-            }
-
-            ProcessBuilder proc = this.os.equals(XLEStarter.OS.WINDOWS)
-                    ? new ProcessBuilder("wsl", processString)
-                    : new ProcessBuilder(processString);
-
-            Process process = proc.start();
-
-            // Log the process output
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                 BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    LOGGER.info(line);
-                }
-
-                while ((line = errorReader.readLine()) != null) {
-                    LOGGER.severe(line);
-                }
-            }
-
-            int exitCode = process.waitFor();
+            int exitCode = run(XLEStarter.writeParseScript(workDir));
             LOGGER.info("Process exited with code: " + exitCode);
 
-            if (exitCode == 0 && unpack){
-                String unpackProcessString =
-                        XLEStarter.unpackFsViaXLE(
-                                Paths.get(PathVariables.workingDirectory,"tmp","parser_output","sentence1").toString(),
-                                "100");
-
-                if (this.os.equals(XLEStarter.OS.WINDOWS)) {
-                    unpackProcessString = HelperMethods.formatWslString(unpackProcessString);
-                }
-
-                ProcessBuilder unpackProc = this.os.equals(XLEStarter.OS.WINDOWS)
-                        ? new ProcessBuilder("wsl", unpackProcessString)
-                        : new ProcessBuilder(unpackProcessString);
-
-                Process unpackProcess = unpackProc.start();
-
-                // Log the process output
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(unpackProcess.getInputStream()));
-                     BufferedReader errorReader = new BufferedReader(new InputStreamReader(unpackProcess.getErrorStream()))) {
-
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        LOGGER.info(line);
-                    }
-
-                    while ((line = errorReader.readLine()) != null) {
-                        LOGGER.severe(line);
-                    }
-                }
-
-                int unpackExitCode = unpackProcess.waitFor();
+            if (exitCode == 0 && unpack) {
+                Path packed = workDir.resolve("parser_output").resolve("sentence1");
+                int unpackExitCode = run(XLEStarter.writeUnpackScript(workDir, packed.toString(), "100"));
                 if (unpackExitCode == 0) {
                     LOGGER.info("Unpacking process exited with code: " + unpackExitCode);
-                    //Delete original file
-                    File fo = new File(Paths.get(PathVariables.workingDirectory,"tmp","parser_output","sentence1.pl").toString());
-                    if (fo.exists()) {
-                        fo.delete();
-                    }
+                    // The packed original; the unpacked sentence1-<n>.pl files stay.
+                    Files.deleteIfExists(workDir.resolve("parser_output").resolve("sentence1.pl"));
                 } else {
                     LOGGER.warning("Unpacking process exited with code: " + unpackExitCode);
                 }
-
             }
         } catch (Exception e) {
             LOGGER.warning("Failed to execute process: " + e.getMessage());
         }
+        return workDir;
+    }
 
+    /** Runs a script and logs its output; returns its exit code. */
+    private int run(Path script) throws IOException, InterruptedException {
+        String command = script.toString();
+        if (this.os.equals(XLEStarter.OS.WINDOWS)) {
+            command = HelperMethods.formatWslString(command);
+        }
+        ProcessBuilder proc = this.os.equals(XLEStarter.OS.WINDOWS)
+                ? new ProcessBuilder("wsl", command)
+                : new ProcessBuilder(command);
+        Process process = proc.start();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+             BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                LOGGER.info(line);
+            }
+            while ((line = errorReader.readLine()) != null) {
+                LOGGER.severe(line);
+            }
+        }
+        return process.waitFor();
+    }
+
+    private static long analysisNumber(String fileName) {
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("-(\\d+)\\.pl$").matcher(fileName);
+        return m.find() ? Long.parseLong(m.group(1)) : 0L;
+    }
+
+    /** Removes a parse's working directory. */
+    public static void deleteWorkDir(Path workDir) {
+        if (workDir == null || !Files.exists(workDir)) {
+            return;
+        }
+        try (var paths = Files.walk(workDir)) {
+            paths.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+        } catch (IOException e) {
+            LOGGER.warning("Failed to delete " + workDir + ": " + e.getMessage());
+        }
     }
 
     //TODO parse multiple
@@ -280,14 +240,23 @@ public class XLEoperator extends SyntaxOperator {
     public List<LinguisticStructure> parseSingle(String sentence, boolean unpack) {
         List<String> singletonList = new ArrayList<>();
         singletonList.add(sentence);
-        parseSentences(singletonList, unpack);
+        Path workDir = parseSentences(singletonList, unpack);
+        try {
+            return readStructures(workDir.resolve("parser_output").toFile());
+        } finally {
+            deleteWorkDir(workDir);
+        }
+    }
 
+    private List<LinguisticStructure> readStructures(File fsFile) {
         List<LinguisticStructure> out = new ArrayList<>();
-        //File fsFile = new File("/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/parser_output")
-        File fsFile = new File(Paths.get(PathVariables.workingDirectory,"tmp","parser_output").toString());
 
         if (fsFile.isDirectory()) {
             List<File> files = new ArrayList<>(Arrays.asList(fsFile.listFiles((d, name) -> name.endsWith(".pl"))));
+            // listFiles has no defined order, and the order of the analyses is their solution
+            // keys' order: sentence1-2 before sentence1-10.
+            files.sort(Comparator.comparing((File file) -> analysisNumber(file.getName()))
+                    .thenComparing(File::getName));
 
             if (files.size() > 1) {
                 // Delete files with same string contents
@@ -325,27 +294,19 @@ public class XLEoperator extends SyntaxOperator {
     public String parse2Prolog(String sentence) {
         List<String> singletonList = new ArrayList<>();
         singletonList.add(sentence);
-        parseSentences(singletonList, true);
-
-        //File fsFile = new File("/Users/red_queen/IdeaProjects/abstract-syntax-annotator-web/parser_output");
-
-        File fsFile = new File(Paths.get(PathVariables.workingDirectory,"tmp","parser_output").toString());
-
-        if (fsFile.isDirectory()) {
-            File[] files = fsFile.listFiles((d, name) -> name.endsWith(".pl"));
-
-            for (int i = 0; i < files.length; i++) {
-                //read in files.get(i)
-
-                try {
-                    return Files.readString(Paths.get(files[i].getPath()));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
+        Path workDir = parseSentences(singletonList, true);
+        try {
+            File[] files = workDir.resolve("parser_output").toFile().listFiles((d, name) -> name.endsWith(".pl"));
+            if (files != null && files.length > 0) {
+                Arrays.sort(files);
+                return Files.readString(files[0].toPath());
             }
+            return null;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            deleteWorkDir(workDir);
         }
-        return null;
     }
 
     public LinkedHashMap<String,LinguisticStructure> fs2Java(String inputPath)

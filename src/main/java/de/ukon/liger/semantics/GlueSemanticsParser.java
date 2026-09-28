@@ -111,9 +111,25 @@ public class GlueSemanticsParser {
             content = content.replace(mcLine, parsed);
         }
 
-        //write to file
-        String newFileName = lfgGlueFile.replace(".lfg.glue", ".lfg");
-        Files.writeString(Path.of(newFileName), content);
+        // Every request converts the grammar again, while another request's XLE may be reading the
+        // .lfg: so write only when it changes, and never in place (a truncate-then-write could be
+        // read half-written). The conversion is deterministic, so normally nothing is written.
+        Path target = Path.of(lfgGlueFile.replace(".lfg.glue", ".lfg"));
+        if (Files.exists(target) && Files.readString(target).equals(content)) {
+            return;
+        }
+        Path temp = Files.createTempFile(target.toAbsolutePath().getParent(), target.getFileName().toString(), ".tmp");
+        try {
+            Files.writeString(temp, content);
+            try {
+                Files.move(temp, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                        java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+                Files.move(temp, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temp);
+        }
 
     }
 
