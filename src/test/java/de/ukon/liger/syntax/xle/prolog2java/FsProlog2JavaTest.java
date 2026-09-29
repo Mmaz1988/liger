@@ -127,4 +127,35 @@ class FsProlog2JavaTest {
         assertTrue(hasConstraint(result, "f27", "in_set", "f3"), "a structure element is still a node");
         assertFalse(hasNode(result, "f'Punct'"));
     }
+
+    private static List<GraphConstraint> convertCstructure(List<String> cFacts) {
+        ReadFsProlog fs = new ReadFsProlog("s1", "test sentence", Collections.emptyList(), cFacts, new ChoiceSpace(), null);
+        return FsProlog2Java.fs2List(fs);
+    }
+
+    /** A category can contain commas: the lfgxdrt grammar has AUX[perf,fin], VPprog[prog,fin] etc. */
+    @Test
+    void subtreeWithTwoParameterCategoryKeepsItsDaughters() {
+        List<GraphConstraint> result = convertCstructure(List.of(
+                "cf(1,subtree(240,'AUX[perf,fin]',191,238))",
+                "cf(1,subtree(241,'VP',-,240))"
+        ));
+
+        assertTrue(hasConstraint(result, "c240", "CAT", "'AUX[perf,fin]'"));
+        assertTrue(hasConstraint(result, "c240", "left", "c191"));
+        assertTrue(hasConstraint(result, "c240", "right", "c238"));
+        assertTrue(hasConstraint(result, "c241", "left", "c240"), "'-' as left daughter: the right one is the only daughter");
+        assertFalse(hasNode(result, "cfin]'"));
+        assertFalse(hasNode(result, "c191,238"));
+    }
+
+    /** A form can be a comma. */
+    @Test
+    void surfaceFormOfACommaKeepsItsOffsets() {
+        List<GraphConstraint> result = convertCstructure(List.of("cf(1,surfaceform(20,',',10,11))"));
+
+        assertTrue(hasConstraint(result, "c20", "token", "','"));
+        assertTrue(hasConstraint(result, "c20", "start", "int(10)"));
+        assertTrue(hasConstraint(result, "c20", "end", "int(11)"));
+    }
 }

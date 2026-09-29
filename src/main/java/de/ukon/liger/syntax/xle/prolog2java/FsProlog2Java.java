@@ -59,9 +59,14 @@ public class FsProlog2Java {
 	cf(1,cproj(1764,var(23))),
      */
     public static Pattern semForm = Pattern.compile("cf\\((.+?),semform_data\\((.+?),(.+?),(.+?),(.+?)\\)");
-    public static Pattern surfaceForm = Pattern.compile("cf\\((.+?),surfaceform\\((.+?),(.+?),(.+?),(.+?)\\)");
+    // Anchored on the integer node ids and offsets, with the category or form taking everything in
+    // between: a category can contain commas (AUX[perf,fin]) and a form can be one (','). Split on
+    // the first commas instead, AUX[perf,fin] with daughters 191 and 238 became the category
+    // 'AUX[perf, a left daughter fin]' and a right daughter "191,238" -- nodes that do not exist,
+    // so the c-structure broke below them and the constructor ordering fell back to node names.
+    public static Pattern surfaceForm = Pattern.compile("cf\\((.+?),surfaceform\\((\\d+),(.+),(\\d+),(\\d+)\\)\\)");
 
-    public static Pattern subtreePattern = Pattern.compile("cf\\((.+?),subtree\\((.+?),(.+?),(.+?),(.+?)\\)\\)");
+    public static Pattern subtreePattern = Pattern.compile("cf\\((.+?),subtree\\((\\d+),(.+),(-|\\d+),(\\d+)\\)\\)");
     public static Pattern terminalPattern = Pattern.compile("cf\\((.+?),terminal\\((.+?),(.+?),\\[(.+?)\\]\\)\\)");
     public static Pattern phiPattern = Pattern.compile("cf\\((.+?),phi\\((.+?),var\\((\\d+)\\)\\)\\)");
     public static Pattern cprojPattern = Pattern.compile("cf\\((.+?),cproj\\((.+?),var\\((\\d+)\\)\\)\\)");
