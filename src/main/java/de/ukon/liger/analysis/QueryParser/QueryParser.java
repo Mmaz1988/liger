@@ -327,7 +327,9 @@ public class QueryParser {
                     // before their registry is attached.
                     LOGGER.debug("Deferred template token '{}' at position {}", invalidToken, i);
                 } else {
-                    LOGGER.warn("Query token '{}' at position {} could not be resolved against the current structure",
+                    // Normal for rules: a rule naming an attribute this structure lacks does not
+                    // match. At WARN it was most of LiGER's log (hundreds of lines per batch).
+                    LOGGER.debug("Query token '{}' at position {} could not be resolved against the current structure",
                             invalidToken, i);
                 }
                 return new LinkedList<QueryExpression>();

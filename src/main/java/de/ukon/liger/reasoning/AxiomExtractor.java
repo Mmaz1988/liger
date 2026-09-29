@@ -67,7 +67,7 @@ public class AxiomExtractor {
         }
 
         if (axiomBuilder.length() == 0) {
-            LOGGER.warn("No axioms found in linguistic structure.");
+            LOGGER.debug("No axioms found in linguistic structure.");
             return null;
         }
 
@@ -83,15 +83,18 @@ public class AxiomExtractor {
     }
 
     public String translatePrologAxioms(String prologAxioms,String logicType) {
-        LOGGER.info("Translating Prolog axioms to tftf representation");
-        File tmpDir = new File("./liger_resources/tmp/axiom_extractor_tmp");
-
-        // Clean and prepare temp dir
-        if (tmpDir.exists()) {
-            for (File file : tmpDir.listFiles()) file.delete();
-            tmpDir.delete();
+        LOGGER.debug("Translating Prolog axioms to tftf representation");
+        // A directory of its own per call. One fixed axiom_extractor_tmp, emptied and refilled
+        // by every call, let concurrent requests read each other's axioms -- the same race the
+        // XLE working directory had (xleplusglue docs/bug_reports/liger_xle_shared_tmp_dir_race.md).
+        File tmpDir;
+        try {
+            java.nio.file.Path base = java.nio.file.Paths.get("./liger_resources/tmp");
+            java.nio.file.Files.createDirectories(base);
+            tmpDir = java.nio.file.Files.createTempDirectory(base, "axioms-").toFile();
+        } catch (IOException e) {
+            throw new java.io.UncheckedIOException("Could not create a directory for the axiom translation", e);
         }
-        tmpDir.mkdir();
 
         File axiomFile = new File(tmpDir, "axiomFile.txt");
         File axiomOutputFile = new File(tmpDir, "axiomOutputFile.txt");
@@ -100,7 +103,7 @@ public class AxiomExtractor {
         //Create new file
         try {
             if (axiomFile.createNewFile()) {
-                LOGGER.info(String.format("File %s created successfully!", axiomFile.getAbsolutePath()));
+                LOGGER.debug(String.format("File %s created successfully!", axiomFile.getAbsolutePath()));
             } else {
                 LOGGER.error("File already exists!");
             }
@@ -122,7 +125,7 @@ public class AxiomExtractor {
         // Create output file
         try {
             if (axiomOutputFile.createNewFile()) {
-                LOGGER.info(String.format("File %s created successfully!", axiomOutputFile.getAbsolutePath()));
+                LOGGER.debug(String.format("File %s created successfully!", axiomOutputFile.getAbsolutePath()));
             } else {
                 LOGGER.error("File already exists!");
             }
@@ -146,12 +149,12 @@ public class AxiomExtractor {
                     logicType
             };
 
-            LOGGER.info("Executing Prolog command: {}", String.join(" ", command));
+            LOGGER.debug("Executing Prolog command: {}", String.join(" ", command));
 
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.redirectErrorStream(false); // keep stderr separate
 
-            LOGGER.info("Executing Prolog process...");
+            LOGGER.debug("Executing Prolog process...");
             Process process = processBuilder.start();
 
             // Capture stderr output in separate thread
@@ -183,7 +186,7 @@ public class AxiomExtractor {
 
                 stderrThread.join(); // wait for stderr reading to finish
 
-                LOGGER.info("Prolog exited with code {}", exitCode);
+                LOGGER.debug("Prolog exited with code {}", exitCode);
                 if (exitCode != 0) {
 
                     LOGGER.error("Prolog stderr:\n{}", errorOutput.toString());
@@ -202,7 +205,7 @@ public class AxiomExtractor {
                 }
 
                 // Read result from output file
-                LOGGER.info("Translated axioms:\n{}", result);
+                LOGGER.debug("Translated axioms:\n{}", result);
                 return result;
 
             } catch (TimeoutException e) {

@@ -1364,7 +1364,9 @@ public class LigerController {
         List<String> keys = new ArrayList<>(request.sentences.keySet());
         keys.sort(Comparator.comparingInt(key -> Integer.parseInt(key.replaceAll("\\D", ""))));
 
+        LOGGER.info("Batch of " + keys.size() + " sentence(s)");
         for (String id : keys) {
+          try (var item = de.ukon.liger.webservice.RequestIdFilter.item(id)) {
             String sentence = request.sentences.get(id);
 
             // Exactly what /apply_rules_xle returns for this sentence -- one annotation
@@ -1385,6 +1387,7 @@ public class LigerController {
                     id, annotated.appliedRules().size(), annotated.addedAnnotations(),
                     annotated.solutions().size(), mcSets));
             reportBuilder.append(System.lineSeparator());
+          }
         }
 
         List<LigerGraphComponent> appliedRulesGraph =

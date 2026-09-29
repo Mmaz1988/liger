@@ -140,16 +140,17 @@ public class XLEoperator extends SyntaxOperator {
         }
 
         try {
-            LOGGER.info("Parsing following sentences: " + String.join("\n", sentences) + " (in " + workDir + ")");
+            LOGGER.info("Parsing: " + String.join(" | ", sentences));
+            LOGGER.fine("XLE working directory: " + workDir);
 
             int exitCode = run(XLEStarter.writeParseScript(workDir));
-            LOGGER.info("Process exited with code: " + exitCode);
+            LOGGER.fine("Process exited with code: " + exitCode);
 
             if (exitCode == 0 && unpack) {
                 Path packed = workDir.resolve("parser_output").resolve("sentence1");
                 int unpackExitCode = run(XLEStarter.writeUnpackScript(workDir, packed.toString(), "100"));
                 if (unpackExitCode == 0) {
-                    LOGGER.info("Unpacking process exited with code: " + unpackExitCode);
+                    LOGGER.fine("Unpacking process exited with code: " + unpackExitCode);
                     // The packed original; the unpacked sentence1-<n>.pl files stay.
                     Files.deleteIfExists(workDir.resolve("parser_output").resolve("sentence1.pl"));
                 } else {
@@ -171,19 +172,24 @@ public class XLEoperator extends SyntaxOperator {
         ProcessBuilder proc = this.os.equals(XLEStarter.OS.WINDOWS)
                 ? new ProcessBuilder("wsl", command)
                 : new ProcessBuilder(command);
+        // One stream: XLE writes its banner to stderr, which was logged as ~12 SEVERE lines per
+        // parse; and reading stdout to the end before stderr could block on a full stderr pipe.
+        proc.redirectErrorStream(true);
         Process process = proc.start();
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-             BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+        StringBuilder output = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                LOGGER.info(line);
-            }
-            while ((line = errorReader.readLine()) != null) {
-                LOGGER.severe(line);
+                LOGGER.fine(line);
+                output.append(line).append(System.lineSeparator());
             }
         }
-        return process.waitFor();
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            LOGGER.warning(script.getFileName() + " exited with " + exitCode + ":" + System.lineSeparator() + output);
+        }
+        return exitCode;
     }
 
     private static long analysisNumber(String fileName) {

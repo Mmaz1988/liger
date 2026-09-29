@@ -78,7 +78,7 @@ public class XLEStarter {
             throw new RuntimeException(e);
         }
 
-        LOGGER.info("Initialized paths...");
+        LOGGER.debug("Initialized paths...");
 
     }
 
@@ -140,7 +140,7 @@ public class XLEStarter {
     public static Path writeUnpackScript(Path workDir, String fsPath, String noOfSolutions) throws IOException {
         String command = "xle -noTk -e \"unpack-prolog-graph " + fsPath + " " + noOfSolutions + "; exit\"";
         Path file = writeScript(workDir.resolve("xle-unpack.sh"), scriptHeader() + command);
-        LOGGER.info("Generated xle-unpack.sh at " + file);
+        LOGGER.debug("Generated xle-unpack.sh at " + file);
         return file;
     }
 
@@ -172,7 +172,7 @@ public class XLEStarter {
                 + " -outputPrefix " + scriptPath(workDir.resolve("parser_output").resolve("sentence"))
                 + "; exit\"\n";
         Path file = writeScript(workDir.resolve("xlebash.sh"), scriptHeader() + command);
-        LOGGER.info("Generated xlebash.sh at " + file);
+        LOGGER.debug("Generated xlebash.sh at " + file);
         return file;
     }
 
