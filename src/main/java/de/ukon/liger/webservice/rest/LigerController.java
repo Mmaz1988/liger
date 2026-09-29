@@ -223,6 +223,7 @@ public class LigerController {
         List<LigerSolutionAnnotation> solutions = new ArrayList<>();
         LinkedHashSet<LigerRule> allAppliedRules = new LinkedHashSet<>();
         int addedAnnotations = 0;
+        int branchCount = 0;
 
         String logicType = requestedLogicType != null && !requestedLogicType.isEmpty()
                 ? requestedLogicType : "fof";
@@ -262,7 +263,10 @@ public class LigerController {
                     solutionKey, sentence, primary, lg, currentSemString);
             solutionAnnotation.structureVariants = toStructureVariants(branches);
             solutions.add(solutionAnnotation);
+            branchCount += branches.size();
         }
+        logRuleSummary("Semantic rules", quoted(sentence) + " (" + fsList.size() + " analysis(es))",
+                allAppliedRules.size(), rp.getRules().size(), branchCount, addedAnnotations);
         return new SentenceAnnotation(solutions, allAppliedRules, addedAnnotations);
     }
 
@@ -346,9 +350,15 @@ public class LigerController {
                 for (LinguisticStructure structure : parsed) {
                     candidates.add(new SequenceCandidate(structure, new LinkedHashSet<>()));
                 }
+                LOGGER.info("Supplied " + quoted(sentence) + " (" + parsed.size()
+                        + " analysis(es)): already parsed and rule-applied, reused");
                 candidatesBySentence.add(candidates);
                 continue;
             }
+            Set<String> sentenceAppliedRules = new LinkedHashSet<>();
+            int sentenceBranches = 0;
+            int sentenceFacts = 0;
+            int ruleTotal = 0;
             for (LinguisticStructure structure : parsed) {
                 if (request.ruleString == null || request.ruleString.isBlank()) {
                     candidates.add(new SequenceCandidate(structure, new LinkedHashSet<>()));
@@ -365,10 +375,19 @@ public class LigerController {
                 LinkedHashSet<LigerRule> appliedRules = new LinkedHashSet<>();
                 for (Rule rule : ruleParser.getAppliedRules()) {
                     appliedRules.add(new LigerRule(rule.toString(), rule.getRuleIndex(), rule.getLineNumber()));
+                    sentenceAppliedRules.add(rule.getRuleIndex() + ":" + rule.getLineNumber());
                 }
+                ruleTotal = ruleParser.getRules().size();
+                sentenceBranches += branches.size();
+                sentenceFacts += branches.stream().findFirst()
+                        .map(branch -> branch.annotation == null ? 0 : branch.annotation.size()).orElse(0);
                 for (LinguisticStructure branch : branches) {
                     candidates.add(new SequenceCandidate(branch, appliedRules));
                 }
+            }
+            if (request.ruleString != null && !request.ruleString.isBlank()) {
+                logRuleSummary("Semantic rules", quoted(sentence) + " (" + parsed.size() + " analysis(es))",
+                        sentenceAppliedRules.size(), ruleTotal, sentenceBranches, sentenceFacts);
             }
             if (candidates.isEmpty()) {
                 return LigerSolutionAnnotationResponse.failure(
@@ -736,7 +755,7 @@ public class LigerController {
         }
 
         QueryRequestBundle queryBundle = stripEmbeddedQueryDefinitions(request.query);
-        LOGGER.info("Graph inspector query request: templateCount="
+        LOGGER.fine("Graph inspector query request: templateCount="
                 + queryBundle.templateRegistry().getTemplates().size()
                 + ", hierarchyCount=" + queryBundle.hierarchyRegistry().getHierarchies().size()
                 + ", sanitizedQuery='" + queryBundle.query() + "'");
@@ -747,9 +766,10 @@ public class LigerController {
                 queryBundle.hierarchyRegistry());
 
         List<QueryParserResult> results = qp.parseQueryWithTemplates(queryBundle.query());
-        LOGGER.info("Graph inspector query parse completed: resultCount=" + results.size());
+        LOGGER.fine("Graph inspector query parse completed: resultCount=" + results.size());
 
         QueryMatchSummary matchSummary = summarizeQueryMatches(results);
+        LOGGER.info("Query on " + quoted(fs.text) + ": " + matchSummary.matchCount() + " solution(s)");
         LigerWebGraph graph = new LigerWebGraph(fs.constraints, fs.annotation);
         highlightQueryMatches(graph, matchSummary.nodeIds());
 
@@ -762,10 +782,32 @@ public class LigerController {
         LinguisticStructure syntax = parseStructureMap(request.syntax);
         LinguisticStructure drs = parseStructureMap(request.drs);
         LinguisticStructure merged = LinguisticStructureMerger.merge(syntax, drs);
+        LOGGER.info("Merging syntax " + quoted(syntax == null ? null : syntax.text) + " with its DRS: "
+                + factCount(syntax) + " + " + factCount(drs) + " -> " + factCount(merged) + " fact(s)");
         LigerWebGraph graph = wantsGraph(request.includeGraph)
                 ? new LigerWebGraph(merged.constraints, merged.annotation)
                 : null;
         return new LigerMergeResponse(graph, merged.toJson());
+    }
+
+    /** One INFO line per rule application -- what ran on what, and what came of it. The same
+     *  shape for the semantic rules after parsing and for post-processing, so a run can be
+     *  followed through both. */
+    private static void logRuleSummary(String stage, String subject, int applied, int total,
+                                       int branches, int factsAdded) {
+        LOGGER.info(stage + " on " + subject + ": " + applied + " of " + total + " rule(s) applied, "
+                + branches + " branch(es), " + factsAdded + " fact(s) added");
+    }
+
+    /** A sentence for a log line: quoted, and shortened if it is a whole discourse. */
+    private static String quoted(String text) {
+        if (text == null || text.isBlank()) {
+            return "(no text)";
+        }
+        // A sequence's text is its sentences, each in single quotes: 'A.' 'B.' -> A. | B.
+        String oneLine = text.replaceAll("\\s+", " ").trim()
+                .replace("' '", " | ").replaceAll("^'|'$", "");
+        return "\"" + (oneLine.length() > 120 ? oneLine.substring(0, 117) + "..." : oneLine) + "\"";
     }
 
     /** Graph rendering is opt-OUT: an absent flag means render, so callers that predate
@@ -773,6 +815,14 @@ public class LigerController {
      *  gets the cheaper response. */
     private static boolean wantsGraph(Boolean includeGraph) {
         return !Boolean.FALSE.equals(includeGraph);
+    }
+
+    private static int factCount(LinguisticStructure structure) {
+        if (structure == null) {
+            return 0;
+        }
+        return (structure.constraints == null ? 0 : structure.constraints.size())
+                + (structure.annotation == null ? 0 : structure.annotation.size());
     }
 
     private QueryMatchSummary summarizeQueryMatches(List<QueryParserResult> results) {
@@ -935,6 +985,12 @@ public class LigerController {
 
             RuleParser rp = new RuleParser(new ArrayList<>(Collections.singletonList(fs)), request.ruleString == null ? "" : request.ruleString);
             Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Collections.singleton(fs)));
+            int factsAdded = branches.stream()
+                    .filter(Objects::nonNull)
+                    .mapToInt(branch -> addedAnnotationsForBranch(rp, branch).values().stream().mapToInt(Set::size).sum())
+                    .sum();
+            logRuleSummary("Post-processing", (fs.local_id == null ? "" : fs.local_id + " ") + quoted(fs.text),
+                    rp.getAppliedRules().size(), rp.getRules().size(), branches.size(), factsAdded);
 
             for (LinguisticStructure branch : branches) {
                 if (branch == null) {
