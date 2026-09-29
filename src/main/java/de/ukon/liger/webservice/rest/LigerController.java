@@ -290,6 +290,7 @@ public class LigerController {
         XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
 
         List<List<SequenceCandidate>> candidatesBySentence = new ArrayList<>();
+        int analysisIndex = 0;
         for (int sentenceIndex = 0; sentenceIndex < request.sentences.size(); sentenceIndex++) {
             String sentence = request.sentences.get(sentenceIndex);
             List<LinguisticStructure> parsed;
@@ -325,6 +326,16 @@ public class LigerController {
                         String.join("\n", request.sentences),
                         sentenceIndex,
                         "No parse was found for sentence " + (sentenceIndex + 1));
+            }
+            // One numbering for the whole sequence, whichever way a sentence arrived: its
+            // analyses are S<n>, counted in sentence order across the call -- what a parse of
+            // every sentence in this call gives (A|B|C with 2|4|1 analyses: S0,S1|S2..S5|S6).
+            // A supplied structure kept its own id instead (every standalone parse is S0), and
+            // a sentence parsed in a call where the earlier ones were supplied restarted at S0
+            // too, so parts, syntax ids and sequence keys collided (sequence-1-S0+S0).
+            // Rule branches of one analysis inherit its id, as before.
+            for (LinguisticStructure structure : parsed) {
+                structure.local_id = "S" + analysisIndex++;
             }
             List<SequenceCandidate> candidates = new ArrayList<>();
             if (suppliedThisSentence || suppliedLastSentence) {
