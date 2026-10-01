@@ -1,6 +1,7 @@
 package de.ukon.liger.webservice.rest.dtos;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class LigerBatchParsingAnalysis {
@@ -14,6 +15,10 @@ public class LigerBatchParsingAnalysis {
     public List<LigerGraphComponent> ruleApplicationGraph;
 
     public String report;
+
+    /** Per sentence id: milliseconds to parse it with XLE and apply the rules, in the order
+     *  the batch ran them. Lets a client name the slowest and fastest sentence. */
+    public LinkedHashMap<String, Long> timingsMs = new LinkedHashMap<>();
 
     public LigerBatchParsingAnalysis(HashMap<String,LigerSolutionAnnotationResponse> annotations, List<LigerGraphComponent> ruleApplicationGraph, String report) {
         this.annotations = annotations;

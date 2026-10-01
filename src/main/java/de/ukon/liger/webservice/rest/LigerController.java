@@ -1432,9 +1432,11 @@ public class LigerController {
         keys.sort(Comparator.comparingInt(key -> Integer.parseInt(key.replaceAll("\\D", ""))));
 
         LOGGER.info("Batch of " + keys.size() + " sentence(s)");
+        LinkedHashMap<String, Long> timingsMs = new LinkedHashMap<>();
         for (String id : keys) {
           try (var item = de.ukon.liger.webservice.RequestIdFilter.item(id)) {
             String sentence = request.sentences.get(id);
+            long started = System.currentTimeMillis();
 
             // Exactly what /apply_rules_xle returns for this sentence -- one annotation
             // per syntactic analysis, each with its own structureJson, structureVariants,
@@ -1444,6 +1446,7 @@ public class LigerController {
             SentenceAnnotation annotated = annotateSentence(
                     id, sentence, request.ruleString, request.logicType, parser, starter);
 
+            timingsMs.put(id, System.currentTimeMillis() - started);
             output.put(id, new LigerSolutionAnnotationResponse(sentence, annotated.solutions()));
             allAppliedRules.put(id, annotated.appliedRules());
 
@@ -1461,7 +1464,10 @@ public class LigerController {
                 createLigerAnnotationGraph(request.sentences, rulesForGraph, allAppliedRules);
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
-        return new LigerBatchParsingAnalysis(output, appliedRulesGraph, reportBuilder.toString());
+        LigerBatchParsingAnalysis analysis =
+                new LigerBatchParsingAnalysis(output, appliedRulesGraph, reportBuilder.toString());
+        analysis.timingsMs = timingsMs;
+        return analysis;
     }
 
         //Method for applying a multistage grammar to a testsuite
