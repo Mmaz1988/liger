@@ -161,7 +161,7 @@ public class LigerController {
                     new LinkedHashSet<>(),
                     semString,
                     countMeaningConstructorSets(semString),
-                    new ArrayList<>()
+                    new GrammarAxioms()
             );
             solution.sentenceAnalysis = sentenceSyntaxAnalysis(
                     solutionKey, solutionKey, request.sentence, fs, solution.graph, semString);
@@ -189,7 +189,7 @@ public class LigerController {
         // No caller-supplied id on the single-sentence endpoint; the solution key stands
         // in, which is self-consistent because there is only one sentence in play.
         SentenceAnnotation annotated = annotateSentence(
-                null, request.sentence, request.ruleString, request.logicType, parser, starter);
+                null, request.sentence, request.ruleString, parser, starter);
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
         return new LigerSolutionAnnotationResponse(request.sentence, annotated.solutions());
@@ -207,7 +207,6 @@ public class LigerController {
      *  xleplusglue/docs/plans/SHARED_PIPELINE_PLAN.md, Stage 4 and invariant I6.
      */
     private SentenceAnnotation annotateSentence(String sentenceId, String sentence, String ruleString,
-                                                String requestedLogicType,
                                                 XLEoperator parser, XLEStarter starter) throws IOException {
         List<LinguisticStructure> fsList = parser.parseSingle(sentence, true);
         if (fsList == null || fsList.isEmpty()) {
@@ -224,9 +223,6 @@ public class LigerController {
         LinkedHashSet<LigerRule> allAppliedRules = new LinkedHashSet<>();
         int addedAnnotations = 0;
         int branchCount = 0;
-
-        String logicType = requestedLogicType != null && !requestedLogicType.isEmpty()
-                ? requestedLogicType : "fof";
 
         for (int i = 0; i < fsList.size(); i++) {
             LinguisticStructure fs = fsList.get(i);
@@ -246,7 +242,7 @@ public class LigerController {
 
             String currentSemString = sem.returnMeaningConstructors(primary, !starter.isGlue, false, true);
 
-            List<String> axioms = new AxiomExtractor().extractAxiomsFromLigerAnnotations(primary, logicType);
+            GrammarAxioms axioms = new AxiomExtractor().extractGrammarAxioms(primary);
 
             String solutionKey = solutionKeyFor(fs, i);
             LigerSolutionAnnotation solutionAnnotation = new LigerSolutionAnnotation(
@@ -428,9 +424,7 @@ public class LigerController {
                     .flatMap(candidate -> candidate.appliedRules().stream())
                     .collect(Collectors.toCollection(LinkedHashSet::new));
 
-            List<String> axioms = new AxiomExtractor().extractAxiomsFromLigerAnnotations(
-                    sequence, request.logicType == null || request.logicType.isBlank()
-                            ? "fof" : request.logicType);
+            GrammarAxioms axioms = new AxiomExtractor().extractGrammarAxioms(sequence);
             String sourceKey = variant.stream()
                     .map(candidate -> candidate.structure().local_id == null
                             ? "solution" : candidate.structure().local_id)
@@ -599,7 +593,7 @@ public class LigerController {
         GlueSemantics sem = new GlueSemantics();
         List<String> semString = new ArrayList<>();
         LigerWebGraph lg = null;
-        List<String> axioms = null;
+        GrammarAxioms axioms = new GrammarAxioms();
         Set<LinguisticStructure> branches = new LinkedHashSet<>();
         LinguisticStructure primary = ls;
 
@@ -622,15 +616,7 @@ public class LigerController {
             semString.add(sem.returnMeaningConstructors(primary, false, false, true));
 
 
-            //Extract axioms
-            AxiomExtractor axiomExtractor = new AxiomExtractor();
-
-            String logicType = "fof";
-            if (request.logicType != null && !request.logicType.isEmpty()) {
-                logicType = request.logicType;
-            }
-
-            axioms = axiomExtractor.extractAxiomsFromLigerAnnotations(primary, logicType);
+            axioms = new AxiomExtractor().extractGrammarAxioms(primary);
 
         }
 
@@ -956,7 +942,7 @@ public class LigerController {
                 new LinkedHashSet<>(),
                 "",
                 fs.annotation.size(),
-                new ArrayList<>(),
+                new GrammarAxioms(),
                 fs.toJson()
         );
         response.highlightedNodeIds = collectHighlightedNodeIds(fs.annotation);
@@ -1444,7 +1430,7 @@ public class LigerController {
             // single calls with shared setup (the XLE parser and the rule list); it may
             // not return less. See SHARED_PIPELINE_PLAN.md invariant I6.
             SentenceAnnotation annotated = annotateSentence(
-                    id, sentence, request.ruleString, request.logicType, parser, starter);
+                    id, sentence, request.ruleString, parser, starter);
 
             timingsMs.put(id, System.currentTimeMillis() - started);
             output.put(id, new LigerSolutionAnnotationResponse(sentence, annotated.solutions()));
@@ -1541,7 +1527,7 @@ public class LigerController {
             reportBuilder.append(System.lineSeparator());
 
             //TODO fix treatment of axioms
-            output.put(id,new LigerRuleAnnotation(null, null, mcs, new ArrayList<>()));
+            output.put(id,new LigerRuleAnnotation(null, null, mcs, new GrammarAxioms()));
 
         }
         LOGGER.info("Finished LiGER annotation. Returning results...");
@@ -1651,7 +1637,7 @@ public class LigerController {
             reportBuilder.append(System.lineSeparator());
 
             //TODO Make Stanza inference compatible
-            output.put(id, new LigerRuleAnnotation(sentence, lg, appliedLigerRules, currentSemString, fsList.size(), new ArrayList<>()));
+            output.put(id, new LigerRuleAnnotation(sentence, lg, appliedLigerRules, currentSemString, fsList.size(), new GrammarAxioms()));
             allAppliedRules.put(id, appliedLigerRules);
         }
 

@@ -6,11 +6,9 @@ public class LigerMultipleRequest {
 
    public HashMap<String,String> sentences;
    public String ruleString;
-   public String logicType;
 
-    public LigerMultipleRequest(HashMap<String,String> sentences, String ruleString, String logicType) {
+    public LigerMultipleRequest(HashMap<String,String> sentences, String ruleString) {
         this.sentences = sentences;
         this.ruleString = ruleString;
-        this.logicType = logicType;
     }
 }

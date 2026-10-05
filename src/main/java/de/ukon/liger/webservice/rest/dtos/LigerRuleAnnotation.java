@@ -30,7 +30,7 @@ public class LigerRuleAnnotation {
 
     public int numberOfMCsets;
 
-    public List<String> axioms;
+    public GrammarAxioms axioms;
 
     public LigerRuleAnnotation(LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules)
     {
@@ -55,7 +55,7 @@ public class LigerRuleAnnotation {
         this.structureVariantGraphs = new java.util.ArrayList<>();
     }
 
-    public LigerRuleAnnotation(LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules, String meaningConstructors, List<String> axioms)
+    public LigerRuleAnnotation(LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules, String meaningConstructors, GrammarAxioms axioms)
     {
         this.graph = graph;
         this.appliedRules = appliedRules;
@@ -68,7 +68,7 @@ public class LigerRuleAnnotation {
         this.structureVariantGraphs = new java.util.ArrayList<>();
     }
 
-    public LigerRuleAnnotation(String sentence, LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules, String meaningConstructors, int numberOfMCsets, List<String> axioms)
+    public LigerRuleAnnotation(String sentence, LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules, String meaningConstructors, int numberOfMCsets, GrammarAxioms axioms)
     {
         this.sentence = sentence;
         this.graph = graph;
@@ -83,7 +83,7 @@ public class LigerRuleAnnotation {
         this.structureVariantGraphs = new java.util.ArrayList<>();
     }
 
-    public LigerRuleAnnotation(String sentence, LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules, String meaningConstructors, int numberOfMCsets, List<String> axioms, LinkedHashMap<String, Object> structureJson)
+    public LigerRuleAnnotation(String sentence, LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules, String meaningConstructors, int numberOfMCsets, GrammarAxioms axioms, LinkedHashMap<String, Object> structureJson)
     {
         this.sentence = sentence;
         this.graph = graph;

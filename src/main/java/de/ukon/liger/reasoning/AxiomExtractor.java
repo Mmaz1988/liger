@@ -4,6 +4,7 @@ package de.ukon.liger.reasoning;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.utilities.HelperMethods;
+import de.ukon.liger.webservice.rest.dtos.GrammarAxioms;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,31 +55,29 @@ public class AxiomExtractor {
     }
 
 
-    public List<String> extractAxiomsFromLigerAnnotations(LinguisticStructure linguisticStructure, String logicType) {
-        StringBuilder axiomBuilder = new StringBuilder();
+    /** Rule label of an axiom written as a Prolog FOL/DRS term. */
+    public static final String PROLOG_AXIOM_LABEL = "AXIOM";
+    /** Rule label of an axiom written as a TPTP formula (escape its conjunctions as \\&). */
+    public static final String TPTP_AXIOM_LABEL = "TPTP_AXIOM";
 
-        List<GraphConstraint> allConstraints = linguisticStructure.returnFullGraph();
-        for (GraphConstraint constraint : allConstraints) {
-            if (constraint.getRelationLabel().equals("AXIOM")) {
-                //Check if Prolog or tftf
-                axiomBuilder.append(String.format("axiom(%s).", constraint.getFsValue()));
-                axiomBuilder.append(System.lineSeparator());
+    /**
+     * The axiom annotations of a structure, untranslated: AXIOM values as Prolog terms,
+     * TPTP_AXIOM values as TPTP formulas. Both are encoded for a logic (fof/tff) only in the
+     * Vampire service, with the logic type of the run that uses them -- an axiom encoded at
+     * parse time stays fixed to whatever logic was selected then.
+     */
+    public GrammarAxioms extractGrammarAxioms(LinguisticStructure linguisticStructure) {
+        GrammarAxioms axioms = new GrammarAxioms();
+        for (GraphConstraint constraint : linguisticStructure.returnFullGraph()) {
+            String label = constraint.getRelationLabel();
+            List<String> target = PROLOG_AXIOM_LABEL.equals(label) ? axioms.prolog
+                    : TPTP_AXIOM_LABEL.equals(label) ? axioms.tptp : null;
+            if (target == null) continue;
+            String value = String.valueOf(constraint.getFsValue()).trim();
+            if (!value.isEmpty() && !target.contains(value)) {
+                target.add(value);
             }
         }
-
-        if (axiomBuilder.length() == 0) {
-            LOGGER.debug("No axioms found in linguistic structure.");
-            return null;
-        }
-
-        String axiomsString = translatePrologAxioms(axiomBuilder.toString(),logicType);
-
-        axiomsString = HelperMethods.wrapHyphenatedWords(axiomsString);
-
-        List<String> axioms = Arrays.stream(axiomsString.split("\\.\\s*"))
-                .map(String::trim)
-                .collect(Collectors.toList());
-
         return axioms;
     }
 

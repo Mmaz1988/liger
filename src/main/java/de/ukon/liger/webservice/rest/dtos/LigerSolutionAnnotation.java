@@ -12,7 +12,7 @@ public class LigerSolutionAnnotation {
     public LinkedHashSet<LigerRule> appliedRules;
     public String meaningConstructors;
     public int numberOfMCsets;
-    public List<String> axioms;
+    public GrammarAxioms axioms;
     public List<LinkedHashMap<String, Object>> structureVariants;
     public List<LigerSequencePartResult> sequenceParts;
     public List<LigerSequenceAssemblyResponse.Provenance> provenance;
@@ -25,7 +25,7 @@ public class LigerSolutionAnnotation {
                                    LinkedHashSet<LigerRule> appliedRules,
                                    String meaningConstructors,
                                    int numberOfMCsets,
-                                   List<String> axioms) {
+                                   GrammarAxioms axioms) {
         this.solutionKey = solutionKey;
         this.graph = graph;
         this.structureJson = structureJson;
