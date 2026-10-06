@@ -98,6 +98,26 @@ public final class SourceTokenIndex {
                 .toList();
     }
 
+    /** Tokens no meaning constructor's source index resolves to: words that contribute no
+     *  constructor of their own, such as a name inside a compound ("ITEL computer") whose
+     *  meaning a LiGER rule supplies, or "than". */
+    public Set<LigerSourceToken> unindexedTokens() {
+        Set<LigerSourceToken> indexed = new HashSet<>();
+        for (String synId : mcNodesBySynId.keySet()) {
+            for (String mcNode : mcNodesBySynId.get(synId)) {
+                for (String cNode : surfaceCandidates(mcNode)) {
+                    LigerSourceToken token = tokensByNode.get(cNode);
+                    if (token != null) {
+                        indexed.add(token);
+                    }
+                }
+            }
+        }
+        Set<LigerSourceToken> unindexed = new LinkedHashSet<>(allTokens());
+        unindexed.removeAll(indexed);
+        return unindexed;
+    }
+
     /** Whether the structure carries a meaning constructor with this source index at all. */
     public boolean hasSourceIndex(int sourceIndex) {
         return mcNodesBySynId.containsKey("i" + sourceIndex);

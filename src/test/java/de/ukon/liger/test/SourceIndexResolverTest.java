@@ -85,7 +85,8 @@ public class SourceIndexResolverTest {
 
         LigerSourceSpan span = new SourceIndexResolverService().resolve(structure, group);
 
-        assertEquals("the black table", span.text);
+        // "dog on the" between black and table are other constructors' words: elided, not run in.
+        assertEquals("the black … table", span.text);
         assertEquals(0, span.start);
         assertEquals(26, span.end);
         assertEquals(List.of("the", "black", "table"), span.tokens.stream().map(t -> t.form).toList());
@@ -97,5 +98,25 @@ public class SourceIndexResolverTest {
         assertEquals("", span.text);
         assertNull(span.start);
         assertTrue(span.tokens.isEmpty());
+    }
+
+    /** "The PC-6082 is faster than every ITEL computer." (lfgxdrt inference grammar with the
+     *  degree rules, from a stored regression session, 2026-10-06). ITEL's meaning comes from a
+     *  LiGER rule, so it has no source index, and the quantifier's label read "every computer". */
+    @Test
+    void wordsWithoutAConstructorStayInsideAGroupsSpan() throws Exception {
+        LinguisticStructure structure = syntax("comparative-every.json");
+        SourceTokenIndex index = new SourceTokenIndex(structure);
+        List<String> unindexed = index.unindexedTokens().stream().map(t -> t.form).toList();
+        assertTrue(unindexed.contains("ITEL"), "ITEL has no constructor of its own: " + unindexed);
+
+        LigerSourceSpan quantifier = new SourceIndexResolverService().resolve(structure,
+                List.of(indexOf(index, "every"), indexOf(index, "computer")));
+        assertEquals("every ITEL computer", quantifier.text);
+        assertEquals(List.of("every", "computer"), quantifier.tokens.stream().map(t -> t.form).toList());
+
+        LigerSourceSpan subject = new SourceIndexResolverService().resolve(structure,
+                List.of(indexOf(index, "The"), indexOf(index, "PC-6082")));
+        assertEquals("The PC-6082", subject.text);
     }
 }

@@ -22,13 +22,32 @@ public class SourceIndexResolverService {
         return sourceIndexGroups.stream().map(group -> resolve(index, group)).collect(Collectors.toList());
     }
 
+    /** The group's words as they read in the sentence. Words between two of the group's tokens
+     *  are kept when none of them has a source index of its own -- "every ITEL computer", not
+     *  "every computer", since ITEL's meaning comes from a LiGER rule -- and replaced by "…" when
+     *  any of them belongs to a constructor, i.e. to some other element of the reading. */
     private LigerSourceSpan resolve(SourceTokenIndex index, Collection<Integer> sourceIndices) {
         List<LigerSourceToken> tokens = index.tokensFor(sourceIndices);
         if (tokens.isEmpty()) {
             return new LigerSourceSpan("", null, null);
         }
-        String text = tokens.stream().map(token -> token.form).collect(Collectors.joining(" "));
+        Set<LigerSourceToken> unindexed = index.unindexedTokens();
+        List<LigerSourceToken> all = index.allTokens();
+        String sentence = index.text();
+        StringBuilder text = new StringBuilder(tokens.get(0).form);
+        for (int i = 1; i < tokens.size(); i++) {
+            LigerSourceToken previous = tokens.get(i - 1);
+            LigerSourceToken next = tokens.get(i);
+            List<LigerSourceToken> between = all.stream()
+                    .filter(token -> token.start >= previous.end && token.end <= next.start)
+                    .toList();
+            if (unindexed.containsAll(between) && previous.end <= next.start && next.start <= sentence.length()) {
+                text.append(sentence, previous.end, next.start).append(next.form);
+            } else {
+                text.append(" … ").append(next.form);
+            }
+        }
         int end = tokens.stream().mapToInt(token -> token.end).max().getAsInt();
-        return new LigerSourceSpan(text, tokens.get(0).start, end, tokens);
+        return new LigerSourceSpan(text.toString().replaceAll("\\s+", " "), tokens.get(0).start, end, tokens);
     }
 }
