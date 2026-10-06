@@ -13,11 +13,14 @@ import java.util.List;
  *       {@code all(X,imp(dog(X),animal(X)))}.</li>
  *   <li>{@code tptp}: {@code TPTP_AXIOM} values, TPTP formulas such as
  *       {@code ![X]: (dog(X) => animal(X))} -- passed through as written.</li>
+ *   <li>{@code tffTypes}: {@code TFF_TYPE} values, TFF type declaration bodies such as
+ *       {@code big: ($i * $int) > $o} -- declared once per run, and only in tff.</li>
  * </ul>
  */
 public class GrammarAxioms {
     public List<String> prolog = new ArrayList<>();
     public List<String> tptp = new ArrayList<>();
+    public List<String> tffTypes = new ArrayList<>();
 
     public GrammarAxioms() {
     }

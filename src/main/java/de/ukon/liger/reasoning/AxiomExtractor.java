@@ -59,10 +59,14 @@ public class AxiomExtractor {
     public static final String PROLOG_AXIOM_LABEL = "AXIOM";
     /** Rule label of an axiom written as a TPTP formula (escape its conjunctions as \\&). */
     public static final String TPTP_AXIOM_LABEL = "TPTP_AXIOM";
+    /** Rule label of a TFF type declaration, written as its body: {@code big: ($i * $int) > $o}.
+     *  Only symbols over a sort other than $i need one -- an undeclared symbol takes $i
+     *  arguments and returns $o (predicate) or $i (function). */
+    public static final String TFF_TYPE_LABEL = "TFF_TYPE";
 
     /**
      * The axiom annotations of a structure, untranslated: AXIOM values as Prolog terms,
-     * TPTP_AXIOM values as TPTP formulas. Both are encoded for a logic (fof/tff) only in the
+     * TPTP_AXIOM values as TPTP formulas, TFF_TYPE values as type declaration bodies. All are encoded for a logic (fof/tff) only in the
      * Vampire service, with the logic type of the run that uses them -- an axiom encoded at
      * parse time stays fixed to whatever logic was selected then.
      */
@@ -71,7 +75,8 @@ public class AxiomExtractor {
         for (GraphConstraint constraint : linguisticStructure.returnFullGraph()) {
             String label = constraint.getRelationLabel();
             List<String> target = PROLOG_AXIOM_LABEL.equals(label) ? axioms.prolog
-                    : TPTP_AXIOM_LABEL.equals(label) ? axioms.tptp : null;
+                    : TPTP_AXIOM_LABEL.equals(label) ? axioms.tptp
+                    : TFF_TYPE_LABEL.equals(label) ? axioms.tffTypes : null;
             if (target == null) continue;
             String value = String.valueOf(constraint.getFsValue()).trim();
             if (!value.isEmpty() && !target.contains(value)) {
