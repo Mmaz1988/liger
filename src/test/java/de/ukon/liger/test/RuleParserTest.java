@@ -230,6 +230,53 @@ public class RuleParserTest {
         }
     }
 
+    /**
+     * #a ATTR v1 ==> #a ATTR v2 rewrites v1. It used to do so only when v1 was itself rule-added;
+     * a value that came with the parse kept its value and got v2 added next to it as an annotation,
+     * which the graph never showed (the presupposition rule renaming NAME 'bind' to 'acc').
+     */
+    @Test
+    void testAddRuleOverwritesAnAttributeFromTheParse() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.getRules().add(new Rule("#i CASE 'nom' ==> #i CASE 'acc'"));
+        rp.getRules().add(new Rule("#i CASE 'acc' ==> #i SEEN 'yes'"));
+
+        rp.addAnnotation2(structure);
+
+        java.util.List<GraphConstraint> cases = structure.returnFullGraph().stream()
+                .filter(c -> "CASE".equals(c.getRelationLabel())).toList();
+        assertEquals(2, cases.size(), "CASE got a second value instead of being rewritten: " + cases);
+        for (GraphConstraint c : cases) {
+            assertEquals("'acc'", c.getFsValue(), "the rewrite keeps the parse's quoted value notation");
+        }
+        assertEquals(2, rp.getRemovedAnnotationsByRule().get(0).size());
+        assertTrue(rp.getRemovedAnnotationsByRule().get(0).stream().allMatch(c -> "'nom'".equals(c.getFsValue())));
+        assertEquals(2, rp.getAddedAnnotationsByRule().get(0).size());
+        assertEquals(2, rp.getAddedAnnotationsByRule().get(1).size(), "a later rule sees the rewritten value");
+    }
+
+    @Test
+    void testAddRuleOverwriteKeepsQuotedNotation() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.getRules().add(new Rule("#i CASE 'nom' ==> #i MARK 'one'"));
+        rp.getRules().add(new Rule("#i MARK 'one' ==> #i MARK 'two'"));
+
+        rp.addAnnotation2(structure);
+
+        java.util.List<GraphConstraint> marks = structure.returnFullGraph().stream()
+                .filter(c -> "MARK".equals(c.getRelationLabel())).toList();
+        assertEquals(2, marks.size());
+        for (GraphConstraint c : marks) {
+            assertEquals("'two'", c.getFsValue());
+        }
+    }
+
     @Test
     void testRuleParserRewrite1() {
         LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS3.pl");

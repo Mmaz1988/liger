@@ -36,6 +36,7 @@ import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
 import de.ukon.liger.packing.ChoiceVar;
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
+import de.ukon.liger.syntax.NodeIdPolicy;
 import de.ukon.liger.utilities.HelperMethods;
 import de.ukon.liger.utilities.PathVariables;
 import org.slf4j.Logger;
@@ -301,6 +302,28 @@ public class RuleParser {
                 }
             }
         }
+    }
+
+    /**
+     * Rewrites the value of {@code target} in place: {@code #a ATTR v1 ==> #a ATTR v2}. The new value
+     * takes the old one's quoting, so a bare value from the parse ({@code bind}) stays bare and a
+     * condition name does not turn into {@code 'acc'}. The rule records the old fact as removed and
+     * the rewritten one as added, so the rewrite shows in the rule's report like any other change.
+     */
+    private void overwriteValue(LinguisticStructure fs, Rule r, GraphConstraint target, String newValue) {
+        GraphConstraint previous = target.copy();
+        Object oldValue = target.getFsValue();
+        String value = newValue;
+        if (oldValue instanceof String old && !(old.startsWith("'") && old.endsWith("'"))) {
+            value = unquote(newValue);
+        }
+        LOGGER.debug("Rewritten value: " + oldValue + " into: " + value);
+        target.setFsValue(value);
+
+        removedAnnotationsByRule.computeIfAbsent(r.getRuleIndex(), ignored -> new LinkedHashSet<>()).add(previous);
+        addedAnnotationsByRule.computeIfAbsent(r.getRuleIndex(), ignored -> new LinkedHashSet<>()).add(target);
+        recordAddedAnnotations(fs, r.getRuleIndex(), List.of(target));
+        this.appliedRules.add(r);
     }
 
     private void mergeAddedAnnotations(LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> source,
@@ -662,15 +685,25 @@ public class RuleParser {
                                                         replaceValue = true;
 
                                                     } else {
-                                                        //TODO log info about relation label
-                                                    LOGGER.debug("Rewritten value: " + c.getFsValue() + " into: " + newValue);
-                                                    c.setFsValue(newValue);
-                                                    c.setRelationLabel(newLabel);
+                                                    overwriteValue(fs, r, c, newValue);
                                                     replaceValue = true;
-
-                                                    this.appliedRules.add(r);
                                                 }
                                             }
+                                            }
+
+                                            // #a ATTR v1 ==> #a ATTR v2 rewrites v1 also when v1 came with
+                                            // the parse rather than from an earlier rule; adding v2 next to it
+                                            // left the node with two values and the graph showing the old one.
+                                            if (!replaceValue && !r.isBranch()) {
+                                                for (GraphConstraint c : fs.constraints) {
+                                                    if (c.getFsNode().equals(key2) && newLabel.equals(c.getRelationLabel()) &&
+                                                            c.getReading().equals(context) &&
+                                                            !(c.getFsValue() instanceof String value &&
+                                                                    NodeIdPolicy.legacyCompatibleDefaults().isNodeReference(value))) {
+                                                        overwriteValue(fs, r, c, newValue);
+                                                        replaceValue = true;
+                                                    }
+                                                }
                                             }
 
                                             //TODO
@@ -861,7 +894,10 @@ public class RuleParser {
                     addedFacts.add(addedConstraint.toString());
                 }
                 if (!factsForRule.isEmpty()) {
-                    addedAnnotationsByRule.put(r.getRuleIndex(), factsForRule);
+                    addedAnnotationsByRule.merge(r.getRuleIndex(), factsForRule, (left, right) -> {
+                        left.addAll(right);
+                        return left;
+                    });
                     recordAddedAnnotations(fs, r.getRuleIndex(), factsForRule);
                 }
                 String added = String.join("\n", addedFacts);

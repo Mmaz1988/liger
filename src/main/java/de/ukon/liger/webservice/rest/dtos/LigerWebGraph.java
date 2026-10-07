@@ -56,9 +56,21 @@ public class LigerWebGraph {
         List<LigerGraphComponent> nodes = new ArrayList<>();
         nodes.addAll(synMap.get("nodes"));
 
-        HashSet<Object> ids = nodes.stream().map(p ->  p.data.get("id")).collect(Collectors.toCollection(HashSet::new));
+        Map<Object, LigerGraphComponent> byId = new HashMap<>();
+        for (LigerGraphComponent node : nodes) {
+            byId.put(node.data.get("id"), node);
+        }
 
-        nodes.addAll(annMap.get("nodes").stream().filter(p -> !ids.contains(p.data.get("id"))).collect(Collectors.toList()));
+        // A rule may give an existing node a new attribute; dropping the annotation side of the
+        // node dropped that attribute from the graph, although the rule was reported as applied.
+        for (LigerGraphComponent annotated : annMap.get("nodes")) {
+            LigerGraphComponent existing = byId.get(annotated.data.get("id"));
+            if (existing == null) {
+                nodes.add(annotated);
+            } else {
+                mergeAvp(existing, annotated);
+            }
+        }
         List<LigerGraphComponent> edges = new ArrayList<>();
         edges.addAll(synMap.get("edges"));
         edges.addAll(annMap.get("edges"));
@@ -67,6 +79,19 @@ public class LigerWebGraph {
         data.addAll(nodes);
         data.addAll(edges);
         this.graphElements = data;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void mergeAvp(LigerGraphComponent target, LigerGraphComponent source) {
+        if (!(source.data.get("avp") instanceof Map<?, ?> added) || added.isEmpty()) {
+            return;
+        }
+        Object avp = target.data.get("avp");
+        if (!(avp instanceof Map<?, ?>)) {
+            avp = new HashMap<String, String>();
+            target.data.put("avp", avp);
+        }
+        ((Map<String, String>) avp).putAll((Map<String, String>) added);
     }
 
     private static List<GraphConstraint> copyConstraints(List<GraphConstraint> constraints) {
