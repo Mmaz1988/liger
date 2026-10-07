@@ -336,6 +336,65 @@ public class RuleParserTest {
         assertEquals("POSSIBLE-ANT", structure.annotation.get(0).getRelationLabel());
     }
 
+    private static LinguisticStructure presuppositionGraph() {
+        LinguisticStructure structure = new LinguisticStructure("prsp", "prsp", new ArrayList<>());
+        structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), "1", "PRSP", "2", "c", false));
+        structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), "2", "IN", "3", "c", false));
+        structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), "2", "COND", "4", "c", false));
+        structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), "4", "NAME", "bind", "c", false));
+        structure.annotation.add(new GraphConstraint(new LinkedHashSet<>(), "3", "acc", "3", "c", false));
+        return structure;
+    }
+
+    private static java.util.List<String> labels(LinguisticStructure structure) {
+        return structure.returnFullGraph().stream().map(GraphConstraint::getRelationLabel).sorted().toList();
+    }
+
+    @Test
+    void testRewriteDeleteWithoutProtectionDeletesTheContextToo() {
+        LinguisticStructure structure = presuppositionGraph();
+        RuleParser rp = new RuleParser(new ArrayList<>(java.util.List.of(structure)));
+        rp.getRules().add(new Rule("#h PRSP #p & #p IN #x & #x acc #x =-> 0"));
+
+        rp.addAnnotation2(structure);
+
+        assertEquals(java.util.List.of("COND", "NAME"), labels(structure));
+    }
+
+    @Test
+    void testRewriteDeleteKeepsProtectedFacts() {
+        LinguisticStructure structure = presuppositionGraph();
+        RuleParser rp = new RuleParser(new ArrayList<>(java.util.List.of(structure)));
+        rp.getRules().add(new Rule("#h PRSP #p & #p +IN #x & #x +acc #x =-> 0"));
+
+        rp.addAnnotation2(structure);
+
+        assertEquals(java.util.List.of("COND", "IN", "NAME", "acc"), labels(structure));
+    }
+
+    @Test
+    void testRewriteDeleteKeepsProtectedFactsInAChainAndWithALiteralValue() {
+        LinguisticStructure structure = presuppositionGraph();
+        RuleParser rp = new RuleParser(new ArrayList<>(java.util.List.of(structure)));
+        rp.getRules().add(new Rule("#p +IN #x +acc #x & #p COND #c +NAME 'bind' =-> 0"));
+
+        rp.addAnnotation2(structure);
+
+        assertEquals(java.util.List.of("IN", "NAME", "PRSP", "acc"), labels(structure));
+    }
+
+    @Test
+    void testRewriteDeleteKeepsProtectedFactsOnTheStructureSetPath() {
+        LinguisticStructure structure = presuppositionGraph();
+        RuleParser rp = new RuleParser(new ArrayList<>(java.util.List.of(structure)));
+        rp.getRules().add(new Rule("#h PRSP #p & #p +IN #x & #x +acc #x =-> 0"));
+
+        java.util.Set<LinguisticStructure> result = rp.addAnnotation2(new LinkedHashSet<>(java.util.List.of(structure)));
+
+        assertEquals(1, result.size());
+        assertEquals(java.util.List.of("COND", "IN", "NAME", "acc"), labels(result.iterator().next()));
+    }
+
     @Test
     void testRuleParserRewriteDeleteSupportsEdgeValueAndAttributeValueFilters() {
         GraphConstraint potential = new GraphConstraint(new LinkedHashSet<>(), "1", "POTENTIAL-ANT", "2", "c", false);

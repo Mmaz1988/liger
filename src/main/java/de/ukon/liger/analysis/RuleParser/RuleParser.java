@@ -168,11 +168,12 @@ public class RuleParser {
             LinkedHashSet<GraphConstraint> ruleAddedAnnotations = new LinkedHashSet<>();
 
             for (LinguisticStructure structure : active) {
+                ProtectedAtoms protectedAtoms = ProtectedAtoms.of(r.getLeft());
                 QueryParser qp = new QueryParser(structure, templateRegistry, hierarchyRegistry);
                 qp.resetParser();
-                qp.generateQuery(r.getLeft());
+                qp.generateQuery(protectedAtoms.query());
                 QueryParserResult qpr = templateRegistry != null && !templateRegistry.getTemplates().isEmpty()
-                        ? qp.parseQueryWithTemplates(r.getLeft()).stream().filter(result -> result.isSuccess).findFirst()
+                        ? qp.parseQueryWithTemplates(protectedAtoms.query()).stream().filter(result -> result.isSuccess).findFirst()
                         .orElse(new QueryParserResult(new LinkedHashMap<>(), new LinkedHashMap<>()))
                         : qp.parseQuery(qp.getQueryList());
 
@@ -188,7 +189,7 @@ public class RuleParser {
                     for (Solution solution : dedupeSolutions(r, qpr)) {
                         LinguisticStructure branch = structure.copy();
                         if (r.isQuestionDelete()) {
-                            removeFactsForSolution(branch, qpr, solution);
+                            removeFactsForSolution(branch, qpr, solution, protectedAtoms);
                         } else {
                             LinkedHashSet<GraphConstraint> added = addFactsForSolution(branch, qpr, solution, r);
                             ruleAddedAnnotations.addAll(added);
@@ -280,7 +281,8 @@ public class RuleParser {
         return added;
     }
 
-    private void removeFactsForSolution(LinguisticStructure branch, QueryParserResult qpr, Solution solution) {
+    private void removeFactsForSolution(LinguisticStructure branch, QueryParserResult qpr, Solution solution,
+                                        ProtectedAtoms protectedAtoms) {
         if (!qpr.result.containsKey(solution)) {
             return;
         }
@@ -288,7 +290,11 @@ public class RuleParser {
         List<GraphConstraint> removedFacts = new ArrayList<>();
         for (String var : qpr.result.get(solution).keySet()) {
             for (String index : qpr.result.get(solution).get(var).keySet()) {
-                removedFacts.addAll(qpr.result.get(solution).get(var).get(index).values());
+                for (GraphConstraint candidate : qpr.result.get(solution).get(var).get(index).values()) {
+                    if (!protectedAtoms.protects(candidate, qpr, solution)) {
+                        removedFacts.add(candidate);
+                    }
+                }
             }
         }
 
@@ -560,10 +566,13 @@ public class RuleParser {
 
             HashMap<Integer, GraphConstraint> annotation = new LinkedHashMap<>();
 
+            ProtectedAtoms protectedAtoms = ProtectedAtoms.of(r.getLeft());
+            String query = protectedAtoms.query();
+
             qp.resetParser();
-            qp.generateQuery(r.getLeft());
+            qp.generateQuery(query);
             QueryParserResult qpr = templateRegistry != null && !templateRegistry.getTemplates().isEmpty()
-                    ? qp.parseQueryWithTemplates(r.getLeft()).stream().filter(result -> result.isSuccess).findFirst()
+                    ? qp.parseQueryWithTemplates(query).stream().filter(result -> result.isSuccess).findFirst()
                     .orElse(new QueryParserResult(new LinkedHashMap<>(), new LinkedHashMap<>()))
                     : qp.parseQuery(qp.getQueryList());
 
@@ -821,7 +830,7 @@ public class RuleParser {
                             for (String index : qpr.result.get(solution).get(var).keySet()) {
                                 for (Integer i : qpr.result.get(solution).get(var).get(index).keySet()) {
                                     GraphConstraint candidate = qpr.result.get(solution).get(var).get(index).get(i);
-                                    if (candidate != null) {
+                                    if (candidate != null && !protectedAtoms.protects(candidate, qpr, solution)) {
                                         removedFacts.add(edgeKey(candidate));
                                         removedConstraintSet.add(candidate);
                                     }
