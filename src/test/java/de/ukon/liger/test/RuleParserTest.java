@@ -20,6 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
@@ -677,6 +678,63 @@ public class RuleParserTest {
                 .findFirst().orElseThrow();
 
         assertEquals(introducedNode, referencedNode);
+    }
+
+    /**
+     * {@code ?=> 0} deletes the branches its left-hand side matches, as a whole, and leaves the
+     * others as they are. Each branch is a copy, so the structure they were forked from is
+     * untouched. "John said that Mary was sick": one branch per past tense; the one for the
+     * clause with a male subject, "say", is deleted.
+     */
+    @Test
+    void testBranchDeletionDeletesMatchingBranchesOnly() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+        int facts = structure.constraints.size() + structure.annotation.size();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.getRules().add(new Rule("#g TENSE 'past' ?=> #g PICKED +"));
+        rp.getRules().add(new Rule("#f TNS-ASP #g PICKED + & #f SUBJ #s GEND-SEM 'male' ?=> 0"));
+        assertTrue(rp.getRules().get(1).isBranchDeletion());
+
+        Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Set.of(structure)));
+
+        assertEquals(1, branches.size());
+        LinguisticStructure kept = branches.iterator().next();
+        assertTrue(kept.annotation.stream().anyMatch(c -> "PICKED".equals(c.getRelationLabel())));
+        assertEquals(facts, structure.constraints.size() + structure.annotation.size());
+    }
+
+    /** A {@code ?=> 0} rule that matches nothing is the identity on its input. */
+    @Test
+    void testBranchDeletionMatchingNothingKeepsTheInput() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.getRules().add(new Rule("#g GEND-SEM 'neuter' ?=> 0"));
+
+        Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Set.of(structure)));
+
+        assertEquals(1, branches.size());
+        assertSame(structure, branches.iterator().next());
+    }
+
+    /** Deleting every branch leaves none, with the deleting rule as the reason; there is no
+     *  fallback to the structure before rules. */
+    @Test
+    void testBranchDeletionCanDeleteEverything() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>(), "#g TENSE 'past' ?=> #g PICKED +.\n#g PICKED + ?=> 0.");
+        assertTrue(rp.getRules().get(1).isBranchDeletion());
+
+        Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Set.of(structure)));
+
+        assertTrue(branches.isEmpty());
+        assertTrue(rp.deletionReason().endsWith("line(s) " + rp.getRules().get(1).getLineNumber()),
+                rp.deletionReason());
     }
 
     @Test

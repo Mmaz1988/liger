@@ -32,6 +32,9 @@ public class LigerRuleAnnotation {
 
     public GrammarAxioms axioms;
 
+    /** Set when rules deleted every branch: there is no structure, and this says why. */
+    public String failureMessage;
+
     public LigerRuleAnnotation(LigerWebGraph graph, LinkedHashSet<LigerRule> appliedRules)
     {
         this.graph = graph;

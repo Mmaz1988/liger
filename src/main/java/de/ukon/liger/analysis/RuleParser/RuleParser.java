@@ -60,6 +60,7 @@ public class RuleParser {
 
 
     private LinkedHashSet<Rule> appliedRules = new LinkedHashSet<>();
+    private LinkedHashSet<Rule> deletingRules = new LinkedHashSet<>();
     private LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> addedAnnotationsByRule = new LinkedHashMap<>();
     private IdentityHashMap<LinguisticStructure, LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>>> addedAnnotationsByStructure = new IdentityHashMap<>();
     private LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> removedAnnotationsByRule = new LinkedHashMap<>();
@@ -183,6 +184,11 @@ public class RuleParser {
                 }
 
                 this.appliedRules.add(r);
+
+                if (r.isBranchDeletion()) {
+                    this.deletingRules.add(r);
+                    continue;
+                }
 
                 if (isQuestionRule(r)) {
                     boolean producedBranch = false;
@@ -1236,6 +1242,7 @@ public class RuleParser {
         usedKeys = new LinkedHashSet<>();
         usedReadings = new LinkedHashSet<>();
         appliedRules = new LinkedHashSet<>();
+        deletingRules = new LinkedHashSet<>();
         addedAnnotationsByRule = new LinkedHashMap<>();
         addedAnnotationsByStructure = new IdentityHashMap<>();
         removedAnnotationsByRule = new LinkedHashMap<>();
@@ -1285,6 +1292,13 @@ public class RuleParser {
 
     public LinkedHashSet<Rule> getAppliedRules() {
         return this.appliedRules;
+    }
+
+    /** Why a structure has no branches left: the {@code ?=> 0} rules that deleted some. */
+    public String deletionReason() {
+        return "every branch was deleted by the rule(s) at line(s) " + deletingRules.stream()
+                .map(rule -> String.valueOf(rule.getLineNumber()))
+                .collect(Collectors.joining(", "));
     }
 
     public LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> getAddedAnnotationsByRule() {

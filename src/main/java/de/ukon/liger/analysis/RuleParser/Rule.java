@@ -228,6 +228,11 @@ public class Rule {
         return questionDelete;
     }
 
+    /** {@code ?=> 0}: a structure the left-hand side matches is deleted as a whole. */
+    public boolean isBranchDeletion() {
+        return RuleOperator.FORK_ADD.getSymbol().equals(operator) && right != null && "0".equals(right.trim());
+    }
+
     public void setQuestionDelete(boolean questionDelete) {
         this.questionDelete = questionDelete;
         if (questionDelete) {

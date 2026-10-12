@@ -9,6 +9,9 @@ public class LigerRuleAnnotationResponse {
 
     public List<LigerRuleAnnotation> annotations;
 
+    /** Set when rules deleted every branch: there is no annotation, and this says why. */
+    public String failureMessage;
+
     public LigerRuleAnnotationResponse(String sentence, List<LigerRuleAnnotation> annotations) {
         this.sentence = sentence;
         this.annotations = annotations == null ? new ArrayList<>() : annotations;

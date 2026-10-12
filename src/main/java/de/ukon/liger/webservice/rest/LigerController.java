@@ -192,7 +192,9 @@ public class LigerController {
                 null, request.sentence, request.ruleString, parser, starter);
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
-        return new LigerSolutionAnnotationResponse(request.sentence, annotated.solutions());
+        return annotated.failure() != null
+                ? LigerSolutionAnnotationResponse.failure(request.sentence, 0, annotated.failure())
+                : new LigerSolutionAnnotationResponse(request.sentence, annotated.solutions());
     }
 
     /** One sentence's full annotation: one {@link LigerSolutionAnnotation} per syntactic
@@ -210,7 +212,7 @@ public class LigerController {
                                                 XLEoperator parser, XLEStarter starter) throws IOException {
         List<LinguisticStructure> fsList = parser.parseSingle(sentence, true);
         if (fsList == null || fsList.isEmpty()) {
-            return new SentenceAnnotation(List.of(), new LinkedHashSet<>(), 0);
+            return new SentenceAnnotation(List.of(), new LinkedHashSet<>(), 0, null);
         }
 
         // Constructed per sentence, WITH that sentence's structures -- the batch endpoint
@@ -229,15 +231,19 @@ public class LigerController {
             LinkedHashSet<LigerRule> appliedLigerRules = new LinkedHashSet<>();
 
             Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Collections.singleton(fs)));
-            LinguisticStructure primary = branches.stream().findFirst().orElse(fs);
-            sem.annotateSyntheticMcIndices(primary);
-
-            LigerWebGraph lg = new LigerWebGraph(primary.constraints, primary.annotation);
-
             for (Rule r : rp.getAppliedRules()) {
                 appliedLigerRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
             }
             allAppliedRules.addAll(appliedLigerRules);
+            // A rule deleted every branch of this analysis: it has no solution.
+            if (branches.isEmpty()) {
+                continue;
+            }
+            LinguisticStructure primary = branches.iterator().next();
+            sem.annotateSyntheticMcIndices(primary);
+
+            LigerWebGraph lg = new LigerWebGraph(primary.constraints, primary.annotation);
+
             addedAnnotations += primary.annotation.size();
 
             String currentSemString = sem.returnMeaningConstructors(primary, !starter.isGlue, false, true);
@@ -263,14 +269,17 @@ public class LigerController {
         }
         logRuleSummary("Semantic rules", quoted(sentence) + " (" + fsList.size() + " analysis(es))",
                 allAppliedRules.size(), rp.getRules().size(), branchCount, addedAnnotations);
-        return new SentenceAnnotation(solutions, allAppliedRules, addedAnnotations);
+        return new SentenceAnnotation(solutions, allAppliedRules, addedAnnotations,
+                solutions.isEmpty() ? "No analysis of the sentence is left: " + rp.deletionReason() : null);
     }
 
     /** What {@link #annotateSentence} produces: the per-analysis solutions plus the two
-     *  aggregates the batch report needs. */
+     *  aggregates the batch report needs, and why there is no solution if rules deleted every
+     *  analysis. */
     private record SentenceAnnotation(List<LigerSolutionAnnotation> solutions,
                                       LinkedHashSet<LigerRule> appliedRules,
-                                      int addedAnnotations) {
+                                      int addedAnnotations,
+                                      String failure) {
     }
 
     /**
@@ -352,6 +361,7 @@ public class LigerController {
                 continue;
             }
             Set<String> sentenceAppliedRules = new LinkedHashSet<>();
+            String deletionReason = null;
             int sentenceBranches = 0;
             int sentenceFacts = 0;
             int ruleTotal = 0;
@@ -366,7 +376,7 @@ public class LigerController {
                 Set<LinguisticStructure> branches = ruleParser.addAnnotation2(
                         new LinkedHashSet<>(Collections.singleton(structure)));
                 if (branches.isEmpty()) {
-                    branches = new LinkedHashSet<>(Collections.singleton(structure));
+                    deletionReason = ruleParser.deletionReason();
                 }
                 LinkedHashSet<LigerRule> appliedRules = new LinkedHashSet<>();
                 for (Rule rule : ruleParser.getAppliedRules()) {
@@ -389,7 +399,8 @@ public class LigerController {
                 return LigerSolutionAnnotationResponse.failure(
                         String.join("\n", request.sentences),
                         sentenceIndex,
-                        "No rewritten solution was found for sentence " + (sentenceIndex + 1));
+                        "No rewritten solution was found for sentence " + (sentenceIndex + 1)
+                                + (deletionReason == null ? "" : ": " + deletionReason));
             }
             candidatesBySentence.add(candidates);
         }
@@ -603,7 +614,13 @@ public class LigerController {
             LinkedHashSet<LigerRule> appliedLigerRules = new LinkedHashSet<>();
 
             branches = rp.addAnnotation2(new LinkedHashSet<>(Collections.singleton(fs)));
-            primary = branches.stream().findFirst().orElse(fs);
+            if (branches.isEmpty()) {
+                LigerRuleAnnotation deleted = new LigerRuleAnnotation(null, new LinkedHashSet<>(), "", axioms);
+                deleted.structureVariants = new ArrayList<>();
+                deleted.failureMessage = rp.deletionReason();
+                return deleted;
+            }
+            primary = branches.iterator().next();
             sem.annotateSyntheticMcIndices(primary);
 
             lg = new LigerWebGraph(primary.constraints, primary.annotation);
@@ -955,6 +972,7 @@ public class LigerController {
         );
 
         List<LigerRuleAnnotation> annotations = new ArrayList<>();
+        List<String> deletions = new ArrayList<>();
         StringBuilder sentenceBuilder = new StringBuilder();
 
         for (LinguisticStructure fs : structures) {
@@ -977,6 +995,9 @@ public class LigerController {
                     .sum();
             logRuleSummary("Post-processing", (fs.local_id == null ? "" : fs.local_id + " ") + quoted(fs.text),
                     rp.getAppliedRules().size(), rp.getRules().size(), branches.size(), factsAdded);
+            if (branches.isEmpty()) {
+                deletions.add(rp.deletionReason());
+            }
 
             for (LinguisticStructure branch : branches) {
                 if (branch == null) {
@@ -1018,7 +1039,11 @@ public class LigerController {
             }
         }
 
-        return new LigerRuleAnnotationResponse(sentenceBuilder.toString(), annotations);
+        LigerRuleAnnotationResponse response = new LigerRuleAnnotationResponse(sentenceBuilder.toString(), annotations);
+        if (annotations.isEmpty() && !deletions.isEmpty()) {
+            response.failureMessage = String.join("; ", deletions);
+        }
+        return response;
     }
 
     private LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> addedAnnotationsForBranch(
@@ -1433,7 +1458,9 @@ public class LigerController {
                     id, sentence, request.ruleString, parser, starter);
 
             timingsMs.put(id, System.currentTimeMillis() - started);
-            output.put(id, new LigerSolutionAnnotationResponse(sentence, annotated.solutions()));
+            output.put(id, annotated.failure() != null
+                    ? LigerSolutionAnnotationResponse.failure(sentence, 0, annotated.failure())
+                    : new LigerSolutionAnnotationResponse(sentence, annotated.solutions()));
             allAppliedRules.put(id, annotated.appliedRules());
 
             int mcSets = annotated.solutions().stream()
