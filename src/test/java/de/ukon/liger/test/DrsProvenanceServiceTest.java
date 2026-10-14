@@ -54,6 +54,15 @@ public class DrsProvenanceServiceTest {
     }
 
     @Test
+    void aReferentIsLabelledWithTheStateThatIntroducesIt() throws Exception {
+        // As A: names it (s4:x2): sibling branches reuse referent names.
+        LigerDrsProvenanceResponse response = describe("black-dog-on-table.json");
+        for (LigerProvenanceReferent referent : response.referents) {
+            assertTrue(referent.label.matches("s\\d+:x\\d+"), referent.label);
+        }
+    }
+
+    @Test
     void referentDescriptionIsItsNounPhraseIncludingModifiersButNotThePredication() throws Exception {
         LigerDrsProvenanceResponse response = describe("black-dog-on-table.json");
 

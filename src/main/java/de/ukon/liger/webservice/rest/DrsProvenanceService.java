@@ -91,7 +91,7 @@ public class DrsProvenanceService {
                                                      LigerDrsProvenanceResponse response) {
         LigerProvenanceReferent referent = new LigerProvenanceReferent();
         referent.nodeId = node;
-        referent.label = graph.name(node);
+        referent.label = graph.qualifiedName(node);
         referent.sourceIndex = graph.sourceIndex(node);
         referent.directConditionIds = graph.conditionsOn(node);
 
@@ -257,6 +257,18 @@ public class DrsProvenanceService {
         String name(String node) {
             String name = first(node, "NAME");
             return name == null ? null : SourceTokenIndex.unquote(name);
+        }
+
+        /** {@code s4:x2}: a referent's name with the state that introduces it (its IN edge), as
+         *  A: writes it -- sibling branches reuse names. */
+        String qualifiedName(String node) {
+            String name = name(node);
+            String state = outgoing.entrySet().stream()
+                    .filter(entry -> entry.getValue().getOrDefault("IN", List.of()).contains(node))
+                    .map(entry -> name(entry.getKey()))
+                    .filter(Objects::nonNull)
+                    .findFirst().orElse(null);
+            return name == null || state == null ? name : state + ":" + name;
         }
 
         Integer sourceIndex(String node) {
