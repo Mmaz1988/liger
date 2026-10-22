@@ -238,6 +238,57 @@ public class TemplateParserTest {
         assertFalse(expanded.contains("#e !(@GF) #d"));
     }
 
+    @Test
+    void testTemplateInternalValueVariablesAreAlphaRenamed() {
+        TemplateRegistry registry = new TemplateParser().parse(
+                "PREC(#a,#b) := #a NAME %s & #b NAME %t & -(#a FOO %s) & id(%s) < id(%t) .");
+
+        List<List<String>> expansions = TemplateExpander.expandQuery(
+                "#c SORT %s & #d SORT %t & @PREC(#c,#d) & %s == %t", registry);
+
+        assertEquals(1, expansions.size());
+        List<String> tokens = expansions.get(0);
+        String expanded = String.join(" ", tokens);
+        assertTrue(expanded.startsWith("#c SORT %s & #d SORT %t"));
+        assertTrue(expanded.endsWith("%s == %t"));
+        assertFalse(expanded.contains("NAME %s"));
+        assertFalse(expanded.contains("NAME %t"));
+        // one renaming for the whole body: the name, the negation and id() keep one binding
+        String name = tokens.get(tokens.indexOf("NAME") + 1);
+        assertTrue(expanded.contains("-(#c FOO " + name + ")"));
+        assertTrue(expanded.contains("id(" + name + ")"));
+    }
+
+    @Test
+    void testTemplateValueParametersAreNotRenamed() {
+        TemplateRegistry registry = new TemplateParser().parse("HAS(#a,%v) := #a NAME %v & #a SORT %w .");
+
+        List<List<String>> expansions = TemplateExpander.expandQuery("@HAS(#c,%w) & %w == 'x'", registry);
+
+        String expanded = String.join(" ", expansions.get(0));
+        assertTrue(expanded.contains("#c NAME %w"));
+        assertFalse(expanded.contains("SORT %w"));
+    }
+
+    @Test
+    void testTemplateValueVariableDoesNotCaptureTheQuerys() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        TemplateRegistry registry = new TemplateParser().parse("PERFECT(#x) := #x PERF %s .");
+        String query = "#g TNS-ASP #h & #h TENSE %s & @PERFECT(#h) & %s == 'past'";
+
+        for (String key : fs.keySet()) {
+            QueryParser templateParser = new QueryParser(query, fs.get(key), registry);
+            List<QueryParserResult> templateResults = templateParser.parseQueryWithTemplates(query);
+
+            QueryParser inlineParser = new QueryParser("#g TNS-ASP #h & #h TENSE %s & #h PERF %p & %s == 'past'", fs.get(key));
+            QueryParserResult inlineResult = inlineParser.parseQuery(inlineParser.getQueryList());
+
+            assertEquals(1, templateResults.size());
+            assertTrue(inlineResult.result.keySet().size() > 0, "the inline query matches");
+            assertEquals(inlineResult.result.keySet().size(), templateResults.get(0).result.keySet().size());
+        }
+    }
+
     private List<String> normalizeResult(QueryParserResult qpr) {
         List<String> out = new ArrayList<>();
 

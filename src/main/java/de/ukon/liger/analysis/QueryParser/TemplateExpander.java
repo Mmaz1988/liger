@@ -16,6 +16,9 @@ public class TemplateExpander {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(TemplateExpander.class);
     private static final Pattern FS_VAR_PATTERN = Pattern.compile("([#*])(\\w+)");
     private static final Pattern TEMPLATE_RENAME_VAR_PATTERN = Pattern.compile("(#)(\\w+)");
+    // Value variables are one letter (HelperMethods.valueVarPattern); kept apart from fs node
+    // names, which share no namespace with them (#s and %s are different variables).
+    private static final Pattern VALUE_VAR_PATTERN = Pattern.compile("%([a-z])(?![A-Za-z0-9_])");
 
     public static List<List<String>> expandQuery(String query, TemplateRegistry registry) {
         List<List<String>> seeds = new ArrayList<>();
@@ -89,6 +92,7 @@ public class TemplateExpander {
                                                         List<String> parameters,
                                                         Set<String> usedVars,
                                                         AtomicInteger freshVarCounter) {
+        tokens = alphaRenameTemplateValues(tokens, parameters, usedVars);
         if (parameters.isEmpty()) {
             return new ArrayList<>(tokens);
         }
@@ -127,6 +131,53 @@ public class TemplateExpander {
         }
 
         return out;
+    }
+
+    /**
+     * Gives a template's own value variables fresh letters, so that they cannot capture the
+     * invoking rule's (DR-PRECEDENCE's %s is not the rule's %s). One renaming per alternative, so
+     * a variable keeps its binding across the body, its negations and nested invocations.
+     */
+    private static List<String> alphaRenameTemplateValues(List<String> tokens,
+                                                          List<String> parameters,
+                                                          Set<String> usedVars) {
+        Map<String, String> renames = new LinkedHashMap<>();
+        for (String token : tokens) {
+            Matcher matcher = VALUE_VAR_PATTERN.matcher(token);
+            while (matcher.find()) {
+                String variable = "%" + matcher.group(1);
+                if (!parameters.contains(variable) && !renames.containsKey(variable)) {
+                    renames.put(variable, freshValueName(usedVars));
+                }
+            }
+        }
+        if (renames.isEmpty()) {
+            return tokens;
+        }
+
+        List<String> out = new ArrayList<>();
+        for (String token : tokens) {
+            Matcher matcher = VALUE_VAR_PATTERN.matcher(token);
+            StringBuffer buffer = new StringBuffer();
+            while (matcher.find()) {
+                String variable = "%" + matcher.group(1);
+                matcher.appendReplacement(buffer, Matcher.quoteReplacement(renames.getOrDefault(variable, variable)));
+            }
+            matcher.appendTail(buffer);
+            out.add(buffer.toString());
+        }
+        return out;
+    }
+
+    private static String freshValueName(Set<String> usedVars) {
+        for (char c = 'a'; c <= 'z'; c++) {
+            String candidate = "%" + c;
+            if (!usedVars.contains(candidate)) {
+                usedVars.add(candidate);
+                return candidate;
+            }
+        }
+        throw new IllegalStateException("No fresh value variable left: a query and its templates use all of %a-%z");
     }
 
     private static String renameTemplateInvocation(String originalToken,
@@ -207,12 +258,17 @@ public class TemplateExpander {
         return candidate;
     }
 
+    // Fs node names bare (x), value variables with their % (%x), so the two never collide.
     private static Set<String> collectFsNodeNames(List<String> tokens) {
         Set<String> out = new LinkedHashSet<>();
         for (String token : tokens) {
             Matcher matcher = FS_VAR_PATTERN.matcher(token);
             while (matcher.find()) {
                 out.add(matcher.group(2));
+            }
+            Matcher valueMatcher = VALUE_VAR_PATTERN.matcher(token);
+            while (valueMatcher.find()) {
+                out.add("%" + valueMatcher.group(1));
             }
         }
         return out;
