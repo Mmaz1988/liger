@@ -7,13 +7,17 @@ import de.ukon.liger.analysis.QueryParser.QueryParser;
 import de.ukon.liger.analysis.QueryParser.QueryParserResult;
 import de.ukon.liger.analysis.QueryParser.TemplateParser;
 import de.ukon.liger.analysis.QueryParser.TemplateRegistry;
+import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -164,5 +168,62 @@ public class QueryParserNegationTest {
         }
 
         return false;
+    }
+    // State 10 (the root) merges state 11; 10 introduces referent 20, 11 referent 21
+    private static LinguisticStructure mergeChainGraph() {
+        LinguisticStructure structure = new LinguisticStructure("chain", "chain", new ArrayList<>());
+        for (String[] fact : new String[][]{
+                {"10", "NODE_TYPE", "root"}, {"10", "MERGE", "11"}, {"10", "IN", "20"}, {"11", "IN", "21"},
+                {"10", "CLAUSE-BOX", "10"}, {"20", "NODE_TYPE", "referent"}, {"21", "NODE_TYPE", "referent"}}) {
+            structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), fact[0], fact[1], fact[2], "c", false));
+        }
+        return structure;
+    }
+
+    private static List<String> bindings(String query, String... variables) {
+        TemplateRegistry templateRegistry = new TemplateParser().parse("CHAIN := MERGE | UPDATE . " +
+                "CHAIN-TOP-BOX(#d) := #s IN #d & #s ^(@CHAIN*) #b & -(#z MERGE #b) & #b CLAUSE-BOX #b .");
+        QueryParser qp = new QueryParser(query, mergeChainGraph(), templateRegistry, new HierarchyParser().parse(""));
+        List<String> out = new ArrayList<>();
+        for (QueryParserResult result : qp.parseQueryWithTemplates(query)) {
+            for (de.ukon.liger.analysis.QueryParser.Solution solution : result.result.keySet()) {
+                java.util.Map<String, String> binding = new java.util.TreeMap<>();
+                for (de.ukon.liger.analysis.QueryParser.SolutionKey key : solution.getSolutionKeys()) {
+                    binding.put(key.variable, key.reference);
+                }
+                StringBuilder signature = new StringBuilder();
+                for (String variable : variables) {
+                    signature.append(variable).append('=').append(binding.get(variable)).append(' ');
+                }
+                out.add(signature.toString().trim());
+            }
+        }
+        out.sort(null);
+        return out;
+    }
+
+    @Test
+    void testConjunctAfterNegationKeepsEarlierBindings() {
+        assertEquals(List.of("d=20 b=10", "d=21 b=10"),
+                bindings("#s IN #d & #s ^(MERGE*) #b & -(#z MERGE #b) & #b CLAUSE-BOX #b", "d", "b"));
+    }
+
+    @Test
+    void testNegationInsideTemplateBodyKeepsEarlierBindings() {
+        assertEquals(List.of("d=20", "d=21"), bindings("#d NODE_TYPE referent & @CHAIN-TOP-BOX(#d)", "d"));
+    }
+
+    @Test
+    void testNegationsBetweenConjunctsAllApply() {
+        // -(#e MERGE #s) leaves the root's referent 20; 20 sits in a clause box
+        assertEquals(List.of("d=20"),
+                bindings("#s IN #d & -(#e MERGE #s) & #d NODE_TYPE referent & -(#d CLAUSE-BOX #x)", "d"));
+        assertEquals(List.of(),
+                bindings("#s IN #d & -(#e MERGE #s) & #d NODE_TYPE referent & -(#x CLAUSE-BOX #x & #x IN #d)", "d"));
+    }
+
+    @Test
+    void testInvalidQueryMatchesNothing() {
+        assertEquals(List.of(), bindings("#s IN #d & #d #s", "d"));
     }
 }

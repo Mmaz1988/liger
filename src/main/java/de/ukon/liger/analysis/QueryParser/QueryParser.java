@@ -362,11 +362,24 @@ public class QueryParser {
             List<QueryExpression> structuralQuery = new ArrayList<>();
             this.superiorConstraints = new ArrayList<>();
 
+            // A superior constraint is applied after the structural query, so it leaves the query
+            // together with the conjunction that joins it: before it, or after it when it comes first
+            boolean dropNextConjunction = false;
             for (QueryExpression expression : queryList) {
                 if (expression instanceof Superior) {
                     addSuperiorConstraint((Superior) expression);
+                    if (!structuralQuery.isEmpty() && structuralQuery.get(structuralQuery.size() - 1) instanceof Conjunction) {
+                        structuralQuery.remove(structuralQuery.size() - 1);
+                    } else {
+                        dropNextConjunction = true;
+                    }
                     continue;
                 }
+                if (dropNextConjunction && expression instanceof Conjunction) {
+                    dropNextConjunction = false;
+                    continue;
+                }
+                dropNextConjunction = false;
 
                 structuralQuery.add(expression);
             }
@@ -450,7 +463,15 @@ public class QueryParser {
                             result = current.getSolution();
                         } else if (current instanceof QueryNegation) {
                             NegationExpression ne = new NegationExpression(previous, (QueryNegation) current);
+                            // The peek above left the iterator on the token after the negation:
+                            // step back so that set() replaces the negation, not the next token
+                            if (next != null) {
+                                it.previous();
+                            }
                             it.set(ne);
+                            if (next != null) {
+                                it.next();
+                            }
                             result = ne.getSolution();
                             previous = ne;
                             current = null;
@@ -502,8 +523,10 @@ public class QueryParser {
                         continue;
                     }
                 } catch (Exception e) {
+                    // Carrying on would evaluate the rest of the query on its own, without the
+                    // bindings before the error: an invalid query matches nothing
                     LOGGER.error("Invalid query syntax while evaluating '{}': {}", query, e.getMessage(), e);
-                   // e.printStackTrace();
+                    return new QueryParserResult(new LinkedHashMap<>(), new LinkedHashMap<>());
                 }
 
                 if (!it.hasNext() && next == null) {
