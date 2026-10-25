@@ -989,9 +989,15 @@ public class LigerController {
 
             RuleParser rp = new RuleParser(new ArrayList<>(Collections.singletonList(fs)), request.ruleString == null ? "" : request.ruleString);
             Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Collections.singleton(fs)));
-            int factsAdded = branches.stream()
-                    .filter(Objects::nonNull)
-                    .mapToInt(branch -> addedAnnotationsForBranch(rp, branch).values().stream().mapToInt(Set::size).sum())
+            // Each branch's added facts, worked out once for the summary and the branch's result.
+            Map<LinguisticStructure, LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>>> addedByBranch = new IdentityHashMap<>();
+            for (LinguisticStructure branch : branches) {
+                if (branch != null) {
+                    addedByBranch.put(branch, addedAnnotationsForBranch(rp, branch));
+                }
+            }
+            int factsAdded = addedByBranch.values().stream()
+                    .mapToInt(added -> added.values().stream().mapToInt(Set::size).sum())
                     .sum();
             logRuleSummary("Post-processing", (fs.local_id == null ? "" : fs.local_id + " ") + quoted(fs.text),
                     rp.getAppliedRules().size(), rp.getRules().size(), branches.size(), factsAdded);
@@ -999,26 +1005,25 @@ public class LigerController {
                 deletions.add(rp.deletionReason());
             }
 
+            LinkedHashSet<LigerRule> appliedRules = new LinkedHashSet<>();
+            for (Rule r : rp.getAppliedRules()) {
+                appliedRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
+            }
+
             for (LinguisticStructure branch : branches) {
                 if (branch == null) {
                     continue;
-                }
-
-                LinkedHashSet<LigerRule> appliedRules = new LinkedHashSet<>();
-                for (Rule r : rp.getAppliedRules()) {
-                    appliedRules.add(new LigerRule(r.toString(), r.getRuleIndex(), r.getLineNumber()));
                 }
 
                 LigerRuleAnnotation annotation = new LigerRuleAnnotation(
                         wantsGraph(request.includeGraph)
                                 ? new LigerWebGraph(branch.constraints, branch.annotation)
                                 : null,
-                        appliedRules,
+                        new LinkedHashSet<>(appliedRules),
                         branch.toJson()
                 );
                 annotation.sentence = branch.text;
-                LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> branchAddedAnnotations =
-                        addedAnnotationsForBranch(rp, branch);
+                LinkedHashMap<Integer, LinkedHashSet<GraphConstraint>> branchAddedAnnotations = addedByBranch.get(branch);
                 // Per branch, not per request: a three-turn discourse fans out to
                 // ~72 of these, so they belong at DEBUG (JUL FINE) behind
                 // LIGER_LOG_LEVEL, with the endpoint's own INFO line as the summary.
@@ -1063,9 +1068,12 @@ public class LigerController {
         // application produced multiple branches. Recover only facts that are
         // actually present in the selected branch, so another branch's facts
         // are not shown in this result.
+        Set<List<Object>> presentKeys = branch.annotation.stream()
+                .map(this::factKey)
+                .collect(Collectors.toCollection(HashSet::new));
         ruleParser.getAddedAnnotationsByRule().forEach((ruleIndex, facts) -> {
             LinkedHashSet<GraphConstraint> presentFacts = facts.stream()
-                    .filter(fact -> branch.annotation.stream().anyMatch(candidate -> sameFact(fact, candidate)))
+                    .filter(fact -> presentKeys.contains(factKey(fact)))
                     .collect(Collectors.toCollection(LinkedHashSet::new));
             if (!presentFacts.isEmpty()) {
                 result.merge(ruleIndex, presentFacts, (existing, recovered) -> {
@@ -1078,15 +1086,12 @@ public class LigerController {
         return result;
     }
 
-    private boolean sameFact(GraphConstraint left, GraphConstraint right) {
-        if (left == null || right == null) {
-            return left == right;
+    /** What makes two facts the same fact here: node, label, value, projection and reading. */
+    private List<Object> factKey(GraphConstraint fact) {
+        if (fact == null) {
+            return Collections.singletonList(null);
         }
-        return Objects.equals(left.getFsNode(), right.getFsNode())
-                && Objects.equals(left.getRelationLabel(), right.getRelationLabel())
-                && Objects.equals(left.getFsValue(), right.getFsValue())
-                && Objects.equals(left.getProj(), right.getProj())
-                && Objects.equals(left.getReading(), right.getReading());
+        return Arrays.asList(fact.getFsNode(), fact.getRelationLabel(), fact.getFsValue(), fact.getProj(), fact.getReading());
     }
 
     private List<LinguisticStructure> parseUploadedLinguisticStructures(LigerStructureUploadRequest request) throws IOException {
