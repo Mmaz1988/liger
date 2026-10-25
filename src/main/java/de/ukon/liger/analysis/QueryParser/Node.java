@@ -106,22 +106,21 @@ public void calculateSolutions()
     }
 
 
+    // Each node's facts, in fact order: one pass instead of one per node
+    HashMap<String,HashMap<Integer,GraphConstraint>> factsByNode = new HashMap<>();
+    for (Integer key : getFsIndices().keySet())
+    {
+        GraphConstraint fact = getFsIndices().get(key);
+        factsByNode.computeIfAbsent(fact.getFsNode(), node -> new LinkedHashMap<>()).put(key, fact);
+    }
+
+
         for (String fs : usedKeys)
         {
             HashMap<String,HashMap<Integer,GraphConstraint>> reference = new LinkedHashMap<>();
-            reference.put(fs,new LinkedHashMap<>());
+            reference.put(fs,new LinkedHashMap<>(factsByNode.getOrDefault(fs, new LinkedHashMap<>())));
             HashMap<String,HashMap<String,HashMap<Integer,GraphConstraint>>> binding = new LinkedHashMap<>();
             binding.put(getNodeVar(),new LinkedHashMap<>());
-
-
-
-            for (Integer key : getFsIndices().keySet())
-        {
-            if (getFsIndices().get(key).getFsNode().equals(fs))
-            {
-                reference.get(fs).put(key,getFsIndices().get(key));
-            }
-            }
 
 
             // String key = getNodeVar()+fs;

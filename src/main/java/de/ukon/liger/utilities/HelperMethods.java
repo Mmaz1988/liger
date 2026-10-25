@@ -216,18 +216,11 @@ public class HelperMethods {
         return value != null && NODE_ID_POLICY.isNodeReference(String.valueOf(value));
     }
 
+    /** Node IDs are equal as written: typed IDs are never normalised, and legacy numeric IDs
+     *  keep zero-padded variants distinct. Called in the query matcher's inner loops, so it
+     *  does no ID parsing. */
     public static boolean nodeIdsEqual(String left, String right) {
-        if (Objects.equals(left, right)) {
-            return true;
-        }
-        if (left == null || right == null || !isNodeReference(left) || !isNodeReference(right)) {
-            return false;
-        }
-        if (NODE_ID_POLICY.isLegacyNumericId(left) || NODE_ID_POLICY.isLegacyNumericId(right)) {
-            // Legacy graph exports may use zero-padded IDs as distinct nodes.
-            return left.equals(right);
-        }
-        return false;
+        return Objects.equals(left, right);
     }
 
     public static String formatWslString(String winpath) {
