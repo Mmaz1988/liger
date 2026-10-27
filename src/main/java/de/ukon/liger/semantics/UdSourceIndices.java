@@ -32,7 +32,9 @@ import java.util.Set;
  *
  * <p>The MC nodes are numbered in the order of their anchors' positions, ties in the order
  * the rules added them. One MC per node: a node carrying several shares one index, which is
- * reported.
+ * reported. Each numbered node also gets {@code ANCHOR} to its word: what XLE's path
+ * {@code in_set > GLUE > g:: > cproj} is to its constructors, for rules that link a referent
+ * ({@code SRC}) to the syntax (a UD {@code DR-GF-LINK}).
  */
 public final class UdSourceIndices {
     private static final Logger LOGGER = LoggerFactory.getLogger(UdSourceIndices.class);
@@ -71,16 +73,22 @@ public final class UdSourceIndices {
         List<String> anchored = order.stream().filter(anchors::containsKey)
                 .sorted(Comparator.comparingInt(node -> index.position(anchors.get(node))))
                 .toList();
-        structure.constraints.removeIf(constraint -> "SYN-ID".equals(constraint.getRelationLabel()));
+        structure.constraints.removeIf(constraint -> "SYN-ID".equals(constraint.getRelationLabel())
+                || "ANCHOR".equals(constraint.getRelationLabel()));
         int next = 1;
         for (String node : anchored) {
-            GraphConstraint synId = new GraphConstraint();
-            synId.setFsNode(node);
-            synId.setRelationLabel("SYN-ID");
-            synId.setFsValue("i" + next++);
-            synId.setReading(new LinkedHashSet<>(mcNodes.get(node)));
-            structure.constraints.add(synId);
+            structure.constraints.add(fact(node, "SYN-ID", "i" + next++, mcNodes.get(node)));
+            structure.constraints.add(fact(node, "ANCHOR", anchors.get(node), mcNodes.get(node)));
         }
+    }
+
+    private static GraphConstraint fact(String node, String relation, String value, Set<ChoiceVar> reading) {
+        GraphConstraint constraint = new GraphConstraint();
+        constraint.setFsNode(node);
+        constraint.setRelationLabel(relation);
+        constraint.setFsValue(value);
+        constraint.setReading(new LinkedHashSet<>(reading));
+        return constraint;
     }
 
     /** The word an MC node hangs from; null if none. */

@@ -91,6 +91,11 @@ public class UdSourceIndicesTest {
 
         // "A" 1, "dog" 2, then the verb's three in the order the rules added them.
         assertEquals(Map.of("a7", "i1", "a6", "i2", "a2", "i3", "a3", "i4", "a4", "i5"), synIds(structure));
+        // And each says which word it hangs from, for linking referents to the syntax.
+        Map<String, String> anchors = new LinkedHashMap<>();
+        structure.returnFullGraph().stream().filter(c -> "ANCHOR".equals(c.getRelationLabel()))
+                .forEach(c -> anchors.put(c.getFsNode(), String.valueOf(c.getFsValue())));
+        assertEquals(Map.of("a7", "w1", "a6", "w2", "a2", "w3", "a3", "w3", "a4", "w3"), anchors);
     }
 
     @Test
