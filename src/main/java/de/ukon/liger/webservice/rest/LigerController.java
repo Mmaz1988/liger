@@ -54,6 +54,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -179,17 +180,12 @@ public class LigerController {
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rules_xle", produces = "application/json", consumes = "application/json")
     public LigerSolutionAnnotationResponse applyRuleRequestXLE2(@RequestBody LigerRequest request) throws IOException {
-
-        //    System.out.println(request.sentence);
-        //   System.out.println(request.ruleString);
-        XLEStarter starter = new XLEStarter();
-        starter.generateXLEStarterFile();
-        XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
+        SentenceParser parser = new SentenceParser(request.parser);
 
         // No caller-supplied id on the single-sentence endpoint; the solution key stands
         // in, which is self-consistent because there is only one sentence in play.
         SentenceAnnotation annotated = annotateSentence(
-                null, request.sentence, request.ruleString, parser, starter);
+                null, request.sentence, request.ruleString, parser);
 
         LOGGER.info("Finished LiGER annotation. Returning results...");
         return annotated.failure() != null
@@ -209,8 +205,13 @@ public class LigerController {
      *  xleplusglue/docs/plans/SHARED_PIPELINE_PLAN.md, Stage 4 and invariant I6.
      */
     private SentenceAnnotation annotateSentence(String sentenceId, String sentence, String ruleString,
-                                                XLEoperator parser, XLEStarter starter) throws IOException {
-        List<LinguisticStructure> fsList = parser.parseSingle(sentence, true);
+                                                SentenceParser parser) throws IOException {
+        List<LinguisticStructure> fsList;
+        try {
+            fsList = parser.parse(sentenceId, sentence);
+        } catch (IllegalStateException e) {
+            return new SentenceAnnotation(List.of(), new LinkedHashSet<>(), 0, e.getMessage());
+        }
         if (fsList == null || fsList.isEmpty()) {
             return new SentenceAnnotation(List.of(), new LinkedHashSet<>(), 0, null);
         }
@@ -246,7 +247,7 @@ public class LigerController {
 
             addedAnnotations += primary.annotation.size();
 
-            String currentSemString = sem.returnMeaningConstructors(primary, !starter.isGlue, false, true);
+            String currentSemString = sem.returnMeaningConstructors(primary, parser.prologMcs(), false, true);
 
             GrammarAxioms axioms = new AxiomExtractor().extractGrammarAxioms(primary);
 
@@ -282,6 +283,65 @@ public class LigerController {
                                       String failure) {
     }
 
+    /** The parser a request asked for (UD_PARSING_PLAN.md): XLE with the loaded grammar --
+     *  started only when used -- or the Stanza service with a UD model. A UD parse that fails
+     *  throws {@code IllegalStateException} with the reason; it never falls back to XLE. */
+    private static final class SentenceParser {
+        private final LigerParserSelection selection;
+        private XLEStarter starter;
+        private XLEoperator xle;
+
+        SentenceParser(LigerParserSelection selection) {
+            this.selection = selection;
+            if (LigerParserSelection.isUd(selection) && (selection.model == null || selection.model.isBlank())) {
+                throw new IllegalArgumentException("A UD parse needs a model (see /list_ud_models).");
+            }
+        }
+
+        List<LinguisticStructure> parse(String sentenceId, String sentence) throws IOException {
+            if (LigerParserSelection.isUd(selection)) {
+                return List.of(StanzaClient.parse(sentenceId, sentence, selection.model));
+            }
+            return xle().parseSingle(sentence, true);
+        }
+
+        /** Whether the grammar's MCs are read from its Prolog output (XLE without glue). */
+        boolean prologMcs() throws IOException {
+            return !LigerParserSelection.isUd(selection) && !starter().isGlue;
+        }
+
+        private XLEStarter starter() throws IOException {
+            if (starter == null) {
+                starter = new XLEStarter();
+                starter.generateXLEStarterFile();
+            }
+            return starter;
+        }
+
+        private XLEoperator xle() throws IOException {
+            if (xle == null) {
+                xle = new XLEoperator(new VariableHandler(), starter().operatingSystem);
+            }
+            return xle;
+        }
+    }
+
+    /** The UD models the Stanza service has installed; {@code error} says why there are none
+     *  when it cannot be reached. The client enables its UD toggle only on a non-empty list. */
+    @CrossOrigin
+    @GetMapping(value = "/list_ud_models", produces = "application/json")
+    public Map<String, Object> listUdModels() {
+        Map<String, Object> result = new LinkedHashMap<>();
+        try {
+            result.put("models", StanzaClient.models());
+            result.put("error", null);
+        } catch (RuntimeException e) {
+            result.put("models", List.of());
+            result.put("error", "The Stanza service at " + StanzaClient.url() + " is not reachable: " + e.getMessage());
+        }
+        return result;
+    }
+
     /**
      * Parses a sentence sequence, assembles syntactic variants, and only then
      * extracts meaning constructors from each assembled graph.
@@ -294,9 +354,7 @@ public class LigerController {
             throw new IllegalArgumentException("At least one sentence is required");
         }
 
-        XLEStarter starter = new XLEStarter();
-        starter.generateXLEStarterFile();
-        XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
+        SentenceParser parser = new SentenceParser(request.parser);
 
         List<List<SequenceCandidate>> candidatesBySentence = new ArrayList<>();
         int analysisIndex = 0;
@@ -328,7 +386,12 @@ public class LigerController {
                         .map(LinguisticStructure::parseFromJson)
                         .toList();
             } else {
-                parsed = parser.parseSingle(sentence, true);
+                try {
+                    parsed = parser.parse(sentenceIdFor(request.sentenceIds, sentenceIndex), sentence);
+                } catch (IllegalStateException e) {
+                    return LigerSolutionAnnotationResponse.failure(
+                            String.join("\n", request.sentences), sentenceIndex, e.getMessage());
+                }
             }
             if (parsed == null || parsed.isEmpty()) {
                 return LigerSolutionAnnotationResponse.failure(
@@ -423,7 +486,7 @@ public class LigerController {
                 semantics.annotateSyntheticMcIndices(structure);
                 sentenceSourceOffsets.add(sourceIndexOffset);
                 String sentenceMeaningConstructorsText = semantics.returnMeaningConstructors(
-                        structure, !starter.isGlue, false, true, true);
+                        structure, parser.prologMcs(), false, true, true);
                 sentenceMeaningConstructors.add(
                         shiftSourceIndexes(sentenceMeaningConstructorsText, sourceIndexOffset));
                 sourceIndexOffset += maxSyntheticMcIndex(structure);
@@ -1424,10 +1487,7 @@ public class LigerController {
     //(origins = "http://localhost:63342")
     @PostMapping(value = "/apply_rules_to_batch", produces = "application/json", consumes = "application/json")
     public LigerBatchParsingAnalysis applyRulesToTestsuiteNew(@RequestBody LigerMultipleRequest request) throws IOException {
-
-        XLEStarter starter = new XLEStarter();
-        starter.generateXLEStarterFile();
-        XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
+        SentenceParser parser = new SentenceParser(request.parser);
 
         // Parsed once purely for createLigerAnnotationGraph's rule LIST -- it reads
         // getRules(), not any per-sentence application state. The per-sentence parsers
@@ -1460,7 +1520,7 @@ public class LigerController {
             // single calls with shared setup (the XLE parser and the rule list); it may
             // not return less. See SHARED_PIPELINE_PLAN.md invariant I6.
             SentenceAnnotation annotated = annotateSentence(
-                    id, sentence, request.ruleString, parser, starter);
+                    id, sentence, request.ruleString, parser);
 
             timingsMs.put(id, System.currentTimeMillis() - started);
             output.put(id, annotated.failure() != null

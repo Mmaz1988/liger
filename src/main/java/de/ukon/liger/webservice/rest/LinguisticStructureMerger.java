@@ -31,6 +31,7 @@ final class LinguisticStructureMerger {
         merged.constraints = unionConstraints(syntax.constraints, drs.constraints);
         merged.annotation = concat(syntax.annotation, drs.annotation);
         merged.cp = mergeChoiceSpace(syntax.cp, drs.cp);
+        merged.syntaxType = syntax.syntaxType;
         return merged;
     }
 
@@ -45,6 +46,7 @@ final class LinguisticStructureMerger {
         copy.constraints = source.constraints == null ? new ArrayList<>() : new ArrayList<>(source.constraints);
         copy.annotation = source.annotation == null ? new ArrayList<>() : new ArrayList<>(source.annotation);
         copy.cp = source.cp;
+        copy.syntaxType = source.syntaxType;
         return copy;
     }
 

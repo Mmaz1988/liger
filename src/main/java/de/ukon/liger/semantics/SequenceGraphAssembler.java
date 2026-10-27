@@ -124,6 +124,9 @@ public final class SequenceGraphAssembler {
         String text = String.join(LinguisticStructure.SENTENCE_SEPARATOR, texts);
         Fstructure result = new Fstructure("sequence", text, constraints, choiceSpace);
         result.annotation = annotations;
+        // A session parses with one parser (UD_PARSING_PLAN.md): a sequence of UD parts is UD.
+        result.syntaxType = structures.stream().filter(Objects::nonNull)
+                .map(structure -> structure.syntaxType).filter(Objects::nonNull).findFirst().orElse(null);
         List<PartProvenance> provenance = new ArrayList<>();
         LinkedHashMap<String, String> rebasedIds = new LinkedHashMap<>();
         int presentIndex = 0;

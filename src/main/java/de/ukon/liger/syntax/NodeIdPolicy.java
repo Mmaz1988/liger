@@ -53,6 +53,8 @@ public final class NodeIdPolicy {
         namespaces.put("d", new Namespace("drt", "dnode"));
         namespaces.put("g", new Namespace("glue", "gnode"));
         namespaces.put("a", new Namespace("annotation", "annotation"));
+        // UD dependency parses (the Stanza service): a word w<id>, the root w0.
+        namespaces.put("w", new Namespace("dependency", "input"));
         return new NodeIdPolicy(namespaces);
     }
 

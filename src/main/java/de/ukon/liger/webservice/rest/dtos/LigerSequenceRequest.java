@@ -9,6 +9,8 @@ public class LigerSequenceRequest {
     public List<String> sentenceIds = new ArrayList<>();
     public String ruleString = "";
     public boolean packAlternatives;
+    /** XLE when absent; see {@link LigerParserSelection}. */
+    public LigerParserSelection parser;
     public List<LinkedHashMap<String, Object>> parsedLastSentence = new ArrayList<>();
     public List<List<LinkedHashMap<String, Object>>> parsedSentences = new ArrayList<>();
 

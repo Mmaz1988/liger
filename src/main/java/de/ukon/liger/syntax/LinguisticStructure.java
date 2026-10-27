@@ -43,6 +43,10 @@ public class LinguisticStructure {
 
     @JsonAlias("annotations")
     public List<GraphConstraint> annotation = new ArrayList<>();
+    /** {@link #UD} for a dependency parse (the Stanza service); null for an XLE parse. */
+    public String syntaxType;
+
+    public static final String UD = "ud";
 
 
 
@@ -101,7 +105,13 @@ public class LinguisticStructure {
                 .map(GraphConstraint::copy)
                 .collect(Collectors.toList());
         this.cp = other.cp == null ? new ChoiceSpace() : other.cp.copy();
+        this.syntaxType = other.syntaxType;
         deduplicateEdges();
+    }
+
+    /** Whether this is a UD dependency parse rather than an XLE parse. */
+    public boolean isUd() {
+        return UD.equals(syntaxType);
     }
 
     public LinguisticStructure copy() {
@@ -161,6 +171,9 @@ public class LinguisticStructure {
         jsonMap.put("annotations",jsonAnnotations);
 
         jsonMap.put("choiceSpace",this.cp.toJson());
+        if (this.syntaxType != null) {
+            jsonMap.put("syntaxType", this.syntaxType);
+        }
 
         return jsonMap;
     }
@@ -171,6 +184,7 @@ public class LinguisticStructure {
 
         ls.local_id = (String) input.get("id");
         ls.text = (String) input.get("text");
+        ls.syntaxType = input.get("syntaxType") instanceof String type ? type : null;
         if (input.get("nodes") instanceof List<?> && input.get("edges") instanceof List<?>) {
             ls.constraints = parseCanonicalGraph(input);
         } else {

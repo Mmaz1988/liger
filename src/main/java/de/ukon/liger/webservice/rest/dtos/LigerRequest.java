@@ -25,6 +25,8 @@ public class LigerRequest {
     public String sentence;
     public String ruleString;
     public boolean unpack;
+    /** XLE when absent; see {@link LigerParserSelection}. */
+    public LigerParserSelection parser;
 
     public LigerRequest(String sentence, String ruleString, boolean unpack) {
         this.sentence = sentence;

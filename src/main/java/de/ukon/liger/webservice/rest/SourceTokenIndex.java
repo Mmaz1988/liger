@@ -1,5 +1,7 @@
 package de.ukon.liger.webservice.rest;
 
+import de.ukon.liger.semantics.UdSourceIndices;
+
 import de.ukon.liger.syntax.GraphConstraint;
 import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.webservice.rest.dtos.LigerSourceToken;
@@ -36,9 +38,12 @@ public final class SourceTokenIndex {
     private final Map<String, List<GraphConstraint>> incoming = new LinkedHashMap<>();
     private final Map<String, List<String>> mcNodesBySynId = new LinkedHashMap<>();
     private final Map<String, LigerSourceToken> tokensByNode = new LinkedHashMap<>();
+    /** A UD parse: an MC node resolves to the word it hangs from ({@link UdSourceIndices}). */
+    private final List<GraphConstraint> udGraph;
 
     public SourceTokenIndex(LinguisticStructure structure) {
         this.text = structure == null ? "" : LinguisticStructure.plainText(structure.text);
+        this.udGraph = structure != null && structure.isUd() ? structure.returnFullGraph() : null;
         if (structure == null) {
             return;
         }
@@ -148,6 +153,10 @@ public final class SourceTokenIndex {
     }
 
     private Set<String> surfaceCandidates(String mcNode) {
+        if (udGraph != null) {
+            String anchor = UdSourceIndices.anchorOf(udGraph, mcNode);
+            return anchor == null ? Set.of() : Set.of(anchor);
+        }
         Set<String> current = new LinkedHashSet<>(List.of(mcNode));
         for (String relation : REVERSE_PATH) {
             Set<String> next = new LinkedHashSet<>();

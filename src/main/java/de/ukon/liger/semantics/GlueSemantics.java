@@ -583,6 +583,11 @@ public class GlueSemantics {
             return;
         }
 
+        if (fs.isUd()) {
+            UdSourceIndices.number(fs);
+            return;
+        }
+
         Map<String, Set<ChoiceVar>> mcReadings = collectMcReadings(fs.returnFullGraph());
         if (mcReadings.isEmpty()) {
             return;
