@@ -194,8 +194,9 @@ public class LigerController {
     }
 
     /** One sentence's full annotation: one {@link LigerSolutionAnnotation} per syntactic
-     *  analysis, each carrying its own structure, graph, meaning constructors, sentence
-     *  analysis and structure variants.
+     *  analysis and rule branch (a {@code ?+=>}/{@code ?*=>} rule's branches are as many
+     *  semantics of one parse), each carrying its own structure, graph, meaning constructors
+     *  and sentence analysis. Branches with the same meaning constructors are one solution.
      *
      *  Extracted so {@code /apply_rules_to_batch} is literally N of these rather than a
      *  parallel implementation returning less. It used to return ONE annotation per
@@ -204,8 +205,8 @@ public class LigerController {
      *  analysis's graph -- which forced every consumer to compensate. See
      *  xleplusglue/docs/plans/SHARED_PIPELINE_PLAN.md, Stage 4 and invariant I6.
      */
-    private SentenceAnnotation annotateSentence(String sentenceId, String sentence, String ruleString,
-                                                SentenceParser parser) throws IOException {
+    SentenceAnnotation annotateSentence(String sentenceId, String sentence, String ruleString,
+                                        SentenceParser parser) throws IOException {
         List<LinguisticStructure> fsList;
         try {
             fsList = parser.parse(sentenceId, sentence);
@@ -240,32 +241,29 @@ public class LigerController {
             if (branches.isEmpty()) {
                 continue;
             }
-            LinguisticStructure primary = branches.iterator().next();
-            sem.annotateSyntheticMcIndices(primary);
+            List<BranchConstructors> distinct = distinctByConstructors(branches, sem, parser, sentence);
+            for (int b = 0; b < distinct.size(); b++) {
+                LinguisticStructure branch = distinct.get(b).structure();
+                String currentSemString = distinct.get(b).meaningConstructors();
+                LigerWebGraph lg = new LigerWebGraph(branch.constraints, branch.annotation);
+                addedAnnotations += branch.annotation.size();
+                GrammarAxioms axioms = new AxiomExtractor().extractGrammarAxioms(branch);
 
-            LigerWebGraph lg = new LigerWebGraph(primary.constraints, primary.annotation);
-
-            addedAnnotations += primary.annotation.size();
-
-            String currentSemString = sem.returnMeaningConstructors(primary, parser.prologMcs(), false, true);
-
-            GrammarAxioms axioms = new AxiomExtractor().extractGrammarAxioms(primary);
-
-            String solutionKey = solutionKeyFor(fs, i);
-            LigerSolutionAnnotation solutionAnnotation = new LigerSolutionAnnotation(
-                    solutionKey,
-                    lg,
-                    primary.toJson(),
-                    appliedLigerRules,
-                    currentSemString,
-                    countMeaningConstructorSets(currentSemString),
-                    axioms
-            );
-            solutionAnnotation.sentenceAnalysis = sentenceSyntaxAnalysis(
-                    sentenceId != null ? sentenceId : solutionKey,
-                    solutionKey, sentence, primary, lg, currentSemString);
-            solutionAnnotation.structureVariants = toStructureVariants(branches);
-            solutions.add(solutionAnnotation);
+                String solutionKey = branchKey(solutionKeyFor(fs, i), b);
+                LigerSolutionAnnotation solutionAnnotation = new LigerSolutionAnnotation(
+                        solutionKey,
+                        lg,
+                        branch.toJson(),
+                        appliedLigerRules,
+                        currentSemString,
+                        countMeaningConstructorSets(currentSemString),
+                        axioms
+                );
+                solutionAnnotation.sentenceAnalysis = sentenceSyntaxAnalysis(
+                        sentenceId != null ? sentenceId : solutionKey,
+                        solutionKey, sentence, branch, lg, currentSemString);
+                solutions.add(solutionAnnotation);
+            }
             branchCount += branches.size();
         }
         logRuleSummary("Semantic rules", quoted(sentence) + " (" + fsList.size() + " analysis(es))",
@@ -274,10 +272,48 @@ public class LigerController {
                 solutions.isEmpty() ? "No analysis of the sentence is left: " + rp.deletionReason() : null);
     }
 
+    /** A rule branch with its meaning constructors. */
+    private record BranchConstructors(LinguisticStructure structure, String meaningConstructors) {
+    }
+
+    /**
+     * The branches of one analysis with their meaning constructors, one per distinct constructor
+     * set: branches that differ only in facts that make no constructor give the same readings, so
+     * they are one solution (the first branch's structure is kept). In branch order.
+     */
+    private List<BranchConstructors> distinctByConstructors(Set<LinguisticStructure> branches, GlueSemantics sem,
+                                                           SentenceParser parser, String sentence) throws IOException {
+        LinkedHashMap<String, BranchConstructors> distinct = new LinkedHashMap<>();
+        for (LinguisticStructure branch : branches) {
+            sem.annotateSyntheticMcIndices(branch);
+            String meaningConstructors = sem.returnMeaningConstructors(branch, parser.prologMcs(), false, true);
+            distinct.putIfAbsent(meaningConstructors, new BranchConstructors(branch, meaningConstructors));
+        }
+        if (distinct.size() < branches.size()) {
+            LOGGER.info(quoted(sentence) + ": " + branches.size() + " rule branches, " + distinct.size()
+                    + " with distinct meaning constructors; the others are merged into them.");
+        }
+        return new ArrayList<>(distinct.values());
+    }
+
+    /** Numbers a sentence's candidates S<n>, counting on from {@code next}; returns the next number. */
+    private static int numberCandidates(List<SequenceCandidate> candidates, int next) {
+        for (SequenceCandidate candidate : candidates) {
+            candidate.structure().local_id = "S" + next++;
+        }
+        return next;
+    }
+
+    /** A branch's solution key: the first branch keeps its analysis's key, so rules without
+     *  branching change nothing; later ones are {@code <key>-b<n>}. */
+    private static String branchKey(String analysisKey, int branchIndex) {
+        return branchIndex == 0 ? analysisKey : analysisKey + "-b" + (branchIndex + 1);
+    }
+
     /** What {@link #annotateSentence} produces: the per-analysis solutions plus the two
      *  aggregates the batch report needs, and why there is no solution if rules deleted every
      *  analysis. */
-    private record SentenceAnnotation(List<LigerSolutionAnnotation> solutions,
+    record SentenceAnnotation(List<LigerSolutionAnnotation> solutions,
                                       LinkedHashSet<LigerRule> appliedRules,
                                       int addedAnnotations,
                                       String failure) {
@@ -286,19 +322,37 @@ public class LigerController {
     /** The parser a request asked for (UD_PARSING_PLAN.md): XLE with the loaded grammar --
      *  started only when used -- or the Stanza service with a UD model. A UD parse that fails
      *  throws {@code IllegalStateException} with the reason; it never falls back to XLE. */
-    private static final class SentenceParser {
+    static final class SentenceParser {
         private final LigerParserSelection selection;
+        /** Parses handed in instead of parsing (tests): UD structures, every sentence the same. */
+        private final List<LinguisticStructure> supplied;
         private XLEStarter starter;
         private XLEoperator xle;
 
         SentenceParser(LigerParserSelection selection) {
+            this(selection, null);
+        }
+
+        /** A parser that returns copies of {@code structures} for any sentence. */
+        static SentenceParser supplying(List<LinguisticStructure> structures) {
+            LigerParserSelection ud = new LigerParserSelection();
+            ud.kind = "ud";
+            ud.model = "supplied";
+            return new SentenceParser(ud, structures);
+        }
+
+        private SentenceParser(LigerParserSelection selection, List<LinguisticStructure> supplied) {
             this.selection = selection;
+            this.supplied = supplied;
             if (LigerParserSelection.isUd(selection) && (selection.model == null || selection.model.isBlank())) {
                 throw new IllegalArgumentException("A UD parse needs a model (see /list_ud_models).");
             }
         }
 
         List<LinguisticStructure> parse(String sentenceId, String sentence) throws IOException {
+            if (supplied != null) {
+                return supplied.stream().map(LinguisticStructure::copy).toList();
+            }
             if (LigerParserSelection.isUd(selection)) {
                 return List.of(StanzaClient.parse(sentenceId, sentence, selection.model));
             }
@@ -353,8 +407,11 @@ public class LigerController {
         if (request == null || request.sentences == null || request.sentences.isEmpty()) {
             throw new IllegalArgumentException("At least one sentence is required");
         }
+        return applyRuleRequestXLESequence(request, new SentenceParser(request.parser));
+    }
 
-        SentenceParser parser = new SentenceParser(request.parser);
+    LigerSolutionAnnotationResponse applyRuleRequestXLESequence(LigerSequenceRequest request, SentenceParser parser)
+            throws IOException {
 
         List<List<SequenceCandidate>> candidatesBySentence = new ArrayList<>();
         int analysisIndex = 0;
@@ -405,10 +462,9 @@ public class LigerController {
             // A supplied structure kept its own id instead (every standalone parse is S0), and
             // a sentence parsed in a call where the earlier ones were supplied restarted at S0
             // too, so parts, syntax ids and sequence keys collided (sequence-1-S0+S0).
-            // Rule branches of one analysis inherit its id, as before.
-            for (LinguisticStructure structure : parsed) {
-                structure.local_id = "S" + analysisIndex++;
-            }
+            // Numbered once the candidates are known: a rule branch is a candidate of its own,
+            // as /apply_rules_xle makes it a solution of its own, so a sentence parsed here and
+            // the same sentence's solutions supplied are numbered alike.
             List<SequenceCandidate> candidates = new ArrayList<>();
             if (suppliedThisSentence || suppliedLastSentence) {
                 // The client has already parsed and rewritten the current
@@ -420,6 +476,7 @@ public class LigerController {
                 }
                 LOGGER.info("Supplied " + quoted(sentence) + " (" + parsed.size()
                         + " analysis(es)): already parsed and rule-applied, reused");
+                analysisIndex = numberCandidates(candidates, analysisIndex);
                 candidatesBySentence.add(candidates);
                 continue;
             }
@@ -450,8 +507,8 @@ public class LigerController {
                 sentenceBranches += branches.size();
                 sentenceFacts += branches.stream().findFirst()
                         .map(branch -> branch.annotation == null ? 0 : branch.annotation.size()).orElse(0);
-                for (LinguisticStructure branch : branches) {
-                    candidates.add(new SequenceCandidate(branch, appliedRules));
+                for (BranchConstructors branch : distinctByConstructors(branches, new GlueSemantics(), parser, sentence)) {
+                    candidates.add(new SequenceCandidate(branch.structure(), appliedRules));
                 }
             }
             if (request.ruleString != null && !request.ruleString.isBlank()) {
@@ -465,6 +522,7 @@ public class LigerController {
                         "No rewritten solution was found for sentence " + (sentenceIndex + 1)
                                 + (deletionReason == null ? "" : ": " + deletionReason));
             }
+            analysisIndex = numberCandidates(candidates, analysisIndex);
             candidatesBySentence.add(candidates);
         }
 
