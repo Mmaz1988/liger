@@ -91,6 +91,10 @@ public final class EmbeddedDefinitionExtractor {
                 && !trimmed.contains("::=")
                 && !trimmed.contains("==>")
                 && !trimmed.contains("=->")
+                && !trimmed.contains("?=>")
+                && !trimmed.contains("?+=>")
+                && !trimmed.contains("?*=>")
+                && !trimmed.contains("?->")
                 && !trimmed.contains("+->");
     }
 

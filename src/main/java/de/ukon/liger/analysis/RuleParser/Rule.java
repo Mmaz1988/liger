@@ -34,7 +34,10 @@ public class Rule {
     public enum RuleOperator {
         ADD("==>"),
         REWRITE("=->"),
-        FORK_ADD("?=>"),
+        /** Additive branching: one branch per match. {@code ?=>} is read as this arrow. */
+        FORK_ADD("?+=>"),
+        /** Multiplicative branching: one branch per combination of choices. */
+        FORK_PRODUCT("?*=>"),
         FORK_DELETE("?->");
 
         private final String symbol;
@@ -55,10 +58,14 @@ public class Rule {
     private boolean rewrite;
     private  boolean branch;
     private boolean questionDelete;
+    private boolean product;
 
     private int lineNumber;
     private int ruleIndex;
-    private static Pattern rulePattern = Pattern.compile("(.+?)(==>|=->|\\?=>|\\?->)(.+)");
+    /** The additive arrow's earlier spelling, still read (saved sessions hold rules with it). */
+    public static final String LEGACY_FORK_ADD = "?=>";
+
+    private static Pattern rulePattern = Pattern.compile("(.+?)(==>|=->|\\?\\+=>|\\?\\*=>|\\?=>|\\?->)(.+)");
 
     public Rule(String rule) {
         generateRule(rule);
@@ -138,11 +145,13 @@ public class Rule {
         if (rm.matches())
         {
             this.left = rm.group(1);
-            this.operator = rm.group(2);
+            this.operator = LEGACY_FORK_ADD.equals(rm.group(2)) ? RuleOperator.FORK_ADD.getSymbol() : rm.group(2);
             this.right = rm.group(3);
             this.rewrite = RuleOperator.REWRITE.getSymbol().equals(this.operator);
             this.branch = RuleOperator.FORK_ADD.getSymbol().equals(this.operator);
             this.questionDelete = RuleOperator.FORK_DELETE.getSymbol().equals(this.operator);
+            this.product = RuleOperator.FORK_PRODUCT.getSymbol().equals(this.operator);
+            this.branch = this.branch || this.product;
         }
     }
 
@@ -211,6 +220,24 @@ public class Rule {
         }
     }
 
+    /**
+     * {@code ?*=>}: applied as {@code ?+=>}, then again to every branch until it matches nowhere
+     * or adds nothing new. The left side's guard says which matches exclude each other, e.g.
+     * {@code #n SITE #c & -(#n SCOPE #x) ?*=> #n SCOPE #c}: every #n chooses one #c, and the
+     * branches are the combinations of those choices.
+     */
+    public boolean isProduct() {
+        return product;
+    }
+
+    public void setProduct(boolean product) {
+        this.product = product;
+        if (product) {
+            this.branch = true;
+            this.operator = RuleOperator.FORK_PRODUCT.getSymbol();
+        }
+    }
+
     public boolean isBranch() {
         return branch;
     }
@@ -228,9 +255,10 @@ public class Rule {
         return questionDelete;
     }
 
-    /** {@code ?=> 0}: a structure the left-hand side matches is deleted as a whole. */
+    /** {@code ?+=> 0} (or {@code ?*=> 0}): a structure the left-hand side matches is deleted as a whole. */
     public boolean isBranchDeletion() {
-        return RuleOperator.FORK_ADD.getSymbol().equals(operator) && right != null && "0".equals(right.trim());
+        return (RuleOperator.FORK_ADD.getSymbol().equals(operator) || RuleOperator.FORK_PRODUCT.getSymbol().equals(operator))
+                && right != null && "0".equals(right.trim());
     }
 
     public void setQuestionDelete(boolean questionDelete) {

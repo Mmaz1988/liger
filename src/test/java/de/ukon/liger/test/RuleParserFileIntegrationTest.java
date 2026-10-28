@@ -193,7 +193,7 @@ public class RuleParserFileIntegrationTest {
         int offendingRuleIndex = -1;
         for (int i = 0; i < ruleParser.getRules().size(); i++) {
             if (ruleParser.getRules().get(i).getRight().contains("POSSIBLE-ANT")
-                    && ruleParser.getRules().get(i).getOperator().equals("?=>")) {
+                    && ruleParser.getRules().get(i).getOperator().equals("?+=>")) {
                 offendingRuleIndex = i;
                 break;
             }

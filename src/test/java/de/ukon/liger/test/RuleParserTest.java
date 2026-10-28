@@ -737,6 +737,88 @@ public class RuleParserTest {
                 rp.deletionReason());
     }
 
+    /** The branching arrows: {@code ?+=>} adds, {@code ?*=>} multiplies; {@code ?=>}, the additive
+     *  arrow's earlier spelling, is still read as {@code ?+=>}. */
+    @Test
+    void testBranchingArrowsAreRead() {
+        RuleParser rp = new RuleParser(new ArrayList<>(),
+                "#a X #b ?+=> #a Y #b.\n#a X #b ?*=> #a Z #b.\n#a X #b ?=> #a W #b.\n#a X #b ?*=> 0.");
+        assertEquals(4, rp.getRules().size());
+        assertEquals("?+=>", rp.getRules().get(0).getOperator());
+        assertEquals("?*=>", rp.getRules().get(1).getOperator());
+        assertTrue(rp.getRules().get(1).isProduct());
+        assertEquals("?+=>", rp.getRules().get(2).getOperator());
+        assertTrue(rp.getRules().get(3).isBranchDeletion());
+        assertEquals("?*=>", new Rule("#a X #b ?*=> #a Z #b").getOperator());
+        assertEquals("?+=>", new Rule("#a X #b ?=> #a Z #b").getOperator());
+    }
+
+    /** Every subject of "John said that Mary was sick" gets a site at each of the two past
+     *  tenses; one choice per subject. */
+    private Set<LinguisticStructure> chooseSites(String arrow, String guard) {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+        RuleParser rp = new RuleParser(new ArrayList<>(),
+                "#f SUBJ #s & #g TENSE 'past' ==> #s SITE #g.\n#s SITE #g" + guard + " " + arrow + " #s CHOSEN #g.");
+        return rp.addAnnotation2(new LinkedHashSet<>(Set.of(structure)));
+    }
+
+    private static java.util.List<java.util.List<String>> chosen(Set<LinguisticStructure> branches) {
+        java.util.List<java.util.List<String>> out = new ArrayList<>();
+        for (LinguisticStructure branch : branches) {
+            out.add(branch.annotation.stream().filter(c -> "CHOSEN".equals(c.getRelationLabel()))
+                    .map(c -> c.getFsNode() + ">" + c.getFsValue()).sorted().toList());
+        }
+        return out;
+    }
+
+    /** {@code ?*=>} with a guard: every subject chooses one site; the branches are the 2 x 2
+     *  combinations, each made once although two orders of choosing reach it. */
+    @Test
+    void testProductBranchingGivesEveryCombination() {
+        java.util.List<java.util.List<String>> branches = chosen(chooseSites("?*=>", " & -(#s CHOSEN #x)"));
+
+        assertEquals(4, branches.size(), branches.toString());
+        assertEquals(4, new LinkedHashSet<>(branches).size(), branches.toString());
+        for (java.util.List<String> branch : branches) {
+            assertEquals(2, branch.size(), branch.toString());
+            assertEquals(2, branch.stream().map(c -> c.substring(0, c.indexOf('>'))).distinct().count(), branch.toString());
+        }
+    }
+
+    /** {@code ?+=>} on the same rule gives the sum: one branch per (subject, site), each with one
+     *  subject's choice. */
+    @Test
+    void testAdditiveBranchingGivesOneChoicePerBranch() {
+        java.util.List<java.util.List<String>> branches = chosen(chooseSites("?+=>", " & -(#s CHOSEN #x)"));
+
+        assertEquals(4, branches.size(), branches.toString());
+        branches.forEach(branch -> assertEquals(1, branch.size(), branch.toString()));
+    }
+
+    /** Without a guard nothing excludes anything: {@code ?*=>} ends in one branch with every match's
+     *  facts, as {@code ==>} would give. */
+    @Test
+    void testProductBranchingWithoutGuardAddsEverything() {
+        java.util.List<java.util.List<String>> branches = chosen(chooseSites("?*=>", ""));
+
+        assertEquals(1, branches.size(), branches.toString());
+        assertEquals(4, branches.get(0).size(), branches.toString());
+    }
+
+    /** A {@code ?*=>} rule that matches nothing is the identity on its input. */
+    @Test
+    void testProductBranchingMatchingNothingKeepsTheInput() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+        RuleParser rp = new RuleParser(new ArrayList<>(), "#g GEND-SEM 'neuter' ?*=> #g PICKED +.");
+
+        Set<LinguisticStructure> branches = rp.addAnnotation2(new LinkedHashSet<>(Set.of(structure)));
+
+        assertEquals(1, branches.size());
+        assertSame(structure, branches.iterator().next());
+    }
+
     @Test
     void testChoiceVarCopyPreservesNullPropValue() {
         ChoiceVar original = new ChoiceVar("A");

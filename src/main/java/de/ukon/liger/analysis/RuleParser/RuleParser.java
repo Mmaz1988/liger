@@ -190,7 +190,9 @@ public class RuleParser {
                     continue;
                 }
 
-                if (isQuestionRule(r)) {
+                if (r.isProduct()) {
+                    next.addAll(productBranches(r, k, structure, ruleAddedAnnotations));
+                } else if (isQuestionRule(r)) {
                     boolean producedBranch = false;
                     for (Solution solution : dedupeSolutions(r, qpr)) {
                         LinguisticStructure branch = structure.copy();
@@ -397,8 +399,70 @@ public class RuleParser {
         }
     }
 
+    /** Rounds after which a {@code ?*=>} rule stops although it still matches: one whose
+     *  right-hand side introduces nodes matches again forever. */
+    private static final int MAX_PRODUCT_ROUNDS = 64;
+
+    /**
+     * The branches of a {@code ?*=>} rule: it is applied as {@code ?+=>} -- one branch per match --
+     * and then again to every branch, until it matches nowhere or adds nothing new. Branches with
+     * the same facts are merged after every round, so the order in which choices are made does not
+     * multiply them. The left side's guard ({@code -(#n SCOPE #x)}) says which matches exclude each
+     * other: "every #n chooses one" gives the product of the choices, where {@code ?+=>} gives
+     * their sum.
+     */
+    private List<LinguisticStructure> productBranches(Rule r, int k, LinguisticStructure structure,
+                                                      LinkedHashSet<GraphConstraint> ruleAddedAnnotations) {
+        LinkedHashMap<Set<GraphConstraint>, LinguisticStructure> done = new LinkedHashMap<>();
+        LinkedHashMap<Set<GraphConstraint>, LinguisticStructure> frontier = new LinkedHashMap<>();
+        frontier.put(new HashSet<>(structure.annotation), structure);
+        ProtectedAtoms protectedAtoms = ProtectedAtoms.of(r.getLeft());
+        int rounds = 0;
+        while (!frontier.isEmpty()) {
+            if (++rounds > MAX_PRODUCT_ROUNDS) {
+                LOGGER.warn("The ?*=> rule at line " + r.getLineNumber() + " still matches after " + MAX_PRODUCT_ROUNDS
+                        + " rounds; its " + frontier.size() + " unfinished branch(es) are kept as they are.");
+                frontier.forEach(done::putIfAbsent);
+                break;
+            }
+            LinkedHashMap<Set<GraphConstraint>, LinguisticStructure> next = new LinkedHashMap<>();
+            for (LinguisticStructure current : frontier.values()) {
+                QueryParser qp = new QueryParser(current, templateRegistry, hierarchyRegistry);
+                qp.resetParser();
+                qp.generateQuery(protectedAtoms.query());
+                QueryParserResult qpr = templateRegistry != null && !templateRegistry.getTemplates().isEmpty()
+                        ? qp.parseQueryWithTemplates(protectedAtoms.query()).stream().filter(result -> result.isSuccess).findFirst()
+                        .orElse(new QueryParserResult(new LinkedHashMap<>(), new LinkedHashMap<>()))
+                        : qp.parseQuery(qp.getQueryList());
+                boolean grew = false;
+                if (qpr.isSuccess) {
+                    Set<GraphConstraint> present = new HashSet<>(current.annotation);
+                    for (Solution solution : dedupeSolutions(r, qpr)) {
+                        LinguisticStructure branch = current.copy();
+                        LinkedHashSet<GraphConstraint> added = addFactsForSolution(branch, qpr, solution, r);
+                        if (present.containsAll(added)) {
+                            continue;
+                        }
+                        ruleAddedAnnotations.addAll(added);
+                        recordAddedAnnotations(branch, k, added);
+                        next.putIfAbsent(new HashSet<>(branch.annotation), branch);
+                        grew = true;
+                    }
+                }
+                if (!grew) {
+                    done.putIfAbsent(new HashSet<>(current.annotation), current);
+                }
+            }
+            frontier = next;
+        }
+        LOGGER.debug("The ?*=> rule at line " + r.getLineNumber() + " gave " + done.size() + " branch(es) in "
+                + rounds + " round(s).");
+        return new ArrayList<>(done.values());
+    }
+
     private boolean isQuestionRule(Rule r) {
-        return r != null && ("?=>".equals(r.getOperator()) || "?->".equals(r.getOperator()));
+        return r != null && (Rule.RuleOperator.FORK_ADD.getSymbol().equals(r.getOperator())
+                || Rule.RuleOperator.FORK_DELETE.getSymbol().equals(r.getOperator()));
     }
 
     /**
@@ -1163,6 +1227,14 @@ public class RuleParser {
                     }
                 }
 
+                // ?+=> and ?*=>: the branching arrows, read as ?=> with the kind of branching marked.
+                boolean product = false;
+                if (c == '?' && i + 3 < fileString.length()
+                        && (fileString.charAt(i + 1) == '+' || fileString.charAt(i + 1) == '*')
+                        && fileString.charAt(i + 2) == '=' && fileString.charAt(i + 3) == '>') {
+                    product = fileString.charAt(i + 1) == '*';
+                    i++;
+                }
                 if ((c =='=' || c == '?') &&
                         (fileString.charAt(i + 1) == '=' || fileString.charAt(i + 1) == '-')
                         && fileString.charAt(i + 2) == '>')
@@ -1202,6 +1274,9 @@ public class RuleParser {
                     rightString = rightString.replaceAll("\\s+"," ");
 
                     Rule r = new Rule(leftString,rightString, rewrite,branch,questionDelete);
+                    if (product) {
+                        r.setProduct(true);
+                    }
                     r.setLineNumber(lineCounter);
                     out.add(r);
 
@@ -1333,6 +1408,8 @@ public class RuleParser {
                 && !trimmed.contains("==>")
                 && !trimmed.contains("=->")
                 && !trimmed.contains("?=>")
+                && !trimmed.contains("?+=>")
+                && !trimmed.contains("?*=>")
                 && !trimmed.contains("?->");
     }
 
