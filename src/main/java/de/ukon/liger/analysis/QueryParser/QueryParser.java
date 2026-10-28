@@ -245,9 +245,7 @@ public class QueryParser {
                             getFsIndices(),
                             this));
                 }
-                else if (isAttribute(currentToken, getFsIndices())) {
-                    queryList.add(new Attribute(currentToken, getFsIndices(), this));
-                } else if (isSuperiorToken(currentToken)) {
+                else if (isSuperiorToken(currentToken)) {
                     queryList.add(new Superior(currentToken, getFsIndices(), this));
                 } else if (currentToken.startsWith("id(")) {
                     if (!HelperMethods.isIdExpression(currentToken)) {
@@ -263,6 +261,14 @@ public class QueryParser {
                     idValue.setIdRef(true);
                     idValue.setIdVar(idMatcher.group(1));
                     queryList.add(idValue);
+                } else if (isAttributePosition(queryList) && !OPERATORS.contains(currentToken)
+                        && !HelperMethods.isValueShaped(currentToken)) {
+                    // A word after a node or at the start of a conjunct is an attribute, whatever the
+                    // structure holds: UD's tags and relations share names (UPOS AUX, the relation AUX).
+                    if (!isAttribute(currentToken, getFsIndices())) {
+                        throw new IllegalArgumentException("Element not found in f-structure " + i);
+                    }
+                    queryList.add(new Attribute(currentToken, getFsIndices(), this));
                 } else if (HelperMethods.isValue(currentToken, getFsIndices())) {
                     Boolean var = false;
                     Boolean strip = false;
@@ -649,6 +655,13 @@ public class QueryParser {
 
 
 
+
+    private static final Set<String> OPERATORS = Set.of("\u0026", "==", "!=", "<", ">", "<=", ">=");
+
+    /** After a node, at the start of the query or of a conjunct: where a query names an attribute. */
+    private static boolean isAttributePosition(LinkedList<QueryExpression> queryList) {
+        return queryList.isEmpty() || queryList.getLast() instanceof Node || queryList.getLast() instanceof Conjunction;
+    }
 
     public boolean isAttribute(String query, HashMap<Integer, GraphConstraint> fsIndices)
     {

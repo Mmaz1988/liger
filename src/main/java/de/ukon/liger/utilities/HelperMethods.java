@@ -152,15 +152,20 @@ public class HelperMethods {
 
 
     public static boolean isValue(String query, HashMap<Integer, GraphConstraint> fsIndices) {
-        Matcher namedValueFilter = Pattern.compile("value=(.+)").matcher(query);
-        if (namedValueFilter.matches()) {
-            return true;
-        }
-
         for (Integer key : fsIndices.keySet()) {
             if (fsIndices.get(key).getFsValue().equals(query)) {
                 return true;
             }
+        }
+
+        return isValueShaped(query);
+    }
+
+    /** A value by its form alone (a value variable, a quoted string, strip(), id(), a number), whatever the structure holds. */
+    public static boolean isValueShaped(String query) {
+        Matcher namedValueFilter = Pattern.compile("value=(.+)").matcher(query);
+        if (namedValueFilter.matches()) {
+            return true;
         }
 
         Matcher m = HelperMethods.valueVarPattern.matcher(query);
