@@ -363,6 +363,11 @@ public class QueryParser {
             return parseStandaloneFilterQuery(queryList);
         }
 
+        queryList = withoutGroundConjuncts(queryList);
+        if (queryList == null) {
+            return new QueryParserResult(new LinkedHashMap<>(), new LinkedHashMap<>());
+        }
+
         if (!queryList.isEmpty()) {
 
             List<QueryExpression> structuralQuery = new ArrayList<>();
@@ -556,6 +561,55 @@ public class QueryParser {
             return new QueryParserResult(result, fsValueBindings);
         }
         return new QueryParserResult(new LinkedHashMap<>(),new LinkedHashMap<>());
+    }
+
+    /**
+     * A conjunct without variables ({@code TENSE Past}) is a condition on the whole structure, not on
+     * the nodes the rest of the query binds: it holds if some fact has that attribute (and value).
+     * Returns the query without such conjuncts once each holds, or null if one does not.
+     */
+    private LinkedList<QueryExpression> withoutGroundConjuncts(LinkedList<QueryExpression> queryList) {
+        LinkedList<QueryExpression> kept = new LinkedList<>();
+        LinkedList<QueryExpression> conjunct = new LinkedList<>();
+        Conjunction before = null;
+
+        for (QueryExpression expression : queryList) {
+            if (expression instanceof Conjunction || expression instanceof End) {
+                if (isGroundConjunct(conjunct)) {
+                    if (!parseStandaloneFilterQuery(conjunct).isSuccess) {
+                        return null;
+                    }
+                } else if (!conjunct.isEmpty()) {
+                    if (!kept.isEmpty() && before != null) {
+                        kept.add(before);
+                    }
+                    kept.addAll(conjunct);
+                }
+                conjunct = new LinkedList<>();
+                if (expression instanceof Conjunction conjunction) {
+                    before = conjunction;
+                } else {
+                    kept.add(expression);
+                }
+                continue;
+            }
+            conjunct.add(expression);
+        }
+        kept.addAll(conjunct);
+        return kept;
+    }
+
+    private static boolean isGroundConjunct(List<QueryExpression> conjunct) {
+        if (conjunct.isEmpty()) {
+            return false;
+        }
+        for (QueryExpression expression : conjunct) {
+            boolean plainValue = expression instanceof Value value && !value.var && !value.strip && !value.idRef;
+            if (!(expression instanceof Attribute) && !plainValue) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean isStandaloneFilterQuery(LinkedList<QueryExpression> queryList) {
