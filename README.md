@@ -147,13 +147,68 @@ Values can be looked up in a lexicon, stored in resources via the predicate `lex
 #a POS MD & #a TOKEN %a ==> #a MORPH #b & #b FIN '+' & #b FORM 'lex(%a,tense)' & #b HEAD %a.
 ```
 
-The dictionary is a text file sorting values in categories:
+The dictionary is a text file sorting values in categories. `>name` starts a dictionary (the second
+argument of `lex/2`), each entry is `***` followed by a `#LABEL` and one or more lines of values:
 
 ```
+>tense
 ***
 #FUTURE_PREDICTION
 threaten, vow, promise, pressure, force, urge, warn, indicate, insist, postpone, should
+***
+#FUTURE_POSSIBLE
+will
 ```
+
+`lex/2` is evaluated while variables are substituted into a rule's output, so it needs
+`--replace(true)`. A bound value is looked up without its quotes (`'past'` matches `past`). The first
+matching label is returned, `undefined` if none matches; a `lex(...)` naming an unknown dictionary is
+left as it is. Which dictionaries exist is set by the loaded LiGER config (below); a single rule
+file activates none. Before any rule set is loaded it is `<resources>/dicts/ling_dict_eng.txt`. A
+rule file can add a dictionary of its own with a directive on its own line:
+
+```
+--lexicon(../dicts/my_dict.txt)
+```
+
+### LiGER configs
+
+Instead of a single rule file, the web service's `/load_rules` accepts a LiGER config
+(`*.liger.yaml`). A config belongs to a grammar and lives in the grammar's folder or its `liger/`
+folder, e.g. `grammars/dev/lfgxdrt_inference_grammar/liger/lfgxdrt.liger.yaml` in xleplusglue.
+Paths are relative to the config file:
+
+```yaml
+scope: .              # the folder its files belong in (default: the config's folder)
+semantics:            # rules applied to the parse before semantic composition (GSWB)
+  - semantics/degree_rules_lfgxdrt.liger
+pragmatics:           # post-processing rules, applied to the merged syntax + DRS
+  - pragmatics/core.liger
+  - pragmatics/presupposition.liger
+  - pragmatics/pronouns.liger
+lexica:               # dictionaries for lex/2, available to all rules above
+  - dicts/ling_dict_eng.txt
+axioms:               # TPTP axiom files, for the client's axioms editor
+  - axioms/degree_axioms.txt
+```
+
+`scope` is a boundary, not a base for paths: files outside it are allowed, but logged and marked
+in `/config_tree`. Loading a grammar and loading a config are separate steps; `/list_configs`
+names a grammar's configs (its folder and its `liger/` folder only, so a loose grammar beside a
+grammar folder is not offered the other grammar's config).
+
+`axioms` are concatenated the same way (with `%` marker lines, TPTP's comment character) and
+returned for the client to load into its axioms editor; LiGER itself does not use them.
+
+The rule files of a stage are concatenated in order, so templates and hierarchies defined in an
+earlier file are visible to later ones (and a `--replace(true)` in any of them applies to the whole
+stage). `/load_rules` answers with the assembled `semantics` and `pragmatics` rule text and makes the
+config's `lexica` the globally active ones: one config is active at a time. A config gets exactly
+what it lists; nothing is inherited from a default config. A single rule file is the semantics
+stage and nothing else: no pragmatics, so it cannot be post-processed (the client blocks
+post-processing and says so), no lexica and no axioms. `/config_tree` lists a config's files per
+field without reading them. Configs are not yet supported in CLI mode
+(`docs/plans/CONFIG_CLI_TODO.md`).
 
 For XLE, there exists a special predicate `strip/1` that reduces the values of `PRED`s to their lemmas (more concretely, string values in the lexicon). 
 
