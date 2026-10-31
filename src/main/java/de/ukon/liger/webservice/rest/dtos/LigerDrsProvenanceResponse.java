@@ -8,6 +8,7 @@ public class LigerDrsProvenanceResponse {
     public List<LigerSourceToken> tokens = new ArrayList<>();
     public List<LigerProvenanceCondition> conditions = new ArrayList<>();
     public List<LigerProvenanceReferent> referents = new ArrayList<>();
+    public List<LigerProvenanceState> states = new ArrayList<>();
     public List<String> warnings = new ArrayList<>();
 
     public LigerDrsProvenanceResponse() {}

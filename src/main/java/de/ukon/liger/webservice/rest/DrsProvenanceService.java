@@ -5,6 +5,7 @@ import de.ukon.liger.syntax.LinguisticStructure;
 import de.ukon.liger.webservice.rest.dtos.LigerDrsProvenanceResponse;
 import de.ukon.liger.webservice.rest.dtos.LigerProvenanceCondition;
 import de.ukon.liger.webservice.rest.dtos.LigerProvenanceReferent;
+import de.ukon.liger.webservice.rest.dtos.LigerProvenanceState;
 import de.ukon.liger.webservice.rest.dtos.LigerSourceToken;
 import org.springframework.stereotype.Service;
 
@@ -82,6 +83,24 @@ public class DrsProvenanceService {
 
         for (String node : graph.nodesOfType("referent")) {
             response.referents.add(describeReferent(node, graph, index, tokensByNode, response));
+        }
+
+        for (String node : graph.nodes()) {
+            if (!"state".equals(graph.type(node)) && !"root".equals(graph.type(node))) {
+                continue;
+            }
+            LigerProvenanceState state = new LigerProvenanceState();
+            state.nodeId = node;
+            state.label = graph.name(node);
+            state.sourceIndex = graph.sourceIndex(node);
+            String[] entering = graph.entering(node, STATE_EDGES);
+            if (entering != null) {
+                state.parent = graph.name(entering[0]);
+                state.enteredBy = entering[1];
+            }
+            fillSurface(tokensByNode.get(node), response.text, state.tokenIds, state.spans);
+            state.text = textOf(state.spans, response.text);
+            response.states.add(state);
         }
         return response;
     }
@@ -211,6 +230,9 @@ public class DrsProvenanceService {
                 .collect(Collectors.joining(" "));
     }
 
+    /** The edges by which a state is entered from another node. */
+    private static final Set<String> STATE_EDGES = Set.of("SUB", "IMP", "NOT", "OR", "SCOPE", "PRSP", "MERGE", "UPDATE");
+
     private static String describeNode(DrsGraph graph, String node) {
         return graph.type(node) + " " + node + " (" + graph.name(node) + ")";
     }
@@ -281,6 +303,18 @@ public class DrsProvenanceService {
             } catch (NumberFormatException e) {
                 return null;
             }
+        }
+
+        /** {source node, relation} of the first edge into the node with one of the relations. */
+        String[] entering(String node, Set<String> relations) {
+            for (Map.Entry<String, Map<String, List<String>>> source : outgoing.entrySet()) {
+                for (Map.Entry<String, List<String>> edge : source.getValue().entrySet()) {
+                    if (relations.contains(edge.getKey()) && edge.getValue().contains(node)) {
+                        return new String[]{source.getKey(), edge.getKey()};
+                    }
+                }
+            }
+            return null;
         }
 
         /** Argument node ids of a condition, ordered by TERM number. */
