@@ -173,10 +173,7 @@ public class RuleParser {
                 QueryParser qp = new QueryParser(structure, templateRegistry, hierarchyRegistry);
                 qp.resetParser();
                 qp.generateQuery(protectedAtoms.query());
-                QueryParserResult qpr = templateRegistry != null && !templateRegistry.getTemplates().isEmpty()
-                        ? qp.parseQueryWithTemplates(protectedAtoms.query()).stream().filter(result -> result.isSuccess).findFirst()
-                        .orElse(new QueryParserResult(new LinkedHashMap<>(), new LinkedHashMap<>()))
-                        : qp.parseQuery(qp.getQueryList());
+                QueryParserResult qpr = match(qp, protectedAtoms.query());
 
                 if (!qpr.isSuccess) {
                     next.add(structure);
@@ -430,10 +427,7 @@ public class RuleParser {
                 QueryParser qp = new QueryParser(current, templateRegistry, hierarchyRegistry);
                 qp.resetParser();
                 qp.generateQuery(protectedAtoms.query());
-                QueryParserResult qpr = templateRegistry != null && !templateRegistry.getTemplates().isEmpty()
-                        ? qp.parseQueryWithTemplates(protectedAtoms.query()).stream().filter(result -> result.isSuccess).findFirst()
-                        .orElse(new QueryParserResult(new LinkedHashMap<>(), new LinkedHashMap<>()))
-                        : qp.parseQuery(qp.getQueryList());
+                QueryParserResult qpr = match(qp, protectedAtoms.query());
                 boolean grew = false;
                 if (qpr.isSuccess) {
                     Set<GraphConstraint> present = new HashSet<>(current.annotation);
@@ -463,6 +457,30 @@ public class RuleParser {
     private boolean isQuestionRule(Rule r) {
         return r != null && (Rule.RuleOperator.FORK_ADD.getSymbol().equals(r.getOperator())
                 || Rule.RuleOperator.FORK_DELETE.getSymbol().equals(r.getOperator()));
+    }
+
+    /**
+     * The solutions of a rule's query. A template with alternatives ({@code GF := SUBJ | OBJ},
+     * {@code NAME-BINDER(#d) := ... | ...}) expands the query into one query per alternative; the
+     * query matches where any of them does, and its solutions are those of every alternative, in
+     * the order of the alternatives. The same assignment reached through two alternatives is one
+     * solution only after {@link #dedupeSolutions}: what a rule's right-hand side reads decides.
+     */
+    private QueryParserResult match(QueryParser qp, String query) {
+        if (templateRegistry == null || templateRegistry.getTemplates().isEmpty()) {
+            return qp.parseQuery(qp.getQueryList());
+        }
+        LinkedHashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> result = new LinkedHashMap<>();
+        LinkedHashMap<Solution, HashMap<String, String>> valueBindings = new LinkedHashMap<>();
+        for (QueryParserResult alternative : qp.parseQueryWithTemplates(query)) {
+            if (alternative.isSuccess) {
+                result.putAll(alternative.result);
+                if (alternative.valueBindings != null) {
+                    valueBindings.putAll(alternative.valueBindings);
+                }
+            }
+        }
+        return new QueryParserResult(result, valueBindings);
     }
 
     /**
@@ -641,10 +659,7 @@ public class RuleParser {
 
             qp.resetParser();
             qp.generateQuery(query);
-            QueryParserResult qpr = templateRegistry != null && !templateRegistry.getTemplates().isEmpty()
-                    ? qp.parseQueryWithTemplates(query).stream().filter(result -> result.isSuccess).findFirst()
-                    .orElse(new QueryParserResult(new LinkedHashMap<>(), new LinkedHashMap<>()))
-                    : qp.parseQuery(qp.getQueryList());
+            QueryParserResult qpr = match(qp, query);
 
             if (qpr.isSuccess && !r.getRight().equals("0")) {
 

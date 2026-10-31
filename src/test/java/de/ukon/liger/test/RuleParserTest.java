@@ -737,6 +737,46 @@ public class RuleParserTest {
                 rp.deletionReason());
     }
 
+    /** "John said that Mary was sick": f0 SUBJ f11, f0 COMP f2, f2 SUBJ f4, f10 SUBJ f4. */
+    private static LinguisticStructure saidThat() {
+        return new QueryParserTest().loadFs("testdirS1.pl").values().iterator().next();
+    }
+
+    private static java.util.List<String> facts(java.util.Collection<GraphConstraint> facts, String label) {
+        return facts.stream().filter(c -> label.equals(c.getRelationLabel()))
+                .map(c -> c.getFsNode() + ">" + c.getFsValue()).sorted().toList();
+    }
+
+    /** A template's alternatives each add their matches: COMP is not dropped because SUBJ, the
+     *  first alternative, matched somewhere in the graph. */
+    @Test
+    void testTemplateAlternativesAllMatch() {
+        LinguisticStructure structure = saidThat();
+        RuleParser rp = new RuleParser(new ArrayList<>(), "ARG := SUBJ | COMP .\n#f @ARG #a ==> #a ARG-OF #f .");
+
+        LinguisticStructure annotated = rp.addAnnotation2(new LinkedHashSet<>(Set.of(structure))).iterator().next();
+
+        assertEquals(java.util.List.of("f11>f0", "f2>f0", "f4>f10", "f4>f2"), facts(annotated.annotation, "ARG-OF"));
+    }
+
+    /** The same for alternatives of a whole query (as NAME-BINDER's), under {@code ?+=>}: one
+     *  branch per assignment of what the right-hand side reads, whichever alternatives found it.
+     *  f4, found by the first and the third alternative through different template-local nodes,
+     *  is one branch. */
+    @Test
+    void testQueryAlternativesBranchOncePerAssignment() {
+        LinguisticStructure structure = saidThat();
+        RuleParser rp = new RuleParser(new ArrayList<>(),
+                "ARGUMENT(#a) := #f SUBJ #a | #g COMP #a | #h SUBJ #a .\n@ARGUMENT(#a) ?+=> #a CHOSEN #a .");
+
+        java.util.List<String> branches = new ArrayList<>();
+        for (LinguisticStructure branch : rp.addAnnotation2(new LinkedHashSet<>(Set.of(structure)))) {
+            branches.add(String.join(",", facts(branch.annotation, "CHOSEN")));
+        }
+
+        assertEquals(java.util.List.of("f11>f11", "f2>f2", "f4>f4"), branches.stream().sorted().toList());
+    }
+
     /** The branching arrows: {@code ?+=>} adds, {@code ?*=>} multiplies; {@code ?=>}, the additive
      *  arrow's earlier spelling, is still read as {@code ?+=>}. */
     @Test
