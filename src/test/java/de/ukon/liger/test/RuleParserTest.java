@@ -777,6 +777,26 @@ public class RuleParserTest {
         assertEquals(java.util.List.of("f11>f11", "f2>f2", "f4>f4"), branches.stream().sorted().toList());
     }
 
+    /** A negated template sees only the variables it is given. The outer templates' locals and
+     *  NOT-SHARED's own are renamed apart separately; both come out #d (HAS-TENSE's TNS-ASP node,
+     *  NOT-SHARED's subject), and seeding the negation with every outer binding made its #d the
+     *  TNS-ASP node: -(@NOT-SHARED(#a,#c)) never held (pronouns.liger's -(@DISJOINT(#a,#c))). */
+    @Test
+    void testNegatedTemplateLocalsAreNotCapturedByOuterTemplateLocals() {
+        String templates = "HAS-SUBJ(#a) := #a SUBJ #b .\nHAS-TENSE(#a) := #a TNS-ASP #b .\n"
+                + "NOT-SHARED(#a,#b) := -(#a SUBJ #g & #b SUBJ #h & id(#g) == id(#h)) .\n";
+        java.util.List<java.util.List<String>> marks = new ArrayList<>();
+        for (String rule : java.util.List.of(
+                "#a SUBJ #y & #c TNS-ASP #z & id(#a) != id(#c) & -(@NOT-SHARED(#a,#c)) ==> #a MARK #c .",
+                "@HAS-SUBJ(#a) & @HAS-TENSE(#c) & id(#a) != id(#c) & -(@NOT-SHARED(#a,#c)) ==> #a MARK #c .")) {
+            RuleParser rp = new RuleParser(new ArrayList<>(), templates + rule);
+            marks.add(facts(rp.addAnnotation2(new LinkedHashSet<>(Set.of(saidThat()))).iterator().next().annotation, "MARK"));
+        }
+
+        assertEquals(java.util.List.of("f10>f2"), marks.get(0));
+        assertEquals(marks.get(0), marks.get(1));
+    }
+
     /** The branching arrows: {@code ?+=>} adds, {@code ?*=>} multiplies; {@code ?=>}, the additive
      *  arrow's earlier spelling, is still read as {@code ?+=>}. */
     @Test

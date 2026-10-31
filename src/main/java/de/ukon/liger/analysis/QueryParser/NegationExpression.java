@@ -61,9 +61,13 @@ public class NegationExpression extends QueryExpression {
                                         HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> seedBinding) {
         try {
             QueryParser parser = getParser();
+            Set<String> queryVars = extractQueryVariables(current.getNegatedQuery());
+            // Only the variables the negated query names: any other outer variable is invisible in
+            // it, and would capture a fresh name its own template expansion picks (ANT's local,
+            // renamed #d outside, binding DISJOINT's local, renamed #d inside).
             HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> seedSolution = new LinkedHashMap<>();
             if (outerKey != null) {
-                seedSolution.put(outerKey.copy(), copyBinding(seedBinding));
+                seedSolution.put(restrictedKey(outerKey, queryVars), restrictedBinding(seedBinding, queryVars));
             }
 
             QueryParser nestedParser = new QueryParser(
@@ -73,7 +77,6 @@ public class NegationExpression extends QueryExpression {
                     parser.getTemplateRegistry(),
                     parser.getHierarchyRegistry());
 
-            Set<String> queryVars = extractQueryVariables(current.getNegatedQuery());
 
             boolean matched = nestedParser.parseQueryWithTemplates(
                             current.getNegatedQuery(),
@@ -90,6 +93,27 @@ public class NegationExpression extends QueryExpression {
             // An evaluation error must not turn negation into a successful match.
             return true;
         }
+    }
+
+    private static Solution restrictedKey(Solution outerKey, Set<String> queryVars) {
+        Set<SolutionKey> keys = new LinkedHashSet<>();
+        for (SolutionKey key : outerKey.getSolutionKeys()) {
+            if (queryVars.contains(variableName(key.variable))) {
+                keys.add(key);
+            }
+        }
+        return new Solution(keys, outerKey.isTruthValue());
+    }
+
+    private HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> restrictedBinding(
+            HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> source, Set<String> queryVars) {
+        HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> copy = copyBinding(source);
+        copy.keySet().removeIf(variable -> !queryVars.contains(variableName(variable)));
+        return copy;
+    }
+
+    private static String variableName(String variable) {
+        return variable != null && variable.startsWith("#") ? variable.substring(1) : variable;
     }
 
     private HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> copyBinding(
