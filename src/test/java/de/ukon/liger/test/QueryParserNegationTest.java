@@ -223,6 +223,17 @@ public class QueryParserNegationTest {
     }
 
     @Test
+    void testNegationIsAnsweredPerBindingOfItsOwnVariables() {
+        // A negation is evaluated once per binding of the variables it names (#s, or #t), and that
+        // answer holds for every outer solution with that binding, whatever #t (or #s) is: 10 merges
+        // a box, 11 does not
+        assertEquals(List.of("s=11 t=10", "s=11 t=11"),
+                bindings("#s IN #d & #t IN #e & -(#s MERGE #x)", "s", "t"));
+        assertEquals(List.of("s=10 t=11", "s=11 t=11"),
+                bindings("#s IN #d & #t IN #e & -(#t MERGE #x)", "s", "t"));
+    }
+
+    @Test
     void testInvalidQueryMatchesNothing() {
         assertEquals(List.of(), bindings("#s IN #d & #d #s", "d"));
     }

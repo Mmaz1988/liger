@@ -41,9 +41,19 @@ public class NegationExpression extends QueryExpression {
             return;
         }
 
+        // The negated query sees only the variables it names: outer solutions that agree on them
+        // get the same answer, computed once.
+        Set<String> queryVars = extractQueryVariables(current.getNegatedQuery());
+        HashMap<Set<String>, Boolean> answers = new HashMap<>();
         for (Solution key : left.getSolution().keySet()) {
             if (key.isTruthValue()) {
-                boolean matched = matchesNegatedQuery(key, left.getSolution().get(key));
+                Solution restricted = restrictedKey(key, queryVars);
+                Set<String> bindings = new HashSet<>();
+                for (SolutionKey solutionKey : restricted.getSolutionKeys()) {
+                    bindings.add(solutionKey.variable + "=" + solutionKey.reference);
+                }
+                HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>> binding = left.getSolution().get(key);
+                boolean matched = answers.computeIfAbsent(bindings, b -> matchesNegatedQuery(key, binding));
                 if (matched) {
                     key.setTruthValue(false);
                 }

@@ -76,6 +76,11 @@ public class UncertaintyExpression extends QueryExpression {
     private final Map<String, List<GraphConstraint>> activeConstraintsByNode = new LinkedHashMap<>();
     private final Map<String, List<GraphConstraint>> activeConstraintsByValue = new LinkedHashMap<>();
     private boolean activeTraversalUsesFullGraph = true;
+    /** The labels the active traversal graph was built for; null: none built yet. */
+    private Set<String> activeLabels = null;
+    /** Each node's facts in fact order, and each fact's position, for lookups without a scan. */
+    private final Map<String, LinkedHashMap<Integer, GraphConstraint>> factsByNode = new HashMap<>();
+    private final Map<Integer, Integer> factPosition = new HashMap<>();
 
     private enum OffPathDirection {
         TO_VALUE,
@@ -132,6 +137,11 @@ public class UncertaintyExpression extends QueryExpression {
     @Override
     public void calculateSolutions() {
         buildGraphIndex();
+        Map<String, LinkedHashMap<Integer, GraphConstraint>> middleFactsByNode = new HashMap<>();
+        for (Map.Entry<Integer, GraphConstraint> entry : middle.getFsIndices().entrySet()) {
+            middleFactsByNode.computeIfAbsent(entry.getValue().getFsNode(), n -> new LinkedHashMap<>())
+                    .put(entry.getKey(), entry.getValue());
+        }
         HashMap<Solution, HashMap<String, HashMap<String, HashMap<Integer, GraphConstraint>>>> out = new LinkedHashMap<>();
 
         for (Solution leftKey : left.getSolution().keySet()) {
@@ -145,12 +155,8 @@ public class UncertaintyExpression extends QueryExpression {
             }
 
             for (String nodeRef : leftBinding.get(nodeVar).keySet()) {
-                HashMap<Integer, GraphConstraint> boundIndices = new LinkedHashMap<>();
-                for (Integer index : middle.getFsIndices().keySet()) {
-                    if (HelperMethods.nodeIdsEqual(middle.getFsIndices().get(index).getFsNode(), nodeRef)) {
-                        boundIndices.put(index, middle.getFsIndices().get(index));
-                    }
-                }
+                HashMap<Integer, GraphConstraint> boundIndices =
+                        new LinkedHashMap<>(middleFactsByNode.getOrDefault(nodeRef, new LinkedHashMap<>()));
 
                 for (String searchQuery : getExpandedQueries()) {
                     List<HashMap<Integer, GraphConstraint>> alternatives;
@@ -226,11 +232,16 @@ public class UncertaintyExpression extends QueryExpression {
         incoming.clear();
         constraintsByNode.clear();
         constraintsByValue.clear();
+        factsByNode.clear();
+        factPosition.clear();
+        activeLabels = null;
 
         for (Map.Entry<Integer, GraphConstraint> entry : right.getFsIndices().entrySet()) {
             GraphConstraint constraint = entry.getValue();
             String node = String.valueOf(constraint.getFsNode());
             String value = String.valueOf(constraint.getFsValue());
+            factsByNode.computeIfAbsent(node, ignored -> new LinkedHashMap<>()).put(entry.getKey(), constraint);
+            factPosition.put(entry.getKey(), factPosition.size());
             outgoing.computeIfAbsent(node, ignored -> new ArrayList<>()).add(entry);
             incoming.computeIfAbsent(value, ignored -> new ArrayList<>()).add(entry);
             constraintsByNode.computeIfAbsent(node, ignored -> new ArrayList<>()).add(constraint);
@@ -262,6 +273,12 @@ public class UncertaintyExpression extends QueryExpression {
         if (wildcard) {
             return;
         }
+        // The facts do not change while this expression is evaluated: a graph built for these
+        // labels serves every later search.
+        if (labels.equals(activeLabels)) {
+            return;
+        }
+        activeLabels = labels;
 
         activeOutgoing.clear();
         activeIncoming.clear();
@@ -864,12 +881,19 @@ public class UncertaintyExpression extends QueryExpression {
         return factsForNodes(currentNodes);
     }
 
+    /** The facts of these nodes, in fact order. */
     private HashMap<Integer, GraphConstraint> factsForNodes(Set<String> nodes) {
+        if (nodes.size() == 1) {
+            return new LinkedHashMap<>(factsByNode.getOrDefault(nodes.iterator().next(), new LinkedHashMap<>()));
+        }
+        List<Map.Entry<Integer, GraphConstraint>> facts = new ArrayList<>();
+        for (String node : nodes) {
+            facts.addAll(factsByNode.getOrDefault(node, new LinkedHashMap<>()).entrySet());
+        }
+        facts.sort(Comparator.comparingInt(entry -> factPosition.get(entry.getKey())));
         HashMap<Integer, GraphConstraint> result = new LinkedHashMap<>();
-        for (Map.Entry<Integer, GraphConstraint> entry : right.getFsIndices().entrySet()) {
-            if (nodes.contains(String.valueOf(entry.getValue().getFsNode()))) {
-                result.put(entry.getKey(), entry.getValue());
-            }
+        for (Map.Entry<Integer, GraphConstraint> entry : facts) {
+            result.put(entry.getKey(), entry.getValue());
         }
         return result;
     }

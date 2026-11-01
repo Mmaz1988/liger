@@ -26,6 +26,7 @@ import de.ukon.liger.syntax.GraphConstraint;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 public class AttributeExpression extends QueryExpression {
@@ -52,6 +53,17 @@ public class AttributeExpression extends QueryExpression {
 
         HashMap<Integer,GraphConstraint> fsIndices = new LinkedHashMap<>();
 
+        // Each node's facts in fact order, built once: a lookup per solution instead of a scan of
+        // the whole structure.
+        HashMap<String, LinkedHashMap<Integer, GraphConstraint>> factsByNode = null;
+        if (left instanceof Node || left instanceof NodeExpression) {
+            factsByNode = new HashMap<>();
+            for (Map.Entry<Integer, GraphConstraint> fact : right.getFsIndices().entrySet()) {
+                factsByNode.computeIfAbsent(fact.getValue().getFsNode(), n -> new LinkedHashMap<>())
+                        .put(fact.getKey(), fact.getValue());
+            }
+        }
+
             Iterator<Solution> it = out.keySet().iterator();
 
 
@@ -68,16 +80,13 @@ public class AttributeExpression extends QueryExpression {
                 String nodeRef = left.getSolution().get(key).get(left.getNodeVar()).keySet().stream().findAny().get();
                 HashMap<Integer,GraphConstraint> boundIndices = left.getSolution().get(key).get(left.getNodeVar()).get(nodeRef);
 
-                    if (left instanceof Node || left instanceof NodeExpression)
+                    if (factsByNode != null)
                     {
-                     for (Integer key2 : right.getFsIndices().keySet())
+                     for (Map.Entry<Integer, GraphConstraint> fact : factsByNode.getOrDefault(nodeRef, new LinkedHashMap<>()).entrySet())
                      {
-                         if (right.getFsIndices().get(key2).getFsNode().equals(nodeRef))
-                         {
-                             boundIndices.put(key2,right.getFsIndices().get(key2));
-                             fsIndices.put(key2,right.getFsIndices().get(key2));
-                             containsAtribute = true;
-                         }
+                         boundIndices.put(fact.getKey(), fact.getValue());
+                         fsIndices.put(fact.getKey(), fact.getValue());
+                         containsAtribute = true;
                      }
                     }
 
