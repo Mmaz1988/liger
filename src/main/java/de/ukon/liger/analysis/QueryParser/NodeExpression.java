@@ -44,7 +44,10 @@ public class NodeExpression extends QueryExpression {
     @Override
     public void calculateSolutions() {
 
-        if (left instanceof ConjointExpression) {
+        // A negated query's outer bindings (the seed) are the matches so far, as before a conjunct:
+        // a variable they bind keeps its binding, any other is joined with them. Read as a node
+        // after an attribute, the seed made a bound node a candidate only if it was some fact's value.
+        if (left instanceof ConjointExpression || left instanceof SeedExpression) {
 
             Boolean alreadyBound = false;
             for (Solution key : left.getSolution().keySet()) {

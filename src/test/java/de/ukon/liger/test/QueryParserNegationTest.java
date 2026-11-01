@@ -181,9 +181,13 @@ public class QueryParserNegationTest {
     }
 
     private static List<String> bindings(String query, String... variables) {
+        return bindings(mergeChainGraph(), query, variables);
+    }
+
+    private static List<String> bindings(LinguisticStructure structure, String query, String... variables) {
         TemplateRegistry templateRegistry = new TemplateParser().parse("CHAIN := MERGE | UPDATE . " +
                 "CHAIN-TOP-BOX(#d) := #s IN #d & #s ^(@CHAIN*) #b & -(#z MERGE #b) & #b CLAUSE-BOX #b .");
-        QueryParser qp = new QueryParser(query, mergeChainGraph(), templateRegistry, new HierarchyParser().parse(""));
+        QueryParser qp = new QueryParser(query, structure, templateRegistry, new HierarchyParser().parse(""));
         List<String> out = new ArrayList<>();
         for (QueryParserResult result : qp.parseQueryWithTemplates(query)) {
             for (de.ukon.liger.analysis.QueryParser.Solution solution : result.result.keySet()) {
@@ -231,6 +235,21 @@ public class QueryParserNegationTest {
                 bindings("#s IN #d & #t IN #e & -(#s MERGE #x)", "s", "t"));
         assertEquals(List.of("s=10 t=11", "s=11 t=11"),
                 bindings("#s IN #d & #t IN #e & -(#t MERGE #x)", "s", "t"));
+    }
+
+    @Test
+    void testNegationMatchesANodeThatIsNoFactsValue() {
+        // 1-3 are the sources of their edges only, never a value: a negation starting from them
+        // used to match nothing, so it always held
+        LinguisticStructure structure = new LinguisticStructure("sources", "sources", new ArrayList<>());
+        for (String[] fact : new String[][]{{"1", "POTENTIAL-ANT", "11"}, {"1", "POTENTIAL-ANT", "12"},
+                {"2", "POTENTIAL-ANT", "11"}, {"3", "POTENTIAL-ANT", "12"}, {"11", "NAME", "x"}, {"12", "NAME", "y"}}) {
+            structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), fact[0], fact[1], fact[2], "c", false));
+        }
+        assertEquals(List.of(), bindings(structure, "#a POTENTIAL-ANT #c & -(#a POTENTIAL-ANT #b)", "a", "c"));
+        assertEquals(List.of("a=2 c=11"),
+                bindings(structure, "#a POTENTIAL-ANT #c & -(#a POTENTIAL-ANT #b & #b NAME 'y')", "a", "c"));
+        assertEquals(List.of("a=1 c=11", "a=2 c=11"), bindings(structure, "#a POTENTIAL-ANT #c & -(#c NAME 'y')", "a", "c"));
     }
 
     @Test
