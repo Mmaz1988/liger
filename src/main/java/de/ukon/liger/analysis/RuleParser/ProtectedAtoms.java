@@ -11,15 +11,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * The protected facts of a deletion rule's left-hand side. {@code =-> 0} deletes every fact its
- * left-hand side matched, so a fact that only says when to delete would be deleted with the rest.
- * A leading {@code +} on a relation label keeps the facts that atom matched:
+ * The protected facts of a deletion rule's left-hand side. {@code =-> 0} deletes every node its
+ * left-hand side binds (all outgoing edges and attribute-value pairs of each, rule-added ones
+ * included), so a fact that only says when to delete would be deleted with the rest. A leading
+ * {@code +} on a relation label keeps the facts that atom matched:
  *
  * <pre>
  *     #h PRSP #p & #p +IN #x & #x +acc #x =-> 0.
  * </pre>
  *
- * deletes the {@code PRSP} edge and keeps {@code IN} and {@code acc}. The {@code +} goes only on
+ * deletes the {@code PRSP} edge and the other facts of {@code #h}, {@code #p} and {@code #x}, and
+ * keeps {@code IN} and {@code acc}. The {@code +} goes only on
  * a plain relation label after a node variable ({@code #a +LABEL value}), also inside a chain
  * ({@code #a L1 #b +L2 #c}); it is not supported inside a path such as {@code ^(...)}.
  */

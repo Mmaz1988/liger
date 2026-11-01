@@ -309,11 +309,13 @@ public class RuleParserTest {
 
         rp.addAnnotation2(fslist.get(0));
 
-        assertEquals(420, fslist.get(0).constraints.size());
+        // Every fact of the f-structures with TNS-ASP and of their TNS-ASP values goes.
+        assertEquals(401, fslist.get(0).constraints.size());
     }
 
+    /** {@code =-> 0} deletes the nodes it binds: #a's other edge goes with the matched one. */
     @Test
-    void testRuleParserRewriteDeleteRemovesOnlyMatchedEdges() {
+    void testRuleParserRewriteDeleteRemovesTheBoundNodesOutgoingEdges() {
         GraphConstraint potential = new GraphConstraint(new LinkedHashSet<>(), "1", "POTENTIAL-ANT", "2", "c", false);
         GraphConstraint possible = new GraphConstraint(new LinkedHashSet<>(), "1", "POSSIBLE-ANT", "2", "c", false);
 
@@ -331,10 +333,31 @@ public class RuleParserTest {
 
         rp.addAnnotation2(structure);
 
-        assertEquals(1, structure.constraints.size());
-        assertEquals(1, structure.annotation.size());
-        assertEquals("POSSIBLE-ANT", structure.constraints.get(0).getRelationLabel());
-        assertEquals("POSSIBLE-ANT", structure.annotation.get(0).getRelationLabel());
+        assertEquals(0, structure.constraints.size());
+        assertEquals(0, structure.annotation.size());
+    }
+
+    /** Every node a variable binds loses its outgoing facts, a value-position node's included,
+     *  parse facts (constraints) and rule-added ones (annotations) alike; +-marked facts and the
+     *  facts of unbound nodes stay. Node ids are prefixed as in the pipeline's DRS graphs. */
+    @Test
+    void testRewriteDeleteRemovesEveryBoundNodesFactsAddedOnesIncluded() {
+        LinguisticStructure structure = new LinguisticStructure("sites", "sites", new ArrayList<>());
+        structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), "d12", "IN", "d13", "c", false));
+        structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), "d1", "NAME", "s0", "c", false));
+        structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), "d3", "NAME", "y1", "c", false));
+        structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), "d13", "NAME", "y2", "c", false));
+        structure.constraints.add(new GraphConstraint(new LinkedHashSet<>(), "d20", "NAME", "x1", "c", false));
+        structure.annotation.add(new GraphConstraint(new LinkedHashSet<>(), "d12", "POSSIBLE-ACC", "d1", "c", false));
+        structure.annotation.add(new GraphConstraint(new LinkedHashSet<>(), "d13", "POSSIBLE-ANT", "d3", "c", false));
+        RuleParser rp = new RuleParser(new ArrayList<>(java.util.List.of(structure)));
+        rp.getRules().add(new Rule("#p POSSIBLE-ACC #s & #p +IN #c & #c +POSSIBLE-ANT #d =-> 0"));
+
+        java.util.Set<LinguisticStructure> result = rp.addAnnotation2(new LinkedHashSet<>(java.util.List.of(structure)));
+
+        assertEquals(java.util.List.of("d12 IN d13", "d13 POSSIBLE-ANT d3", "d20 NAME x1"),
+                result.iterator().next().returnFullGraph().stream()
+                        .map(fact -> fact.getFsNode() + " " + fact.getRelationLabel() + " " + fact.getFsValue()).sorted().toList());
     }
 
     private static LinguisticStructure presuppositionGraph() {
@@ -352,14 +375,15 @@ public class RuleParserTest {
     }
 
     @Test
-    void testRewriteDeleteWithoutProtectionDeletesTheContextToo() {
+    void testRewriteDeleteWithoutProtectionDeletesTheBoundNodes() {
         LinguisticStructure structure = presuppositionGraph();
         RuleParser rp = new RuleParser(new ArrayList<>(java.util.List.of(structure)));
         rp.getRules().add(new Rule("#h PRSP #p & #p IN #x & #x acc #x =-> 0"));
 
         rp.addAnnotation2(structure);
 
-        assertEquals(java.util.List.of("COND", "NAME"), labels(structure));
+        // 1, 2 and 3 are bound: their facts go, #p's COND too; 4 is not bound.
+        assertEquals(java.util.List.of("NAME"), labels(structure));
     }
 
     @Test
@@ -370,7 +394,7 @@ public class RuleParserTest {
 
         rp.addAnnotation2(structure);
 
-        assertEquals(java.util.List.of("COND", "IN", "NAME", "acc"), labels(structure));
+        assertEquals(java.util.List.of("IN", "NAME", "acc"), labels(structure));
     }
 
     @Test
@@ -393,7 +417,7 @@ public class RuleParserTest {
         java.util.Set<LinguisticStructure> result = rp.addAnnotation2(new LinkedHashSet<>(java.util.List.of(structure)));
 
         assertEquals(1, result.size());
-        assertEquals(java.util.List.of("COND", "IN", "NAME", "acc"), labels(result.iterator().next()));
+        assertEquals(java.util.List.of("IN", "NAME", "acc"), labels(result.iterator().next()));
     }
 
     @Test

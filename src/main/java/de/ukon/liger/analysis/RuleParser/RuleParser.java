@@ -910,17 +910,45 @@ public class RuleParser {
                 Set<String> removedFacts = new LinkedHashSet<>();
                 LinkedHashSet<GraphConstraint> removedConstraintSet = new LinkedHashSet<>();
                 if (deleteOnly) {
+                    // =-> 0 deletes what the left-hand side matched and, for every node a variable
+                    // binds (as a source or as a value), all its outgoing edges and attribute-value
+                    // pairs, parse and rule-added facts alike. A fact a +-marked atom matched in
+                    // any solution stays. A left-hand side without variables (edge=..., value=...,
+                    // TENSE past) binds no node: it deletes the facts it matched.
+                    List<GraphConstraint> matched = new ArrayList<>();
+                    Set<String> nodes = new LinkedHashSet<>();
                     for (Solution solution : qpr.result.keySet()) {
                         for (String var : qpr.result.get(solution).keySet()) {
                             for (String index : qpr.result.get(solution).get(var).keySet()) {
-                                for (Integer i : qpr.result.get(solution).get(var).get(index).keySet()) {
-                                    GraphConstraint candidate = qpr.result.get(solution).get(var).get(index).get(i);
-                                    if (candidate != null && !protectedAtoms.protects(candidate, qpr, solution)) {
-                                        removedFacts.add(edgeKey(candidate));
-                                        removedConstraintSet.add(candidate);
+                                nodes.add(index);
+                                for (GraphConstraint candidate : qpr.result.get(solution).get(var).get(index).values()) {
+                                    if (candidate != null) {
+                                        matched.add(candidate);
                                     }
                                 }
                             }
+                        }
+                    }
+                    if (!nodes.isEmpty()) {
+                        if (fs.constraints != null) {
+                            fs.constraints.stream().filter(fact -> nodes.contains(String.valueOf(fact.getFsNode()))).forEach(matched::add);
+                        }
+                        if (fs.annotation != null) {
+                            fs.annotation.stream().filter(fact -> nodes.contains(String.valueOf(fact.getFsNode()))).forEach(matched::add);
+                        }
+                    }
+                    Set<String> kept = new LinkedHashSet<>();
+                    for (GraphConstraint candidate : matched) {
+                        for (Solution solution : qpr.result.keySet()) {
+                            if (protectedAtoms.protects(candidate, qpr, solution)) {
+                                kept.add(edgeKey(candidate));
+                                break;
+                            }
+                        }
+                    }
+                    for (GraphConstraint candidate : matched) {
+                        if (!kept.contains(edgeKey(candidate)) && removedFacts.add(edgeKey(candidate))) {
+                            removedConstraintSet.add(candidate);
                         }
                     }
                 }
