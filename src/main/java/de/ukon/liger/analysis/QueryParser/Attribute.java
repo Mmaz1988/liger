@@ -36,11 +36,15 @@ public class Attribute extends QueryExpression {
         HashMap<Integer,GraphConstraint> fs = new LinkedHashMap<>();
         String lookup = query != null && query.startsWith("edge=") ? query.substring("edge=".length()) : query;
 
-        for (int key : fsIndices.keySet())
-        {
-            if (fsIndices.get(key).getRelationLabel().equals(lookup))
+        if (parser != null && parser.getFsIndices() == fsIndices) {
+            fs.putAll(parser.graphIndex().withLabel(lookup));
+        } else {
+            for (int key : fsIndices.keySet())
             {
-                fs.put(key,fsIndices.get(key));
+                if (fsIndices.get(key).getRelationLabel().equals(lookup))
+                {
+                    fs.put(key,fsIndices.get(key));
+                }
             }
         }
         setFsIndices(fs);

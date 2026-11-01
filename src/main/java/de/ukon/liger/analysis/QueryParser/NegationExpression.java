@@ -80,12 +80,8 @@ public class NegationExpression extends QueryExpression {
                 seedSolution.put(restrictedKey(outerKey, queryVars), restrictedBinding(seedBinding, queryVars));
             }
 
-            QueryParser nestedParser = new QueryParser(
-                    current.getNegatedQuery(),
-                    parser.getFsIndices() == null ? new LinkedHashMap<>() : new LinkedHashMap<>(parser.getFsIndices()),
-                    parser.cp,
-                    parser.getTemplateRegistry(),
-                    parser.getHierarchyRegistry());
+            // The negated query only reads the facts: it shares them and their index
+            QueryParser nestedParser = new QueryParser(current.getNegatedQuery(), parser);
 
 
             boolean matched = nestedParser.parseQueryWithTemplates(

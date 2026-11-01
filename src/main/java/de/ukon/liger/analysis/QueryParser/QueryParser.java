@@ -47,6 +47,7 @@ public class QueryParser {
     private TemplateRegistry templateRegistry;
     private HierarchyRegistry hierarchyRegistry;
     private List<Superior> superiorConstraints = new ArrayList<>();
+    private GraphIndex graphIndex;
     //TODO why are the values of the result hashmap empty?
 
     public QueryParser(String query, LinguisticStructure fs)
@@ -151,6 +152,17 @@ public class QueryParser {
             usedKeys.add(fsIndices.get(key).getFsNode());
         }
 
+        generateQuery(query);
+    }
+
+    /** A negated query's parser: over the outer parser's facts (not a copy), with its index. */
+    QueryParser(String query, QueryParser outer) {
+        this.query = query;
+        this.fsIndices = outer.fsIndices == null ? new LinkedHashMap<>() : outer.fsIndices;
+        this.cp = outer.cp;
+        this.templateRegistry = outer.templateRegistry;
+        this.hierarchyRegistry = outer.hierarchyRegistry;
+        shareGraphIndex(outer);
         generateQuery(query);
     }
 
@@ -722,6 +734,9 @@ public class QueryParser {
         if (query != null && query.matches("edge=(.+)")) {
             return true;
         }
+        if (fsIndices == this.fsIndices) {
+            return graphIndex().hasLabel(query);
+        }
 
         for (Integer key : fsIndices.keySet())
         {
@@ -896,6 +911,21 @@ public class QueryParser {
 
     public void setQueryList(LinkedList<QueryExpression> queryList) {
         this.queryList = queryList;
+    }
+
+    /** The facts by label and by node; rebuilt when the facts were replaced or grew. */
+    GraphIndex graphIndex() {
+        if (graphIndex == null || !graphIndex.describes(fsIndices)) {
+            graphIndex = new GraphIndex(fsIndices);
+        }
+        return graphIndex;
+    }
+
+    /** The index of a parser over the same facts (a negation's), so it is built once. */
+    void shareGraphIndex(QueryParser other) {
+        if (other.fsIndices == fsIndices) {
+            graphIndex = other.graphIndex();
+        }
     }
 
     public HashMap<Integer, GraphConstraint> getFsIndices() {

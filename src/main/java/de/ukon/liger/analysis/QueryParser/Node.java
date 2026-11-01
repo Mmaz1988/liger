@@ -36,6 +36,9 @@ import java.util.Set;
 public class Node extends QueryExpression {
 
     public boolean constant;
+    /** Whether the candidates are computed: only when read, since a variable already bound by
+     *  the matches before it (or by a negation's seed) never reads them. */
+    private boolean computed;
 
     public Node(String query, String nodeVar, HashMap fsIndices, boolean constant, QueryParser parser)
     {
@@ -45,7 +48,6 @@ public class Node extends QueryExpression {
         setQuery(query);
         setParser(parser);
         setFsIndices(fsIndices);
-        calculateSolutions();
 
 
 }
@@ -62,8 +64,31 @@ public class Node extends QueryExpression {
 
 
 @Override
+public HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> getSolution()
+{
+    if (!computed) {
+        computed = true;
+        calculateSolutions();
+    }
+    return super.getSolution();
+}
+
+@Override
+public void setSolution(HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> solution)
+{
+    computed = true;
+    super.setSolution(solution);
+}
+
+@Override
 public void calculateSolutions()
 {
+    GraphIndex index = getParser() != null && getParser().getFsIndices() == getFsIndices()
+            ? getParser().graphIndex() : null;
+    if (index != null) {
+        calculateSolutions(index);
+        return;
+    }
 
     HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> out = new LinkedHashMap<>();
 
@@ -134,5 +159,32 @@ public void calculateSolutions()
 
 }
 
+
+
+/** The same candidates from the parser's index: every node in Node's order, each with a copy of
+ *  its facts (later steps narrow a candidate's facts in place). */
+private void calculateSolutions(GraphIndex index)
+{
+    HashMap<Solution,HashMap<String, HashMap<String,HashMap<Integer,GraphConstraint>>>> out = new LinkedHashMap<>();
+    if (constant)
+    {
+        HashMap<String,HashMap<Integer,GraphConstraint>> reference = new LinkedHashMap<>();
+        reference.put(getNodeVar(), new LinkedHashMap<>(index.ofNode(getNodeVar())));
+        HashMap<String,HashMap<String,HashMap<Integer,GraphConstraint>>> binding = new LinkedHashMap<>();
+        binding.put(getNodeVar(),reference);
+        out.put(new Solution(Collections.singleton(new SolutionKey(getNodeVar(),getNodeVar()))),binding);
+        super.setSolution(out);
+        return;
+    }
+    for (String fs : index.nodes())
+    {
+        HashMap<String,HashMap<Integer,GraphConstraint>> reference = new LinkedHashMap<>();
+        reference.put(fs,new LinkedHashMap<>(index.ofNode(fs)));
+        HashMap<String,HashMap<String,HashMap<Integer,GraphConstraint>>> binding = new LinkedHashMap<>();
+        binding.put(getNodeVar(),reference);
+        out.put(new Solution(Collections.singleton(new SolutionKey(getNodeVar(),fs))),binding);
+    }
+    super.setSolution(out);
+}
 
 }
