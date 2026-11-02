@@ -37,6 +37,9 @@ public class LigerProvenanceReferent {
     /** True when no one-place condition has a token (e.g. a proper name, whose EQ condition has
      *  no SRC) and the lexical surface is the referent's own source token instead. */
     public boolean lexicalFromReferentSource;
+    /** The constants the referent equals by an EQ condition: a proper name's ({@code y1='kim'}:
+     *  {@code kim}). Equal names are one name, whatever the words. */
+    public List<String> names = new ArrayList<>();
 
     public LigerProvenanceReferent() {}
 }

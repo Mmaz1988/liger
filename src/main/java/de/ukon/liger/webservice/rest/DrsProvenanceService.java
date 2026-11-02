@@ -166,6 +166,14 @@ public class DrsProvenanceService {
         }
         fillSurface(new ArrayList<>(lexicalTokens), response.text, referent.lexicalTokenIds, referent.lexicalSpans);
         referent.lexicalText = textOf(referent.lexicalSpans, response.text);
+        for (String condition : referent.directConditionIds) {
+            if ("EQ".equals(graph.name(condition))) {
+                graph.arguments(condition).stream()
+                        .filter(argument -> !argument.equals(node) && !graph.isReferent(argument))
+                        .map(graph::name).filter(Objects::nonNull)
+                        .forEach(referent.names::add);
+            }
+        }
 
         if (referent.fsNode != null) {
             Set<String> subtree = index.fsSubtree(referent.fsNode);

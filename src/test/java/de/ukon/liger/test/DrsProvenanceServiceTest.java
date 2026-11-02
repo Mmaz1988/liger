@@ -145,6 +145,17 @@ public class DrsProvenanceServiceTest {
     }
 
     @Test
+    void aNameIsTheConstantItsReferentEqualsAndOtherReferentsHaveNone() throws Exception {
+        LigerDrsProvenanceResponse response = describe("object-relative-clause.json");
+
+        LigerProvenanceReferent bill = response.referents.stream()
+                .filter(r -> "Bill".equals(r.text)).findFirst().orElseGet(() -> fail("no referent for Bill"));
+        assertEquals(List.of("bill"), bill.names);
+        assertEquals(List.of(), referentOf(response, "dog").names);
+        assertEquals(List.of(), referentOf(response, "see").names);
+    }
+
+    @Test
     void properNameReferentResolvesThroughItsOwnSource() throws Exception {
         LigerDrsProvenanceResponse response = describe("proper-name.json");
 
