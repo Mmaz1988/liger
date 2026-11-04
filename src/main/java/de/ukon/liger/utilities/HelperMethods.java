@@ -87,6 +87,46 @@ public class HelperMethods {
     }
 
 
+    /**
+     * Replaces every lower(...) in a rule's right-hand side with its content lowercased, after
+     * strip(...) has been resolved: lower(strip(%p)) is the PRED's name in lowercase, as LFGxDRT
+     * keeps concepts once it has parsed a DRS (an axiom written with it names the same predicate
+     * as the DRS). A name ending in "lower" (follower(...)) is not the function.
+     */
+    public static String lowerValues(String value) {
+        StringBuilder out = new StringBuilder();
+        int i = 0;
+        while (i < value.length()) {
+            int start = value.indexOf("lower(", i);
+            if (start < 0 || (start > 0 && (Character.isLetterOrDigit(value.charAt(start - 1)) || value.charAt(start - 1) == '_'))) {
+                if (start < 0) {
+                    out.append(value, i, value.length());
+                    break;
+                }
+                out.append(value, i, start + 6);
+                i = start + 6;
+                continue;
+            }
+            int depth = 1;
+            int j = start + 6;
+            while (j < value.length() && depth > 0) {
+                char c = value.charAt(j);
+                if (c == '(') depth++;
+                else if (c == ')') depth--;
+                j++;
+            }
+            if (depth > 0) {
+                // Unbalanced: left as written.
+                out.append(value, i, value.length());
+                break;
+            }
+            out.append(value, i, start);
+            out.append(lowerValues(value.substring(start + 6, j - 1)).toLowerCase(java.util.Locale.ROOT));
+            i = j;
+        }
+        return out.toString();
+    }
+
     public static String stripValeue2(String value) {
 
         StringBuilder newString = new StringBuilder();

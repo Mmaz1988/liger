@@ -1112,6 +1112,7 @@ public class RuleParser {
 
         replacedFsVars = sb3.toString();
         replacedFsVars = HelperMethods.stripValeue2(replacedFsVars);
+        replacedFsVars = HelperMethods.lowerValues(replacedFsVars);
 
         return replacedFsVars;
     }

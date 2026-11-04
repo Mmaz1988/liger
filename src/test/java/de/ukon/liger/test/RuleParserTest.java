@@ -213,6 +213,26 @@ public class RuleParserTest {
      * recorded Solution equals the true final one.
      */
     @Test
+    void testLowerLowercasesAStrippedValue() {
+        LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
+        LinguisticStructure structure = fs.values().iterator().next();
+
+        RuleParser rp = new RuleParser(new ArrayList<>());
+        rp.setReplace(true);
+        rp.getRules().add(new Rule("#i PRED %i & #i NTYPE #j & #j NSYN %s & #j NSEM #k ==> #i SEM 'lower(strip(%i))(X), follower(Y)'"));
+        rp.addAnnotation2(structure);
+
+        assertEquals(2, structure.annotation.size());
+        for (GraphConstraint c : structure.annotation) {
+            String value = String.valueOf(c.getFsValue());
+            assertTrue(value.contains("john(X)") || value.contains("mary(X)"), "not lowercased: " + value);
+            assertTrue(value.contains("follower(Y)"), "a name ending in lower is not the function: " + value);
+        }
+        assertEquals("a(b(c)) x", HelperMethods.lowerValues("lower(A(B(C))) x"));
+        assertEquals("lower(unbalanced", HelperMethods.lowerValues("lower(unbalanced"));
+    }
+
+    @Test
     void testReplaceSubstitutesTheEarlierOfTwoValueVariables() {
         LinkedHashMap<String, LinguisticStructure> fs = new QueryParserTest().loadFs("testdirS1.pl");
         LinguisticStructure structure = fs.values().iterator().next();
