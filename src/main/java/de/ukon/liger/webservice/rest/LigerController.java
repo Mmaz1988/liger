@@ -140,8 +140,6 @@ public class LigerController {
         starter.generateXLEStarterFile();
         XLEoperator parser = new XLEoperator(new VariableHandler(), starter.operatingSystem);
 
-        String fsProlog = parser.parse2Prolog(request.sentence);
-
         List<LinguisticStructure> fsList = parser.parseSingle(request.sentence, true);
 
        // System.out.println(fs.getSubstructures("GLUE"));

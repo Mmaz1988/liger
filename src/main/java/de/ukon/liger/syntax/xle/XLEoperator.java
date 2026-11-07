@@ -297,24 +297,6 @@ public class XLEoperator extends SyntaxOperator {
         return null;
     }
 
-    public String parse2Prolog(String sentence) {
-        List<String> singletonList = new ArrayList<>();
-        singletonList.add(sentence);
-        Path workDir = parseSentences(singletonList, true);
-        try {
-            File[] files = workDir.resolve("parser_output").toFile().listFiles((d, name) -> name.endsWith(".pl"));
-            if (files != null && files.length > 0) {
-                Arrays.sort(files);
-                return Files.readString(files[0].toPath());
-            }
-            return null;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            deleteWorkDir(workDir);
-        }
-    }
-
     public LinkedHashMap<String,LinguisticStructure> fs2Java(String inputPath)
     {
         //In
