@@ -1182,52 +1182,24 @@ public class GlueSemantics {
 
     //For XLE+Glue version 1. Uses Prolog to extract MCs
     public String extractMCsFromFs(String fs) {
-        List<String> drtSolutions = new ArrayList<>();
-        //create a file that includes all Strings in solutions line  by line
-        //run swipl with the file as input
-
-        LOGGER.debug("Creating temporary files...");
-        //create temporary directory gswb_resources/tmp
-        File tmpDir = new File(PathVariables.workingDirectory,"tmp/prolog");
-
-        if (tmpDir.exists()) {
-            File[] files = tmpDir.listFiles();
-            for (File file : files) {
-                file.delete();
-            }
-            tmpDir.delete();
-        }
-
-
-        tmpDir.mkdirs();
-        // make sure the directory exists
-        File prologFS = new File(PathVariables.workingDirectory, "/tmp/prolog/prolog.pl");
-
+        // A directory of its own per call: one fixed tmp/prolog, emptied and refilled by every
+        // call, let concurrent requests delete and read each other's files (the race the XLE
+        // working directory had, 76b114d).
+        java.nio.file.Path workDir;
         try {
-            if (prologFS.createNewFile()) {
-                LOGGER.debug("File created successfully!");
-            } else {
-                LOGGER.error("File already exists!");
-            }
+            java.nio.file.Path base = java.nio.file.Paths.get(PathVariables.workingDirectory, "tmp");
+            java.nio.file.Files.createDirectories(base);
+            workDir = java.nio.file.Files.createTempDirectory(base, "prolog-");
         } catch (IOException e) {
-            LOGGER.error("An error occurred while creating the file: "
-                    + prologFS.getAbsolutePath() + "\n"
-                    + e.getMessage() + "\n");
+            throw new java.io.UncheckedIOException("Could not create a directory for the Prolog MC extraction", e);
         }
-
-        File xleTransferOutput = new File(PathVariables.workingDirectory, "tmp/prolog/xle_prolog_mcs.txt");
+        File prologFS = workDir.resolve("prolog.pl").toFile();
+        File xleTransferOutput = workDir.resolve("xle_prolog_mcs.txt").toFile();
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(prologFS));
-            writer.write(fs);
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(prologFS))) {
+                writer.write(fs);
+            }
 
-
-// exec swipl -q -f  src/premises.pl -t "main." -- \
-//	"$prologfile" "$outputfile"
-        try {
             String[] command = {
                     "swipl",
                     "-q",
@@ -1239,27 +1211,14 @@ public class GlueSemantics {
                     prologFS.getCanonicalPath(),
                     xleTransferOutput.getCanonicalPath()
             };
-
             ProcessBuilder processBuilder = new ProcessBuilder(command);
-
-            // Java join command with white space
-
-
-            LOGGER.debug("Executing Prolog goal to extract meaning constructors!");
-
             processBuilder.redirectErrorStream(true);
-
+            LOGGER.debug("Executing Prolog goal to extract meaning constructors!");
             Process process = processBuilder.start();
 
-            // Read and print the output of the external command
-
-            // Wait for the process to complete
-            // Create a separate thread to wait for the process to finish
             FutureTask<Integer> task = new FutureTask<>(process::waitFor);
             ExecutorService executor = Executors.newFixedThreadPool(1);
             executor.execute(task);
-
-            // Wait for 5 seconds for the process to finish
             try {
                 int exitCode = task.get(5, TimeUnit.SECONDS);
                 if (exitCode != 0) {
@@ -1267,43 +1226,26 @@ public class GlueSemantics {
                     return null;
                 }
             } catch (Exception e) {
-                // If the process takes more than 5 seconds, destroy it
                 process.destroyForcibly();
                 LOGGER.error("\nProcess timed out and was forcibly terminated.\n");
                 return null;
+            } finally {
+                executor.shutdownNow();
             }
 
-            executor.shutdown();
-
-            //read file xleTransferOutput to String
-
-            String xleTransferOutputString = "";
-
-            if (xleTransferOutput.exists()) {
-
-
-                BufferedReader reader = new BufferedReader(new FileReader(xleTransferOutput));
-
-                //concatenate all lines in the file to one String
-                xleTransferOutputString = reader.lines().collect(Collectors.joining("\n"));
-            } else {
+            if (!xleTransferOutput.exists()) {
                 LOGGER.error("File " + xleTransferOutput.getCanonicalPath() + " does not exist!");
-
+                return "";
             }
-
-
-
-            //delete temporary files
-            prologFS.delete();
-            xleTransferOutput.delete();
-            tmpDir.delete();
-
-            return xleTransferOutputString;
-
+            try (BufferedReader reader = new BufferedReader(new FileReader(xleTransferOutput))) {
+                return reader.lines().collect(Collectors.joining("\n"));
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Prolog MC extraction failed: " + e.getMessage());
+            return null;
+        } finally {
+            de.ukon.liger.syntax.xle.XLEoperator.deleteWorkDir(workDir);
         }
-        return null;
     }
 
 
